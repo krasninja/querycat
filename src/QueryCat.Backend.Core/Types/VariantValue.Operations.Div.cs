@@ -21,49 +21,57 @@ public partial struct VariantValue
         {
             DataType.Integer => rightType switch
             {
-                DataType.Integer => (in VariantValue left, in VariantValue right) =>
+                DataType.Integer => (in left, in right) =>
                 {
-                    return new VariantValue(left.AsIntegerUnsafe / right.AsIntegerUnsafe);
+                    var divisor = right.AsIntegerUnsafe;
+                    return divisor != 0 ? new VariantValue(left.AsIntegerUnsafe / divisor) : Null;
                 },
-                DataType.Float => (in VariantValue left, in VariantValue right) =>
+                DataType.Float => (in left, in right) =>
                 {
-                    return new VariantValue(left.AsIntegerUnsafe / right.AsFloatUnsafe);
+                    var divisor = right.AsFloatUnsafe;
+                    return divisor != 0.0 ? new VariantValue(left.AsIntegerUnsafe / divisor) : Null;
                 },
-                DataType.Numeric => (in VariantValue left, in VariantValue right) =>
+                DataType.Numeric => (in left, in right) =>
                 {
-                    return new VariantValue(left.AsIntegerUnsafe / right.AsNumericUnsafe);
+                    var divisor = right.AsNumericUnsafe;
+                    return divisor != 0 ? new VariantValue(left.AsIntegerUnsafe / divisor) : Null;
                 },
                 _ => BinaryNullDelegate,
             },
             DataType.Float => rightType switch
             {
-                DataType.Integer => (in VariantValue left, in VariantValue right) =>
+                DataType.Integer => (in left, in right) =>
                 {
-                    return new VariantValue(left.AsFloatUnsafe / right.AsIntegerUnsafe);
+                    var divisor = right.AsIntegerUnsafe;
+                    return divisor != 0 ? new VariantValue(left.AsFloatUnsafe / divisor) : Null;
                 },
-                DataType.Float => (in VariantValue left, in VariantValue right) =>
+                DataType.Float => (in left, in right) =>
                 {
-                    return new VariantValue(left.AsFloatUnsafe / right.AsFloatUnsafe);
+                    var divisor = right.AsFloatUnsafe;
+                    return divisor != 0.0 ? new VariantValue(left.AsFloatUnsafe / divisor) : Null;
                 },
                 _ => BinaryNullDelegate,
             },
             DataType.Numeric => rightType switch
             {
-                DataType.Integer => (in VariantValue left, in VariantValue right) =>
+                DataType.Integer => (in left, in right) =>
                 {
-                    return new VariantValue(left.AsNumericUnsafe / right.AsIntegerUnsafe);
+                    var divisor = right.AsIntegerUnsafe;
+                    return divisor != 0 ? new VariantValue(left.AsNumericUnsafe / divisor) : Null;
                 },
-                DataType.Numeric => (in VariantValue left, in VariantValue right) =>
+                DataType.Numeric => (in left, in right) =>
                 {
-                    return new VariantValue(left.AsNumericUnsafe / right.AsNumericUnsafe);
+                    var divisor = right.AsNumericUnsafe;
+                    return divisor != 0 ? new VariantValue(left.AsNumericUnsafe / divisor) : Null;
                 },
                 _ => BinaryNullDelegate,
             },
             DataType.Interval => rightType switch
             {
-                DataType.Integer => (in VariantValue left, in VariantValue right) =>
+                DataType.Integer => (in left, in right) =>
                 {
-                    return new VariantValue(left.AsIntervalUnsafe / right.AsIntegerUnsafe);
+                    var divisor = right.AsIntegerUnsafe;
+                    return divisor != 0 ? new VariantValue(left.AsIntervalUnsafe / divisor) : Null;
                 },
                 _ => BinaryNullDelegate,
             },

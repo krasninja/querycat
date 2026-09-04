@@ -21,19 +21,19 @@ public partial struct VariantValue
         {
             DataType.Integer => rightType switch
             {
-                DataType.Integer => (in VariantValue left, in VariantValue right) =>
+                DataType.Integer => (in left, in right) =>
                 {
                     return new VariantValue(left.AsIntegerUnsafe + right.AsIntegerUnsafe);
                 },
-                DataType.Float => (in VariantValue left, in VariantValue right) =>
+                DataType.Float => (in left, in right) =>
                 {
                     return new VariantValue(left.AsIntegerUnsafe + right.AsFloatUnsafe);
                 },
-                DataType.Numeric => (in VariantValue left, in VariantValue right) =>
+                DataType.Numeric => (in left, in right) =>
                 {
                     return new VariantValue(left.AsIntegerUnsafe + right.AsNumericUnsafe);
                 },
-                DataType.String => (in VariantValue left, in VariantValue right) =>
+                DataType.String => (in left, in right) =>
                 {
                     return new VariantValue(string.Concat(left.AsString, right.AsStringUnsafe));
                 },
@@ -41,15 +41,15 @@ public partial struct VariantValue
             },
             DataType.Float => rightType switch
             {
-                DataType.Integer => (in VariantValue left, in VariantValue right) =>
+                DataType.Integer => (in left, in right) =>
                 {
                     return new VariantValue(left.AsFloatUnsafe + right.AsIntegerUnsafe);
                 },
-                DataType.Float => (in VariantValue left, in VariantValue right) =>
+                DataType.Float => (in left, in right) =>
                 {
                     return new VariantValue(left.AsFloatUnsafe + right.AsFloatUnsafe);
                 },
-                DataType.String => (in VariantValue left, in VariantValue right) =>
+                DataType.String => (in left, in right) =>
                 {
                     return new VariantValue(string.Concat(left.AsString, right.AsStringUnsafe));
                 },
@@ -57,15 +57,15 @@ public partial struct VariantValue
             },
             DataType.Numeric => rightType switch
             {
-                DataType.Integer => (in VariantValue left, in VariantValue right) =>
+                DataType.Integer => (in left, in right) =>
                 {
                     return new VariantValue(left.AsNumericUnsafe + right.AsIntegerUnsafe);
                 },
-                DataType.Numeric => (in VariantValue left, in VariantValue right) =>
+                DataType.Numeric => (in left, in right) =>
                 {
                     return new VariantValue(left.AsNumericUnsafe + right.AsNumericUnsafe);
                 },
-                DataType.String => (in VariantValue left, in VariantValue right) =>
+                DataType.String => (in left, in right) =>
                 {
                     return new VariantValue(string.Concat(left.AsString, right.AsStringUnsafe));
                 },
@@ -73,23 +73,23 @@ public partial struct VariantValue
             },
             DataType.Timestamp => rightType switch
             {
-                DataType.Interval => (in VariantValue left, in VariantValue right) =>
+                DataType.Interval => (in left, in right) =>
                 {
                     return new VariantValue(left.AsTimestampUnsafe + right.AsIntervalUnsafe);
                 },
-                DataType.String => (in VariantValue left, in VariantValue right) =>
+                DataType.String => (in left, in right) =>
                 {
-                    return new VariantValue(left.AsTimestampUnsafe + right.AsStringUnsafe);
+                    return new VariantValue(left.AsTimestampUnsafe.ToString(Application.Culture) + right.AsStringUnsafe);
                 },
                 _ => BinaryNullDelegate,
             },
             DataType.Interval => rightType switch
             {
-                DataType.Interval => (in VariantValue left, in VariantValue right) =>
+                DataType.Interval => (in left, in right) =>
                 {
                     return new VariantValue(left.AsIntervalUnsafe + right.AsIntervalUnsafe);
                 },
-                DataType.String => (in VariantValue left, in VariantValue right) =>
+                DataType.String => (in left, in right) =>
                 {
                     return new VariantValue(left.AsIntervalUnsafe + right.AsStringUnsafe);
                 },
@@ -97,15 +97,15 @@ public partial struct VariantValue
             },
             DataType.String => rightType switch
             {
-                DataType.String => (in VariantValue left, in VariantValue right) =>
+                DataType.String => (in left, in right) =>
                 {
                     return new VariantValue(string.Concat(left.AsStringUnsafe, right.AsStringUnsafe));
                 },
-                DataType.Integer or DataType.Float or DataType.Numeric or DataType.Boolean => (in VariantValue left, in VariantValue right) =>
+                DataType.Integer or DataType.Float or DataType.Numeric or DataType.Boolean => (in left, in right) =>
                 {
                     return new VariantValue(string.Concat(left.AsStringUnsafe, right.AsString));
                 },
-                DataType.Dynamic or DataType.Object or DataType.Interval or DataType.Timestamp => (in VariantValue left, in VariantValue right) =>
+                DataType.Dynamic or DataType.Object or DataType.Interval or DataType.Timestamp => (in left, in right) =>
                 {
                     if (left.IsNull || right.IsNull)
                     {
@@ -117,7 +117,7 @@ public partial struct VariantValue
             },
             DataType.Boolean => rightType switch
             {
-                DataType.String => (in VariantValue left, in VariantValue right) =>
+                DataType.String => (in left, in right) =>
                 {
                     return new VariantValue(string.Concat(left.AsString, right.AsStringUnsafe));
                 },
@@ -125,7 +125,7 @@ public partial struct VariantValue
             },
             DataType.Dynamic or DataType.Object => rightType switch
             {
-                DataType.String => (in VariantValue left, in VariantValue right) =>
+                DataType.String => (in left, in right) =>
                 {
                     if (left.IsNull || right.IsNull)
                     {

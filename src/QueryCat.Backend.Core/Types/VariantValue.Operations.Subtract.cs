@@ -6,23 +6,23 @@ public partial struct VariantValue
     {
         return leftType switch
         {
-            DataType.Integer => (in VariantValue left) =>
+            DataType.Integer => (in left) =>
             {
                 return new VariantValue(-left.AsIntegerUnsafe);
             },
-            DataType.Float => (in VariantValue left) =>
+            DataType.Float => (in left) =>
             {
                 return new VariantValue(-left.AsFloatUnsafe);
             },
-            DataType.Numeric => (in VariantValue left) =>
+            DataType.Numeric => (in left) =>
             {
                 return new VariantValue(-left.AsNumericUnsafe);
             },
-            DataType.Boolean => (in VariantValue left) =>
+            DataType.Boolean => (in left) =>
             {
                 return new VariantValue(!left.AsBooleanUnsafe);
             },
-            DataType.Interval => (in VariantValue left) =>
+            DataType.Interval => (in left) =>
             {
                 return new VariantValue(-left.AsIntervalUnsafe);
             },
@@ -49,7 +49,7 @@ public partial struct VariantValue
         {
             DataType.Timestamp => rightType switch
             {
-                DataType.Timestamp => (in VariantValue left, in VariantValue right) =>
+                DataType.Timestamp => (in left, in right) =>
                 {
                     return new VariantValue(left.AsTimestampUnsafe - right.AsTimestampUnsafe);
                 },
@@ -70,7 +70,7 @@ public partial struct VariantValue
             return BinaryNullDelegate;
         }
 
-        return (in VariantValue left, in VariantValue right) =>
+        return (in left, in right) =>
         {
             var negativeRight = negativeFunction.Invoke(in right);
             return addFunction.Invoke(in left, in negativeRight);

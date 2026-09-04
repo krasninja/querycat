@@ -52,25 +52,25 @@ public readonly partial struct VariantValue
 
     internal static BinaryFunction GetBinaryFunction(Operation operation) => operation switch
     {
-        Operation.Add => (in VariantValue left, in VariantValue right) => Add(in left, in right, out _),
-        Operation.Subtract => (in VariantValue left, in VariantValue right) => Subtract(in left, in right, out _),
-        Operation.Multiple => (in VariantValue left, in VariantValue right) => Mul(in left, in right, out _),
-        Operation.Divide => (in VariantValue left, in VariantValue right) => Div(in left, in right, out _),
-        Operation.Modulo => (in VariantValue left, in VariantValue right) => Modulo(in left, in right, out _),
-        Operation.LeftShift => (in VariantValue left, in VariantValue right) => LeftShift(in left, in right, out _),
-        Operation.RightShift => (in VariantValue left, in VariantValue right) => RightShift(in left, in right, out _),
-        Operation.Equals => (in VariantValue left, in VariantValue right) => Equals(in left, in right, out _),
-        Operation.NotEquals => (in VariantValue left, in VariantValue right) => NotEquals(in left, in right, out _),
-        Operation.Greater => (in VariantValue left, in VariantValue right) => Greater(in left, in right, out _),
-        Operation.GreaterOrEquals => (in VariantValue left, in VariantValue right) => GreaterOrEquals(in left, in right, out _),
-        Operation.Less => (in VariantValue left, in VariantValue right) => Less(in left, in right, out _),
-        Operation.LessOrEquals => (in VariantValue left, in VariantValue right) => LessOrEquals(in left, in right, out _),
-        Operation.Concat => (in VariantValue left, in VariantValue right) => Concat(in left, in right, out _),
-        Operation.BetweenAnd => (in VariantValue left, in VariantValue right) => BetweenAnd(in left, in right, out _),
-        Operation.Like => (in VariantValue left, in VariantValue right) => Like(in left, in right, out _),
-        Operation.NotLike => (in VariantValue left, in VariantValue right) => NotLike(in left, in right, out _),
-        Operation.Similar => (in VariantValue left, in VariantValue right) => Similar(in left, in right, out _),
-        Operation.NotSimilar => (in VariantValue left, in VariantValue right) => NotSimilar(in left, in right, out _),
+        Operation.Add => (in left, in right) => Add(in left, in right, out _),
+        Operation.Subtract => (in left, in right) => Subtract(in left, in right, out _),
+        Operation.Multiple => (in left, in right) => Mul(in left, in right, out _),
+        Operation.Divide => (in left, in right) => Div(in left, in right, out _),
+        Operation.Modulo => (in left, in right) => Modulo(in left, in right, out _),
+        Operation.LeftShift => (in left, in right) => LeftShift(in left, in right, out _),
+        Operation.RightShift => (in left, in right) => RightShift(in left, in right, out _),
+        Operation.Equals => (in left, in right) => Equals(in left, in right, out _),
+        Operation.NotEquals => (in left, in right) => NotEquals(in left, in right, out _),
+        Operation.Greater => (in left, in right) => Greater(in left, in right, out _),
+        Operation.GreaterOrEquals => (in left, in right) => GreaterOrEquals(in left, in right, out _),
+        Operation.Less => (in left, in right) => Less(in left, in right, out _),
+        Operation.LessOrEquals => (in left, in right) => LessOrEquals(in left, in right, out _),
+        Operation.Concat => (in left, in right) => Concat(in left, in right, out _),
+        Operation.BetweenAnd => (in left, in right) => BetweenAnd(in left, in right, out _),
+        Operation.Like => (in left, in right) => Like(in left, in right, out _),
+        Operation.NotLike => (in left, in right) => NotLike(in left, in right, out _),
+        Operation.Similar => (in left, in right) => Similar(in left, in right, out _),
+        Operation.NotSimilar => (in left, in right) => NotSimilar(in left, in right, out _),
         _ => throw new ArgumentOutOfRangeException(nameof(operation), Resources.Errors.InvalidOperation),
     };
 
@@ -169,24 +169,24 @@ public readonly partial struct VariantValue
     internal static DataType GetResultType(in DataType left, in DataType right,
         in Operation operation)
     {
-        if (ComparisionOperations.Contains(operation))
+        if (Array.IndexOf(ComparisionOperations, operation) > -1)
         {
             return DataType.Boolean;
         }
 
-        if (LogicalOperations.Contains(operation)
+        if (Array.IndexOf(LogicalOperations, operation) > -1
             && left == DataType.Boolean && right == DataType.Boolean)
         {
             return DataType.Boolean;
         }
 
-        if (MiscOperations.Contains(operation)
+        if (Array.IndexOf(MiscOperations, operation) > -1
             && (left == DataType.String || right == DataType.String))
         {
             return DataType.String;
         }
 
-        if (MiscOperations.Contains(operation)
+        if (Array.IndexOf(MiscOperations, operation) > -1
             && left == DataType.Blob && right == DataType.Blob)
         {
             return DataType.Blob;
@@ -284,6 +284,22 @@ public readonly partial struct VariantValue
         return false;
     }
 
+    /// <summary>
+    /// Tests if value is zero. For non-numeric types returns false.
+    /// </summary>
+    /// <param name="value">Value to test.</param>
+    /// <returns><c>True</c> of zero, <c>false</c> otherwise.</returns>
+    internal static bool IsZero(in VariantValue value)
+    {
+        return value.Type switch
+        {
+            DataType.Integer => value.AsIntegerUnsafe == 0,
+            DataType.Float => value.AsFloatUnsafe == 0.0,
+            DataType.Numeric => value.AsNumericUnsafe == decimal.Zero,
+            _ => false,
+        };
+    }
+
     #region Algebraic operations
 
     public delegate VariantValue UnaryFunction(in VariantValue left);
@@ -314,21 +330,28 @@ public readonly partial struct VariantValue
         {
             DataType.Integer => right.Type switch
             {
-                DataType.Integer => new VariantValue(left.AsIntegerUnsafe % right.AsIntegerUnsafe),
-                DataType.Float => new VariantValue(left.AsIntegerUnsafe % right.AsFloatUnsafe),
-                DataType.Numeric => new VariantValue(left.AsIntegerUnsafe % right.AsNumericUnsafe),
+                DataType.Integer => right.AsIntegerUnsafe != 0
+                    ? new VariantValue(left.AsIntegerUnsafe % right.AsIntegerUnsafe) : Null,
+                DataType.Float => right.AsFloatUnsafe != 0.0
+                    ? new VariantValue(left.AsIntegerUnsafe % right.AsFloatUnsafe) : Null,
+                DataType.Numeric => right.AsNumericUnsafe != decimal.Zero
+                    ? new VariantValue(left.AsIntegerUnsafe % right.AsNumericUnsafe) : Null,
                 _ => Null,
             },
             DataType.Float => right.Type switch
             {
-                DataType.Integer => new VariantValue(left.AsFloatUnsafe % right.AsIntegerUnsafe),
-                DataType.Float => new VariantValue(left.AsFloatUnsafe % right.AsFloatUnsafe),
+                DataType.Integer => right.AsIntegerUnsafe != 0
+                    ? new VariantValue(left.AsFloatUnsafe % right.AsIntegerUnsafe) : Null,
+                DataType.Float => right.AsFloatUnsafe != 0.0
+                    ? new VariantValue(left.AsFloatUnsafe % right.AsFloatUnsafe) : Null,
                 _ => Null,
             },
             DataType.Numeric => right.Type switch
             {
-                DataType.Integer => new VariantValue(left.AsNumericUnsafe % right.AsIntegerUnsafe),
-                DataType.Numeric => new VariantValue(left.AsNumericUnsafe % right.AsNumericUnsafe),
+                DataType.Integer => right.AsIntegerUnsafe != 0
+                    ? new VariantValue(left.AsNumericUnsafe % right.AsIntegerUnsafe) : Null,
+                DataType.Numeric => right.AsNumericUnsafe != decimal.Zero
+                    ? new VariantValue(left.AsNumericUnsafe % right.AsNumericUnsafe) : Null,
                 _ => Null,
             },
             _ => Null,
@@ -344,7 +367,7 @@ public readonly partial struct VariantValue
         {
             DataType.Integer => right.Type switch
             {
-                DataType.Integer => new VariantValue((int)left.AsIntegerUnsafe << (int)right.AsIntegerUnsafe),
+                DataType.Integer => new VariantValue(left.AsIntegerUnsafe << (int)right.AsIntegerUnsafe),
                 _ => Null,
             },
             _ => Null,
@@ -360,7 +383,7 @@ public readonly partial struct VariantValue
         {
             DataType.Integer => right.Type switch
             {
-                DataType.Integer => new VariantValue((int)left.AsIntegerUnsafe >> (int)right.AsIntegerUnsafe),
+                DataType.Integer => new VariantValue(left.AsIntegerUnsafe >> (int)right.AsIntegerUnsafe),
                 _ => Null,
             },
             _ => Null,
@@ -397,6 +420,12 @@ public readonly partial struct VariantValue
             return Null;
         }
 
+        if (leftCondition.IsNull || rightCondition.IsNull)
+        {
+            errorCode = ErrorCode.OK;
+            return Null;
+        }
+
         errorCode = ErrorCode.OK;
         return new VariantValue(leftCondition.AsBoolean && rightCondition.AsBoolean);
     }
@@ -408,6 +437,12 @@ public readonly partial struct VariantValue
 
     public static VariantValue Like(in VariantValue left, in VariantValue right, out ErrorCode errorCode)
     {
+        if (left.IsNull || right.IsNull)
+        {
+            errorCode = ErrorCode.OK;
+            return Null;
+        }
+
         var pattern = right.AsString;
         var str = left.AsString;
 
@@ -428,12 +463,32 @@ public readonly partial struct VariantValue
 
     public static VariantValue Similar(in VariantValue left, in VariantValue right, out ErrorCode errorCode)
     {
+        if (left.IsNull || right.IsNull)
+        {
+            errorCode = ErrorCode.OK;
+            return Null;
+        }
+
         var pattern = right.AsString;
         var str = left.AsString;
 
+        if (string.IsNullOrEmpty(pattern))
+        {
+            errorCode = ErrorCode.InvalidArguments;
+            return default;
+        }
+
         errorCode = ErrorCode.OK;
-        var regex = new Regex(pattern, RegexOptions.Compiled | RegexOptions.CultureInvariant);
-        return new VariantValue(regex.IsMatch(str));
+
+        try
+        {
+            return new VariantValue(Regex.IsMatch(str, pattern));
+        }
+        catch (ArgumentException)
+        {
+            errorCode = ErrorCode.InvalidArguments;
+            return default;
+        }
     }
 
     public static VariantValue NotSimilar(in VariantValue left, in VariantValue right, out ErrorCode errorCode)
@@ -467,14 +522,17 @@ public readonly partial struct VariantValue
             DataType.Integer => right.Type switch
             {
                 DataType.String => new VariantValue(string.Concat(left.AsString, right.AsStringUnsafe)),
+                _ => Null,
             },
             DataType.Float => right.Type switch
             {
                 DataType.String => new VariantValue(string.Concat(left.AsString, right.AsStringUnsafe)),
+                _ => Null,
             },
             DataType.Numeric => right.Type switch
             {
                 DataType.String => new VariantValue(string.Concat(left.AsString, right.AsStringUnsafe)),
+                _ => Null,
             },
             DataType.String => right.Type switch
             {
@@ -482,6 +540,9 @@ public readonly partial struct VariantValue
                 DataType.Integer => new VariantValue(string.Concat(left.AsStringUnsafe, right.AsString)),
                 DataType.Float => new VariantValue(string.Concat(left.AsStringUnsafe, right.AsString)),
                 DataType.Numeric => new VariantValue(string.Concat(left.AsStringUnsafe, right.AsString)),
+                DataType.Boolean => new VariantValue(string.Concat(left.AsStringUnsafe, right.AsString)),
+                DataType.Timestamp => new VariantValue(string.Concat(left.AsStringUnsafe, right.AsString)),
+                DataType.Interval => new VariantValue(string.Concat(left.AsStringUnsafe, right.AsString)),
                 _ => Null,
             },
             DataType.Blob => right.Type switch
@@ -491,7 +552,7 @@ public readonly partial struct VariantValue
             },
             DataType.Array => right.Type switch
             {
-                DataType.Array => CreateFromObject(left.AsArrayUnsafe.Concat(right.AsArrayUnsafe)),
+                DataType.Array => CreateFromObject(left.AsArrayUnsafe.Concat(right.AsArrayUnsafe).ToArray()),
                 _ => Null,
             },
             _ => Null,

@@ -532,7 +532,6 @@ public class DelimiterStreamReader
         }
     }
 
-
     [Conditional("DEBUG")]
     private static void Trace(string message)
     {

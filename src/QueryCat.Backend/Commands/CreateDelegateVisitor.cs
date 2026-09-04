@@ -86,6 +86,10 @@ internal partial class CreateDelegateVisitor : AstVisitor
             var rightValue = await rightAction.InvokeAsync(thread, ct);
             var result = VariantValue.Between(in value, in leftValue, in rightValue, out ErrorCode code);
             ApplyStatistic(thread, code);
+            if (result.IsNull)
+            {
+                return VariantValue.Null;
+            }
             var boolResult = result.AsBoolean;
             return node.IsNot ? new VariantValue(!boolResult) : new VariantValue(boolResult);
         }

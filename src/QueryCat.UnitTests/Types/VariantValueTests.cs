@@ -1,3 +1,4 @@
+using System.Globalization;
 using Xunit;
 using QueryCat.Backend.Core.Types;
 
@@ -40,7 +41,7 @@ public sealed class VariantValueTests
         Assert.Equal(new VariantValue(1), Cast(new VariantValue("1"), DataType.Integer));
         Assert.Equal(new VariantValue(true), Cast(new VariantValue("1"), DataType.Boolean));
         Assert.Equal(new VariantValue(false), Cast(new VariantValue("0"), DataType.Boolean));
-        Assert.Equal(new VariantValue(new DateTime(2022, 1, 1)),
+        Assert.Equal(new VariantValue(new DateTime(2022, 1, 1, 0, 0, 0, DateTimeKind.Utc)),
             Cast(new VariantValue("2022-01-01"), DataType.Timestamp));
         Assert.Equal(new VariantValue(10), Cast(new VariantValue(10.3), DataType.Integer));
 
@@ -62,5 +63,40 @@ public sealed class VariantValueTests
     {
         // Arrange, act and assert.
         Assert.Throws<FormatException>(() => new VariantValue("820xx").ToInt32());
+    }
+
+    [Fact]
+    public void Create_Dictionary_ShouldCreateMap()
+    {
+        // Arrange.
+        var result = new VariantValue(new Dictionary<VariantValue, VariantValue>
+        {
+            [new VariantValue("key1")] = new(1),
+            [new VariantValue("key2")] = new(2),
+        });
+
+        // Act.
+        var str = result.ToString(CultureInfo.InvariantCulture);
+
+        // Assert.
+        Assert.Equal("{key1:1,key2:2}", str);
+    }
+
+    [Fact]
+    public void Create_List_ShouldCreateArray()
+    {
+        // Arrange.
+        var result = new VariantValue(new List<VariantValue>()
+        {
+            new("key1"),
+            new("key2"),
+            new(321),
+        });
+
+        // Act.
+        var str = result.ToString(CultureInfo.InvariantCulture);
+
+        // Assert.
+        Assert.Equal("[key1,key2,321]", str);
     }
 }

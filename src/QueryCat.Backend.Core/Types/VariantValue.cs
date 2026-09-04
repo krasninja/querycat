@@ -1,5 +1,4 @@
 using System.Buffers;
-using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -31,9 +30,9 @@ public readonly partial struct VariantValue :
     private static readonly DataTypeObject _intervalObject = IntervalDataTypeObject.Instance;
     private static readonly DataTypeObject _booleanObject = BooleanDataTypeObject.Instance;
 
-    public static VariantValue OneIntegerValue = new(1);
-    public static VariantValue TrueValue = new(true);
-    public static VariantValue FalseValue = new(false);
+    public static readonly VariantValue OneIntegerValue = new(1);
+    public static readonly VariantValue TrueValue = new(true);
+    public static readonly VariantValue FalseValue = new(false);
 
     /// <summary>
     /// Float number formatter that is used for variant value string representation.
@@ -111,7 +110,7 @@ public readonly partial struct VariantValue :
     /// <summary>
     /// NULL value.
     /// </summary>
-    public static VariantValue Null = default;
+    public static readonly VariantValue Null = default;
 
     /// <summary>
     /// Variant value type.
@@ -130,19 +129,49 @@ public readonly partial struct VariantValue :
 
     public VariantValue(DataType type)
     {
-        _object = type switch
+        switch (type)
         {
-            DataType.Integer => _integerObject,
-            DataType.String => string.Empty,
-            DataType.Boolean => _booleanObject,
-            DataType.Float => _floatObject,
-            DataType.Timestamp => _timestampObject,
-            DataType.Interval => _intervalObject,
-            DataType.Object => null,
-            DataType.Blob => StreamBlobData.Empty,
-            _ => throw new ArgumentOutOfRangeException(nameof(type)),
-        };
-        _valueUnion = default;
+            case DataType.Integer:
+                _object = _integerObject;
+                break;
+            case DataType.String:
+                _object = string.Empty;
+                _valueUnion = new TypeUnion(DataType.String);
+                break;
+            case DataType.Boolean:
+                _object = _booleanObject;
+                break;
+            case DataType.Float:
+                _object = _floatObject;
+                break;
+            case DataType.Timestamp:
+                _object = _timestampObject;
+                break;
+            case DataType.Interval:
+                _object = _intervalObject;
+                break;
+            case DataType.Numeric:
+                _object = 0M;
+                _valueUnion = new TypeUnion(DataType.Numeric);
+                break;
+            case DataType.Object:
+                _object = null;
+                break;
+            case DataType.Blob:
+                _object = StreamBlobData.Empty;
+                _valueUnion = new TypeUnion(DataType.Blob);
+                break;
+            case DataType.Array:
+                _object = new List<VariantValue>();
+                _valueUnion = new TypeUnion(DataType.Array);
+                break;
+            case DataType.Map:
+                _object = new Dictionary<VariantValue, VariantValue>();
+                _valueUnion = new TypeUnion(DataType.Map);
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(type));
+        }
     }
 
     public VariantValue(long value)
@@ -172,8 +201,11 @@ public readonly partial struct VariantValue :
 
     public VariantValue(string? value)
     {
-        _object = value;
-        _valueUnion = new TypeUnion(DataType.String);
+        if (value != null)
+        {
+            _object = value;
+            _valueUnion = new TypeUnion(DataType.String);
+        }
     }
 
     public VariantValue(char value)
@@ -228,7 +260,7 @@ public readonly partial struct VariantValue :
 
     public VariantValue(DateTimeOffset value)
     {
-        _valueUnion = new TypeUnion(value.DateTime);
+        _valueUnion = new TypeUnion(value.UtcDateTime);
         _object = _timestampObject;
     }
 
@@ -295,13 +327,13 @@ public readonly partial struct VariantValue :
         _valueUnion = new TypeUnion(DataType.Object);
     }
 
-    private VariantValue(IList<VariantValue> list)
+    public VariantValue(IList<VariantValue> list)
     {
         _object = list;
         _valueUnion = new TypeUnion(DataType.Array);
     }
 
-    private VariantValue(IDictionary<VariantValue, VariantValue> map)
+    public VariantValue(IDictionary<VariantValue, VariantValue> map)
     {
         _object = map;
         _valueUnion = new TypeUnion(DataType.Map);
@@ -309,8 +341,11 @@ public readonly partial struct VariantValue :
 
     public VariantValue(IBlobData? blob)
     {
-        _object = blob;
-        _valueUnion = new TypeUnion(DataType.Blob);
+        if (blob != null)
+        {
+            _object = blob;
+            _valueUnion = new TypeUnion(DataType.Blob);
+        }
     }
 
     private VariantValue(byte[] bytes)
@@ -366,9 +401,13 @@ public readonly partial struct VariantValue :
         {
             return new VariantValue(Convert.ToString(obj));
         }
-        if (obj is DateTime || obj is DateOnly)
+        if (obj is DateTime dateTime)
         {
-            return new VariantValue(Convert.ToDateTime(obj));
+            return new VariantValue(dateTime);
+        }
+        if (obj is DateOnly dateOnly)
+        {
+            return new VariantValue(dateOnly.ToDateTime(TimeOnly.MinValue));
         }
         if (obj is DateTimeOffset dateTimeOffset)
         {
@@ -570,7 +609,8 @@ public readonly partial struct VariantValue :
             || retType == typeof(UInt16)
             || retType == typeof(SByte))
         {
-            return (T?)Convert.ChangeType(AsInteger, typeof(T?));
+            var value = AsInteger;
+            return value.HasValue ? (T?)Convert.ChangeType(value.Value, retType) : default;
         }
         if (retType == typeof(bool))
         {
@@ -578,23 +618,38 @@ public readonly partial struct VariantValue :
         }
         if (retType == typeof(double) || retType == typeof(float))
         {
-            return (T?)Convert.ChangeType(AsFloat, typeof(T?));
+            var value = AsFloat;
+            return value.HasValue ? (T?)Convert.ChangeType(value.Value, retType) : default;
         }
         if (retType == typeof(decimal))
         {
-            return (T?)Convert.ChangeType(AsNumeric, typeof(T?));
+            var value = AsNumeric;
+            return value.HasValue ? (T?)Convert.ChangeType(value.Value, retType) : default;
         }
-        if (retType == typeof(string) || retType == typeof(char))
+        if (retType == typeof(string))
         {
-            return (T)Convert.ChangeType(AsString, typeof(T?));
+            var value = AsString;
+            return value != null ? (T?)Convert.ChangeType(value, retType) : default;
         }
-        if (retType == typeof(DateTime) || retType == typeof(DateTimeOffset))
+        if (retType == typeof(char))
         {
-            return (T?)Convert.ChangeType(AsTimestamp, typeof(T?));
+            var s = AsString;
+            return s.Length == 1 ? (T?)(object)s[0] : default;
         }
         if (retType == typeof(TimeSpan))
         {
-            return (T?)Convert.ChangeType(AsInterval, typeof(T?));
+            var value = AsInterval;
+            return value.HasValue ? (T?)Convert.ChangeType(value.Value, retType) : default;
+        }
+        if (retType == typeof(DateTime))
+        {
+            var value = AsTimestamp;
+            return value.HasValue ? (T?)Convert.ChangeType(value.Value, retType) : default;
+        }
+        if (retType == typeof(DateTimeOffset))
+        {
+            var ts = AsTimestamp;
+            return ts.HasValue ? (T?)(object)new DateTimeOffset(DateTime.SpecifyKind(ts.Value, DateTimeKind.Utc)) : default;
         }
 
         var sourceObj = Cast(DataType.Object)._object;
@@ -631,7 +686,7 @@ public readonly partial struct VariantValue :
 
             CloseIteratorInternal(iterator);
         }
-        else if (Type == DataType.Object && AsObjectUnsafe is IDisposable disposable)
+        else if ((Type == DataType.Object || Type == DataType.Blob) && AsObjectUnsafe is IDisposable disposable)
         {
             disposable.Dispose();
         }
@@ -653,6 +708,9 @@ public readonly partial struct VariantValue :
         DataType.Timestamp => AsTimestampUnsafe,
         DataType.Interval => AsIntervalUnsafe,
         DataType.Object => AsObjectUnsafe,
+        DataType.Blob => AsBlobUnsafe,
+        DataType.Array => AsArrayUnsafe,
+        DataType.Map => AsMapUnsafe,
         _ => null,
     };
 
@@ -746,9 +804,15 @@ public readonly partial struct VariantValue :
 
     #endregion
 
-    public static bool Equals(in VariantValue value1, in VariantValue value2) =>
-        value1._valueUnion.IntegerValue == value2._valueUnion.IntegerValue
-            && ((value1._object == null && value2._object == null) || Equals(value1._object, value2._object));
+    public static bool Equals(in VariantValue value1, in VariantValue value2)
+    {
+        if (ReferenceEquals(value1._object, _timestampObject) && ReferenceEquals(value2._object, _timestampObject))
+        {
+            return value1.AsTimestampUnsafe.Ticks == value2.AsTimestampUnsafe.Ticks;
+        }
+        return value1._valueUnion.IntegerValue == value2._valueUnion.IntegerValue
+               && ((value1._object == null && value2._object == null) || Equals(value1._object, value2._object));
+    }
 
     /// <inheritdoc />
     public override bool Equals(object? obj)
@@ -761,6 +825,10 @@ public readonly partial struct VariantValue :
         if (_object == null)
         {
             return 0;
+        }
+        if (ReferenceEquals(_object, _timestampObject))
+        {
+            return _valueUnion.DateTimeValue.Ticks.GetHashCode();
         }
         return IsValueType() ? _valueUnion.GetHashCode() : _object.GetHashCode();
     }
@@ -797,8 +865,8 @@ public readonly partial struct VariantValue :
 
     public static implicit operator TimeSpan?(VariantValue value) => value.AsInterval;
 
-    [RequiresDynamicCode("Contains serialization for object type.")]
-    [RequiresUnreferencedCode("Contains serialization for object type.")]
+    [System.Diagnostics.CodeAnalysis.RequiresDynamicCode("Contains serialization for object type.")]
+    [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("Contains serialization for object type.")]
     public static implicit operator JsonNode?(VariantValue value) => value.Type switch
     {
         DataType.Integer => JsonValue.Create(value.AsIntegerUnsafe),
@@ -867,6 +935,7 @@ public readonly partial struct VariantValue :
     {
         DataType.Null => NullValueString,
         DataType.Void => VoidValueString,
+        DataType.Dynamic => VoidValueString,
         DataType.Integer => AsIntegerUnsafe.ToString(formatProvider),
         DataType.String => AsStringUnsafe,
         DataType.Boolean => AsBooleanUnsafe.ToString(formatProvider),
@@ -884,17 +953,23 @@ public readonly partial struct VariantValue :
     private static string BlobToShortString(IBlobData blobData)
     {
         // Convert BLOB into string: ABC\5C.
-        var sb = new StringBuilder((int)blobData.Length * 3);
+        const int maxChars = 64 * 1024;
+        var sb = new StringBuilder((int)Math.Min(blobData.Length * 3, maxChars));
         using var stream = blobData.GetStream();
         var buffer = ArrayPool<byte>.Shared.Rent(1024);
         try
         {
             int read;
-            var oneByteArr = new byte[1];
+            Span<byte> oneByteArr = stackalloc byte[1];
             while ((read = stream.Read(buffer, 0, buffer.Length)) > 0)
             {
                 foreach (var b in buffer.AsSpan(0, read))
                 {
+                    if (sb.Length >= maxChars)
+                    {
+                        return sb.ToString();
+                    }
+
                     var ch = (char)b;
                     if (char.IsAsciiLetterOrDigit(ch) || char.IsPunctuation(ch)
                         || char.IsSeparator(ch))
@@ -920,27 +995,32 @@ public readonly partial struct VariantValue :
 
     private static string ArrayToString(IList<VariantValue> list, IFormatProvider? formatProvider)
     {
-        var sb = new StringBuilder(list.Count * 7)
-            .Append('[')
-            .Append(
-                string.Join(',', list.Select(item => item.ToString(formatProvider)))
-            )
-            .Append(']');
-        return sb.ToString();
+        var sb = new StringBuilder(list.Count * 7).Append('[');
+        for (var i = 0; i < list.Count; i++)
+        {
+            if (i > 0)
+            {
+                sb.Append(',');
+            }
+            sb.Append(list[i].ToString(formatProvider));
+        }
+        return sb.Append(']').ToString();
     }
 
     private static string MapToString(IDictionary<VariantValue, VariantValue> map, IFormatProvider? formatProvider)
     {
-        string KeyValueToString(KeyValuePair<VariantValue, VariantValue> kvp) =>
-            $"{kvp.Key.ToString(formatProvider)}:{kvp.Value.ToString(formatProvider)}";
-
-        var sb = new StringBuilder(map.Count * 7)
-            .Append('{')
-            .Append(
-                string.Join(',', map.Select(KeyValueToString))
-            )
-            .Append('}');
-        return sb.ToString();
+        var sb = new StringBuilder(map.Count * 7).Append('{');
+        var i = 0;
+        foreach (var kvp in map)
+        {
+            if (i > 0)
+            {
+                sb.Append(',');
+            }
+            sb.Append(kvp.Key.ToString(formatProvider)).Append(':').Append(kvp.Value.ToString(formatProvider));
+            i++;
+        }
+        return sb.Append('}').ToString();
     }
 
     /// <inheritdoc />

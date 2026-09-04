@@ -144,16 +144,17 @@ internal sealed partial class GrokInput : IRowsInput, IRowsIteratorParent
 
     private static VariantValue TryParseDateTimeOffsetOrNull(ReadOnlySpan<char> input, params string[] formats)
     {
+        var styles = DateTimeStyles.AllowWhiteSpaces | DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal;
         if (formats.Length > 0)
         {
-            if (DateTimeOffset.TryParseExact(input, formats, CultureInfo.InvariantCulture, DateTimeStyles.None, out var dt))
+            if (DateTimeOffset.TryParseExact(input, formats, CultureInfo.InvariantCulture, styles, out var dt))
             {
                 return new VariantValue(dt);
             }
         }
         else
         {
-            if (DateTimeOffset.TryParse(input, CultureInfo.InvariantCulture, DateTimeStyles.None, out var dt))
+            if (DateTimeOffset.TryParse(input, CultureInfo.InvariantCulture, styles, out var dt))
             {
                 return new VariantValue(dt);
             }

@@ -9,7 +9,7 @@ public partial struct VariantValue
             throw new SemanticException(string.Format(Resources.Errors.CannotGetOrDelegate, leftType));
         }
 
-        return (in VariantValue left) =>
+        return (in left) =>
         {
             if (left.IsNull)
             {
@@ -27,8 +27,12 @@ public partial struct VariantValue
             throw new SemanticException(string.Format(Resources.Errors.CannotGetAndDelegate, leftType, rightType));
         }
 
-        return (in VariantValue left, in VariantValue right) =>
+        return (in left, in right) =>
         {
+            if (left.IsNull && right.IsNull)
+            {
+                return Null;
+            }
             if ((left.IsNull && right.AsBooleanUnsafe)
                 || (left.AsBooleanUnsafe && right.IsNull))
             {
@@ -51,7 +55,7 @@ public partial struct VariantValue
             throw new SemanticException(string.Format(Resources.Errors.CannotGetOrDelegate, leftType, rightType));
         }
 
-        return (in VariantValue left, in VariantValue right) =>
+        return (in left, in right) =>
         {
             if ((left.IsNull && right.AsBooleanUnsafe)
                 || (left.AsBooleanUnsafe && right.IsNull))
