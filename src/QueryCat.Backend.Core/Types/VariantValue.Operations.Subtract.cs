@@ -45,35 +45,65 @@ public partial struct VariantValue
 
     internal static BinaryFunction GetSubtractDelegate(DataType leftType, DataType rightType)
     {
-        BinaryFunction func = leftType switch
+        return leftType switch
         {
+            DataType.Integer => rightType switch
+            {
+                DataType.Integer => (in left, in right) =>
+                {
+                    return new VariantValue(left.AsIntegerUnsafe - right.AsIntegerUnsafe);
+                },
+                DataType.Float => (in left, in right) =>
+                {
+                    return new VariantValue(left.AsIntegerUnsafe - right.AsFloatUnsafe);
+                },
+                DataType.Numeric => (in left, in right) =>
+                {
+                    return new VariantValue(left.AsIntegerUnsafe - right.AsNumericUnsafe);
+                },
+                _ => BinaryNullDelegate,
+            },
+            DataType.Float => rightType switch
+            {
+                DataType.Integer => (in left, in right) =>
+                {
+                    return new VariantValue(left.AsFloatUnsafe - right.AsIntegerUnsafe);
+                },
+                DataType.Float => (in left, in right) =>
+                {
+                    return new VariantValue(left.AsFloatUnsafe - right.AsFloatUnsafe);
+                },
+                _ => BinaryNullDelegate,
+            },
+            DataType.Numeric => rightType switch
+            {
+                DataType.Integer => (in left, in right) =>
+                {
+                    return new VariantValue(left.AsNumericUnsafe - right.AsIntegerUnsafe);
+                },
+                DataType.Numeric => (in left, in right) =>
+                {
+                    return new VariantValue(left.AsNumericUnsafe - right.AsNumericUnsafe);
+                },
+                _ => BinaryNullDelegate,
+            },
             DataType.Timestamp => rightType switch
             {
-                DataType.Timestamp => (in left, in right) =>
+                DataType.Interval => (in left, in right) =>
                 {
-                    return new VariantValue(left.AsTimestampUnsafe - right.AsTimestampUnsafe);
+                    return new VariantValue(left.AsTimestampUnsafe - right.AsIntervalUnsafe);
+                },
+                _ => BinaryNullDelegate,
+            },
+            DataType.Interval => rightType switch
+            {
+                DataType.Interval => (in left, in right) =>
+                {
+                    return new VariantValue(left.AsIntervalUnsafe - right.AsIntervalUnsafe);
                 },
                 _ => BinaryNullDelegate,
             },
             _ => BinaryNullDelegate,
-        };
-
-        if (func != BinaryNullDelegate)
-        {
-            return func;
-        }
-
-        var negativeFunction = GetNegationDelegate(rightType);
-        var addFunction = GetAddDelegate(leftType, rightType);
-        if (negativeFunction == UnaryNullDelegate || addFunction == BinaryNullDelegate)
-        {
-            return BinaryNullDelegate;
-        }
-
-        return (in left, in right) =>
-        {
-            var negativeRight = negativeFunction.Invoke(in right);
-            return addFunction.Invoke(in left, in negativeRight);
         };
     }
 }

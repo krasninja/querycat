@@ -120,6 +120,107 @@ public partial struct VariantValue
         };
     }
 
+    internal static BinaryFunction GetNotEqualsDelegate(DataType leftType, DataType rightType)
+    {
+        return leftType switch
+        {
+            DataType.Integer => rightType switch
+            {
+                DataType.Integer => (in left, in right) =>
+                {
+                    return new VariantValue(left.AsIntegerUnsafe != right.AsIntegerUnsafe);
+                },
+                DataType.Float => (in left, in right) =>
+                {
+                    return new VariantValue(left.AsIntegerUnsafe != right.AsFloatUnsafe);
+                },
+                DataType.Numeric => (in left, in right) =>
+                {
+                    return new VariantValue(left.AsIntegerUnsafe != right.AsNumericUnsafe);
+                },
+                DataType.String => (in left, in right) =>
+                {
+                    return new VariantValue(left.AsIntegerUnsafe != right.AsInteger);
+                },
+                _ => BinaryNullDelegate,
+            },
+            DataType.Float => rightType switch
+            {
+                DataType.Integer => (in left, in right) =>
+                {
+                    return new VariantValue(left.AsFloatUnsafe != right.AsIntegerUnsafe);
+                },
+                DataType.Float => (in left, in right) =>
+                {
+                    return new VariantValue(left.AsFloatUnsafe != right.AsFloatUnsafe);
+                },
+                _ => BinaryNullDelegate,
+            },
+            DataType.Numeric => rightType switch
+            {
+                DataType.Integer => (in left, in right) =>
+                {
+                    return new VariantValue(left.AsNumericUnsafe != right.AsIntegerUnsafe);
+                },
+                DataType.Numeric => (in left, in right) =>
+                {
+                    return new VariantValue(left.AsNumericUnsafe != right.AsNumericUnsafe);
+                },
+                DataType.String => (in left, in right) =>
+                {
+                    return new VariantValue(left.AsNumericUnsafe != right.AsNumeric);
+                },
+                _ => BinaryNullDelegate,
+            },
+            DataType.Boolean => rightType switch
+            {
+                DataType.Boolean => (in left, in right) =>
+                {
+                    return new VariantValue(left.AsBooleanUnsafe != right.AsBooleanUnsafe);
+                },
+                DataType.String => (in left, in right) =>
+                {
+                    return new VariantValue(left.AsBooleanUnsafe != right.AsBoolean);
+                },
+                _ => BinaryNullDelegate,
+            },
+            DataType.Timestamp => rightType switch
+            {
+                DataType.Timestamp => (in left, in right) =>
+                {
+                    return new VariantValue(left.AsTimestampUnsafe != right.AsTimestampUnsafe);
+                },
+                DataType.String => (in left, in right) =>
+                {
+                    return new VariantValue(left.AsTimestampUnsafe != right.AsTimestamp);
+                },
+                _ => BinaryNullDelegate,
+            },
+            DataType.Interval => rightType switch
+            {
+                DataType.Interval => (in left, in right) =>
+                {
+                    return new VariantValue(left.AsIntervalUnsafe != right.AsIntervalUnsafe);
+                },
+                _ => BinaryNullDelegate,
+            },
+            DataType.String => rightType switch
+            {
+                DataType.String => (in left, in right) =>
+                {
+                    return new VariantValue(left.AsStringUnsafe != right.AsStringUnsafe);
+                },
+                DataType.Boolean or DataType.Integer or DataType.Numeric
+                    => (in left, in right) =>
+                    {
+                        return new VariantValue(left.AsStringUnsafe != right.AsString);
+                    },
+                _ => BinaryNullDelegate,
+            },
+            _ => BinaryNullDelegate,
+        };
+    }
+
     internal static VariantValue NotEquals(in VariantValue left, in VariantValue right, out ErrorCode errorCode)
     {
         var result = Equals(in left, in right, out errorCode);
@@ -128,18 +229,5 @@ public partial struct VariantValue
             return Null;
         }
         return Negation(in result, out errorCode);
-    }
-
-    internal static BinaryFunction GetNotEqualsDelegate(DataType leftType, DataType rightType)
-    {
-        var equalsDelegate = GetEqualsDelegate(leftType, rightType);
-        if (equalsDelegate == BinaryNullDelegate)
-        {
-            return BinaryNullDelegate;
-        }
-        return (in left, in right) =>
-        {
-            return new VariantValue(!equalsDelegate.Invoke(in left, in right).AsBooleanUnsafe);
-        };
     }
 }
