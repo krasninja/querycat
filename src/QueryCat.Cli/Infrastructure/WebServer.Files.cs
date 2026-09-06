@@ -8,19 +8,25 @@ namespace QueryCat.Cli.Infrastructure;
 
 internal partial class WebServer
 {
-    private static readonly string _selectFilesQuery = @"select *, size_pretty(size) as 'size_pretty' from ls_dir(path);";
+    private const string SelectFilesQuery = @"select *, size_pretty(size) as 'size_pretty' from ls_dir(path);";
+    private const int ReadBufferSize = 1024 * 4;
+
+    /*
+     * For testing: curl -r 1-18 http://localhost:6789/api/files?q=%2Ftest.txt.
+     */
+
     private static readonly ArrayPool<byte> _readBufferPool = ArrayPool<byte>.Create();
 
     [DebuggerDisplay("{Start}-{End}")]
-    private readonly struct Range
+    private readonly struct RequestRange
     {
         public long Start { get; }
 
         public long End { get; }
 
-        public long Size => End - Start;
+        public long Size => End - Start + 1;
 
-        public Range(long start, long end)
+        public RequestRange(long start, long end)
         {
             Start = start > 0 && start <= end ? start : 0;
             End = end > 0 && end > start ? end : start;
@@ -39,17 +45,21 @@ internal partial class WebServer
             response.StatusCode = (int)HttpStatusCode.NotFound;
             return;
         }
+        response.Headers["Accept-Ranges"] = "bytes";
 
         var query = GetQueryDataFromRequest(request).Query;
 
         // Get absolute path.
         query = query.Replace("..", string.Empty);
-        while (query.StartsWith("/"))
-        {
-            query = query.Substring(1, query.Length - 1);
-        }
+        query = query.TrimStart('/');
         query = query.Replace('/', Path.DirectorySeparatorChar);
-        var path = Path.Combine(_filesRoot, query);
+        var root = Path.GetFullPath(_filesRoot);
+        var path = Path.GetFullPath(Path.Combine(root, query));
+        if (!path.StartsWith(root + Path.DirectorySeparatorChar, StringComparison.Ordinal) && path != root)
+        {
+            response.StatusCode = (int)HttpStatusCode.Forbidden;
+            return;
+        }
 
         if (Directory.Exists(path))
         {
@@ -69,7 +79,7 @@ internal partial class WebServer
         CancellationToken cancellationToken)
     {
         _executionThread.TopScope.Variables["path"] = new VariantValue(path);
-        var result = await _executionThread.RunAsync(_selectFilesQuery, cancellationToken: cancellationToken);
+        var result = await _executionThread.RunAsync(SelectFilesQuery, cancellationToken: cancellationToken);
         _logger.LogInformation("[{Address}] Dir: {Path}", request.RemoteEndPoint.Address, path);
         await WriteValueAsync(result, request, response, cancellationToken);
         result.Close();
@@ -77,11 +87,12 @@ internal partial class WebServer
 
     private async Task Files_ServeFile(string file, HttpListenerRequest request, HttpListenerResponse response, CancellationToken cancellationToken)
     {
-        await using var fileInput = new FileStream(file, FileMode.Open, FileAccess.ReadWrite);
+        await using var fileInput = new FileStream(file, FileMode.Open, FileAccess.Read,
+            FileShare.Read, bufferSize: ReadBufferSize);
         var maxLength = fileInput.Length;
-        Span<Range> ranges = stackalloc Range[1];
+        Span<RequestRange> ranges = stackalloc RequestRange[1];
         var isRangeRequest = Files_ParseRange(request.Headers["Range"], maxLength, ranges) > 0;
-        var range = isRangeRequest ? ranges[0] : new Range(0, maxLength);
+        var range = isRangeRequest ? ranges[0] : new RequestRange(1, maxLength + 1);
         _logger.LogTrace("Start range {Start}-{End}", range.Start, range.End);
 
         response.AddHeader("Date", DateTime.Now.ToString("r"));
@@ -96,22 +107,32 @@ internal partial class WebServer
         }
         response.StatusCode = isRangeRequest ? (int)HttpStatusCode.PartialContent : (int)HttpStatusCode.OK;
 
-        var buffer = _readBufferPool.Rent(1024 * 8);
-        int totalBytesRead = 0, totalBytesWrite = 0;
-        _logger.LogInformation("[{Address}] File: {File}", request.RemoteEndPoint.Address, file);
+        long totalBytesRead = 0, totalBytesWrite = 0;
+        if (isRangeRequest)
+        {
+            _logger.LogInformation("[{Address}] File: {File}, Range {Start}-{End}", request.RemoteEndPoint.Address,
+                file, range.Start, range.End);
+        }
+        else
+        {
+            _logger.LogInformation("[{Address}] File: {File}", request.RemoteEndPoint.Address, file);
+        }
+
+        var buffer = _readBufferPool.Rent(ReadBufferSize);
         try
         {
             fileInput.Seek(range.Start, SeekOrigin.Begin);
             var finish = false;
-            int bytesRead;
-            while (!finish && (bytesRead = await fileInput.ReadAsync(buffer, 0, buffer.Length, cancellationToken)) > 0)
+            long bytesRead;
+            var toRead = buffer.Length;
+            while (!finish && (bytesRead = await fileInput.ReadAsync(buffer, 0, toRead, cancellationToken)) > 0)
             {
                 totalBytesRead += bytesRead;
 
                 // Read only final range.
                 if (totalBytesRead >= range.Size)
                 {
-                    bytesRead -= totalBytesRead - (int)range.Size;
+                    bytesRead -= totalBytesRead - range.Size;
                     finish = true;
                 }
                 try
@@ -120,7 +141,7 @@ internal partial class WebServer
                     {
                         break;
                     }
-                    await response.OutputStream.WriteAsync(buffer, 0, bytesRead, cancellationToken);
+                    await response.OutputStream.WriteAsync(buffer, 0, (int)bytesRead, cancellationToken);
                     totalBytesWrite += bytesRead;
                 }
                 catch (HttpListenerException e)
@@ -134,12 +155,12 @@ internal partial class WebServer
         {
             fileInput.Close();
             await response.OutputStream.FlushAsync(cancellationToken);
-            ArrayPool<byte>.Shared.Return(buffer);
+            _readBufferPool.Return(buffer);
         }
         _logger.LogTrace("End range {Start}-{End}, Total: {TotalWrite}", range.Start, range.End, totalBytesWrite);
     }
 
-    private static int Files_ParseRange(string? rangeValue, long maxLength, Span<Range> result)
+    private static int Files_ParseRange(string? rangeValue, long maxLength, Span<RequestRange> result)
     {
         if (string.IsNullOrEmpty(rangeValue))
         {
@@ -150,20 +171,15 @@ internal partial class WebServer
         var rangeValueSpan = rangeValue.StartsWith(bytesHeader, StringComparison.OrdinalIgnoreCase)
             ? rangeValue.AsSpan(bytesHeader.Length)
             : rangeValue.AsSpan();
-        Span<System.Range> ranges = stackalloc System.Range[7];
+        Span<Range> ranges = stackalloc Range[7];
         var rangeValueSpanCount = rangeValueSpan.Split(
             ranges,
             ',',
             StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
 
         var i = 0;
-        foreach (var range in ranges)
+        foreach (var range in ranges[..rangeValueSpanCount])
         {
-            if (i >= result.Length || i >= rangeValueSpanCount)
-            {
-                break;
-            }
-
             // Parse start and end.
             var rangeSpan = rangeValueSpan[range];
             var dashIndex = rangeSpan.IndexOf('-');
@@ -199,14 +215,14 @@ internal partial class WebServer
             {
                 start = end;
             }
-            var rangeResult = new Range(start, end);
+            var rangeResult = new RequestRange(start, end);
             if (rangeResult.Size > maxLength)
             {
-                rangeResult = new Range(start, maxLength);
+                rangeResult = new RequestRange(start, maxLength - 1);
             }
             if (rangeResult.Size > maxLength - rangeResult.Start)
             {
-                rangeResult = new Range(start, maxLength - rangeResult.Start);
+                rangeResult = new RequestRange(start, maxLength - rangeResult.Start);
             }
             result[i++] = rangeResult;
         }

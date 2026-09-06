@@ -9,7 +9,7 @@ internal class ServeCommand : BaseCommand
     /// <inheritdoc />
     public ServeCommand() : base("serve", Resources.Messages.ServeCommand_Description)
     {
-        var urlsOption = new Option<string>("--url")
+        var urlOption = new Option<string>("--url")
         {
             Description = Resources.Messages.ServeCommand_UrlsDescription,
         };
@@ -39,7 +39,7 @@ internal class ServeCommand : BaseCommand
             AllowMultipleArgumentsPerToken = true,
         };
 
-        Add(urlsOption);
+        Add(urlOption);
         Add(allowOriginOption);
         Add(passwordOption);
         Add(rootDirectoryOption);
@@ -51,7 +51,7 @@ internal class ServeCommand : BaseCommand
             parseResult.InvocationConfiguration.EnableDefaultExceptionHandler = false;
 
             var applicationOptions = GetApplicationOptions(parseResult);
-            var urls = parseResult.GetValue(urlsOption);
+            var urls = parseResult.GetValue(urlOption);
             var allowOrigin = parseResult.GetValue(allowOriginOption);
             var password = parseResult.GetValue(passwordOption) ?? string.Empty;
             var safeMode = parseResult.GetValue(safeModeOption);
@@ -66,7 +66,7 @@ internal class ServeCommand : BaseCommand
             root.Thread.Options.SafeMode = safeMode;
             var webServer = new WebServer(root.Thread, new WebServerOptions
             {
-                Urls = urls,
+                Url = urls,
                 Password = password,
                 FilesRoot = rootDirectory,
                 AllowedAddresses = allowedIPs.Select(IPAddress.Parse).ToArray(),
