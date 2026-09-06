@@ -258,7 +258,7 @@ public sealed partial class DynamicBuffer<T> where T : IEquatable<T>
         }
     }
 
-    private sealed class BufferSegment : ReadOnlySequenceSegment<T>
+    internal sealed class BufferSegment : ReadOnlySequenceSegment<T>
     {
 #if DEBUG
         private int SegmentId { get; } = _segmentId++;
@@ -381,9 +381,12 @@ public sealed partial class DynamicBuffer<T> where T : IEquatable<T>
         public override string ToString() => $"Offset = {Offset} ({AbsolutePosition}), Segment = {_segment}";
     }
 
-    private readonly struct SegmentChunk : IEquatable<SegmentChunk>
+    internal readonly struct SegmentChunk : IEquatable<SegmentChunk>
     {
-        public BufferSegment Segment { get; }
+        /// <summary>
+        /// Buffer segment.
+        /// </summary>
+        internal BufferSegment Segment { get; }
 
         /// <summary>
         /// Start index within segment (local) of effective data.
@@ -411,10 +414,10 @@ public sealed partial class DynamicBuffer<T> where T : IEquatable<T>
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static SegmentChunk Empty() => new(BufferSegment.Empty, 0, 0);
+        internal static SegmentChunk Empty() => new(BufferSegment.Empty, 0, 0);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public SegmentChunk(BufferSegment segment, int startIndex, int endIndex)
+        internal SegmentChunk(BufferSegment segment, int startIndex, int endIndex)
         {
             Segment = segment;
             StartIndex = startIndex;
@@ -432,7 +435,7 @@ public sealed partial class DynamicBuffer<T> where T : IEquatable<T>
         public override int GetHashCode() => HashCode.Combine(RuntimeHelpers.GetHashCode(Segment), StartIndex, EndIndex);
     }
 
-    private ref struct ChunkIterator : IEnumerator<SegmentChunk>
+    internal ref struct ChunkIterator : IEnumerator<SegmentChunk>
     {
         private const int ModeStart = -1;
         private const int ModeNext = 0;
@@ -447,6 +450,9 @@ public sealed partial class DynamicBuffer<T> where T : IEquatable<T>
         /// <inheritdoc />
         object? IEnumerator.Current => Current;
 
+        /// <summary>
+        /// Current segment chunk.
+        /// </summary>
         public SegmentChunk Current
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -655,7 +661,6 @@ public sealed partial class DynamicBuffer<T> where T : IEquatable<T>
     public void Commit(int size)
     {
         ArgumentOutOfRangeException.ThrowIfNegative(size);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(_endPosition + size, _allocatedPosition);
         ArgumentOutOfRangeException.ThrowIfGreaterThan(_endPosition + size, _allocatedPosition, nameof(size));
         _allocatedFlag = false;
         if (size == 0)
@@ -892,6 +897,17 @@ public sealed partial class DynamicBuffer<T> where T : IEquatable<T>
         }
 
         return localBuffer;
+    }
+
+    /// <summary>
+    /// Get chunks of dynamic buffer from start to end.
+    /// </summary>
+    /// <param name="start">Start position.</param>
+    /// <param name="end">End position.</param>
+    /// <returns>Chunk iterator.</returns>
+    internal ChunkIterator GetChunks(DynamicBufferPosition start, DynamicBufferPosition end)
+    {
+        return new ChunkIterator(this, start, end);
     }
 
     /// <summary>

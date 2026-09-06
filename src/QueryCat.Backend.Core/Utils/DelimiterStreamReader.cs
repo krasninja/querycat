@@ -50,9 +50,9 @@ public class DelimiterStreamReader
     public bool AsyncRead { get; set; } = OperatingSystem.IsBrowser();
 
     /// <summary>
-    /// Current line index.
+    /// Current record index.
     /// </summary>
-    public long LineIndex { get; private set; } = -1;
+    public long RecordIndex { get; private set; } = -1;
 
     /// <summary>
     /// Quotes escape mode.
@@ -147,9 +147,9 @@ public class DelimiterStreamReader
     {
         public DynamicBuffer<char>.DynamicBufferPosition Start { get; set; }
 
-        public int Length { get; set; } = -1;
+        public long Length { get; set; } = -1;
 
-        public ulong QuotesCount { get; set; }
+        public int QuotesCount { get; set; }
 
         public char QuoteCharacter { get; set; }
 
@@ -166,7 +166,7 @@ public class DelimiterStreamReader
         public bool IsEmpty
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => (uint)Length == 0;
+            get => (ulong)Length == 0;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -204,7 +204,7 @@ public class DelimiterStreamReader
     private long _stFieldStartOffset = 0L;
     private DynamicBuffer<char>.DynamicBufferPosition _stFieldStartPosition = DynamicBuffer<char>.DynamicBufferPosition.Null;
     private char _stQuoteChar = '\0';
-    private ulong _stQuotesCount = 0UL;
+    private int _stQuotesCount = 0;
     private long _stEndQuotePosition = 0L;
     private bool _stCompleteLine = false;
 
@@ -306,7 +306,7 @@ public class DelimiterStreamReader
         _fieldInfoLastIndex = 0;
         _stCurrentField = null;
         _stCompleteLine = false;
-        LineIndex++;
+        RecordIndex++;
 
         if (_dynamicBuffer.IsEmpty || _noData)
         {
@@ -344,7 +344,7 @@ public class DelimiterStreamReader
                     }
                     if (_skipEmptyLines && _fieldInfoLastIndex < 1)
                     {
-                        _bufferReader.AdvancePastAny(_endOfLineCharactersSearch);
+                        _bufferReader.AdvancePastAny(_endOfLineCharacters);
                     }
                     _stFieldStartOffset = _bufferReader.Consumed;
                     _stFieldStartPosition = _bufferReader.Position;
@@ -393,7 +393,7 @@ public class DelimiterStreamReader
                         _parseState = StateReadQuoteField;
                         Trace("state change");
                     }
-                    else if (_endOfLineCharactersSearch.Contains(_stChar) || _noData)
+                    else if (_stChar == '\n' || _stChar == '\r' || _noData)
                     {
                         _currentDelimiterPosition = _bufferReader.Consumed;
                         _parseState = StateAdvanceNewLine1;
@@ -452,7 +452,8 @@ public class DelimiterStreamReader
                         Trace("no data break");
                         break;
                     }
-                    _parseState = _endOfLineCharactersSearch.Contains(_bufferReader.Current)
+                    var current = _bufferReader.Current;
+                    _parseState = current == '\n' || current == '\r'
                         ? StateAdvanceNewLine2
                         : StateReadField;
                     Trace("state change");
@@ -511,8 +512,8 @@ public class DelimiterStreamReader
         {
             _stCurrentField = MoveToNextFieldInfo();
             _stCurrentField.Start = _stFieldStartPosition;
-            _stCurrentField.Length = (int)(_bufferReader.Consumed - _stFieldStartOffset);
-            if (_includeDelimiter)
+            _stCurrentField.Length = _bufferReader.Consumed - _stFieldStartOffset;
+            if (_includeDelimiter && isStCharDelimiter)
             {
                 _stCurrentField.Length++;
             }
@@ -540,7 +541,19 @@ public class DelimiterStreamReader
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private bool HasOnlyWhitespaces(DynamicBuffer<char>.DynamicBufferPosition startPosition, long length)
-        => _dynamicBuffer.Slice(startPosition, length).IsWhiteSpace();
+    {
+        var end = _dynamicBuffer.GetPosition(length, startPosition);
+        var onlyWhiteSpaces = true;
+        foreach (var chunk in _dynamicBuffer.GetChunks(startPosition, end))
+        {
+            onlyWhiteSpaces = chunk.Span.IsWhiteSpace();
+            if (!onlyWhiteSpaces)
+            {
+                break;
+            }
+        }
+        return onlyWhiteSpaces;
+    }
 
     private bool ReadQuoteField()
     {
@@ -574,7 +587,7 @@ public class DelimiterStreamReader
                     return false;
                 }
             }
-            else if (!inQuotes && (_delimitersSearch.Contains(ch) || _endOfLineCharactersSearch.Contains(ch)))
+            else if (!inQuotes && (_delimitersSearch.Contains(ch) || ch == '\n' || ch == '\r'))
             {
                 return true;
             }
@@ -601,10 +614,14 @@ public class DelimiterStreamReader
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private FieldInfo MoveToNextFieldInfo()
     {
-        if ((uint)_fieldInfoLastIndex >= (uint)_fieldInfos.LongLength)
+        if ((uint)_fieldInfoLastIndex >= (uint)_fieldInfos.Length)
         {
-            Array.Resize(ref _fieldInfos, _fieldInfoLastIndex + 1);
-            _fieldInfos[^1] = new FieldInfo();
+            var oldLength = _fieldInfos.Length;
+            Array.Resize(ref _fieldInfos, oldLength * 2);
+            for (var i = oldLength; i < _fieldInfos.Length; i++)
+            {
+                _fieldInfos[i] = new FieldInfo();
+            }
         }
 
         var field = _fieldInfos[_fieldInfoLastIndex++];
@@ -652,7 +669,7 @@ public class DelimiterStreamReader
     /// <returns>Returns <c>true</c> if empty, <c>false</c> otherwise.</returns>
     public bool IsEmpty(int columnIndex)
     {
-        if (columnIndex + 1 > _fieldInfoLastIndex)
+        if ((uint)columnIndex >= (uint)_fieldInfoLastIndex)
         {
             return true;
         }
@@ -797,7 +814,12 @@ public class DelimiterStreamReader
     /// <returns><c>True</c> if found the best delimiter, <c>false</c> otherwise.</returns>
     public static bool TryDetectDelimiter(ReadOnlySpan<char> line, out char delimiter)
     {
-        var autoDetectDelimitersCount = new int[_autoDetectDelimiters.Length];
+        if (_autoDetectDelimiters.Length < 1)
+        {
+            delimiter = '\0';
+            return false;
+        }
+        Span<int> autoDetectDelimitersCount = stackalloc int[_autoDetectDelimiters.Length];
         foreach (var ch in line)
         {
             var delimiterIndex = Array.IndexOf(_autoDetectDelimiters, ch);
@@ -807,8 +829,15 @@ public class DelimiterStreamReader
             }
         }
 
-        var bestDelimiterCount = autoDetectDelimitersCount.Max();
-        var bestDelimiterIndex = Array.IndexOf(autoDetectDelimitersCount, bestDelimiterCount);
+        var bestDelimiterCount = autoDetectDelimitersCount[0];
+        for (var i = 1; i < autoDetectDelimitersCount.Length; i++)
+        {
+            if (autoDetectDelimitersCount[i] > bestDelimiterCount)
+            {
+                bestDelimiterCount = autoDetectDelimitersCount[i];
+            }
+        }
+        var bestDelimiterIndex = autoDetectDelimitersCount.IndexOf(bestDelimiterCount);
         if (bestDelimiterIndex < 0 || bestDelimiterCount == 0)
         {
             delimiter = ' ';
@@ -824,9 +853,15 @@ public class DelimiterStreamReader
     /// </summary>
     public void Reset()
     {
-        LineIndex = -1;
+        RecordIndex = -1;
         _fieldInfoLastIndex = 0;
         _currentDelimiterPosition = 0;
+        _stQuotesCount = 0;
+        _stQuoteChar = '\0';
+        _stEndQuotePosition = 0;
+        _stCurrentField = null;
+        _stCompleteLine = false;
+        _stFieldStartPosition = DynamicBuffer<char>.DynamicBufferPosition.Null;
         _dynamicBuffer.Clear();
         _bufferReader.Reset();
         if (_streamReader.BaseStream.CanSeek)
@@ -859,6 +894,10 @@ public class DelimiterStreamReader
         {
             return string.Empty;
         }
+        if (target.Length < 2)
+        {
+            return target.ToString();
+        }
 
         var endIndex = target.Length;
         var sequenceReader = target.First.Span[0] == quoteChar
@@ -888,6 +927,14 @@ public class DelimiterStreamReader
 
     public static string UnquoteBackslash(ReadOnlySequence<char> target, char quoteChar = '"')
     {
+        if (target.IsEmpty)
+        {
+            return string.Empty;
+        }
+        if (target.Length < 2)
+        {
+            return target.ToString();
+        }
         var endIndex = target.Length;
         var sequenceReader = target.First.Span[0] == quoteChar
             ? new SequenceReader<char>(target.Slice(1, --endIndex - 1))
