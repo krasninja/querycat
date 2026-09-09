@@ -32,6 +32,35 @@ public class AsyncLockTests
             }
         }
 
+        // Assert.
+        Assert.Equal(30, resource);
+    }
+
+    [Fact]
+    public async Task Lock_RecursiveCallSyncAndAsync_ShouldSupportReentrancy()
+    {
+        // Arrange.
+        var asyncLock = new AsyncLock();
+        var resource = 10;
+
+        // Act.
+        await using (await asyncLock.LockAsync())
+        {
+            using (asyncLock.Lock())
+            {
+                await Task.Delay(20);
+                await using (await asyncLock.LockAsync())
+                {
+                    resource = 20;
+                }
+                using (asyncLock.Lock())
+                {
+                    resource = 30;
+                }
+            }
+        }
+
+        // Assert.
         Assert.Equal(30, resource);
     }
 
@@ -244,5 +273,71 @@ public class AsyncLockTests
 
         // Assert.
         Assert.Equal([1, 2, 3, 4, 5], list);
+    }
+
+    [Fact]
+    public async Task LockAsync_CanceledWhileWaiting_ShouldNotBreakMutualExclusion()
+    {
+        // Arrange.
+        var asyncLock = new AsyncLock();
+        var holderEntered = new SemaphoreSlim(0);
+        var releaseHolder = new SemaphoreSlim(0);
+        var cts = new CancellationTokenSource();
+
+        // Act.
+        var holderTask = Task.Run(async () =>
+        {
+            await using (await asyncLock.LockAsync())
+            {
+                holderEntered.Release();
+                await releaseHolder.WaitAsync();
+            }
+        });
+        await holderEntered.WaitAsync();
+
+        // The first attempt gets canceled while queued, the second one runs within the very
+        // same execution flow and must still observe the lock as taken by the holder.
+        var secondFlowTask = Task.Run(async () =>
+        {
+            try
+            {
+                await using (await asyncLock.LockAsync(cts.Token))
+                {
+                }
+            }
+            catch (OperationCanceledException)
+            {
+            }
+
+            var retryTask = asyncLock.LockAsync().AsTask();
+            var acquiredWhileHeld = await Task.WhenAny(retryTask, Task.Delay(500)) == retryTask;
+            releaseHolder.Release();
+            await using (await retryTask)
+            {
+            }
+            return acquiredWhileHeld;
+        });
+
+        await Task.Delay(100);
+        await cts.CancelAsync();
+
+        Assert.False(await secondFlowTask, "The lock was granted while another flow was holding it.");
+        await holderTask;
+    }
+
+    [Fact]
+    public async Task LockAsync_DisposedTwice_ShouldBeNoOp()
+    {
+        var asyncLock = new AsyncLock();
+
+        var scope = await asyncLock.LockAsync();
+        await scope.DisposeAsync();
+        await scope.DisposeAsync();
+
+        Assert.False(asyncLock.IsTaken);
+        await using (await asyncLock.LockAsync())
+        {
+            Assert.True(asyncLock.IsTaken);
+        }
     }
 }

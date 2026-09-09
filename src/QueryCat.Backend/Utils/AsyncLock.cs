@@ -1,7 +1,36 @@
 using System.Diagnostics;
 using QueryCat.Backend.Core.Utils;
+#if !DEBUG
+using SemaphoreSlimImpl = System.Threading.SemaphoreSlim;
+#endif
 
 namespace QueryCat.Backend.Utils;
+
+#if DEBUG
+[DebuggerDisplay("Id = {Id}, Current Count = {CurrentCount}")]
+internal sealed class SemaphoreSlimImpl : SemaphoreSlim
+{
+    private static int _id;
+
+    /// <summary>
+    /// Identifier for debug.
+    /// </summary>
+    public int Id { get; } = Interlocked.Increment(ref _id);
+
+    /// <inheritdoc />
+    public SemaphoreSlimImpl(int initialCount) : base(initialCount)
+    {
+    }
+
+    /// <inheritdoc />
+    public SemaphoreSlimImpl(int initialCount, int maxCount) : base(initialCount, maxCount)
+    {
+    }
+
+    /// <inheritdoc />
+    public override string ToString() => $"{Id} - {base.ToString()}";
+}
+#endif
 
 /// <summary>
 /// A mutual exclusion lock that is compatible with async. This lock supports recursive calls.
@@ -12,29 +41,21 @@ namespace QueryCat.Backend.Utils;
 [DebuggerDisplay("Taken = {IsTaken}")]
 public sealed class AsyncLock : IAsyncDisposable, IDisposable
 {
-    private static readonly DisposableObjectPool<SemaphoreSlim> _semaphorePool = new(
-        createFunc: () => new SemaphoreSlim(1),
-        beforeReturn: s =>
-        {
-            if (s.CurrentCount == 0)
-            {
-                s.Release();
-                Debug.Assert(s.CurrentCount == 1, "Initial semaphore count must be 1.");
-            }
-        },
+    private static readonly DisposableObjectPool<SemaphoreSlimImpl> _semaphorePool = new(
+        createFunc: () => new SemaphoreSlimImpl(1, 1),
         maximumRetained: 40
     );
 
-    private readonly AsyncLocal<SemaphoreSlim?> _currentSemaphore = new();
+    private readonly AsyncLocal<LockScope?> _currentScope = new();
 #pragma warning disable CA2213
-    private readonly SemaphoreSlim _topLevelSemaphore;
+    private readonly SemaphoreSlimImpl _topLevelSemaphore;
 #pragma warning restore CA2213
-    private bool _isDisposed;
+    private volatile bool _isDisposed;
 
     /// <summary>
     /// Is lock currently taken.
     /// </summary>
-    public bool IsTaken => _topLevelSemaphore.CurrentCount == 0;
+    public bool IsTaken => !_isDisposed && _topLevelSemaphore.CurrentCount == 0;
 
     /// <summary>
     /// Constructor.
@@ -44,46 +65,88 @@ public sealed class AsyncLock : IAsyncDisposable, IDisposable
         _topLevelSemaphore = _semaphorePool.Get();
     }
 
+    private static void ReturnSemaphore(SemaphoreSlimImpl semaphore)
+    {
+        Debug.Assert(semaphore.CurrentCount == 1, "Semaphore must be fully released before pooling.");
+        if (semaphore.CurrentCount == 1)
+        {
+            _semaphorePool.Return(semaphore);
+        }
+    }
+
     /// <summary>
     /// Take the lock.
     /// </summary>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Awaitable task.</returns>
-    public Task<IAsyncDisposable> LockAsync(CancellationToken cancellationToken = default)
+    public ValueTask<IAsyncDisposable> LockAsync(CancellationToken cancellationToken = default)
     {
         ObjectDisposedException.ThrowIf(_isDisposed, this);
+        cancellationToken.ThrowIfCancellationRequested();
 
-        _currentSemaphore.Value ??= _topLevelSemaphore;
-        var localCurrentSemaphore = _currentSemaphore.Value;
+        var localCurrentSemaphore = ResolveTargetSemaphore(out var parent);
         var nextSemaphore = _semaphorePool.Get();
-        _currentSemaphore.Value = nextSemaphore;
-        var safeRelease = new SafeSemaphoreRelease(localCurrentSemaphore, nextSemaphore, this);
-        return TakeLockCoreAsync(localCurrentSemaphore, safeRelease, cancellationToken);
+        var scope = new LockScope(parent, localCurrentSemaphore, nextSemaphore, this);
+
+        var waitTask = scope.Current.WaitAsync(cancellationToken);
+        _currentScope.Value = scope;
+        if (waitTask.IsCompletedSuccessfully)
+        {
+            return ValueTask.FromResult<IAsyncDisposable>(scope);
+        }
+
+        return TakeLockCoreAsync(scope, waitTask);
     }
 
-    private async Task<IAsyncDisposable> TakeLockCoreAsync(
-        SemaphoreSlim localCurrentSemaphore,
-        SafeSemaphoreRelease safeSemaphoreRelease,
-        CancellationToken cancellationToken)
+    private static async ValueTask<IAsyncDisposable> TakeLockCoreAsync(
+        LockScope lockScope,
+        Task waitTask)
     {
-        await localCurrentSemaphore.WaitAsync(cancellationToken);
-        return safeSemaphoreRelease;
+        try
+        {
+            await waitTask.ConfigureAwait(false);
+        }
+        catch (Exception)
+        {
+            // The acquisition failed (canceled). Nothing to release.
+            lockScope.Abandon();
+            throw;
+        }
+        return lockScope;
     }
 
     /// <summary>
     /// Take the lock. Sync version.
     /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Disposable.</returns>
-    public IDisposable Lock()
+    public IDisposable Lock(CancellationToken cancellationToken = default)
     {
         ObjectDisposedException.ThrowIf(_isDisposed, this);
 
-        _currentSemaphore.Value ??= _topLevelSemaphore;
-        var localCurrentSemaphore = _currentSemaphore.Value;
-        localCurrentSemaphore.Wait();
-        var nextSemaphore = _semaphorePool.Get();
-        _currentSemaphore.Value = nextSemaphore;
-        return new SafeSemaphoreRelease(localCurrentSemaphore, nextSemaphore, this);
+        var localCurrentSemaphore = ResolveTargetSemaphore(out var parent);
+        localCurrentSemaphore.Wait(cancellationToken);
+        var scope = new LockScope(parent, localCurrentSemaphore, _semaphorePool.Get(), this);
+        _currentScope.Value = scope;
+        return scope;
+    }
+
+    private SemaphoreSlimImpl ResolveTargetSemaphore(out LockScope? parent)
+    {
+        var scope = _currentScope.Value;
+        while (scope != null)
+        {
+            var next = scope.Next;
+            if (next != null)
+            {
+                parent = scope;
+                return next;
+            }
+            scope = scope.Parent;
+        }
+
+        parent = null;
+        return _topLevelSemaphore;
     }
 
     /// <inheritdoc />
@@ -97,9 +160,9 @@ public sealed class AsyncLock : IAsyncDisposable, IDisposable
         _isDisposed = true;
         // Ensure the lock isn't held. If it is, wait for it to be released
         // before completing to dispose.
-        await _topLevelSemaphore.WaitAsync();
+        await _topLevelSemaphore.WaitAsync().ConfigureAwait(false);
         _topLevelSemaphore.Release();
-        _semaphorePool.Return(_topLevelSemaphore);
+        ReturnSemaphore(_topLevelSemaphore);
     }
 
     /// <inheritdoc />
@@ -114,71 +177,82 @@ public sealed class AsyncLock : IAsyncDisposable, IDisposable
         // Ensure the lock isn't held. If it is, wait for it to be released
         // before completing to dispose.
         _topLevelSemaphore.Wait();
-        _semaphorePool.Return(_topLevelSemaphore);
+        _topLevelSemaphore.Release();
+        ReturnSemaphore(_topLevelSemaphore);
     }
 
     [DebuggerDisplay("Taken = {IsTaken}")]
-    private readonly struct SafeSemaphoreRelease : IAsyncDisposable, IDisposable
+    private sealed class LockScope : IAsyncDisposable, IDisposable
     {
-        private readonly SemaphoreSlim _currentSemaphore;
-        private readonly SemaphoreSlim _nextSemaphore;
+        private readonly LockScope? _parent;
+        private readonly SemaphoreSlimImpl _currentSemaphore;
+        private SemaphoreSlimImpl? _nextSemaphore;
         private readonly AsyncLock _asyncLock;
 
         public bool IsTaken => _asyncLock.IsTaken;
 
-        public SafeSemaphoreRelease(SemaphoreSlim currentSemaphore, SemaphoreSlim nextSemaphore, AsyncLock asyncLock)
+        public LockScope? Parent => _parent;
+
+        public SemaphoreSlimImpl Current => _currentSemaphore;
+
+        public SemaphoreSlimImpl? Next => Volatile.Read(ref _nextSemaphore);
+
+        public LockScope(LockScope? parent, SemaphoreSlimImpl currentSemaphore, SemaphoreSlimImpl nextSemaphore, AsyncLock asyncLock)
         {
+            _parent = parent;
             _currentSemaphore = currentSemaphore;
             _nextSemaphore = nextSemaphore;
             _asyncLock = asyncLock;
         }
 
-        public ValueTask DisposeAsync()
+        /// <summary>
+        /// The acquisition failed (canceled). Nothing was taken, so nothing is released.
+        /// </summary>
+        internal void Abandon()
         {
-            Debug.Assert(_nextSemaphore == _asyncLock._currentSemaphore.Value,
-                "nextSemaphore was expected to be the current semaphore.");
-            // Update _asyncLock._currentSemaphore in the calling ExecutionContext
-            // and defer any awaits to DisposeCoreAsync(). If this isn't done, the
-            // update will happen in a copy of the ExecutionContext and the caller
-            // won't see the changes.
-            if (_currentSemaphore == _asyncLock._topLevelSemaphore)
+            var nextSemaphore = Interlocked.Exchange(ref _nextSemaphore, null);
+            if (nextSemaphore != null)
             {
-                _asyncLock._currentSemaphore.Value = null;
+                ReturnSemaphore(nextSemaphore);
             }
-            else
-            {
-                _asyncLock._currentSemaphore.Value = _currentSemaphore;
-            }
-
-            return DisposeCoreAsync();
         }
 
-        private async ValueTask DisposeCoreAsync()
+        /// <inheritdoc />
+        public ValueTask DisposeAsync()
         {
-            await _nextSemaphore.WaitAsync();
+            var nextSemaphore = Interlocked.Exchange(ref _nextSemaphore, null);
+            if (nextSemaphore == null)
+            {
+                return ValueTask.CompletedTask;
+            }
+            _asyncLock._currentScope.Value = Parent;
+
+            return DisposeCoreAsync(nextSemaphore);
+        }
+
+        private async ValueTask DisposeCoreAsync(SemaphoreSlimImpl next)
+        {
+            await next.WaitAsync().ConfigureAwait(false);
             _currentSemaphore.Release();
-            _nextSemaphore.Release();
-            _semaphorePool.Return(_nextSemaphore);
+            next.Release();
+            ReturnSemaphore(next);
         }
 
         /// <inheritdoc />
         public void Dispose()
         {
-            Debug.Assert(_nextSemaphore == _asyncLock._currentSemaphore.Value,
-                "nextSemaphore was expected to be the current semaphore.");
-            if (_currentSemaphore == _asyncLock._topLevelSemaphore)
+            var nextSemaphore = Interlocked.Exchange(ref _nextSemaphore, null);
+            if (nextSemaphore == null)
             {
-                _asyncLock._currentSemaphore.Value = null;
-            }
-            else
-            {
-                _asyncLock._currentSemaphore.Value = _currentSemaphore;
+                return;
             }
 
-            _nextSemaphore.Wait();
+            _asyncLock._currentScope.Value = Parent;
+
+            nextSemaphore.Wait();
             _currentSemaphore.Release();
-            _nextSemaphore.Release();
-            _semaphorePool.Return(_nextSemaphore);
+            nextSemaphore.Release();
+            ReturnSemaphore(nextSemaphore);
         }
     }
 }
