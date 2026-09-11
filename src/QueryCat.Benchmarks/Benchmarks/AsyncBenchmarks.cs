@@ -13,9 +13,9 @@ public class AsyncBenchmarks
         {
             AsyncUtils.RunSync(async (ct) =>
             {
-                await Task.Delay(1, ct);
-                await Task.Delay(1, ct);
-                await Task.Delay(1, ct);
+                await Task.Yield();
+                await Task.Yield();
+                await Task.Yield();
             });
         }
     }

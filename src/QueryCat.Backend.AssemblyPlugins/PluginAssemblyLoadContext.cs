@@ -108,7 +108,8 @@ internal sealed class PluginAssemblyLoadContext : AssemblyLoadContext
         if (!File.Exists(libraryPath))
         {
             libraryPath = AsyncUtils.RunSync(
-                lp => CopyFileToNativeCacheAsync((string)lp!, CancellationToken.None), libraryPath)!;
+                lp => CopyFileToNativeCacheAsync(lp, CancellationToken.None),
+                libraryPath);
         }
 
         // Load native library.
