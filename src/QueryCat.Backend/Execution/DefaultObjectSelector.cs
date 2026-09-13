@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using QueryCat.Backend.Core.Execution;
@@ -13,10 +14,15 @@ namespace QueryCat.Backend.Execution;
 /// </remarks>
 public class DefaultObjectSelector : IObjectSelector
 {
+    private static readonly ValueTask<ObjectSelectorContext.Token?> _emptyTokenResult
+        = ValueTask.FromResult<ObjectSelectorContext.Token?>(null);
+
+    private static readonly ConcurrentDictionary<Type, PropertyInfo[]> _typePropertiesMap = new();
+
     /// <summary>
     /// Ignore string case on property resolve by name.
     /// </summary>
-    public bool CaseInsensitivePropertyName { get; set; }
+    public bool CaseInsensitivePropertyName { get; init; }
 
     /// <inheritdoc />
     [UnconditionalSuppressMessage("Trimming", "IL2075",
@@ -32,15 +38,22 @@ public class DefaultObjectSelector : IObjectSelector
             throw new InvalidOperationException(Resources.Errors.InvalidSelectorState);
         }
 
-        var propertyFindOptions = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public;
-        if (CaseInsensitivePropertyName)
+        var readableProperties = _typePropertiesMap.GetOrAdd(lastObject.GetType(), GetReadableProperties);
+        PropertyInfo? propertyInfo = null;
+        foreach (var readableProperty in readableProperties)
         {
-            propertyFindOptions |= BindingFlags.IgnoreCase;
+            var match = CaseInsensitivePropertyName
+                ? readableProperty.Name.Equals(propertyName, StringComparison.InvariantCultureIgnoreCase)
+                : readableProperty.Name.Equals(propertyName, StringComparison.InvariantCulture);
+            if (match)
+            {
+                propertyInfo = readableProperty;
+                break;
+            }
         }
-        var propertyInfo = lastObject.GetType().GetProperty(propertyName, propertyFindOptions);
         if (propertyInfo == null || !propertyInfo.CanRead)
         {
-            return ValueTask.FromResult((ObjectSelectorContext.Token?)null);
+            return _emptyTokenResult;
         }
 
         var resultObject = propertyInfo.GetValue(lastObject);
@@ -56,84 +69,105 @@ public class DefaultObjectSelector : IObjectSelector
         object?[] indexes,
         CancellationToken cancellationToken = default)
     {
-        var current = context.Peek();
+        var lastObject = context.LastValue;
+        if (lastObject == null)
+        {
+            throw new InvalidOperationException(Resources.Errors.InvalidSelectorState);
+        }
+
         object? resultObject = null;
+        var found = false;
+        PropertyInfo? indexProperty = null;
 
         if (indexes.Length == 1 && indexes[0] != null)
         {
             // Try to get value with GetValue call (dictionary).
-            if (resultObject == null && current.Value is IDictionary dictionary)
+            if (!found && lastObject is IDictionary dictionary)
             {
                 // Dictionary.
-                if (indexes[0] != null)
+                var keyType = GetDictionaryKeyType(dictionary);
+                var key = keyType != null ? ConvertValue(indexes[0], keyType) : indexes[0];
+                if (key != null && dictionary.Contains(key))
                 {
-                    var keyType = dictionary.GetType().GetGenericArguments()[0];
-                    var key = ConvertValue(indexes[0], keyType);
-                    if (key != null && dictionary.Contains(key))
-                    {
-                        resultObject = dictionary[key];
-                    }
-                    else
-                    {
-                        return ValueTask.FromResult((ObjectSelectorContext.Token?)null);
-                    }
+                    resultObject = dictionary[key];
+                    found = true;
+                }
+                else
+                {
+                    return _emptyTokenResult;
                 }
             }
 
             // First try to use the most popular case when we have only one integer index.
-            if (resultObject == null && TryGetObjectIsIntegerIndex(indexes[0], out var intIndex)
+            if (!found && TryGetIntegerIndex(indexes[0], out var intIndex)
                 && intIndex > -1)
             {
                 // Array.
-                if (current.Value is Array array)
+                if (lastObject is Array array)
                 {
-                    if (intIndex < array.Length)
+                    if (intIndex < array.Length && array.Rank == 1)
                     {
                         resultObject = array.GetValue(intIndex);
+                        found = true;
                     }
                     else
                     {
-                        return ValueTask.FromResult((ObjectSelectorContext.Token?)null);
+                        return _emptyTokenResult;
                     }
                 }
                 // List.
-                else if (current.Value is IList list)
+                else if (lastObject is IList list)
                 {
                     if (intIndex < list.Count)
                     {
                         resultObject = list[intIndex];
+                        found = true;
                     }
                     else
                     {
-                        return ValueTask.FromResult((ObjectSelectorContext.Token?)null);
+                        return _emptyTokenResult;
+                    }
+                }
+                // Read only list.
+                else if (lastObject is IReadOnlyList<object> readOnlyList)
+                {
+                    if (intIndex < readOnlyList.Count)
+                    {
+                        resultObject = readOnlyList[intIndex];
+                        found = true;
+                    }
+                    else
+                    {
+                        return _emptyTokenResult;
                     }
                 }
                 // Generic enumerable.
-                else if (current.Value is IEnumerable<object> objectsEnumerable)
+                else if (lastObject is IEnumerable<object> objectsEnumerable)
                 {
                     resultObject = objectsEnumerable.ElementAtOrDefault(intIndex);
+                    found = true;
                 }
                 // Enumerable.
-                else if (current.Value is IEnumerable enumerable)
+                else if (lastObject is IEnumerable enumerable)
                 {
                     resultObject = GetEnumerableItemByIndex(enumerable, intIndex);
+                    found = true;
                 }
             }
         }
 
         // Index property.
-        if (resultObject == null && current.Value != null && indexes.Length > 0 && indexes.All(i => i != null))
+        if (!found && indexes.Length > 0 && HasNoNulls(indexes))
         {
-            var indexProperty = current.Value.GetType()
-                .GetProperties()
-                .FirstOrDefault(p => p.CanRead && IsPropertyMatchesIndexes(p, indexes));
+            indexProperty = GetIndexProperty(lastObject, indexes);
             if (indexProperty != null)
             {
                 try
                 {
                     resultObject = indexProperty.GetValue(
-                        current.Value,
+                        lastObject,
                         PrepareObjectMatchTypes(indexProperty.GetIndexParameters(), indexes));
+                    found = true;
                 }
                 // Skip out of range exception.
                 catch (TargetInvocationException e) when (e.InnerException is ArgumentOutOfRangeException)
@@ -142,12 +176,55 @@ public class DefaultObjectSelector : IObjectSelector
             }
         }
 
-        if (resultObject != null)
+        if (found)
         {
-            var result = new ObjectSelectorContext.Token(resultObject, Indexes: indexes);
+            var result = new ObjectSelectorContext.Token(resultObject, indexProperty, indexes);
             return ValueTask.FromResult(new ObjectSelectorContext.Token?(result));
         }
-        return ValueTask.FromResult((ObjectSelectorContext.Token?)null);
+        return _emptyTokenResult;
+    }
+
+    [UnconditionalSuppressMessage("Trimming", "IL2070", Justification = "Requires get properties call.")]
+    private static PropertyInfo[] GetReadableProperties(Type type)
+        => type.GetProperties().Where(p => p.CanRead).ToArray();
+
+    private static PropertyInfo? GetIndexProperty(object obj, object?[] indexes)
+    {
+        var props = _typePropertiesMap.GetOrAdd(obj.GetType(), GetReadableProperties);
+
+        foreach (var prop in props)
+        {
+            if (IsPropertyMatchesIndexes(prop, indexes))
+            {
+                return prop;
+            }
+        }
+        return null;
+    }
+
+    private static bool HasNoNulls(object?[] arr)
+    {
+        foreach (var el in arr)
+        {
+            if (el == null)
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static Type? GetDictionaryKeyType(IDictionary dictionary)
+    {
+        foreach (var @interface in dictionary.GetType().GetInterfaces())
+        {
+            if (@interface.IsGenericType
+                && @interface.GetGenericTypeDefinition() == typeof(IDictionary<,>))
+            {
+                return @interface.GetGenericArguments()[0];
+            }
+        }
+        return null;
     }
 
     #region For index properties
@@ -167,7 +244,7 @@ public class DefaultObjectSelector : IObjectSelector
             {
                 continue;
             }
-            if (indexParameterType != indexes[i]?.GetType())
+            if (!indexParameterType.IsInstanceOfType(indexes[i]))
             {
                 return false;
             }
@@ -176,34 +253,31 @@ public class DefaultObjectSelector : IObjectSelector
         return true;
     }
 
-    private object?[] PrepareObjectMatchTypes(ParameterInfo[] types, object?[] objs)
+    private static object?[] PrepareObjectMatchTypes(ParameterInfo[] parameters, object?[] indexes)
     {
-        if (types.Length != objs.Length)
+        if (parameters.Length != indexes.Length)
         {
-            return objs;
+            return indexes;
         }
-        var newObjs = objs;
 
-        if (types.Any(t => t.ParameterType == typeof(int)))
+        object?[]? newIndexes = null;
+        for (var i = 0; i < indexes.Length; i++)
         {
-            newObjs = new object?[objs.Length];
-            for (var i = 0; i < objs.Length; i++)
+            if (parameters[i].ParameterType == typeof(int)
+                && indexes[i] is not int
+                && TryGetIntegerIndex(indexes[i], out var intIndex))
             {
-                if (TryGetObjectIsIntegerIndex(objs[i], out var objInt))
+                if (newIndexes == null)
                 {
-                    newObjs[i] = objInt;
+                    newIndexes = new object?[indexes.Length];
+                    Array.Copy(indexes, newIndexes, indexes.Length);
                 }
-                else
-                {
-                    newObjs[i] = objs;
-                }
+                newIndexes[i] = intIndex;
             }
         }
 
-        return newObjs;
+        return newIndexes ?? indexes;
     }
-
-    #endregion
 
     private static object? GetEnumerableItemByIndex(IEnumerable enumerable, int index)
     {
@@ -228,6 +302,8 @@ public class DefaultObjectSelector : IObjectSelector
         return result;
     }
 
+    #endregion
+
     /// <inheritdoc />
     public virtual ValueTask<bool> SetValueAsync(
         ObjectSelectorContext context,
@@ -248,10 +324,11 @@ public class DefaultObjectSelector : IObjectSelector
         // No indexes, expression like "User.Name = 'Vladimir'".
         if (propertyInfo != null && propertyInfo.CanWrite)
         {
+            var matchTypes = PrepareObjectMatchTypes(propertyInfo.GetIndexParameters(), indexes);
             propertyInfo.SetValue(
                 owner,
                 ConvertValue(newValue, propertyInfo.PropertyType),
-                indexes);
+                matchTypes);
             return ValueTask.FromResult(true);
         }
 
@@ -261,23 +338,36 @@ public class DefaultObjectSelector : IObjectSelector
             // Dictionary.
             if (indexes[0] != null && owner is IDictionary dictionary)
             {
-                dictionary[indexes[0]!] = ConvertValue(newValue, TypeUtils.GetUnderlyingType(dictionary));
-                return ValueTask.FromResult(true);
+                var keyType = GetDictionaryKeyType(dictionary);
+                var key = keyType != null ? ConvertValue(indexes[0], keyType) : indexes[0];
+                if (key == null)
+                {
+                    return ValueTask.FromResult(false);
+                }
+                dictionary[key] = ConvertValue(newValue, GetElementType(dictionary, true));
             }
-            if (TryGetObjectIsIntegerIndex(indexes[0], out var intIndex))
+            if (TryGetIntegerIndex(indexes[0], out var intIndex))
             {
                 // Array.
                 if (owner is Array array)
                 {
+                    if (array.Rank != 1 || intIndex < 0 || intIndex >= array.Length)
+                    {
+                        return ValueTask.FromResult(false);
+                    }
                     array.SetValue(
-                        ConvertValue(newValue, TypeUtils.GetUnderlyingType(array)),
+                        ConvertValue(newValue, GetElementType(array, false)),
                         intIndex);
                     return ValueTask.FromResult(true);
                 }
                 // List.
                 if (owner is IList list)
                 {
-                    list[intIndex] = ConvertValue(newValue, TypeUtils.GetUnderlyingType(list));
+                    if (intIndex < 0 || intIndex >= list.Count)
+                    {
+                        return ValueTask.FromResult(false);
+                    }
+                    list[intIndex] = ConvertValue(newValue, GetElementType(list, false));
                     return ValueTask.FromResult(true);
                 }
             }
@@ -300,6 +390,32 @@ public class DefaultObjectSelector : IObjectSelector
         return ValueTask.FromResult(false);
     }
 
+    private static Type GetElementType(object collection, bool dictionaryValue)
+    {
+        var type = collection.GetType();
+        if (type.IsArray)
+        {
+            return type.GetElementType()!;
+        }
+        foreach (var @interface in type.GetInterfaces())
+        {
+            if (!@interface.IsGenericType)
+            {
+                continue;
+            }
+            var definition = @interface.GetGenericTypeDefinition();
+            if (dictionaryValue && definition == typeof(IDictionary<,>))
+            {
+                return @interface.GetGenericArguments()[1];
+            }
+            if (!dictionaryValue && definition == typeof(IList<>))
+            {
+                return @interface.GetGenericArguments()[0];
+            }
+        }
+        return typeof(object);   // Non-generic IList/IDictionary - ArrayList, Hashtable.
+    }
+
     /// <summary>
     /// Convert value to the target type.
     /// </summary>
@@ -310,16 +426,40 @@ public class DefaultObjectSelector : IObjectSelector
     {
         if (value == null)
         {
-            return null;
+            return targetType.IsValueType && Nullable.GetUnderlyingType(targetType) == null
+                ? Activator.CreateInstance(targetType)
+                : null;
         }
-        if (value.GetType() == targetType)
+        if (targetType.IsInstanceOfType(value))
         {
             return value;
         }
-        return Convert.ChangeType(value, Nullable.GetUnderlyingType(targetType) ?? targetType);
+        var underlyingType = Nullable.GetUnderlyingType(targetType) ?? targetType;
+        if (underlyingType.IsEnum)
+        {
+            try
+            {
+                return value is string str
+                    ? Enum.Parse(underlyingType, str, ignoreCase: true)
+                    : Enum.ToObject(underlyingType, value);
+            }
+            catch (Exception e) when (e is ArgumentException or InvalidCastException or OverflowException)
+            {
+                return null;
+            }
+        }
+
+        try
+        {
+            return Convert.ChangeType(value, underlyingType);
+        }
+        catch (Exception e) when (e is InvalidCastException or FormatException or OverflowException)
+        {
+            return null;
+        }
     }
 
-    private static bool TryGetObjectIsIntegerIndex(object? obj, out int value)
+    private static bool TryGetIntegerIndex(object? obj, out int value)
     {
         if (obj is int intValue)
         {

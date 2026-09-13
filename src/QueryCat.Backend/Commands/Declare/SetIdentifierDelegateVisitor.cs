@@ -65,12 +65,6 @@ internal sealed class SetIdentifierDelegateVisitor : CreateDelegateVisitor
         await GetObjectBySelectorAsync(thread, context, startObject, selectStrategyContainer, cancellationToken);
         var set = await thread.ObjectSelector.SetValueAsync(context,
             Converter.ConvertValue(newValue, typeof(object)), cancellationToken);
-        context.ExecutionThread = NullExecutionThread.Instance;
-        if (!set)
-        {
-            set = await thread.ObjectSelector.SetValueAsync(context,
-                Converter.ConvertValue(newValue, typeof(object)), cancellationToken);
-        }
         // Not an expression - variable.
         if (!set && !node.HasSelectors)
         {

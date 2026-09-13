@@ -11,6 +11,8 @@ public class DefaultObjectSelectorTests
 {
     private readonly DefaultObjectSelector _selector = new();
 
+    private sealed class Settings : Dictionary<string, string>;
+
     [Fact]
     public async Task SelectByIndex_Array_ShouldReturnCorrectValueByIndex()
     {
@@ -21,6 +23,7 @@ public class DefaultObjectSelectorTests
         // Act.
         var token = (await _selector.SelectByIndexAsync(context, [1]))!.Value;
 
+        // Assert.
         Assert.Equal(2, token.Value);
     }
 
@@ -35,6 +38,7 @@ public class DefaultObjectSelectorTests
         // Act.
         await _selector.SetValueAsync(context, 5);
 
+        // Assert.
         Assert.Equal(5, target[1]);
     }
 
@@ -52,7 +56,45 @@ public class DefaultObjectSelectorTests
         // Act.
         var token = (await _selector.SelectByIndexAsync(context, ["item2"]))!.Value;
 
+        // Assert.
         Assert.Equal(25, token.Value);
+    }
+
+    [Fact]
+    public async Task SelectByIndex_DictionaryBaseClass_ShouldReturnCorrectValueByIndex()
+    {
+        // Arrange.
+        var target = new Settings
+        {
+            ["token"] = "0x1",
+            ["refresh"] = "2026-11-09",
+        };
+        var context = new ObjectSelectorContext(target);
+
+        // Act.
+        var token = (await _selector.SelectByIndexAsync(context, ["token"]))!.Value;
+
+        // Assert.
+        Assert.Equal("0x1", token.Value);
+    }
+
+    [Fact]
+    public async Task SetValue_DictionaryBaseClass_ShouldSetCorrectValueByIndex()
+    {
+        // Arrange.
+        var target = new Settings
+        {
+            ["token"] = "0x1",
+            ["refresh"] = "2026-11-09",
+        };
+        var context = new ObjectSelectorContext(target);
+        context.Push(new ObjectSelectorContext.Token(target, Indexes: ["token"]));
+
+        // Act.
+        await _selector.SetValueAsync(context, "0x2");
+
+        // Assert.
+        Assert.Equal("0x2", target["token"]);
     }
 
     [Fact]
@@ -70,6 +112,7 @@ public class DefaultObjectSelectorTests
         // Act.
         await _selector.SetValueAsync(context, 13);
 
+        // Assert.
         Assert.Equal(13, target["item2"]);
     }
 }

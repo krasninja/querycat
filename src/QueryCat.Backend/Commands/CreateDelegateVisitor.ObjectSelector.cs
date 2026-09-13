@@ -257,18 +257,22 @@ internal partial class CreateDelegateVisitor
         SelectStrategyContainer selectStrategyContainer,
         CancellationToken cancellationToken = default)
     {
+        var existingThread = context.ExecutionThread;
         try
         {
             context.ExecutionThread = thread;
             var result = await GetObjectBySelectorInternalAsync(context, value, selectStrategyContainer,
                 cancellationToken);
-            context.ExecutionThread = NullExecutionThread.Instance;
             return result;
         }
         catch (Exception e)
         {
             var logger = Application.LoggerFactory.CreateLogger(nameof(GetObjectBySelectorAsync));
             logger.LogDebug(e, Resources.Errors.CannotSelectObject);
+        }
+        finally
+        {
+            context.ExecutionThread = existingThread;
         }
 
         return VariantValue.Null;

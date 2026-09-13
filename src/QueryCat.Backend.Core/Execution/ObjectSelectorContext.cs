@@ -125,6 +125,7 @@ public sealed class ObjectSelectorContext
     public void Clear()
     {
         _selectStack.Clear();
+        ExecutionThread = NullExecutionThread.Instance;
     }
 
     private static PropertyInfo GetPropertyInfo<T>(Expression<Func<T, object?>> property)
