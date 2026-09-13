@@ -39,6 +39,11 @@ internal sealed class AstTraversal
     private readonly Stack<TraversalItem> _traversalStack = new(32);
 
     /// <summary>
+    /// Current stack length.
+    /// </summary>
+    public int Depth => _traversalStack.Count;
+
+    /// <summary>
     /// The list of types the traversal will not visit.
     /// </summary>
     public List<Type> TypesToIgnore { get; } = new();
@@ -50,7 +55,7 @@ internal sealed class AstTraversal
 
     public AstTraversal(AstVisitor visitor)
     {
-        ArgumentNullException.ThrowIfNull(visitor, nameof(visitor));
+        ArgumentNullException.ThrowIfNull(visitor);
         _visitor = visitor;
     }
 
@@ -78,14 +83,14 @@ internal sealed class AstTraversal
     /// </summary>
     /// <typeparam name="TNode">Target type.</typeparam>
     /// <returns>Found parent node or null.</returns>
-    public TNode? GetFirstParent<TNode>(Func<IAstNode, bool> predicate) where TNode : IAstNode
-        => GetParents().Where(predicate).OfType<TNode>().FirstOrDefault();
+    public TNode? GetFirstParent<TNode>(Func<TNode, bool> predicate) where TNode : IAstNode
+        => GetParents().OfType<TNode>().Where(predicate).FirstOrDefault();
 
     /// <summary>
     /// Returns enumerable of all current node parents.
     /// </summary>
     /// <returns>Enumerable of parents.</returns>
-    public IEnumerable<IAstNode> GetParents() => _traversalStack.Select(s => s.Node);
+    public IEnumerable<IAstNode> GetParents() => _traversalStack.Skip(1).Select(s => s.Node);
 
     /// <summary>
     /// Returns enumerable of all current node parents.
@@ -114,6 +119,7 @@ internal sealed class AstTraversal
             await node.AcceptAsync(_visitor, cancellationToken);
             while (_traversalStack.Count > 0)
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 var current = _traversalStack.Peek();
                 if (current.ChildrenEnumerator.MoveNext())
                 {
@@ -159,6 +165,7 @@ internal sealed class AstTraversal
             _traversalStack.Push(new TraversalItem(node));
             while (_traversalStack.Count > 0)
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 var current = _traversalStack.Peek();
                 if (current.ChildrenEnumerator.MoveNext())
                 {
@@ -185,7 +192,7 @@ internal sealed class AstTraversal
         }
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static bool IsIgnoreType(Type type, Type[] ignoreTypes)
     {
         foreach (var ignoreType in ignoreTypes)

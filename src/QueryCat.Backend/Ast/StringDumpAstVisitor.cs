@@ -23,7 +23,7 @@ internal sealed class StringDumpAstVisitor(StringBuilder output) : DelegateVisit
     private void PrettyPrintNode(IAstNode node,
         params (string Key, object? Value)[] @params)
     {
-        var ident = (AstTraversal.GetCurrentStack().Count() - 1) * 3;
+        var ident = (AstTraversal.Depth - 1) * 3;
         output.Append(new string(' ', ident));
         output.Append($"- <{node.Code}>:");
 
