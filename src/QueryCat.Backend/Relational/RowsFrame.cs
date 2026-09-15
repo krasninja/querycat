@@ -14,7 +14,7 @@ public class RowsFrame : IRowsSchema, IEnumerable<Row>
 {
     private readonly int _chunkSize;
     private readonly int _rowsPerChunk;
-    private readonly ChunkList<VariantValue[]> _storage;
+    private readonly List<VariantValue[]> _storage;
     private readonly Column[] _columns;
     private readonly HashSet<int> _removedRows = new();
 
@@ -57,7 +57,7 @@ public class RowsFrame : IRowsSchema, IEnumerable<Row>
         var remains = _chunkSize - _rowsPerChunk * _columns.Length;
         _chunkSize -= remains;
 
-        _storage = new ChunkList<VariantValue[]>(_chunkSize);
+        _storage = new List<VariantValue[]>(_chunkSize);
     }
 
     /// <summary>
