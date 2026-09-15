@@ -1,0 +1,10 @@
+expected: |
+  1,a,1,xxx
+  3,c,3,yyy
+query: |
+  -- Multiple star expressions.
+  with a as (select num, name from 'Table1.csv'),
+    b as (select num, value from 'Table2.csv')
+  select a.*, b.*
+  from a
+    inner join b on a.num = b.num;

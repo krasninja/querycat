@@ -29,20 +29,22 @@ internal sealed partial class SelectPlanner
             }
 
             context.HasExactColumnsSelect = false;
-            var iterator = context.CurrentIterator;
-            columnsNode.ColumnsNodes.Remove(columnsNode.ColumnsNodes[i]);
-            foreach (var column in iterator.Columns)
+            var expandedColumns = new List<SelectColumnsSublistNode>();
+            foreach (var column in context.CurrentIterator.Columns)
             {
-                if (selectColumnsSublistAll.PrefixIdentifier != null &&
-                    column.SourceName != selectColumnsSublistAll.PrefixIdentifier.TableFullName)
+                if (selectColumnsSublistAll.PrefixIdentifier != null
+                    && !string.Equals(column.SourceName, selectColumnsSublistAll.PrefixIdentifier.TableFullName, StringComparison.OrdinalIgnoreCase))
                 {
                     continue;
                 }
 
-                var astColumn = new SelectColumnsSublistExpressionNode(
-                    new IdentifierExpressionNode(column.Name, column.SourceName));
-                columnsNode.ColumnsNodes.Add(astColumn);
+                expandedColumns.Add(new SelectColumnsSublistExpressionNode(
+                    new IdentifierExpressionNode(column.Name, column.SourceName)));
             }
+
+            columnsNode.ColumnsNodes.RemoveAt(i);
+            columnsNode.ColumnsNodes.InsertRange(i, expandedColumns);
+            i += expandedColumns.Count - 1;
         }
     }
 
@@ -142,11 +144,7 @@ internal sealed partial class SelectPlanner
     {
         // Format the initial iterator with all columns (except excluded) that
         // user mentioned in SELECT block.
-        var funcs = new List<IFuncUnit>();
-        foreach (var node in columnsNode.ColumnsNodes)
-        {
-            funcs.Add(await Misc_CreateDelegateAsync(node, context, cancellationToken));
-        }
+        var funcs = await Misc_CreateDelegateAsync(columnsNode.ColumnsNodes, context, cancellationToken);
         var selectColumns = CreateSelectColumns(columnsNode).ToList();
         var exceptColumns = exceptNode?.ExceptIdentifiers.ToList() ?? new List<IdentifierExpressionNode>();
         var projectedIterator = new ProjectedRowsIterator(ExecutionThread, context.CurrentIterator);
@@ -158,7 +156,8 @@ internal sealed partial class SelectPlanner
             {
                 var columnToExcept = exceptColumns.Find(
                     node => node.TableFieldName.Equals(columnIdNode.TableFieldName, StringComparison.InvariantCultureIgnoreCase)
-                            && node.TableSourceName.Equals(columnIdNode.TableSourceName, StringComparison.InvariantCultureIgnoreCase));
+                            && (string.IsNullOrEmpty(node.TableSourceName)
+                                || node.TableSourceName.Equals(columnIdNode.TableSourceName, StringComparison.InvariantCultureIgnoreCase)));
                 if (columnToExcept != null)
                 {
                     exceptColumns.Remove(columnToExcept);
@@ -254,8 +253,6 @@ internal sealed partial class SelectPlanner
             return;
         }
 
-        Pipeline_OrderConvertColumnNumbers(context.CurrentIterator, orderByNode.OrderBySpecificationNodes);
-
         // Create wrapper to initialize rows frame and create index.
         var orderFunctions = new List<OrderByData>();
         foreach (var node in orderByNode.OrderBySpecificationNodes)
@@ -269,18 +266,23 @@ internal sealed partial class SelectPlanner
         context.SetIterator(new OrderRowsIterator(ExecutionThread, context.CurrentIterator, orderFunctions.ToArray()));
     }
 
-    private static void Pipeline_OrderConvertColumnNumbers(IRowsIterator currentIterator, List<SelectOrderBySpecificationNode> orderByNodes)
+    private static void Pipeline_OrderConvertColumnNumbers(IRowsIterator currentIterator, SelectOrderByNode? orderByNode)
     {
-        // Convert: SELECT id FROM x ORDER BY 1 -> SELECT id FROM x ORDER BY id.
-        foreach (var orderByNode in orderByNodes)
+        if (orderByNode == null)
         {
-            if (orderByNode.ExpressionNode is LiteralNode literalNode
+            return;
+        }
+
+        // Convert: SELECT id FROM x ORDER BY 1 -> SELECT id FROM x ORDER BY id.
+        foreach (var orderBySpecificationNode in orderByNode.OrderBySpecificationNodes)
+        {
+            if (orderBySpecificationNode.ExpressionNode is LiteralNode literalNode
                 && literalNode.Value.Type == DataType.Integer
                 && literalNode.Value.AsIntegerUnsafe > 0
                 && literalNode.Value.AsIntegerUnsafe <= currentIterator.Columns.Length)
             {
                 var column = currentIterator.Columns[literalNode.Value.AsIntegerUnsafe - 1];
-                orderByNode.ExpressionNode = new IdentifierExpressionNode(column.Name, column.SourceName);
+                orderBySpecificationNode.ExpressionNode = new IdentifierExpressionNode(column.Name, column.SourceName);
             }
         }
     }

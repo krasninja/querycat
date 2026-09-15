@@ -1,5 +1,6 @@
 using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes;
+using QueryCat.Backend.Ast.Nodes.Function;
 using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Commands.Select.KeyConditionValue;
 using QueryCat.Backend.Commands.Select.Visitors;
@@ -34,8 +35,23 @@ internal sealed partial class SelectPlanner
             }
         }
 
-        // Fill "limit". For now, we limit only if order is not defined.
-        if (querySpecificationNode.OrderByNode == null)
+        // Fill "limit", "offset".
+        var canPushLimit =
+            // No order.
+            querySpecificationNode.OrderByNode == null
+            // No group, having, where.
+            && querySpecificationNode.TableExpressionNode is { SearchConditionNode: null, GroupByNode: null, HavingNode: null }
+            // One "from".
+            && querySpecificationNode.TableExpressionNode.TablesNode.TableFunctionsNodes.Count == 1
+            && context.Inputs.Count == 1
+            // No distinct.
+            && querySpecificationNode.DistinctNode is null or { IsEmpty: true }
+            // No window.
+            && !querySpecificationNode.ColumnsListNode.ColumnsNodes.OfType<SelectColumnsSublistWindowNode>().Any()
+            // No aggregation.
+            && !querySpecificationNode.ColumnsListNode.GetAllChildren<FunctionCallNode>()
+                .Any(f => f.HasAttribute(AstAttributeKeys.AggregateFunctionKey));
+        if (canPushLimit)
         {
             if (querySpecificationNode.FetchNode != null)
             {
@@ -59,6 +75,19 @@ internal sealed partial class SelectPlanner
             }
         }
     }
+
+    /// <summary>
+    /// A condition is only a safe key condition under a pure AND chain.
+    /// </summary>
+    /// <param name="node">AST node.</param>
+    /// <param name="traversal">Traversal.</param>
+    /// <returns><c>True</c> if can push down, <c>false></c> otherwise.</returns>
+    static bool CanPushDown(IAstNode node, AstTraversal traversal)
+        => node is not BetweenExpressionNode { IsNot: true }
+           && node is not InOperationExpressionNode { IsNot: true }
+           && !traversal.GetParents().Any(p =>
+               p is BinaryOperationExpressionNode { Operation: VariantValue.Operation.Or }
+               || p is UnaryOperationExpressionNode { Operation: VariantValue.Operation.Not });
 
     private async Task QueryContext_FillQueryContextConditionsAsync(
         ExpressionNode? predicateNode,
@@ -189,8 +218,7 @@ internal sealed partial class SelectPlanner
             }
             if (inOperationExpressionNode.InExpressionValuesNodes is SelectQueryNode selectQueryNode)
             {
-                var iterator = await new SelectPlanner(ExecutionThread)
-                    .CreateIteratorAsync(selectQueryNode, commandContext, ct);
+                var iterator = await CreateIteratorAsync(selectQueryNode, commandContext, ct);
                 commandContext.Conditions.TryAddCondition(column, VariantValue.Operation.In,
                     new KeyConditionValueGeneratorIterator(iterator));
                 return true;
@@ -210,6 +238,10 @@ internal sealed partial class SelectPlanner
         callbackVisitor.AstTraversal.TypesToIgnore.Add(typeof(SelectQueryCombineNode));
         callbackVisitor.Callback = async (node, traversal, ct) =>
         {
+            if (!CanPushDown(node, traversal))
+            {
+                return;
+            }
             if (await HandleBinaryOperationAsync(node, traversal, ct))
             {
                 return;

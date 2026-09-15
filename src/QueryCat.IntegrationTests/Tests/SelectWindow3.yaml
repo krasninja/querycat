@@ -1,0 +1,14 @@
+expected: |
+  aleksander,1799
+  elina,800
+  ivan,2280
+  lena,1280
+  sergey,500
+query: |
+  -- Named window with additional ORDER BY.
+  select
+    name,
+    sum(balance) over (w order by balance) as 'running'
+  from 'Simple2.csv'
+  window w as (partition by city)
+  order by name;

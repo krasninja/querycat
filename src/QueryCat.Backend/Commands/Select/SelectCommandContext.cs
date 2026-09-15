@@ -77,14 +77,17 @@ internal sealed class SelectCommandContext(SelectQueryNode queryNode) : CommandC
             }
         }
 
-        // Local CTE.
-        foreach (var commonTableExpression in CteList)
+        // CTE, the nearest definitions go first.
+        foreach (var context in GetParents())
         {
-            index = commonTableExpression.RowsIterator.GetColumnIndexByName(name, source);
-            if (index > -1)
+            foreach (var commonTableExpression in context.CteList)
             {
-                result = new InputNameSearchResult(commonTableExpression.RowsIterator, index, this, null);
-                return true;
+                index = commonTableExpression.RowsIterator.GetColumnIndexByName(name, source);
+                if (index > -1)
+                {
+                    result = new InputNameSearchResult(commonTableExpression.RowsIterator, index, this, null);
+                    return true;
+                }
             }
         }
 
@@ -222,9 +225,31 @@ internal sealed class SelectCommandContext(SelectQueryNode queryNode) : CommandC
     public IFuncUnit? OutputArgumentsFunc { get; set; }
 
     /// <summary>
-    /// Common table expressions of the query.
+    /// Common table expressions defined by the query without include parent queries definitions.
     /// </summary>
     internal List<CommonTableExpression> CteList { get; } = new();
+
+    /// <summary>
+    /// Find common table expression by name within <see cref="CteList" /> and parents.
+    /// </summary>
+    /// <param name="name">Common table expression name.</param>
+    /// <param name="commonTableExpression">Found common table expression.</param>
+    /// <returns>Returns <c>true</c> if found, <c>false</c> otherwise.</returns>
+    internal bool TryGetCommonTableExpression(string name, out CommonTableExpression commonTableExpression)
+    {
+        foreach (var context in GetParents())
+        {
+            var index = context.CteList.FindIndex(c => c.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+            if (index > -1)
+            {
+                commonTableExpression = context.CteList[index];
+                return true;
+            }
+        }
+
+        commonTableExpression = default;
+        return false;
+    }
 
     /// <summary>
     /// Returns the list of identifiers - direct references to input columns.

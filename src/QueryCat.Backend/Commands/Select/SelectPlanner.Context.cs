@@ -166,29 +166,17 @@ internal sealed partial class SelectPlanner
         IdentifierExpressionNode idNode,
         CancellationToken cancellationToken)
     {
-        var cteIndex = context.CteList.FindIndex(c => c.Name == idNode.FullName);
-        if (cteIndex < 0)
+        if (!context.TryGetCommonTableExpression(idNode.FullName, out var commonTableExpression))
         {
             return [];
         }
-        var inputs = new List<IRowsInput>
-        {
-            context.CteList[cteIndex].RowsInputProxy,
-        };
+        var rowsInput = commonTableExpression.RowsInputProxy;
         if (idNode is ISelectAliasNode aliasNode)
         {
-            Context_SetAlias(inputs[0], aliasNode.Alias);
+            Context_SetAlias(rowsInput, aliasNode.Alias);
         }
-        if (idNode is SelectIdentifierExpressionNode selectIdentifierExpressionNode)
-        {
-            foreach (var joinedNode in selectIdentifierExpressionNode.JoinedNodes)
-            {
-                var joinRowsInput = await Context_CreateInputSourceFromTableJoinAsync(
-                    context, inputs[0], joinedNode, cancellationToken);
-                inputs.Add(joinRowsInput);
-            }
-        }
-        return inputs.ToArray();
+        return await Context_CreateJoinedInputsAsync(context, rowsInput,
+            (idNode as SelectIdentifierExpressionNode)?.JoinedNodes ?? [], cancellationToken);
     }
 
     private async Task<IRowsInput[]> Context_CreateInputSourceFromVariableAsync(
@@ -208,25 +196,8 @@ internal sealed partial class SelectPlanner
             Context_SetAlias(rowsInputContext.RowsInput, selectAliasNode.Alias);
         }
 
-        var inputs = new[] { rowsInputContext.RowsInput };
-
-        // Joined nodes processing.
-        if (idNode is SelectIdentifierExpressionNode selectIdentifierExpressionNode)
-        {
-            var joinedInputs = new List<IRowsInput>(capacity: selectIdentifierExpressionNode.JoinedNodes.Count + 1)
-            {
-                rowsInputContext.RowsInput
-            };
-            foreach (var joinedNode in selectIdentifierExpressionNode.JoinedNodes)
-            {
-                var joinRowsInput = await Context_CreateInputSourceFromTableJoinAsync(
-                    context, rowsInputContext.RowsInput, joinedNode, cancellationToken);
-                joinedInputs.Add(joinRowsInput);
-            }
-            inputs = joinedInputs.ToArray();
-        }
-
-        return inputs;
+        return await Context_CreateJoinedInputsAsync(context, rowsInputContext.RowsInput,
+            (idNode as SelectIdentifierExpressionNode)?.JoinedNodes ?? [], cancellationToken);
     }
 
     // Last input is combine input.
@@ -235,12 +206,28 @@ internal sealed partial class SelectPlanner
         SelectTableFunctionNode tableFunctionNode,
         CancellationToken cancellationToken)
     {
-        var inputs = new List<IRowsInput>();
         var rowsInputContext = tableFunctionNode.GetRequiredAttribute<SelectInputQueryContext>(AstAttributeKeys.RowsInputContextKey);
-        var rowsInput = rowsInputContext.RowsInput;
-        inputs.Add(rowsInput);
-        Context_SetAlias(rowsInput, tableFunctionNode.Alias);
-        foreach (var joinedNode in tableFunctionNode.JoinedNodes)
+        Context_SetAlias(rowsInputContext.RowsInput, tableFunctionNode.Alias);
+        return await Context_CreateJoinedInputsAsync(context, rowsInputContext.RowsInput,
+            tableFunctionNode.JoinedNodes, cancellationToken);
+    }
+
+    /// <summary>
+    /// Create the chain of joined inputs. Every join uses the result of the previous join as the left input.
+    /// </summary>
+    /// <param name="context">Select command context.</param>
+    /// <param name="rowsInput">The first (leftmost) rows input.</param>
+    /// <param name="joinedNodes">Joined nodes.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Inputs chain. The last input is the final join result.</returns>
+    private async Task<IRowsInput[]> Context_CreateJoinedInputsAsync(
+        SelectCommandContext context,
+        IRowsInput rowsInput,
+        IEnumerable<SelectTableJoinedNode> joinedNodes,
+        CancellationToken cancellationToken)
+    {
+        var inputs = new List<IRowsInput> { rowsInput };
+        foreach (var joinedNode in joinedNodes)
         {
             rowsInput = await Context_CreateInputSourceFromTableJoinAsync(context, rowsInput, joinedNode, cancellationToken);
             inputs.Add(rowsInput);
@@ -413,7 +400,7 @@ internal sealed partial class SelectPlanner
             return;
         }
 
-        foreach (var inputColumn in node.GetAllChildren<IdentifierExpressionNode>()
+        foreach (var inputColumn in node.GetAllChildren<IdentifierExpressionNode>([typeof(SelectTableJoinedNode)])
                      .Where(n => string.IsNullOrEmpty(n.TableSourceName)))
         {
             inputColumn.TableSourceName = alias;

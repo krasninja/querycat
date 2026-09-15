@@ -1,0 +1,6 @@
+expected: |
+  2
+query: |
+  -- Inner CTE shadows the outer one with the same name.
+  with t as (select 1 as x)
+  select s.x from (with t as (select 2 as x) select x from t) as s;

@@ -207,4 +207,13 @@
   <data name="AnswerAgentNotFound" xml:space="preserve">
     <value>Answer agent not found. Define or set '{0}' variable to object of type '{1}'.</value>
   </data>
+  <data name="CannotOverrideWindowPartition" xml:space="preserve">
+    <value>Cannot override PARTITION BY clause of window '{0}'.</value>
+  </data>
+  <data name="CannotOverrideWindowOrder" xml:space="preserve">
+    <value>Cannot override ORDER BY clause of window '{0}'.</value>
+  </data>
+  <data name="WindowCircularReference" xml:space="preserve">
+    <value>Window '{0}' has circular reference.</value>
+  </data>
 </root>

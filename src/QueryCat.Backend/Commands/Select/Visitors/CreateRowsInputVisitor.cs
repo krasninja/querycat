@@ -140,7 +140,10 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
             if (rowsIterator is not PrefetchRowsIterator)
             {
                 var prefetchIterator = await PrefetchRowsIterator.CreateAsync(rowsIterator, cancellationToken);
-                result.Context.SetIterator(prefetchIterator);
+                if (ReferenceEquals(rowsIterator, result.Context.CurrentIterator))
+                {
+                    result.Context.SetIterator(prefetchIterator);
+                }
             }
             funcUnit = new FuncUnitRowsIteratorColumn(result.Context.CurrentIterator, columnIndex);
         }

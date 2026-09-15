@@ -1,0 +1,10 @@
+expected: |
+  1,xxx,a
+  3,yyy,c
+query: |
+  -- Multiple joins after variable.
+  declare x := (select * from 'Table1.csv');
+  select t1.num, t2.value, t3.name
+  from x as t1
+    inner join 'Table2.csv' as t2 on t1.num = t2.num
+    inner join 'Table1.csv' as t3 on t2.num = t3.num;

@@ -2,7 +2,7 @@ namespace QueryCat.Backend.Ast.Nodes.Select;
 
 internal sealed class SelectWindowSpecificationNode : AstNode
 {
-    public string ExistingWindowName { get; } = string.Empty;
+    public string ExistingWindowName { get; }
 
     public SelectWindowPartitionClauseNode? PartitionNode { get; }
 
@@ -11,14 +11,19 @@ internal sealed class SelectWindowSpecificationNode : AstNode
     /// <inheritdoc />
     public override string Code => "windowspec";
 
-    public SelectWindowSpecificationNode(string existingWindowName)
+    /// <inheritdoc />
+    public SelectWindowSpecificationNode(SelectWindowPartitionClauseNode? partitionNode, SelectWindowOrderClauseNode? orderNode)
+        : this(string.Empty, partitionNode, orderNode)
     {
-        ExistingWindowName = existingWindowName;
     }
 
     /// <inheritdoc />
-    public SelectWindowSpecificationNode(SelectWindowPartitionClauseNode? partitionNode, SelectWindowOrderClauseNode? orderNode)
+    public SelectWindowSpecificationNode(
+        string existingWindowName,
+        SelectWindowPartitionClauseNode? partitionNode,
+        SelectWindowOrderClauseNode? orderNode)
     {
+        ExistingWindowName = existingWindowName;
         PartitionNode = partitionNode;
         OrderNode = orderNode;
     }

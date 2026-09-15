@@ -452,11 +452,11 @@ internal partial class ProgramParserVisitor
     /// <inheritdoc />
     public override IAstNode VisitSelectWindowSpecification(QueryCatParser.SelectWindowSpecificationContext context)
     {
-        if (context.existingWindowName != null)
-        {
-            return new SelectWindowSpecificationNode(GetUnwrappedText(context.existingWindowName));
-        }
+        var existingWindowName = context.existingWindowName != null
+            ? GetUnwrappedText(context.existingWindowName)
+            : string.Empty;
         return new SelectWindowSpecificationNode(
+            existingWindowName,
             this.VisitMaybe<SelectWindowPartitionClauseNode>(context.selectWindowPartitionClause()),
             this.VisitMaybe<SelectWindowOrderClauseNode>(context.selectWindowOrderClause()));
     }

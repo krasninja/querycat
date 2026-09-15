@@ -1,0 +1,7 @@
+expected: |
+  1,a,x
+  2,b,x
+  3,c,x
+query: |
+  -- Expanded columns keep their position.
+  select *, 'x' as mark from (select num, name from 'Table1.csv') as t;
