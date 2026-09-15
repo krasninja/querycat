@@ -900,6 +900,33 @@ public sealed partial class DynamicBuffer<T> where T : IEquatable<T>
     }
 
     /// <summary>
+    /// Copy dynamic buffer data to destination span starting from startIndex for a specific length.
+    /// </summary>
+    /// <param name="destination">Destination span.</param>
+    /// <param name="startIndex">Start index.</param>
+    /// <param name="length">Length. -1 is to copy to the end of buffer.</param>
+    /// <returns>Total elements copied.</returns>
+    public long CopyTo(Span<T> destination, long startIndex = 0, long length = -1)
+    {
+        var available = Math.Max(0, Size - startIndex);
+        length = Math.Min(length < 0 ? available : Math.Min(length, available), destination.Length);
+        if (length <= 0)
+        {
+            return 0;
+        }
+        var startPosition = GetPosition(startIndex);
+        var endPosition = GetPosition(length, startPosition);
+        var totalRead = 0;
+        foreach (var chunk in GetChunks(startPosition, endPosition))
+        {
+            var span = chunk.Span;
+            span.CopyTo(destination[totalRead..]);
+            totalRead += span.Length;
+        }
+        return totalRead;
+    }
+
+    /// <summary>
     /// Get chunks of dynamic buffer from start to end.
     /// </summary>
     /// <param name="start">Start position.</param>

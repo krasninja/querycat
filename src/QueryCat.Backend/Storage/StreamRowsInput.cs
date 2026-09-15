@@ -107,7 +107,7 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable, IModelDescripti
     {
         _options = options ?? new();
         _baseStream = stream;
-        _cacheStream = new CacheStream(stream);
+        _cacheStream = new CacheStream(stream, bufferSize: ReadBufferSize);
         StreamReader = new StreamReader(_cacheStream, bufferSize: ReadBufferSize);
         _delimiterStreamReader = new DelimiterStreamReader(StreamReader, _options.DelimiterStreamReaderOptions);
         UniqueKey = _options.CacheKeys;
