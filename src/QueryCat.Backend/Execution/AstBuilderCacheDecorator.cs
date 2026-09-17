@@ -58,5 +58,5 @@ internal sealed class AstBuilderCacheDecorator : IAstBuilder
         => _astBuilder.BuildFunctionSignatureFromString(function);
 
     /// <inheritdoc />
-    public IAstBuilder.Token[] GetTokens(string text) => _astBuilder.GetTokens(text);
+    public IReadOnlyList<IAstBuilder.Token> GetTokens(string text) => _astBuilder.GetTokens(text);
 }

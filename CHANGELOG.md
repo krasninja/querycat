@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Improve parser handling in ambiguity paths.
+- Fix WebServer bugger leaks, query processing improvements.
+- Reduce memory usage for GreaterOrEquals, LessOrEquals, NotEquals, Subtract operations.
+- Improve Window functions support.
+- Overall bugfixes and improvements.
+
 ## [0.17.5] - 2026-07-31
 
 ### Fixed

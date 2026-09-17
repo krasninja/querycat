@@ -19,7 +19,7 @@ public sealed class VariablesCompletionSourceTests
     [InlineData("", "userName")]
     [InlineData("use", "userName")]
     [InlineData("name", "name")]
-    [InlineData("-- name", "-")]
+    [InlineData("-- name", "userName")]
     [InlineData("'me' + 3; 'add' || name", "name")]
     [InlineData("callme() + 'asd asd' ;  \n\t \"na\".no[0]", "-")]
     public async Task GetCompletions_PartVariableName_ReturnsExpectedCompletions(string query, string expected)
