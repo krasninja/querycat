@@ -255,8 +255,7 @@ public partial class ThriftPluginsServer
         public async Task<List<CompletionResult>> GetCompletionsAsync(long token, string text, int position, CancellationToken cancellationToken = default)
         {
             await BeforeCallAsync(token, nameof(GetCompletionsAsync), cancellationToken);
-            var completions = await _thriftPluginsServer._executionThread.GetCompletionsAsync(text, position, null, cancellationToken)
-                .ToListAsync(cancellationToken);
+            var completions = await _thriftPluginsServer._executionThread.GetCompletionsAsync(text, position, null, cancellationToken);
             return completions.Select(SdkConvert.Convert).ToList();
         }
 

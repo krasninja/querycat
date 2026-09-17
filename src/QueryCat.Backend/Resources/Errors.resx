@@ -216,4 +216,7 @@
   <data name="WindowCircularReference" xml:space="preserve">
     <value>Window '{0}' has circular reference.</value>
   </data>
+  <data name="QueryTimeout" xml:space="preserve">
+    <value>Query timeout.</value>
+  </data>
 </root>

@@ -422,22 +422,28 @@ namespace QueryCat.Backend.Resources {
                 return ResourceManager.GetString("AnswerAgentNotFound", resourceCulture);
             }
         }
-
+        
         internal static string CannotOverrideWindowPartition {
             get {
                 return ResourceManager.GetString("CannotOverrideWindowPartition", resourceCulture);
             }
         }
-
+        
         internal static string CannotOverrideWindowOrder {
             get {
                 return ResourceManager.GetString("CannotOverrideWindowOrder", resourceCulture);
             }
         }
-
+        
         internal static string WindowCircularReference {
             get {
                 return ResourceManager.GetString("WindowCircularReference", resourceCulture);
+            }
+        }
+        
+        internal static string QueryTimeout {
+            get {
+                return ResourceManager.GetString("QueryTimeout", resourceCulture);
             }
         }
     }

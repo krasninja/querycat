@@ -20,7 +20,7 @@ public sealed class KeywordsCompletionSourceTests
             .Create();
 
         // Act.
-        var completions = (await executionThread.GetCompletionsAsync("in").ToListAsync())
+        var completions = (await executionThread.GetCompletionsAsync("in"))
             .Select(c => c.Completion.Label).OrderBy(c => c).ToArray();
 
         // Assert.

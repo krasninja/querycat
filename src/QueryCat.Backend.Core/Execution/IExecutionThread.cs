@@ -77,7 +77,7 @@ public interface IExecutionThread : IDisposable
     /// <param name="tag">Custom User data.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Completion result.</returns>
-    IAsyncEnumerable<CompletionResult> GetCompletionsAsync(string text, int position = -1, object? tag = null,
+    Task<IReadOnlyCollection<CompletionResult>> GetCompletionsAsync(string text, int position = -1, object? tag = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>
