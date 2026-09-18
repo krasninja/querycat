@@ -120,7 +120,7 @@ internal abstract class BaseQueryCommand : BaseCommand
     internal static Task AddVariablesAsync(IExecutionThread executionThread, string[]? variables = null,
         CancellationToken cancellationToken = default)
     {
-        if (variables == null || !variables.Any())
+        if (variables == null || variables.Length == 0)
         {
             return Task.CompletedTask;
         }
@@ -150,7 +150,7 @@ internal abstract class BaseQueryCommand : BaseCommand
     internal static async Task AddInputsAsync(IExecutionThread executionThread, string[]? inputs = null,
         CancellationToken cancellationToken = default)
     {
-        if (inputs == null || !inputs.Any())
+        if (inputs == null || inputs.Length == 0)
         {
             return;
         }

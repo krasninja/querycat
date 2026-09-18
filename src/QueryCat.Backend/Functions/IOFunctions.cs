@@ -93,7 +93,7 @@ internal static class IOFunctions
             ? thread.Stack[1].AsObject as IRowsFormatter
             : await File_GetFormatterAsync(path, thread, funcArgs, cancellationToken);
         var files = await File_GetFileInputsByPath(path, thread, formatter, funcArgs).ToListAsync(cancellationToken);
-        if (!files.Any())
+        if (files.Count == 0)
         {
             throw new QueryCatException(string.Format(Resources.Errors.PathNoFiles, path));
         }

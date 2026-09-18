@@ -75,7 +75,7 @@ public abstract class FunctionsFactory
 
         // Try to register class as function.
         var classAttributes = Attribute.GetCustomAttributes(type, typeof(FunctionSignatureAttribute));
-        if (classAttributes.Any())
+        if (classAttributes.Length > 0)
         {
             foreach (var classAttribute in classAttributes)
             {

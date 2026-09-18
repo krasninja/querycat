@@ -47,7 +47,7 @@ internal sealed class StringDumpAstVisitor(StringBuilder output) : DelegateVisit
         if (node is AstNode astNode)
         {
             var attributes = astNode.GetAttributes();
-            if (attributes.Any())
+            if (attributes.Count > 0)
             {
                 foreach (var attribute in attributes)
                 {

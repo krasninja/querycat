@@ -461,7 +461,7 @@ internal sealed partial class SelectPlanner
         }
 
         var childNodes = rowsIteratorRoot.GetChildren().ToList();
-        while (childNodes.Any())
+        while (childNodes.Count > 0)
         {
             // If we have any proxy iterator we cannot guarantee inner input persistence.
             foreach (var child in childNodes)

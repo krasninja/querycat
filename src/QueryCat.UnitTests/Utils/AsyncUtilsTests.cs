@@ -37,7 +37,9 @@ public class AsyncUtilsTests
             });
             tasks.Add(task);
         }
+#pragma warning disable xUnit1031
         Task.WaitAll(tasks);
+#pragma warning restore xUnit1031
 
         // Assert.
         Assert.Equal(iterations, counter);
@@ -86,11 +88,9 @@ public class AsyncUtilsTests
                     AsyncUtils.RunSync(async () =>
                     {
                         throw new Exception("test");
-                        a++;
-                        await Task.Delay(10);
                     });
                 }
-                catch (Exception e)
+                catch (Exception)
                 {
                 }
             });

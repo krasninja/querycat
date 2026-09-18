@@ -144,7 +144,7 @@ internal sealed partial class WebServer
         // Validate IP.
         lock (_lockObj)
         {
-            if ((_allowedAddresses.Any() || _allowedAddressesSlots.HasValue)
+            if ((_allowedAddresses.Count > 0 || _allowedAddressesSlots.HasValue)
                 && !_allowedAddresses.Contains(context.Request.RemoteEndPoint.Address))
             {
                 if (_allowedAddressesSlots > 0)

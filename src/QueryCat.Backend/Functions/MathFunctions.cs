@@ -193,7 +193,7 @@ internal static class MathFunctions
     public static VariantValue Greatest(IExecutionThread thread)
     {
         var notNullArgs = thread.Stack.Where(v => !v.IsNull).ToArray();
-        if (!notNullArgs.Any())
+        if (notNullArgs.Length == 0)
         {
             return VariantValue.Null;
         }
@@ -214,7 +214,7 @@ internal static class MathFunctions
     public static VariantValue Least(IExecutionThread thread)
     {
         var notNullArgs = thread.Stack.Where(v => !v.IsNull).ToArray();
-        if (!notNullArgs.Any())
+        if (notNullArgs.Length == 0)
         {
             return VariantValue.Null;
         }

@@ -197,7 +197,7 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
             }
         }
 
-        if (_debugMode && !string.IsNullOrEmpty(ForceRegistrationToken) && !_loadedPlugins.Any())
+        if (_debugMode && !string.IsNullOrEmpty(ForceRegistrationToken) && _loadedPlugins.Count == 0)
         {
             _logger.LogDebug("Waiting for any plugin registration.");
             _server.SetRegistrationToken(ForceRegistrationToken, ".plugin");

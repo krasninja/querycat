@@ -277,7 +277,7 @@ internal sealed class SelectCommandContext(SelectQueryNode queryNode) : CommandC
         {
             stringBuilder.AppendLine($"Parent: {Parent?.Id}");
         }
-        if (_childContexts.Any())
+        if (_childContexts.Count > 0)
         {
             stringBuilder.AppendLine($"Children: {string.Join(", ", _childContexts.Select(c => c.Id))}");
         }

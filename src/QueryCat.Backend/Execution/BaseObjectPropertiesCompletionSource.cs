@@ -106,7 +106,7 @@ public abstract class BaseObjectPropertiesCompletionSource : ICompletionSource
         {
             return (
                 ObjectExpression: string.Empty,
-                Term: triggerTokens.Any() ? triggerTokens[0].Text.Trim() : string.Empty
+                Term: triggerTokens.Count > 0 ? triggerTokens[0].Text.Trim() : string.Empty
             );
         }
 

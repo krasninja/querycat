@@ -54,7 +54,7 @@ internal sealed partial class SelectPlanner
         CancellationToken cancellationToken)
     {
         if (querySpecificationNode.DistinctNode == null || querySpecificationNode.DistinctNode.IsEmpty
-            || !querySpecificationNode.DistinctNode.OnNodes.Any())
+            || querySpecificationNode.DistinctNode.OnNodes.Count == 0)
         {
             return;
         }
@@ -68,7 +68,7 @@ internal sealed partial class SelectPlanner
         SelectQuerySpecificationNode querySpecificationNode)
     {
         if (querySpecificationNode.DistinctNode == null || querySpecificationNode.DistinctNode.IsEmpty
-            || querySpecificationNode.DistinctNode.OnNodes.Any())
+            || querySpecificationNode.DistinctNode.OnNodes.Count > 0)
         {
             return;
         }

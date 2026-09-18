@@ -80,7 +80,7 @@ public sealed class GetInputsInMarkdownTask : AsyncFrostingTask<BuildContext>
             .ToList();
         var sb = new StringBuilder()
             .AppendLine("# Schema");
-        if (pluginFunctions.Any())
+        if (pluginFunctions.Count > 0)
         {
             sb.AppendLine();
         }
