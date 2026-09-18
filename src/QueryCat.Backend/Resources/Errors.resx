@@ -219,4 +219,7 @@
   <data name="QueryTimeout" xml:space="preserve">
     <value>Query timeout.</value>
   </data>
+  <data name="InvalidFilterExpression" xml:space="preserve">
+    <value>Invalid filter expression.</value>
+  </data>
 </root>

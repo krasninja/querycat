@@ -94,10 +94,9 @@ internal class ResolveTypesVisitor : AstVisitor
     /// <inheritdoc />
     public override ValueTask VisitAsync(CaseExpressionNode node, CancellationToken cancellationToken)
     {
-        var lastWhenNode = node.WhenNodes.LastOrDefault();
-        if (lastWhenNode != null)
+        if (node.WhenNodes.Count > 0)
         {
-            node.Type = lastWhenNode.ResultNode.Type;
+            node.Type = node.WhenNodes[0].ResultNode.Type;
         }
         return ValueTask.CompletedTask;
     }

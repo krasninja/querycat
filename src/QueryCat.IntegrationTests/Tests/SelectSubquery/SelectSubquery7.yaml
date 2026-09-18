@@ -1,0 +1,4 @@
+expected: |
+  True
+query: |
+  select 1 in (select 1) as insub;

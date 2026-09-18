@@ -14,7 +14,7 @@ internal partial class CreateDelegateVisitor
 
     internal sealed class SelectStrategyContainer(SelectStrategy[] strategies)
     {
-        public bool Empty => strategies.Length == 0;
+        public bool IsEmpty => strategies.Length == 0;
 
         public async ValueTask<bool> PushToContextAsync(ObjectSelectorContext context,
             CancellationToken cancellationToken)
@@ -75,7 +75,7 @@ internal partial class CreateDelegateVisitor
             // Indexes must be initialized, fix it.
             if (info is { Indexes: null })
             {
-                info = info.Value with { Indexes = _objectIndexesCache };
+                info = info.Value with { Indexes = _objectIndexesCache.ToArray() };
             }
             return info;
         }
@@ -167,9 +167,18 @@ internal partial class CreateDelegateVisitor
             }
             else if (selector is IdentifierFilterSelectorNode filterSelectorNode)
             {
+                if (!idNode.HasAttribute(ObjectSelectorContainerKey))
+                {
+                    throw new SemanticException(
+                        string.Format(Resources.Errors.InvalidFilterExpression, idNode.FullName));
+                }
                 var container = idNode.GetRequiredAttribute<VariantValueContainer>(ObjectSelectorContainerKey);
                 var idNodeContext = idNode.GetRequiredAttribute<ObjectSelectorContext>(ObjectSelectorKey);
                 strategies[i] = new IdentifierFilterSelectStrategy(container, idNodeContext, filterSelectorNode, nodeIdFuncMap);
+            }
+            else
+            {
+                throw new InvalidOperationException($"Selector '{selector.GetType().Name}' is not supported.");
             }
         }
         return new SelectStrategyContainer(strategies);
@@ -204,7 +213,7 @@ internal partial class CreateDelegateVisitor
         public async ValueTask<VariantValue> InvokeAsync(IExecutionThread thread, CancellationToken cancellationToken = default)
         {
             var startObject = thread.GetVariable(_variableName);
-            var result = await GetObjectBySelectorAsync(thread, _context, startObject, _strategies, cancellationToken);
+            var result = await GetObjectBySelectorAsync(thread, _context, startObject, _strategies, true, cancellationToken);
             return result;
         }
 
@@ -235,19 +244,20 @@ internal partial class CreateDelegateVisitor
         public ValueTask<VariantValue> InvokeAsync(IExecutionThread thread, CancellationToken cancellationToken = default)
         {
             return GetObjectBySelectorAsync(
-                    thread,
-                    _context,
-                    VariantValue.CreateFromObject(_container.Value),
-                    _strategies,
-                    cancellationToken);
+                thread,
+                _context,
+                _container.Value,
+                _strategies,
+                true,
+                cancellationToken);
         }
     }
 
     #endregion
 
-    private sealed class VariantValueContainer(object? value = null)
+    private sealed class VariantValueContainer(VariantValue value = default)
     {
-        public object? Value { get; set; } = value;
+        public VariantValue Value { get; set; } = value;
     }
 
     protected static async ValueTask<VariantValue> GetObjectBySelectorAsync(
@@ -255,15 +265,21 @@ internal partial class CreateDelegateVisitor
         ObjectSelectorContext context,
         VariantValue value,
         SelectStrategyContainer selectStrategyContainer,
+        bool restoreStack = false,
         CancellationToken cancellationToken = default)
     {
         var existingThread = context.ExecutionThread;
+        var startLength = context.Length;
         try
         {
             context.ExecutionThread = thread;
             var result = await GetObjectBySelectorInternalAsync(context, value, selectStrategyContainer,
                 cancellationToken);
             return result;
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
         }
         catch (Exception e)
         {
@@ -272,6 +288,10 @@ internal partial class CreateDelegateVisitor
         }
         finally
         {
+            if (restoreStack)
+            {
+                context.Trim(startLength);
+            }
             context.ExecutionThread = existingThread;
         }
 
@@ -284,7 +304,7 @@ internal partial class CreateDelegateVisitor
         SelectStrategyContainer selectStrategyContainer,
         CancellationToken cancellationToken = default)
     {
-        if (selectStrategyContainer.Empty || value.AsObjectUnsafe == null)
+        if (selectStrategyContainer.IsEmpty || value.AsObjectUnsafe == null)
         {
             return value;
         }

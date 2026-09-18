@@ -62,10 +62,17 @@ internal partial class CreateDelegateVisitor : AstVisitor
         {
             return funcUnit;
         }
-        await RunAsync(node, cancellationToken);
-        var handler = NodeIdFuncMap[node.Id];
-        NodeIdFuncMap.Clear();
-        return handler;
+
+        try
+        {
+            await RunAsync(node, cancellationToken);
+            var handler = NodeIdFuncMap[node.Id];
+            return handler;
+        }
+        finally
+        {
+            NodeIdFuncMap.Clear();
+        }
     }
 
     #region General
@@ -78,6 +85,7 @@ internal partial class CreateDelegateVisitor : AstVisitor
         var valueAction = NodeIdFuncMap[node.Expression.Id];
         var leftAction = NodeIdFuncMap[node.Left.Id];
         var rightAction = NodeIdFuncMap[node.Right.Id];
+        var isNot = node.IsNot;
 
         async ValueTask<VariantValue> Func(IExecutionThread thread, CancellationToken ct)
         {
@@ -91,27 +99,55 @@ internal partial class CreateDelegateVisitor : AstVisitor
                 return VariantValue.Null;
             }
             var boolResult = result.AsBoolean;
-            return node.IsNot ? new VariantValue(!boolResult) : new VariantValue(boolResult);
+            return isNot ? new VariantValue(!boolResult) : new VariantValue(boolResult);
         }
         NodeIdFuncMap[node.Id] = new FuncUnitDelegate(Func, node.Type);
     }
 
-    private sealed class BinaryFuncUnit(
-        VariantValue.Operation operation,
-        IFuncUnit leftAction,
-        IFuncUnit rightAction,
-        DataType outputType) : IFuncUnit
+    private sealed class BinaryFuncUnit : IFuncUnit
     {
+        private readonly VariantValue.Operation _operation;
+        private readonly IFuncUnit _leftAction;
+        private readonly IFuncUnit _rightAction;
+        private readonly DataType _outputType;
+
+        // Used for cache.
+        private readonly DataType _declaredLeftType;
+        private readonly DataType _declaredRightType;
+        private readonly VariantValue.BinaryFunction? _operationDelegate;
+
         /// <inheritdoc />
-        public DataType OutputType => outputType;
+        public DataType OutputType => _outputType;
+
+        public BinaryFuncUnit(
+            VariantValue.Operation operation,
+            IFuncUnit leftAction,
+            IFuncUnit rightAction,
+            DataType outputType)
+        {
+            _operation = operation;
+            _leftAction = leftAction;
+            _rightAction = rightAction;
+            _declaredLeftType = leftAction.OutputType;
+            _declaredRightType = rightAction.OutputType;
+            _outputType = outputType;
+
+            if (DataTypeUtils.IsSimple(_leftAction.OutputType) && DataTypeUtils.IsSimple(_rightAction.OutputType))
+            {
+                _operationDelegate =
+                    VariantValue.GetOperationDelegate(_operation, _leftAction.OutputType, _rightAction.OutputType);
+            }
+        }
 
         /// <inheritdoc />
         public async ValueTask<VariantValue> InvokeAsync(IExecutionThread thread, CancellationToken cancellationToken = default)
         {
-            var leftValue = await leftAction.InvokeAsync(thread, cancellationToken);
-            var rightValue = await rightAction.InvokeAsync(thread, cancellationToken);
-            var operationDelegate = VariantValue.GetOperationDelegate(operation, leftValue.Type, rightValue.Type);
-            return operationDelegate.Invoke(in leftValue, in rightValue);
+            var leftValue = await _leftAction.InvokeAsync(thread, cancellationToken);
+            var rightValue = await _rightAction.InvokeAsync(thread, cancellationToken);
+            var @delegate = _operationDelegate != null && leftValue.Type == _declaredLeftType && rightValue.Type == _declaredRightType
+                ? _operationDelegate
+                : VariantValue.GetOperationDelegate(_operation, leftValue.Type, rightValue.Type);
+            return @delegate.Invoke(in leftValue, in rightValue);
         }
     }
 
@@ -316,19 +352,37 @@ internal partial class CreateDelegateVisitor : AstVisitor
         NodeIdFuncMap[node.Id] = new FuncUnitMultiDelegate(DataType.Void, actions);
     }
 
-    private sealed class UnarySubtractFuncUnit(
-        IFuncUnit action,
-        DataType outputType) : IFuncUnit
+    private sealed class UnarySubtractFuncUnit: IFuncUnit
     {
+        private readonly IFuncUnit _action;
+        private readonly DataType _outputType;
+
+        // Used for cache.
+        private readonly DataType _declaredType;
+        private readonly VariantValue.UnaryFunction? _operationDelegate;
+
         /// <inheritdoc />
-        public DataType OutputType => outputType;
+        public DataType OutputType => _outputType;
+
+        public UnarySubtractFuncUnit(IFuncUnit action, DataType outputType)
+        {
+            _action = action;
+            _outputType = outputType;
+            _declaredType = action.OutputType;
+            if (DataTypeUtils.IsSimple(_action.OutputType))
+            {
+                _operationDelegate = VariantValue.GetNegationDelegate(_action.OutputType);
+            }
+        }
 
         /// <inheritdoc />
         public async ValueTask<VariantValue> InvokeAsync(IExecutionThread thread, CancellationToken cancellationToken = default)
         {
-            var value = await action.InvokeAsync(thread, cancellationToken);
-            var result = VariantValue.Negation(in value, out ErrorCode _);
-            return result;
+            var value = await _action.InvokeAsync(thread, cancellationToken);
+            var @delegate = _operationDelegate != null && value.Type == _declaredType
+                ? _operationDelegate
+                : VariantValue.GetNegationDelegate(value.Type);
+            return @delegate.Invoke(in value);
         }
     }
 
@@ -423,12 +477,13 @@ internal partial class CreateDelegateVisitor : AstVisitor
     }
 
     /// <inheritdoc />
-    public override async ValueTask VisitAsync(ArrayValuesNode node, CancellationToken cancellationToken)
+    public override ValueTask VisitAsync(ArrayValuesNode node, CancellationToken cancellationToken)
     {
         var nodeFuncs = node.ValuesNodes.Select(v => NodeIdFuncMap[v.Id]).ToArray();
+        var capacity = nodeFuncs.Length;
         async ValueTask<VariantValue> Func(IExecutionThread thread, CancellationToken ct)
         {
-            var array = new List<VariantValue>(capacity: node.ValuesNodes.Count);
+            var array = new List<VariantValue>(capacity: capacity);
             foreach (var valueFunc in nodeFuncs)
             {
                 var value = await valueFunc.InvokeAsync(thread, ct);
@@ -437,15 +492,17 @@ internal partial class CreateDelegateVisitor : AstVisitor
             return VariantValue.CreateFromObject(array);
         }
         NodeIdFuncMap[node.Id] = new FuncUnitDelegate(Func, node.Type);
+        return ValueTask.CompletedTask;
     }
 
     /// <inheritdoc />
-    public override async ValueTask VisitAsync(MapValuesNode node, CancellationToken cancellationToken)
+    public override ValueTask VisitAsync(MapValuesNode node, CancellationToken cancellationToken)
     {
-        var nodeFuncs = node.Map.ToDictionary(k => k.Key, v => NodeIdFuncMap[v.Value.Id]).ToDictionary();
+        var nodeFuncs = node.Map.ToDictionary(k => k.Key, v => NodeIdFuncMap[v.Value.Id]);
+        var capacity = node.Map.Count;
         async ValueTask<VariantValue> Func(IExecutionThread thread, CancellationToken ct)
         {
-            var map = new Dictionary<VariantValue, VariantValue>(capacity: node.Map.Count);
+            var map = new Dictionary<VariantValue, VariantValue>(capacity: capacity);
             foreach (var keyValue in nodeFuncs)
             {
                 var value = await keyValue.Value.InvokeAsync(thread, ct);
@@ -454,6 +511,7 @@ internal partial class CreateDelegateVisitor : AstVisitor
             return VariantValue.CreateFromObject(map);
         }
         NodeIdFuncMap[node.Id] = new FuncUnitDelegate(Func, node.Type);
+        return ValueTask.CompletedTask;
     }
 
     #endregion
@@ -578,16 +636,16 @@ internal partial class CreateDelegateVisitor : AstVisitor
             var argument = function.Arguments[i];
 
             // Try to set named first.
-            var positionalArgumentValue = node.Arguments
+            var namedArgumentValue = node.Arguments
                 .FirstOrDefault(a => !a.IsPositional && a.Key!.Equals(argument.Name));
-            if (positionalArgumentValue != null)
+            if (namedArgumentValue != null)
             {
-                argsDelegatesList.Add(NodeIdFuncMap[positionalArgumentValue.Id]);
+                argsDelegatesList.Add(NodeIdFuncMap[namedArgumentValue.Id]);
                 continue;
             }
 
             // Try positional.
-            if (node.Arguments.Count >= i + 1 && node.Arguments[i].IsPositional)
+            if (node.Arguments.Count > i && node.Arguments[i].IsPositional)
             {
                 argsDelegatesList.Add(NodeIdFuncMap[node.Arguments[i].Id]);
                 continue;

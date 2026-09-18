@@ -446,5 +446,11 @@ namespace QueryCat.Backend.Resources {
                 return ResourceManager.GetString("QueryTimeout", resourceCulture);
             }
         }
+        
+        internal static string InvalidFilterExpression {
+            get {
+                return ResourceManager.GetString("InvalidFilterExpression", resourceCulture);
+            }
+        }
     }
 }

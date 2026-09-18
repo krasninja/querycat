@@ -120,6 +120,17 @@ public sealed class ObjectSelectorContext
     public Token Peek() => SelectStack[^1];
 
     /// <summary>
+    /// Trim stack to a specific length.
+    /// </summary>
+    /// <param name="targetLength">Target stack length.</param>
+    public void Trim(int targetLength)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegative(targetLength);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(targetLength, Length);
+        _selectStack.RemoveRange(targetLength, Length - targetLength);
+    }
+
+    /// <summary>
     /// Reset state.
     /// </summary>
     public void Clear()

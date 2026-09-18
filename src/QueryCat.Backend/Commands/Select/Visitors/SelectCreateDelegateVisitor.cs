@@ -237,6 +237,7 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
     {
         if (node.InExpressionValuesNodes is SelectQueryNode queryNode)
         {
+            await ResolveTypesVisitor.VisitAsync(node, cancellationToken);
             var valueAction = NodeIdFuncMap[node.ExpressionNode.Id];
             var rowsIterator = await new SelectPlanner(ExecutionThread).CreateIteratorAsync(queryNode, _context, cancellationToken);
             var equalDelegate = VariantValue.GetEqualsDelegate(node.ExpressionNode.Type);

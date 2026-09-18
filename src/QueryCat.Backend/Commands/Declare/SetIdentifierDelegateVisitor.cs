@@ -62,7 +62,7 @@ internal sealed class SetIdentifierDelegateVisitor : CreateDelegateVisitor
         // This is expression object.
         context.ExecutionThread = thread;
         // Fills the context.
-        await GetObjectBySelectorAsync(thread, context, startObject, selectStrategyContainer, cancellationToken);
+        await GetObjectBySelectorAsync(thread, context, startObject, selectStrategyContainer, false, cancellationToken);
         var set = await thread.ObjectSelector.SetValueAsync(context,
             Converter.ConvertValue(newValue, typeof(object)), cancellationToken);
         // Not an expression - variable.
