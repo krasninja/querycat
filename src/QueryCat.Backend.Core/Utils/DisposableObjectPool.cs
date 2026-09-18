@@ -16,7 +16,7 @@ internal sealed class DisposableObjectPool<T> : SimpleObjectPool<T>, IDisposable
     /// <param name="createFunc">Object factory function.</param>
     /// <param name="beforeReturn">The action is called before return object to the pool.</param>
     /// <param name="maximumRetained">The maximum number of objects to retain in the pool.</param>
-    public DisposableObjectPool(Func<T> createFunc, Action<T>? beforeReturn = null, int maximumRetained = -1)
+    public DisposableObjectPool(Func<T> createFunc, Func<T, bool>? beforeReturn = null, int maximumRetained = -1)
         : base(createFunc, beforeReturn, maximumRetained)
     {
     }

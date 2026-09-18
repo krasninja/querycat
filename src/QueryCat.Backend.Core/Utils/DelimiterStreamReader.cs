@@ -31,11 +31,23 @@ public class DelimiterStreamReader
     private const int StateAdvanceNewLine1 = 11;
     private const int StateAdvanceNewLine2 = 12;
 
+    private const int MaximumStringBuilderRetainedCapacity = 4 * 1024;
+
     private static readonly char[] _autoDetectDelimiters = [',', '\t', ';', '|'];
     private static readonly char[] _endOfLineCharacters = ['\n', '\r'];
     private static readonly SearchValues<char> _endOfLineCharactersSearch = SearchValues.Create(_endOfLineCharacters);
 
-    private static readonly SimpleObjectPool<StringBuilder> _stringBuilderPool = new(() => new StringBuilder(), sb => sb.Clear());
+    private static readonly SimpleObjectPool<StringBuilder> _stringBuilderPool = new(
+        () => new StringBuilder(capacity: 100),
+        sb =>
+        {
+            if (sb.Capacity > MaximumStringBuilderRetainedCapacity)
+            {
+                return false;
+            }
+            sb.Clear();
+            return true;
+        });
 
     public delegate void OnDelimiterDelegate(char ch, long position, out bool countField, out bool endLine);
 

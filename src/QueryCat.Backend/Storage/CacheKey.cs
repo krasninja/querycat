@@ -98,13 +98,13 @@ internal readonly struct CacheKey : IEquatable<CacheKey>
         if (InputArguments.Count > 0)
         {
             sb.Append(' ');
-            var inputKeys = InputArguments.Select(ik => StringUtils.Quote("I:" + ik).ToString());
+            var inputKeys = InputArguments.Select(ik => StringUtils.Quote("I:" + ik));
             sb.AppendJoin(' ', inputKeys);
         }
         if (SelectColumns.Count > 0)
         {
             sb.Append(' ');
-            var columns = SelectColumns.Select(c => StringUtils.Quote("S:" + c).ToString());
+            var columns = SelectColumns.Select(c => StringUtils.Quote("S:" + c));
             sb.AppendJoin(' ', columns);
         }
         if (Offset > 0)
@@ -118,7 +118,7 @@ internal readonly struct CacheKey : IEquatable<CacheKey>
         if (Conditions.Count > 0)
         {
             sb.Append(' ');
-            var conditions = Conditions.Select(c => StringUtils.Quote("W:" + c.Serialize()).ToString());
+            var conditions = Conditions.Select(c => StringUtils.Quote("W:" + c.Serialize()));
             sb.AppendJoin(' ', conditions);
         }
         return sb.ToString();

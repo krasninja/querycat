@@ -11,9 +11,11 @@ internal class SimpleObjectPool<T> where T : class
     // Based on .NET implementation: https://github.com/dotnet/dotnet/blob/main/src/aspnetcore/src/ObjectPool/src/DefaultObjectPool.cs.
 
     private readonly Func<T> _createFunc;
-    private readonly Action<T>? _beforeReturn;
+    private readonly Func<T, bool> _beforeReturn;
     private readonly int _maxCapacity;
     private int _numItems;
+
+    private static bool DefaultReturnPolicy(T item) => true;
 
 #pragma warning disable SA1401
     // ReSharper disable InconsistentNaming
@@ -28,10 +30,10 @@ internal class SimpleObjectPool<T> where T : class
     /// <param name="createFunc">Object factory function.</param>
     /// <param name="beforeReturn">The action is called before return object to the pool.</param>
     /// <param name="maximumRetained">The maximum number of objects to retain in the pool.</param>
-    public SimpleObjectPool(Func<T> createFunc, Action<T>? beforeReturn = null, int maximumRetained = -1)
+    public SimpleObjectPool(Func<T> createFunc, Func<T, bool>? beforeReturn = null, int maximumRetained = -1)
     {
         _createFunc = createFunc;
-        _beforeReturn = beforeReturn;
+        _beforeReturn = beforeReturn ?? DefaultReturnPolicy;
         if (maximumRetained < 0)
         {
             maximumRetained = Environment.ProcessorCount * 2;
@@ -73,7 +75,10 @@ internal class SimpleObjectPool<T> where T : class
     /// <returns>True if the object was returned to the pool.</returns>
     private protected bool ReturnCore(T obj)
     {
-        _beforeReturn?.Invoke(obj);
+        if (!_beforeReturn.Invoke(obj))
+        {
+            return false;
+        }
         if (_fastItem != null || Interlocked.CompareExchange(ref _fastItem, obj, null) != null)
         {
             if (Interlocked.Increment(ref _numItems) <= _maxCapacity)

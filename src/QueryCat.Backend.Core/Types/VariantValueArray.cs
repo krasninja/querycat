@@ -28,7 +28,7 @@ internal readonly struct VariantValueArray : IEquatable<VariantValueArray>, IClo
 
     public VariantValueArray(params VariantValue[] values)
     {
-        _values = values ?? [];;
+        _values = values ?? [];
 
         var hashCode = default(HashCode);
         for (var i = 0; i < _values.Length; i++)

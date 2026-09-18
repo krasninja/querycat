@@ -27,4 +27,14 @@ public class StringUtilsTests
         // Assert.
         Assert.Contains(char.ConvertFromUtf32(129337), result);
     }
+
+    [Fact]
+    public void Unescape_HexString2_CorrectCode()
+    {
+        // Arrange and act.
+        var result = StringUtils.Unescape(@"\x41Z");
+
+        // Assert.
+        Assert.Equal("AZ", result);
+    }
 }
