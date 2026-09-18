@@ -236,6 +236,7 @@ public class RowsFrame : IRowsSchema, IEnumerable<Row>
     public void Clear()
     {
         _storage.Clear();
+        _removedRows.Clear();
         TotalRows = 0;
     }
 

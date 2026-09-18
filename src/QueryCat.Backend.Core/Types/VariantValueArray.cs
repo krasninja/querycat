@@ -3,6 +3,9 @@ namespace QueryCat.Backend.Core.Types;
 /// <summary>
 /// Array of <see cref="VariantValue" /> with Equals, GetHashCode implementation.
 /// </summary>
+/// <remarks>
+/// The struct is not read only for VariantValue array items.
+/// </remarks>
 public readonly struct VariantValueArray(params VariantValue[] values) : IEquatable<VariantValueArray>
 {
     public static VariantValueArray Empty { get; } = new(0);
@@ -27,14 +30,6 @@ public readonly struct VariantValueArray(params VariantValue[] values) : IEquata
     public VariantValueArray(VariantValueArray variantValueArray) : this(variantValueArray._values.Length)
     {
         Array.Copy(variantValueArray._values, _values, variantValueArray._values.Length);
-    }
-
-    /// <summary>
-    /// Make every value NULL.
-    /// </summary>
-    public void Clear()
-    {
-        Array.Fill(_values, VariantValue.Null);
     }
 
     /// <inheritdoc />
