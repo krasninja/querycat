@@ -28,7 +28,7 @@ internal sealed class FunctionResultStore
         _factory = factory;
         _functionCallInfo = functionCallInfo;
 
-        _functionCallInfoResults = new VariantValueArray(size: functionCallInfo.Arguments.Length);
+        _functionCallInfoResults = new VariantValue[functionCallInfo.Arguments.Length];
     }
 
     /// <summary>
@@ -72,9 +72,7 @@ internal sealed class FunctionResultStore
         }
         _firstCall = false;
 
-        var arr = new VariantValueArray(size: _functionCallInfo.Arguments.Length);
-        Array.Copy(_functionCallInfoResults, arr, _functionCallInfoResults.Length);
-        return arr;
+        return VariantValueArray.CopyOf(_functionCallInfoResults);
     }
 
     /// <inheritdoc />

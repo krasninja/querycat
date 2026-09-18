@@ -45,11 +45,11 @@ internal sealed class GroupRowsIterator : IRowsIterator, IRowsIteratorParent
 
     private readonly struct GroupKeyEntry
     {
-        public VariantValueArray[] AggregateStates { get; }
+        public VariantValue[][] AggregateStates { get; }
 
         public int RowIndex { get; }
 
-        public GroupKeyEntry(VariantValueArray[] aggregateStates, int rowIndex)
+        public GroupKeyEntry(VariantValue[][] aggregateStates, int rowIndex)
         {
             AggregateStates = aggregateStates;
             RowIndex = rowIndex;
@@ -125,12 +125,12 @@ internal sealed class GroupRowsIterator : IRowsIterator, IRowsIteratorParent
             .AppendSubQueriesWithIndent(_keys);
     }
 
-    private static VariantValueArray[] TargetsToInitialStates(AggregateTarget[] targets)
+    private static VariantValue[][] TargetsToInitialStates(AggregateTarget[] targets)
     {
-        var arr = new VariantValueArray[targets.Length];
+        var arr = new VariantValue[targets.Length][];
         for (var i = 0; i < targets.Length; i++)
         {
-            arr[i] = new VariantValueArray(targets[i].AggregateFunction.GetInitialState(targets[i].ReturnType));
+            arr[i] = targets[i].AggregateFunction.GetInitialState(targets[i].ReturnType);
         }
         return arr;
     }
@@ -156,10 +156,10 @@ internal sealed class GroupRowsIterator : IRowsIterator, IRowsIteratorParent
             if (!keysRowIndexesMap.TryGetValue(probeKeyArray, out GroupKeyEntry groupKey))
             {
                 _rowsIterator.Current.Copy(row);
-                VariantValueArray[] initialStates = TargetsToInitialStates(_targets);
+                var initialStates = TargetsToInitialStates(_targets);
                 groupKey = new GroupKeyEntry(initialStates, _rowsFrame.AddRow(row));
                 keysRowIndexesMap.Add(probeKeyArray, groupKey);
-                probeKey = new VariantValueArray(size: _keys.Length);
+                probeKey = new VariantValue[_keys.Length];
             }
 
             for (var i = 0; i < _targets.Length; i++)

@@ -48,8 +48,8 @@ internal sealed class VaryingOutputRowsIterator : IRowsIterator, IRowsIteratorPa
 
         _outputFactory = func;
         _functionCallInfo = functionCallInfo;
-        _functionCallInfoResults = new VariantValueArray(size: functionCallInfo.Arguments.Length);
-        _functionCallInfoResultsForCompare = new VariantValueArray(size: functionCallInfo.Arguments.Length);
+        _functionCallInfoResults = new VariantValue[functionCallInfo.Arguments.Length];
+        _functionCallInfoResultsForCompare = new VariantValue[functionCallInfo.Arguments.Length];
 
         CurrentOutput = NullRowsOutput.Instance;
     }
@@ -96,7 +96,7 @@ internal sealed class VaryingOutputRowsIterator : IRowsIterator, IRowsIteratorPa
             output.QueryContext = _queryContext;
             await output.OpenAsync(cancellationToken);
             _logger.LogDebug("Open for args {Arguments}.", _functionCallInfo);
-            _outputs.Add(args, output);
+            _outputs.Add(VariantValueArray.CopyOf(values), output);
             CurrentOutput = output;
         }
 
