@@ -37,7 +37,7 @@ internal sealed class OrderRowsIterator : IRowsIterator, IRowsIteratorParent
         _rowsFrame = new RowsFrame(_rowsIterator.Columns);
         _rowsFrameIterator = _rowsFrame.GetIterator();
 
-        var orderColumns = orders.Select((i, index) => new Column($"__order{index}", i.Func.OutputType));
+        var orderColumns = orders.Select((o, index) => new Column($"__order{index}", o.Func.OutputType));
         _orderRowsFrame = new RowsFrame(orderColumns.ToArray());
 
         _orderIndex = new OrderColumnsIndex(
@@ -52,15 +52,10 @@ internal sealed class OrderRowsIterator : IRowsIterator, IRowsIteratorParent
 
     private async ValueTask CopyRowIteratorToFrameAsync(CancellationToken cancellationToken)
     {
-        var row = new Row(_rowsFrame);
         var orderRow = new Row(_orderRowsFrame);
         while (await _rowsIterator.MoveNextAsync(cancellationToken))
         {
-            for (var i = 0; i < _rowsIterator.Columns.Length; i++)
-            {
-                row[i] = _rowsIterator.Current[i];
-            }
-            _rowsFrame.AddRow(row);
+            _rowsFrame.AddRow(_rowsIterator.Current);
             for (var i = 0; i < _orders.Length; i++)
             {
                 orderRow[i] = await _orders[i].Func.InvokeAsync(_thread, cancellationToken);
@@ -90,14 +85,19 @@ internal sealed class OrderRowsIterator : IRowsIterator, IRowsIteratorParent
     /// <inheritdoc />
     public async Task ResetAsync(CancellationToken cancellationToken = default)
     {
-        await _rowsFrameIterator.ResetAsync(cancellationToken);
+        _isInitialized = false;
         _rowsFrame.Clear();
+        _orderRowsFrame.Clear();
+        await _rowsIterator.ResetAsync(cancellationToken);
+        await _rowsFrameIterator.ResetAsync(cancellationToken);
+        await _orderIndexIterator.ResetAsync(cancellationToken);
     }
 
     /// <inheritdoc />
     public void Explain(IndentedStringBuilder stringBuilder)
     {
-        stringBuilder.AppendRowsIteratorsWithIndent("Order", _rowsIterator);
+        stringBuilder.AppendRowsIteratorsWithIndent($"Order (keys={_orders.Length})", _rowsIterator)
+            .AppendSubQueriesWithIndent(_orders.Select(o => o.Func));
     }
 
     /// <inheritdoc />
