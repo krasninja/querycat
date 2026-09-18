@@ -34,7 +34,7 @@ internal static class MathFunctions
     public static VariantValue Degrees(IExecutionThread thread)
     {
         var rad = thread.Stack.Pop();
-        return new VariantValue(180d / Math.PI * rad);
+        return new VariantValue(180d / Math.PI * rad.AsFloat);
     }
 
     [SafeFunction]
@@ -52,7 +52,7 @@ internal static class MathFunctions
     public static VariantValue Radians(IExecutionThread thread)
     {
         var deg = thread.Stack.Pop();
-        return new VariantValue(Math.PI / 180d * deg);
+        return new VariantValue(Math.PI / 180d * deg.AsFloat);
     }
 
     [SafeFunction]
@@ -146,7 +146,7 @@ internal static class MathFunctions
 
     [SafeFunction]
     [Description("a raised to the power of b.")]
-    [FunctionSignature("power(a: integer, b: integer): integer")]
+    [FunctionSignature("power(a: integer, b: integer): float")]
     [FunctionSignature("power(a: float, b: float): float")]
     [FunctionSignature("power(a: integer, b: float): float")]
     [FunctionSignature("power(a: float, b: integer): float")]
@@ -172,6 +172,7 @@ internal static class MathFunctions
     [SafeFunction]
     [Description("Nearest integer less than or equal to argument.")]
     [FunctionSignature("floor(x: float): float")]
+    [FunctionSignature("floor(x: numeric): numeric")]
     public static VariantValue Floor(IExecutionThread thread)
     {
         var x = thread.Stack.Pop().AsFloat;
@@ -179,8 +180,9 @@ internal static class MathFunctions
     }
 
     [SafeFunction]
-    [Description("Nearest integer greater than or equal to argument (same as ceil).")]
+    [Description("Nearest integer greater than or equal to argument.")]
     [FunctionSignature("ceiling(x: float): float")]
+    [FunctionSignature("ceiling(x: numeric): numeric")]
     public static VariantValue Ceiling(IExecutionThread thread)
     {
         var x = thread.Stack.Pop().AsFloat;
@@ -218,15 +220,15 @@ internal static class MathFunctions
         {
             return VariantValue.Null;
         }
-        var maxValue = notNullArgs.First();
+        var minValue = notNullArgs.First();
         for (var i = 1; i < notNullArgs.Length; i++)
         {
-            if (VariantValue.Less(in notNullArgs[i], in maxValue, out _).AsBoolean)
+            if (VariantValue.Less(in notNullArgs[i], in minValue, out _).AsBoolean)
             {
-                maxValue = notNullArgs[i];
+                minValue = notNullArgs[i];
             }
         }
-        return maxValue;
+        return minValue;
     }
 
     [SafeFunction]
@@ -236,7 +238,7 @@ internal static class MathFunctions
     public static VariantValue Ln(IExecutionThread thread)
     {
         var x = thread.Stack.Pop().AsFloat;
-        return new VariantValue(x.HasValue ? Math.Log(x.Value) : null);
+        return new VariantValue(x.HasValue && x.Value <= 0 ? Math.Log(x.Value) : null);
     }
 
     [SafeFunction]
@@ -246,7 +248,7 @@ internal static class MathFunctions
     public static VariantValue Log(IExecutionThread thread)
     {
         var x = thread.Stack.Pop().AsFloat;
-        return new VariantValue(x.HasValue ? Math.Log10(x.Value) : null);
+        return new VariantValue(x.HasValue && x.Value <= 0 ? Math.Log10(x.Value) : null);
     }
 
     public static void RegisterFunctions(IFunctionsManager functionsManager)
