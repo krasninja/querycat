@@ -60,7 +60,7 @@ internal sealed partial class SelectPlanner
         }
 
         var funcUnits = await Misc_CreateDelegateAsync(querySpecificationNode.DistinctNode.OnNodes, context, cancellationToken);
-        context.SetIterator(new DistinctRowsIteratorIterator(ExecutionThread, context.CurrentIterator, funcUnits));
+        context.SetIterator(new DistinctRowsIterator(ExecutionThread, context.CurrentIterator, funcUnits));
     }
 
     private void Pipeline_CreateDistinctAllRowsSet(
@@ -77,7 +77,7 @@ internal sealed partial class SelectPlanner
             .Select((_, i) => new FuncUnitRowsIteratorColumn(context.CurrentIterator, i))
             .Cast<IFuncUnit>()
             .ToArray();
-        context.SetIterator(new DistinctRowsIteratorIterator(ExecutionThread, context.CurrentIterator, funcUnits));
+        context.SetIterator(new DistinctRowsIterator(ExecutionThread, context.CurrentIterator, funcUnits));
     }
 
     private readonly record struct ColumnWithIndex(

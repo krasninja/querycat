@@ -8,12 +8,13 @@ namespace QueryCat.Backend.Commands.Select.Iterators;
 /// <summary>
 /// The iterator eliminates duplicated rows.
 /// </summary>
-internal class DistinctRowsIteratorIterator : IRowsIterator, IRowsIteratorParent
+internal sealed class DistinctRowsIterator : IRowsIterator, IRowsIteratorParent
 {
     private readonly IExecutionThread _thread;
     private readonly IRowsIterator _rowsIterator;
     private readonly IFuncUnit[] _columnsFunctions;
     private readonly HashSet<VariantValueArray> _values = new();
+    private VariantValue[] _buffer;
 
     /// <inheritdoc />
     public Column[] Columns => _rowsIterator.Columns;
@@ -21,23 +22,23 @@ internal class DistinctRowsIteratorIterator : IRowsIterator, IRowsIteratorParent
     /// <inheritdoc />
     public Row Current => _rowsIterator.Current;
 
-    public DistinctRowsIteratorIterator(
+    public DistinctRowsIterator(
         IExecutionThread thread,
         IRowsIterator rowsIterator,
-        IEnumerable<IFuncUnit> columnsIndexes) : this(thread, rowsIterator, columnsIndexes.ToArray())
+        IEnumerable<IFuncUnit> columnsFunctions) : this(thread, rowsIterator, columnsFunctions.ToArray())
     {
     }
 
-    public DistinctRowsIteratorIterator(
+    public DistinctRowsIterator(
         IExecutionThread thread,
         IRowsIterator rowsIterator,
-        params IFuncUnit[] columnsIndexes)
+        params IFuncUnit[] columnsFunctions)
     {
         _thread = thread;
         _rowsIterator = rowsIterator;
-        if (columnsIndexes.Any())
+        if (columnsFunctions.Length > 0)
         {
-            _columnsFunctions = columnsIndexes;
+            _columnsFunctions = columnsFunctions;
         }
         else
         {
@@ -46,6 +47,7 @@ internal class DistinctRowsIteratorIterator : IRowsIterator, IRowsIteratorParent
                 .Select((_, i) => new FuncUnitRowsIteratorColumn(rowsIterator, i))
                 .ToArray();
         }
+        _buffer = new VariantValue[_columnsFunctions.Length];
     }
 
     /// <inheritdoc />
@@ -53,17 +55,20 @@ internal class DistinctRowsIteratorIterator : IRowsIterator, IRowsIteratorParent
     {
         while (await _rowsIterator.MoveNextAsync(cancellationToken))
         {
-            var values = new VariantValue[_columnsFunctions.Length];
             for (var i = 0; i < _columnsFunctions.Length; i++)
             {
-                values[i] = await _columnsFunctions[i].InvokeAsync(_thread, cancellationToken);
+                _buffer[i] = await _columnsFunctions[i].InvokeAsync(_thread, cancellationToken);
             }
-            var arr = new VariantValueArray(values);
+            var arr = new VariantValueArray(_buffer);
 
-            if (_values.Add(arr))
+            if (!_values.Add(arr))
             {
-                return true;
+                continue;
             }
+
+            // It was the new data - create new buffer.
+            _buffer = new VariantValue[_columnsFunctions.Length];
+            return true;
         }
         return false;
     }
@@ -71,19 +76,30 @@ internal class DistinctRowsIteratorIterator : IRowsIterator, IRowsIteratorParent
     /// <inheritdoc />
     public async Task ResetAsync(CancellationToken cancellationToken = default)
     {
-        await _rowsIterator.ResetAsync(cancellationToken);
         _values.Clear();
+        await _rowsIterator.ResetAsync(cancellationToken);
     }
 
     /// <inheritdoc />
     public void Explain(IndentedStringBuilder stringBuilder)
     {
-        stringBuilder.AppendRowsIteratorsWithIndent("Distinct", _rowsIterator);
+        stringBuilder.AppendRowsIteratorsWithIndent($"Distinct (keys={_columnsFunctions.Length})", _rowsIterator)
+            .AppendSubQueriesWithIndent(_columnsFunctions);
     }
 
     /// <inheritdoc />
     public IEnumerable<IRowsSchema> GetChildren()
     {
         yield return _rowsIterator;
+        foreach (var funcUnit in _columnsFunctions)
+        {
+            if (funcUnit is IRowsIteratorParent funcUnitDelegate)
+            {
+                foreach (var child in funcUnitDelegate.GetChildren())
+                {
+                    yield return child;
+                }
+            }
+        }
     }
 }
