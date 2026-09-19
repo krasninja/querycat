@@ -214,6 +214,7 @@ public class DefaultObjectSelector : IObjectSelector
         return true;
     }
 
+    [UnconditionalSuppressMessage("Trimming", "IL2075", Justification = "Dictionary interfaces are preserved by the runtime type.")]
     private static Type? GetDictionaryKeyType(IDictionary dictionary)
     {
         foreach (var @interface in dictionary.GetType().GetInterfaces())
@@ -390,6 +391,7 @@ public class DefaultObjectSelector : IObjectSelector
         return ValueTask.FromResult(false);
     }
 
+    [UnconditionalSuppressMessage("Trimming", "IL2075", Justification = "Collection interfaces are preserved by the runtime type.")]
     private static Type GetElementType(object collection, bool dictionaryValue)
     {
         var type = collection.GetType();
@@ -422,6 +424,7 @@ public class DefaultObjectSelector : IObjectSelector
     /// <param name="value">Value.</param>
     /// <param name="targetType">Target type.</param>
     /// <returns>Converted value or null if cannot convert.</returns>
+    [UnconditionalSuppressMessage("Trimming", "IL2067", Justification = "Only called for value types, which always have a default constructor.")]
     protected virtual object? ConvertValue(object? value, Type targetType)
     {
         if (value == null)

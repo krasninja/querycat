@@ -4,6 +4,8 @@
     <TargetFramework>net10.0</TargetFramework>
     <OutputType>Exe</OutputType>
     <RunWorkingDirectory>$(MSBuildProjectDirectory)</RunWorkingDirectory>
+    <!-- Cake.Git ships native git2 binary in lib folder. -->
+    <MSBuildWarningsAsMessages>$(MSBuildWarningsAsMessages);MSB3246</MSBuildWarningsAsMessages>
   </PropertyGroup>
 
   <PropertyGroup>
