@@ -352,7 +352,7 @@ internal partial class CreateDelegateVisitor : AstVisitor
         NodeIdFuncMap[node.Id] = new FuncUnitMultiDelegate(DataType.Void, actions);
     }
 
-    private sealed class UnarySubtractFuncUnit: IFuncUnit
+    private sealed class UnarySubtractFuncUnit : IFuncUnit
     {
         private readonly IFuncUnit _action;
         private readonly DataType _outputType;

@@ -37,4 +37,24 @@ public class StringUtilsTests
         // Assert.
         Assert.Equal("AZ", result);
     }
+
+    [Fact]
+    public void Unescape_UnknownSymbol_CorrectCode()
+    {
+        // Arrange and act.
+        var result = StringUtils.Unescape(@"a\qb");
+
+        // Assert.
+        Assert.Equal(@"a\qb", result);
+    }
+
+    [Fact]
+    public void Unescape_PathStringWithBackslash_CorrectPath()
+    {
+        // Arrange and act.
+        var result = StringUtils.Unescape(@"C:\\temp");
+
+        // Assert.
+        Assert.Equal(@"C:\temp", result);
+    }
 }

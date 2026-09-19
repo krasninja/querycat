@@ -55,7 +55,7 @@ internal static class RowsInputConverter
 
         var split = StringUtils.GetFieldsFromLine(source, delimiter: '=');
         var name = split.Length == 2 ? split[0] : GetNextInputName();
-        var command = string.Join(' ', Application.CommandOpen, StringUtils.Quote(split[^1], quote: "'", force: true));
+        var command = string.Join(' ', Application.CommandOpen, StringUtils.Quote(split[^1], quoteChar: '\'', force: true));
         var rowsInputValue = await thread.RunAsync(command, cancellationToken: cancellationToken);
         var rowsInput = ConvertToInput(rowsInputValue);
         return new KeyValuePair<string, IRowsInput?>(name, rowsInput);

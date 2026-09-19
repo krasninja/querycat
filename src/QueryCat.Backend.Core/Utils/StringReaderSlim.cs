@@ -10,8 +10,15 @@ internal ref struct StringReaderSlim
     private readonly ReadOnlySpan<char> _str;
     private int _pos;
 
+    /// <summary>
+    /// Is at the end.
+    /// </summary>
     public bool IsEnd => _pos == _str.Length;
 
+    /// <summary>
+    /// Constructor.
+    /// </summary>
+    /// <param name="str">Target string.</param>
     public StringReaderSlim(ReadOnlySpan<char> str)
     {
         _str = str;

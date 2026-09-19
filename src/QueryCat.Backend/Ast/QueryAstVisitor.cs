@@ -81,7 +81,7 @@ internal class QueryAstVisitor : AstVisitor
         string value;
         if (node.Value.Type == DataType.String)
         {
-            value = StringUtils.Quote(node.Value.AsStringUnsafe, quote: "'", force: true);
+            value = StringUtils.Quote(node.Value.AsStringUnsafe, quoteChar: '\'', force: true);
         }
         else
         {

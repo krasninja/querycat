@@ -94,17 +94,17 @@ internal readonly struct CacheKey : IEquatable<CacheKey>
     internal string Serialize()
     {
         var sb = new StringBuilder(32);
-        sb.Append(StringUtils.Quote($"F:{From}"));
+        sb.Append(StringUtils.Quote($"F:{From}", force: true));
         if (InputArguments.Count > 0)
         {
             sb.Append(' ');
-            var inputKeys = InputArguments.Select(ik => StringUtils.Quote("I:" + ik));
+            var inputKeys = InputArguments.Select(ik => StringUtils.Quote("I:" + ik, force: true));
             sb.AppendJoin(' ', inputKeys);
         }
         if (SelectColumns.Count > 0)
         {
             sb.Append(' ');
-            var columns = SelectColumns.Select(c => StringUtils.Quote("S:" + c));
+            var columns = SelectColumns.Select(c => StringUtils.Quote("S:" + c, force: true));
             sb.AppendJoin(' ', columns);
         }
         if (Offset > 0)
@@ -118,7 +118,7 @@ internal readonly struct CacheKey : IEquatable<CacheKey>
         if (Conditions.Count > 0)
         {
             sb.Append(' ');
-            var conditions = Conditions.Select(c => StringUtils.Quote("W:" + c.Serialize()));
+            var conditions = Conditions.Select(c => StringUtils.Quote("W:" + c.Serialize(), force: true));
             sb.AppendJoin(' ', conditions);
         }
         return sb.ToString();

@@ -179,7 +179,7 @@ internal static class FunctionFormatter
         _ => value.ToString(CultureInfo.InvariantCulture),
     };
 
-    private static string Quote(string target) => StringUtils.Quote(target, quote: "\'");
+    private static string Quote(string target) => StringUtils.Quote(target, quoteChar: '\'');
 
     /// <summary>
     /// Normalize function name. Make it uppercase.

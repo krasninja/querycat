@@ -302,7 +302,7 @@ public class AIAssistant
     }
 
     private static string Quote(string target)
-        => StringUtils.Quote(target, quote: "'", force: true);
+        => StringUtils.Quote(target, quoteChar: '\'', force: true);
 
     public static string GetPromptTablesInformation(IReadOnlyDictionary<string, IRowsInput> inputs)
     {

@@ -115,13 +115,16 @@ internal sealed class LtsvInput : StreamRowsInput
 
     private ReadOnlySpan<char> Unquote(ReadOnlySpan<char> span)
     {
-        if (span.StartsWith("\""))
+        if (span.Length > 0)
         {
-            span = StringUtils.Unquote(span, "\"");
-        }
-        if (span.StartsWith("'"))
-        {
-            span = StringUtils.Unquote(span, "'");
+            if (span[0] == '\"')
+            {
+                span = StringUtils.Unquote(span, '\"');
+            }
+            else if (span[0] == '\'')
+            {
+                span = StringUtils.Unquote(span, '\'');
+            }
         }
         return span;
     }

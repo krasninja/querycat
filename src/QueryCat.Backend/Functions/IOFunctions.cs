@@ -462,7 +462,7 @@ internal static class IOFunctions
         if (type == DataType.String)
         {
             var stringValue = StringUtils.Unquote(str);
-            stringValue = StringUtils.Unquote(stringValue, quoteChar: "'");
+            stringValue = StringUtils.Unquote(stringValue, quoteChar: '\'');
             return new VariantValue(StringUtils.Unescape(stringValue));
         }
         if (VariantValue.TryCreateFromString(str, type, out var value))

@@ -133,7 +133,7 @@ internal abstract class BaseQueryCommand : BaseCommand
                 throw new QueryCatException(string.Format(Resources.Errors.InvalidVariableFormat, variable));
             }
             var name = arr[0];
-            var stringValue = StringUtils.Unquote(arr[1], quoteChar: "\'");
+            var stringValue = StringUtils.Unquote(arr[1], quoteChar: '\'');
             var targetType = arr[1].Length == stringValue.Length
                 ? DataTypeUtils.DetermineTypeByValue(stringValue)
                 : DataType.String;
