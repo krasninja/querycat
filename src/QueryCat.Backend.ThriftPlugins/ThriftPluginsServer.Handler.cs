@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.Logging;
 using QueryCat.Plugins.Client;
@@ -21,8 +22,8 @@ public partial class ThriftPluginsServer
     private sealed class Handler : QueryCatIOHandler, PluginsManager.IAsync
     {
         private readonly ThriftPluginsServer _thriftPluginsServer;
-        private readonly Dictionary<int, IExecutionScope> _scopeIdToScope = new();
-        private readonly Dictionary<IExecutionScope, int> _scopeToScopeId = new();
+        private readonly ConcurrentDictionary<int, IExecutionScope> _scopeIdToScope = new();
+        private readonly ConcurrentDictionary<IExecutionScope, int> _scopeToScopeId = new();
         private int _executionScopeId;
 
         public Handler(ThriftPluginsServer thriftPluginsServer, ObjectsStorage objectsStorage)
@@ -59,7 +60,7 @@ public partial class ThriftPluginsServer
             {
                 if (_thriftPluginsServer._logger.IsEnabled(Microsoft.Extensions.Logging.LogLevel.Debug))
                 {
-                    _thriftPluginsServer._logger.LogDebug("Available tokens:\n" + _thriftPluginsServer.DumpRegistrationTokens());
+                    _thriftPluginsServer._logger.LogDebug("Available tokens:\n{Tokens}", _thriftPluginsServer.DumpRegistrationTokens());
                 }
                 throw new QueryCatPluginException(ErrorType.INVALID_REGISTRATION_TOKEN, Resources.Errors.InvalidToken);
             }
@@ -71,7 +72,7 @@ public partial class ThriftPluginsServer
             {
                 context.PluginName = plugin_data.Name;
             }
-            if (string.IsNullOrEmpty(context.PluginName))
+            else
             {
                 context.PluginName = _thriftPluginsServer.GetPluginNameByRegistrationToken(registration_token);
             }
@@ -191,13 +192,8 @@ public partial class ThriftPluginsServer
 
         private int AddScope(IExecutionScope scope)
         {
-            if (_scopeToScopeId.TryGetValue(scope, out var scopeId))
-            {
-                return scopeId;
-            }
-            scopeId = Interlocked.Increment(ref _executionScopeId);
+            var scopeId = _scopeToScopeId.GetOrAdd(scope, _ => Interlocked.Increment(ref _executionScopeId));
             _scopeIdToScope[scopeId] = scope;
-            _scopeToScopeId[scope] = scopeId;
             return scopeId;
         }
 
@@ -205,7 +201,7 @@ public partial class ThriftPluginsServer
         {
             if (_scopeToScopeId.Remove(scope, out var scopeId))
             {
-                _scopeIdToScope.Remove(scopeId);
+                _scopeIdToScope.Remove(scopeId, out _);
                 return scopeId;
             }
             return ThriftPluginExecutionScope.NoScopeId;
@@ -271,11 +267,15 @@ public partial class ThriftPluginsServer
             message = $"[{context.PluginName}] {message}";
             if (arguments != null && arguments.Count > 0)
             {
-                _thriftPluginsServer._logger.Log(logLevel, message, args: arguments.Cast<object>().ToArray());
+                _thriftPluginsServer._logger.Log(logLevel, "[{PluginName}] {Message} {Args}",
+                    context.PluginName,
+                    message,
+                    string.Join(", ", arguments.Cast<object>())
+                );
             }
             else
             {
-                _thriftPluginsServer._logger.Log(logLevel, message);
+                _thriftPluginsServer._logger.Log(logLevel, "[{PluginName}] {Message}", context.PluginName, message);
             }
         }
 
@@ -357,9 +357,11 @@ public partial class ThriftPluginsServer
             return base.BeforeCallAsync(token, methodName, cancellationToken);
         }
 
+        private static readonly Microsoft.Extensions.Logging.LogLevel[] _logLevels = Enum.GetValues<Microsoft.Extensions.Logging.LogLevel>();
+
         private Microsoft.Extensions.Logging.LogLevel GetCurrentLogLevel()
         {
-            foreach (var logLevel in Enum.GetValues<Microsoft.Extensions.Logging.LogLevel>())
+            foreach (var logLevel in _logLevels)
             {
                 if (_thriftPluginsServer._logger.IsEnabled(logLevel))
                 {
@@ -630,7 +632,7 @@ public partial class ThriftPluginsServer
         {
             try
             {
-                return await _handler.Blob_GetContentTypeAsync(token, object_blob_handle, cancellationToken);
+                return await _handler.Blob_GetNameAsync(token, object_blob_handle, cancellationToken);
             }
             catch (Exception ex)
             {
