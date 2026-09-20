@@ -18,9 +18,11 @@ internal sealed class ThriftPluginContext : IDisposable, IAsyncDisposable
     private readonly SemaphoreSlim _createClientSemaphore = new(1);
     private readonly WaitQueue _waitQueue;
     private readonly int _maxConnections;
-    private bool _maxConnectionsReached;
     private bool _isDisposed;
     private readonly bool _logClientRemoteCalls;
+    private readonly ConcurrentBag<Plugin.IAsync> _clients = new();
+    private readonly Lock _functionsLock = new();
+    private readonly List<PluginContextFunction> _functions = new();
 
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(ThriftPluginContext));
 
@@ -28,7 +30,7 @@ internal sealed class ThriftPluginContext : IDisposable, IAsyncDisposable
 
     public string PluginName { get; set; } = "N/A";
 
-    public List<PluginContextFunction> Functions { get; } = new();
+    public IReadOnlyList<PluginContextFunction> Functions => _functions;
 
     public ObjectsStorage ObjectsStorage { get; }
 
@@ -56,11 +58,31 @@ internal sealed class ThriftPluginContext : IDisposable, IAsyncDisposable
         _waitQueue = new WaitQueue(Application.LoggerFactory);
     }
 
+    /// <summary>
+    /// Add function to context.
+    /// </summary>
+    /// <param name="function">Function.</param>
+    public void AddFunction(PluginContextFunction function)
+    {
+        lock (_functionsLock)
+        {
+            _functions.Add(function);
+        }
+    }
+
     internal async ValueTask<ClientWrapper> GetSessionAsync(CancellationToken cancellationToken = default)
     {
+        ObjectDisposedException.ThrowIf(_isDisposed, this);
+
         if (TotalConnectionsCount == 0)
         {
-            await CreateClientAsync(null, cancellationToken);
+            await CreateClientAsync(null, cancellationToken)
+                .ConfigureAwait(false);
+            if (TotalConnectionsCount == 0)
+            {
+                throw new InvalidOperationException(
+                    $"Cannot establish a connection to the plugin '{PluginName}'.");
+            }
         }
 
         // Fast path.
@@ -70,12 +92,13 @@ internal sealed class ThriftPluginContext : IDisposable, IAsyncDisposable
             return new ClientWrapper(session.Value);
         }
 
-        session = await _waitQueue.DequeueAsync(cancellationToken);
+        session = await _waitQueue.DequeueAsync(cancellationToken).ConfigureAwait(false);
         var wrapper = new ClientWrapper(session.Value);
 
-        if (!_maxConnectionsReached && !hasFastItem)
+        if (!hasFastItem && _waitQueue.Count < _maxConnections)
         {
-            await CreateClientAsync(wrapper.ClientProxy, cancellationToken);
+            await CreateClientAsync(wrapper.ClientProxy, cancellationToken)
+                .ConfigureAwait(false);
         }
 
         return wrapper;
@@ -83,17 +106,15 @@ internal sealed class ThriftPluginContext : IDisposable, IAsyncDisposable
 
     private async Task CreateClientAsync(Plugin.IAsync? client, CancellationToken cancellationToken = default)
     {
+        // Concurrency control.
+        await _createClientSemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            // Concurrency control.
-            await _createClientSemaphore.WaitAsync(cancellationToken);
-
             // Do not reach connections limit.
-            if (_maxConnectionsReached || _waitQueue.Count >= _maxConnections)
+            if (_waitQueue.Count >= _maxConnections)
             {
                 _logger.LogTrace("Maximum number of connections {MaxConnections} reached.",
-                    _waitQueue.Count);
-                _maxConnectionsReached = true;
+                    _maxConnections);
                 return;
             }
 
@@ -101,7 +122,8 @@ internal sealed class ThriftPluginContext : IDisposable, IAsyncDisposable
             if (!_pluginCallbackUris.TryDequeue(out var uri)
                 && client != null)
             {
-                uri = await client.ServeAsync(cancellationToken);
+                uri = await client.ServeAsync(cancellationToken)
+                    .ConfigureAwait(false);
             }
             if (string.IsNullOrWhiteSpace(uri))
             {
@@ -109,7 +131,8 @@ internal sealed class ThriftPluginContext : IDisposable, IAsyncDisposable
             }
 
             // Open connection.
-            var newClient = await PrepareClientWrapperAsync(uri, cancellationToken);
+            var newClient = await PrepareClientWrapperAsync(uri, cancellationToken)
+                .ConfigureAwait(false);
             if (newClient != null)
             {
                 _waitQueue.Enqueue(newClient);
@@ -136,24 +159,36 @@ internal sealed class ThriftPluginContext : IDisposable, IAsyncDisposable
                     ThriftTransportFactory.CreateClientTransport(new SimpleUri(callbackUri)))
             ),
             ThriftPluginClient.PluginServerName);
-        Plugin.IAsync newClient;
 
         // Prepare client.
-        if (!_logClientRemoteCalls)
-        {
-            var pluginClient = new Plugin.Client(protocol);
-            await pluginClient.OpenTransportAsync(cancellationToken);
-            newClient = pluginClient;
-        }
-        else
-        {
-            var logClient = new PluginClientLogDecorator(new Plugin.Client(protocol), Application.LoggerFactory);
-            await logClient.OpenTransportAsync(cancellationToken);
-            newClient = logClient;
-        }
+        var pluginClient = new Plugin.Client(protocol);
 
-        // The new client will be returned to the queue after session release.
-        return new PluginClientIdDecorator(newClient);
+        // Open.
+        try
+        {
+            Plugin.IAsync newClient;
+            if (!_logClientRemoteCalls)
+            {
+                await pluginClient.OpenTransportAsync(cancellationToken).ConfigureAwait(false);
+                newClient = pluginClient;
+            }
+            else
+            {
+                var logClient = new PluginClientLogDecorator(pluginClient, Application.LoggerFactory);
+                await logClient.OpenTransportAsync(cancellationToken).ConfigureAwait(false);
+                newClient = logClient;
+            }
+            _clients.Add(pluginClient);
+
+            // The new client will be returned to the queue after session release.
+            return new PluginClientIdDecorator(newClient);
+        }
+        catch (Exception)
+        {
+            pluginClient.Dispose();
+            protocol.Dispose();
+            throw;
+        }
     }
 
     /// <inheritdoc />
@@ -163,9 +198,11 @@ internal sealed class ThriftPluginContext : IDisposable, IAsyncDisposable
         {
             return;
         }
+        _isDisposed = true;
 
-        await _createClientSemaphore.WaitAsync();
-        Dispose();
+        await _createClientSemaphore.WaitAsync(TimeSpan.FromSeconds(20))
+            .ConfigureAwait(false);
+        DisposeCore(true);
     }
 
     /// <inheritdoc />
@@ -175,26 +212,41 @@ internal sealed class ThriftPluginContext : IDisposable, IAsyncDisposable
         {
             return;
         }
-
-        ObjectsStorage.Clean();
-        _createClientSemaphore.Dispose();
-        _waitQueue.Dispose();
-        if (LibraryHandle.HasValue && LibraryHandle.Value != IntPtr.Zero)
-        {
-            // For some reason it causes SIGSEGV (Address boundary error) on Linux.
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                NativeLibrary.Free(LibraryHandle.Value);
-            }
-        }
-
-        _logger.LogTrace("Disposed.");
         _isDisposed = true;
+
+        DisposeCore(true);
     }
 
-    internal readonly struct ClientWrapper : IDisposable
+    private void DisposeCore(bool disposing)
+    {
+        if (disposing)
+        {
+            while (_clients.TryTake(out var client))
+            {
+                (client as IDisposable)?.Dispose();
+            }
+            _createClientSemaphore.Dispose();
+            _clients.Clear();
+            _waitQueue.Dispose();
+            var handle = LibraryHandle;
+            LibraryHandle = null;
+            if (handle.HasValue && handle.Value != IntPtr.Zero)
+            {
+                // For some reason it causes SIGSEGV (Address boundary error) on Linux.
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                {
+                    NativeLibrary.Free(handle.Value);
+                }
+            }
+
+            _logger.LogTrace("Disposed.");
+        }
+    }
+
+    internal sealed class ClientWrapper : IDisposable
     {
         private readonly WaitQueue.ItemWrapper _session;
+        private bool _isDisposed;
 
         public Plugin.IAsync ClientProxy => (Plugin.IAsync)_session.Item;
 
@@ -208,6 +260,11 @@ internal sealed class ThriftPluginContext : IDisposable, IAsyncDisposable
         /// <inheritdoc />
         public void Dispose()
         {
+            if (_isDisposed)
+            {
+                return;
+            }
+            _isDisposed = true;
             _session.Dispose();
         }
 

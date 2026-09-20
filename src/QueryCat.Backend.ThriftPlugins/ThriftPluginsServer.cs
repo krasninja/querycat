@@ -38,6 +38,7 @@ public sealed partial class ThriftPluginsServer : IDisposable
     private readonly ServerThread _mainServerThread;
     private readonly int _maxConnectionsToClient;
     private readonly ObjectsStorage _objectsStorage = new();
+    private bool _isDisposed;
 
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(ThriftPluginsServer));
 
@@ -101,7 +102,7 @@ public sealed partial class ThriftPluginsServer : IDisposable
         var processor = new TMultiplexedProcessor();
         var handler = new HandlerWithExceptionIntercept(new Handler(this, _objectsStorage));
         var asyncProcessor = new Plugins.Sdk.PluginsManager.AsyncProcessor(handler);
-        processor.RegisterProcessor(QueryCat.Plugins.Client.ThriftPluginClient.PluginsManagerServiceName, asyncProcessor);
+        processor.RegisterProcessor(ThriftPluginClient.PluginsManagerServiceName, asyncProcessor);
         return new TThreadPoolAsyncServer(
             new TSingletonProcessorFactory(processor),
             transport,
@@ -319,6 +320,12 @@ public sealed partial class ThriftPluginsServer : IDisposable
     /// <inheritdoc />
     public void Dispose()
     {
+        if (_isDisposed)
+        {
+            return;
+        }
+        _isDisposed = true;
+
         Stop();
         _objectsStorage.Clean();
         _serverCts.Dispose();

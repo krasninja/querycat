@@ -79,7 +79,7 @@ public partial class ThriftPluginsServer
             {
                 foreach (var function in plugin_data.Functions)
                 {
-                    context.Functions.Add(
+                    context.AddFunction(
                         new PluginContextFunction(
                             function.Signature,
                             function.Description,
@@ -338,7 +338,7 @@ public partial class ThriftPluginsServer
             }
             foreach (var function in functions)
             {
-                context.Functions.Add(
+                context.AddFunction(
                     new PluginContextFunction(
                         function.Signature,
                         function.Description,

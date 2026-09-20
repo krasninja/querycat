@@ -31,6 +31,7 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(ThriftPluginsLoader));
     private readonly HashSet<string> _loadedPlugins = new();
     private readonly string _functionsCacheDirectory;
+    private bool _isDisposed;
 
     // Lazy loading.
     private readonly Dictionary<string, string> _fileTokenMap = new(); // file-token.
@@ -54,7 +55,7 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
 
     internal sealed record FunctionsCache(
         [property:JsonPropertyName("createdAt")] long CreatedAt,
-        [property:JsonPropertyName("functions")] List<PluginContextFunction> Functions);
+        [property:JsonPropertyName("functions")] IReadOnlyList<PluginContextFunction> Functions);
 
     private class FunctionCallPluginBase
     {
@@ -721,6 +722,12 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
     /// <inheritdoc />
     public void Dispose()
     {
+        if (_isDisposed)
+        {
+            return;
+        }
+        _isDisposed = true;
+
         _server.OnPluginRegistration -= OnPluginRegistration;
         _server.Dispose();
     }
