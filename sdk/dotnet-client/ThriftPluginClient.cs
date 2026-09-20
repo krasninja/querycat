@@ -238,12 +238,12 @@ public partial class ThriftPluginClient : IDisposable
         {
             foreach (var aggregateExceptionInnerException in aggregateException.InnerExceptions)
             {
-                Console.Error.WriteLine(aggregateExceptionInnerException.Message);
+                Console.Error.WriteLine(aggregateExceptionInnerException);
             }
         }
         else if (e.ExceptionObject is Exception exception)
         {
-            Console.Error.WriteLine(exception.Message);
+            Console.Error.WriteLine(exception);
         }
         Environment.Exit(1);
     }

@@ -476,7 +476,7 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
                 process.StartInfo.ArgumentList.Add(arg);
             }
             process.OutputDataReceived += (_, args) => LogPluginStdOut(fileName, args.Data);
-            process.ErrorDataReceived += (_, args) => LogPluginStdErr(file, args.Data);
+            process.ErrorDataReceived += (_, args) => LogPluginStdErr(fileName, args.Data);
             process.Start();
             process.BeginOutputReadLine();
             process.BeginErrorReadLine();
