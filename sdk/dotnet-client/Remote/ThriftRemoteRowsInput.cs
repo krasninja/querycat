@@ -124,7 +124,7 @@ public sealed class ThriftRemoteRowsInput : IRowsInputUpdate, IRowsInputDelete, 
     /// <inheritdoc />
     public ErrorCode ReadValue(int columnIndex, out VariantValue value)
     {
-        if (columnIndex > Columns.Length - 1)
+        if (columnIndex < 0 || columnIndex > Columns.Length - 1)
         {
             value = VariantValue.Null;
             return ErrorCode.InvalidColumnIndex;

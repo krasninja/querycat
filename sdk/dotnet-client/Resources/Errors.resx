@@ -75,4 +75,7 @@
     <data name="InvalidToken" xml:space="preserve">
         <value>Invalid token '{0}'.</value>
     </data>
+    <data name="NotSupported_Seek" xml:space="preserve">
+        <value>Seek is not supported.</value>
+    </data>
 </root>

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
@@ -10,10 +11,11 @@ using QuestionResponse = QueryCat.Plugins.Sdk.QuestionResponse;
 namespace QueryCat.Plugins.Client;
 
 [SuppressMessage("ReSharper", "InconsistentNaming")]
-internal sealed class ThreadSafePluginsManagerClient : PluginsManager.IAsync
+internal sealed class ThreadSafePluginsManagerClient : PluginsManager.IAsync, IDisposable
 {
     private readonly SemaphoreSlim _semaphore = new(1);
     private readonly PluginsManager.IAsync _client;
+    private volatile bool _isDisposed;
 
     public ThreadSafePluginsManagerClient(PluginsManager.IAsync client)
     {
@@ -696,5 +698,17 @@ internal sealed class ThreadSafePluginsManagerClient : PluginsManager.IAsync
         {
             _semaphore.Release();
         }
+    }
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        if (_isDisposed)
+        {
+            return;
+        }
+        _isDisposed = true;
+
+        _semaphore.Dispose();
     }
 }

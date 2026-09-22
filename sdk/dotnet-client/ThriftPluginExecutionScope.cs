@@ -60,7 +60,7 @@ public sealed class ThriftPluginExecutionScope : IExecutionScope
                     _thriftPluginExecutionScope._client.Token,
                     scope_id: _thriftPluginExecutionScope._id,
                     ct));
-            return values ?? [];
+            return values;
         }
 
         /// <inheritdoc />
@@ -85,7 +85,7 @@ public sealed class ThriftPluginExecutionScope : IExecutionScope
         /// <inheritdoc />
         public void Clear()
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException();
         }
 
         /// <inheritdoc />
@@ -135,7 +135,9 @@ public sealed class ThriftPluginExecutionScope : IExecutionScope
     public IDictionary<string, VariantValue> Variables { get; }
 
     /// <inheritdoc />
-    public IExecutionScope? Parent => null;
+    public IExecutionScope? Parent => _parentId == NoScopeId
+        ? null
+        : new ThriftPluginExecutionScope(_client, _parentId, NoScopeId);
 
     public ThriftPluginExecutionScope(ThriftPluginClient client, int id, int parentId)
     {

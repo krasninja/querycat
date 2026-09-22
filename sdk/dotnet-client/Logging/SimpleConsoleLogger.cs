@@ -9,7 +9,7 @@ namespace QueryCat.Plugins.Client.Logging;
 /// A logger that writes messages in the console.
 /// </summary>
 [UnsupportedOSPlatform("browser")]
-internal sealed class SimpleConsoleLogger : ILogger, IDisposable
+internal sealed class SimpleConsoleLogger : ILogger
 {
     private readonly string _name;
     private readonly LogLevel _minLevel;
@@ -73,10 +73,4 @@ internal sealed class SimpleConsoleLogger : ILogger, IDisposable
     /// <inheritdoc />
     public IDisposable? BeginScope<TState>(TState state) where TState : notnull
         => null;
-
-    /// <inheritdoc />
-    public void Dispose()
-    {
-        _streamWriter.Dispose();
-    }
 }

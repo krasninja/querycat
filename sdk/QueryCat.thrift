@@ -9,7 +9,7 @@ namespace js QueryCat.Plugins.Sdk
  * ------------
  */
 
-typedef i64 Timestamp; // Unix timestamp.
+typedef i64 Timestamp; // Unix timestamp ms.
 typedef i64 Duration;
 typedef i32 Handle;
 

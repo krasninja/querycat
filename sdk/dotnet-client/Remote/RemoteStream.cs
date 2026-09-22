@@ -11,6 +11,8 @@ public sealed class RemoteStream : Stream
     private readonly int _objectHandle;
     private readonly IThriftSessionProvider _sessionProvider;
     private readonly long _token;
+    private readonly bool _ownsHandle;
+    private volatile bool _isDisposed;
 
     /// <inheritdoc />
     public override bool CanRead => true;
@@ -48,7 +50,7 @@ public sealed class RemoteStream : Stream
             {
                 using var session = await _sessionProvider.GetAsync(ct);
                 return await session.Client.Blob_GetContentTypeAsync(_token,_objectHandle, ct);
-            }) ?? string.Empty;
+            });
         }
     }
 
@@ -63,15 +65,16 @@ public sealed class RemoteStream : Stream
             {
                 using var session = await _sessionProvider.GetAsync(ct);
                 return await session.Client.Blob_GetNameAsync(_token,_objectHandle, ct);
-            }) ?? string.Empty;
+            });
         }
     }
 
-    public RemoteStream(int objectHandle, IThriftSessionProvider sessionProvider, long token = 0)
+    public RemoteStream(int objectHandle, IThriftSessionProvider sessionProvider, long token = 0, bool ownsHandle = true)
     {
         _objectHandle = objectHandle;
         _sessionProvider = sessionProvider;
         _token = token;
+        _ownsHandle = ownsHandle;
     }
 
     /// <inheritdoc />
@@ -88,16 +91,13 @@ public sealed class RemoteStream : Stream
     /// <inheritdoc />
     public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
     {
+        ValidateBufferArguments(buffer, offset, count);
+
         using var session = await _sessionProvider.GetAsync(cancellationToken);
         var bytes = await session.Client.Blob_ReadAsync(_token,_objectHandle, (int)Position, count, cancellationToken);
-        Position += bytes.Length;
-
-        var realCount = count;
-        if (realCount + offset > bytes.Length)
-        {
-            realCount = bytes.Length - offset;
-        }
+        var realCount = Math.Min(bytes.Length, count);
         bytes.AsSpan(0, realCount).CopyTo(buffer.AsSpan(offset, count));
+        Position += realCount;
         return realCount;
     }
 
@@ -125,18 +125,40 @@ public sealed class RemoteStream : Stream
     /// <inheritdoc />
     protected override void Dispose(bool disposing)
     {
-        AsyncUtils.RunSync(async () =>
+        if (_isDisposed)
         {
-            await DisposeAsync();
-        });
+            return;
+        }
+        _isDisposed = true;
+
+        if (disposing)
+        {
+            if (_ownsHandle)
+            {
+                AsyncUtils.RunSync(async () =>
+                {
+                    using var session = await _sessionProvider.GetAsync();
+                    await session.Client.Thread_CloseHandleAsync(_token, _objectHandle);
+                });
+            }
+        }
         base.Dispose(disposing);
     }
 
     /// <inheritdoc />
     public override async ValueTask DisposeAsync()
     {
-        using var session = await _sessionProvider.GetAsync();
-        await session.Client.Thread_CloseHandleAsync(_token, _objectHandle);
+        if (_isDisposed)
+        {
+            return;
+        }
+        _isDisposed = true;
+
+        if (_ownsHandle)
+        {
+            using var session = await _sessionProvider.GetAsync();
+            await session.Client.Thread_CloseHandleAsync(_token, _objectHandle);
+        }
         await base.DisposeAsync();
     }
 }

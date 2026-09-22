@@ -51,6 +51,7 @@ public partial class ThriftPluginClient : IDisposable
     private readonly int _parentPid;
     private Process? _qcatProcess;
     private readonly SemaphoreSlim _exitSemaphore = new(0, 1);
+    private bool _isDisposed;
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(ThriftPluginClient));
 
     // Connection to plugin manager.
@@ -62,7 +63,11 @@ public partial class ThriftPluginClient : IDisposable
 
     // Plugin server.
     private readonly List<ThriftServerConnection> _serverConnections = new();
+#if NET9_0_OR_GREATER
+    private readonly Lock _objLock = new();
+#else
     private readonly object _objLock = new();
+#endif
     private readonly CancellationTokenSource _clientServerCts = new();
 
     /// <summary>
@@ -102,7 +107,7 @@ public partial class ThriftPluginClient : IDisposable
     /// <summary>
     /// The event occurs on plugin registration.
     /// </summary>
-    public EventHandler<ThriftPluginClientOnInitializeEventArgs>? OnInitialize;
+    public event EventHandler<ThriftPluginClientOnInitializeEventArgs>? OnInitialize;
 
     public ThriftPluginClient(ThriftPluginClientArguments args)
     {
@@ -167,7 +172,7 @@ public partial class ThriftPluginClient : IDisposable
         foreach (var arg in args)
         {
             var separatorIndex = arg.IndexOf('=', StringComparison.Ordinal);
-            if (separatorIndex == -1)
+            if (separatorIndex == -1 || !arg.StartsWith("--", StringComparison.Ordinal))
             {
                 throw new InvalidOperationException(string.Format(Resources.Errors.InvalidArgument, arg));
             }
@@ -293,6 +298,7 @@ public partial class ThriftPluginClient : IDisposable
             pluginData,
             cancellationToken);
         IsActive = true;
+        OnInitialize?.Invoke(this, new ThriftPluginClientOnInitializeEventArgs(_executionThread));
 
         // Add the current logger.
         QueryCat.Backend.Core.Application.LoggerFactory.AddProvider(new ThriftClientLoggerProvider(this));
@@ -304,7 +310,7 @@ public partial class ThriftPluginClient : IDisposable
     /// <param name="cancellationToken">Cancellation token.</param>
     public async Task ReadyAsync(CancellationToken cancellationToken = default)
     {
-        await _thriftClient.PluginReadyAsync(Token, cancellationToken);
+        await _thriftClientSafe.PluginReadyAsync(Token, cancellationToken);
     }
 
     internal SimpleUri StartNewServer()
@@ -342,7 +348,7 @@ public partial class ThriftPluginClient : IDisposable
         lock (_objLock)
         {
             _serverConnections.Add(serverConnection);
-            serverConnection.Start();
+            serverConnection.Start(_clientServerCts.Token);
         }
         _logger.LogDebug("Started client server on '{Uri}'.", uri);
 
@@ -356,9 +362,10 @@ public partial class ThriftPluginClient : IDisposable
         // Connection to plugin manager.
         _protocol.Dispose();
         _thriftClient.Dispose();
+        _thriftClientSafe.Dispose();
 
         // Server.
-        _clientServerCts.Dispose();
+        _clientServerCts.Cancel();
         lock (_objLock)
         {
             foreach (var connection in _serverConnections)
@@ -366,8 +373,16 @@ public partial class ThriftPluginClient : IDisposable
                 connection.Stop();
             }
         }
+        _clientServerCts.Dispose();
 
-        _exitSemaphore.Release();
+        // Unblock any waiter; ignore if already signalled.
+        try
+        {
+            _exitSemaphore.Release();
+        }
+        catch (SemaphoreFullException)
+        {
+        }
         _exitSemaphore.Dispose();
     }
 
@@ -396,21 +411,25 @@ public partial class ThriftPluginClient : IDisposable
                 FileName = _debugServerPath,
             }
         };
-        _qcatProcess.StartInfo.Arguments = "plugin debug";
+        _qcatProcess.StartInfo.ArgumentList.Add("plugin");
+        _qcatProcess.StartInfo.ArgumentList.Add("debug");
         if (!string.IsNullOrEmpty(_debugServerQueryText))
         {
-            _qcatProcess.StartInfo.Arguments += " \"" + _debugServerQueryText.Replace("\"", "\\\"") + "\" ";
+            _qcatProcess.StartInfo.ArgumentList.Add(_debugServerQueryText);
         }
         else if (!string.IsNullOrEmpty(_debugServerQueryFile))
         {
-            _qcatProcess.StartInfo.Arguments += " -f \"" + _debugServerQueryFile + "\" ";
+            _qcatProcess.StartInfo.ArgumentList.Add("-f");
+            _qcatProcess.StartInfo.ArgumentList.Add(_debugServerQueryFile);
         }
         if (_debugServerFollow)
         {
-            _qcatProcess.StartInfo.Arguments += " --follow ";
+            _qcatProcess.StartInfo.ArgumentList.Add("--follow");
         }
-        _qcatProcess.StartInfo.Arguments += $"--log-level=trace --plugin-dirs=\"{modulePath}\"";
-        _logger.LogDebug("qcat host arguments '{Arguments}'.", _qcatProcess.StartInfo.Arguments);
+        _qcatProcess.StartInfo.ArgumentList.Add("--log-level=trace");
+        _qcatProcess.StartInfo.ArgumentList.Add($"--plugin-dirs={modulePath}");
+
+        _logger.LogDebug("qcat host arguments '{Arguments}'.", string.Join(' ', _qcatProcess.StartInfo.ArgumentList));
         _qcatProcess.OutputDataReceived += (_, args) => Console.Out.WriteLine($"> {args.Data}");
         _qcatProcess.ErrorDataReceived += (_, args) => Console.Error.WriteLine($"> {args.Data}");
         _qcatProcess.Start();
@@ -432,8 +451,16 @@ public partial class ThriftPluginClient : IDisposable
         }
         if (_parentPid > 0)
         {
-            var process = Process.GetProcessById(_parentPid);
-            waitingTasks.Add(process.WaitForExitAsync(cancellationToken));
+            try
+            {
+                var process = Process.GetProcessById(_parentPid);
+                waitingTasks.Add(process.WaitForExitAsync(cancellationToken));
+            }
+            catch (ArgumentException)
+            {
+                // Parent has already exited.
+                return;
+            }
         }
         waitingTasks.Add(_exitSemaphore.WaitAsync(cancellationToken));
         await Task.WhenAny(waitingTasks);
@@ -444,7 +471,18 @@ public partial class ThriftPluginClient : IDisposable
     /// </summary>
     public void SignalExit()
     {
-        _exitSemaphore.Release();
+        try
+        {
+            _exitSemaphore.Release();
+        }
+        catch (SemaphoreFullException)
+        {
+            // Exit has already been signalled.
+        }
+        catch (ObjectDisposedException)
+        {
+            // The client was disposed concurrently.
+        }
     }
 
     /// <summary>
@@ -461,6 +499,12 @@ public partial class ThriftPluginClient : IDisposable
 
     protected virtual void Dispose(bool disposing)
     {
+        if (_isDisposed)
+        {
+            return;
+        }
+        _isDisposed = true;
+
         if (disposing)
         {
             StopServer();
@@ -495,7 +539,7 @@ public partial class ThriftPluginClient : IDisposable
                 () => ClientServer.ServeAsync(cancellationToken),
                 cancellationToken,
                 TaskCreationOptions.LongRunning,
-                TaskScheduler.Current);
+                TaskScheduler.Default);
         }
 
         public void Stop()

@@ -55,7 +55,7 @@ public partial class QueryCatIOHandler : global::QueryCat.Plugins.Sdk.QueryCatIO
         {
             if (result.AsObject is IRowsIterator rowsIterator)
             {
-                var index = _objectsStorage.Add(rowsIterator);
+                var index = _objectsStorage.GetOrAdd(rowsIterator);
                 _logger.LogDebug("Added new iterator object '{Object}' with handle {Handle}.",
                     rowsIterator.ToString(), index);
                 return new VariantValue
@@ -68,7 +68,7 @@ public partial class QueryCatIOHandler : global::QueryCat.Plugins.Sdk.QueryCatIO
                 rowsInput.QueryContext = new PluginQueryContext(
                     new QueryContextQueryInfo(ImmutableList<Backend.Core.Data.Column>.Empty),
                     _executionThread.ConfigStorage);
-                var index =_objectsStorage.Add(rowsInput);
+                var index = _objectsStorage.GetOrAdd(rowsInput);
                 _logger.LogDebug("Added new input object '{Object}' with handle {Handle}.",
                     rowsInput.ToString(), index);
                 return new VariantValue
@@ -81,7 +81,7 @@ public partial class QueryCatIOHandler : global::QueryCat.Plugins.Sdk.QueryCatIO
                 rowsOutput.QueryContext = new PluginQueryContext(
                     new QueryContextQueryInfo(ImmutableList<Backend.Core.Data.Column>.Empty),
                     _executionThread.ConfigStorage);
-                var index =_objectsStorage.Add(rowsOutput);
+                var index = _objectsStorage.GetOrAdd(rowsOutput);
                 _logger.LogDebug("Added new output object '{Object}' with handle {Handle}.",
                     rowsOutput.ToString(), index);
                 return new VariantValue
@@ -91,7 +91,7 @@ public partial class QueryCatIOHandler : global::QueryCat.Plugins.Sdk.QueryCatIO
             }
             else if (result.AsObject is IRowsFormatter rowsFormatter)
             {
-                var index =_objectsStorage.Add(rowsFormatter);
+                var index = _objectsStorage.GetOrAdd(rowsFormatter);
                 _logger.LogDebug("Added new formatter object '{Object}' with handle {Handle}.",
                     rowsFormatter.ToString(), index);
                 return new VariantValue
@@ -101,7 +101,7 @@ public partial class QueryCatIOHandler : global::QueryCat.Plugins.Sdk.QueryCatIO
             }
             else if (result.AsObject is IAnswerAgent answerAgent)
             {
-                var index =_objectsStorage.Add(answerAgent);
+                var index = _objectsStorage.GetOrAdd(answerAgent);
                 _logger.LogDebug("Added new answer agent object '{Object}' with handle {Handle}.",
                     answerAgent.ToString(), index);
                 return new VariantValue
@@ -115,7 +115,7 @@ public partial class QueryCatIOHandler : global::QueryCat.Plugins.Sdk.QueryCatIO
         }
         if (resultType == DataType.Blob)
         {
-            var index = _objectsStorage.Add(result.AsBlobUnsafe);
+            var index = _objectsStorage.GetOrAdd(result.AsBlobUnsafe);
             _logger.LogDebug("Added new blob object with handle {Handle}.", index);
             return new VariantValue
             {
@@ -199,25 +199,25 @@ public partial class QueryCatIOHandler : global::QueryCat.Plugins.Sdk.QueryCatIO
         CancellationToken cancellationToken = default)
     {
         await BeforeCallAsync(token, nameof(Blob_ReadAsync), cancellationToken);
-        if (_objectsStorage.TryGet<IBlobData>(object_blob_handle, out var blobData)
-            && blobData != null)
+        if (_objectsStorage.TryGet<IBlobData>(object_blob_handle, out var blobData))
         {
             await using var stream = blobData.GetStream();
-            if (offset >= stream.Length)
+            var length = stream.Length;
+            if (offset >= length || count <= 0)
             {
                 return [];
             }
             if (offset > 0)
             {
+                if (!stream.CanSeek)
+                {
+                    throw new QueryCatPluginException(ErrorType.NOT_SUPPORTED, Resources.Errors.NotSupported_Seek);
+                }
                 stream.Seek(offset, SeekOrigin.Begin);
             }
-            var buffer = new byte[stream.Length];
-            var readBytes = await stream.ReadAsync(buffer, 0, count, cancellationToken);
-            if (readBytes != buffer.Length)
-            {
-                buffer = buffer.AsSpan(0, readBytes).ToArray();
-            }
-            return buffer;
+            var buffer = new byte[(int)Math.Min(count, length - offset)];
+            var readBytes = await stream.ReadAtLeastAsync(buffer, buffer.Length, throwOnEndOfStream: false, cancellationToken);
+            return readBytes == buffer.Length ? buffer : buffer.AsSpan(0, readBytes).ToArray();
         }
         throw new QueryCatPluginException(ErrorType.INVALID_OBJECT, Resources.Errors.Object_IsNotBlob);
     }
@@ -226,8 +226,7 @@ public partial class QueryCatIOHandler : global::QueryCat.Plugins.Sdk.QueryCatIO
     public virtual async Task<long> Blob_WriteAsync(long token, int object_blob_handle, byte[] bytes, CancellationToken cancellationToken = default)
     {
         await BeforeCallAsync(token, nameof(Blob_WriteAsync), cancellationToken);
-        if (_objectsStorage.TryGet<IBlobData>(object_blob_handle, out var blobData)
-            && blobData != null)
+        if (_objectsStorage.TryGet<IBlobData>(object_blob_handle, out var blobData))
         {
             await using var stream = blobData.GetStream();
             await stream.WriteAsync(bytes, 0, bytes.Length, cancellationToken);
@@ -240,8 +239,7 @@ public partial class QueryCatIOHandler : global::QueryCat.Plugins.Sdk.QueryCatIO
     public virtual async Task<long> Blob_GetLengthAsync(long token, int object_blob_handle, CancellationToken cancellationToken = default)
     {
         await BeforeCallAsync(token, nameof(Blob_GetLengthAsync), cancellationToken);
-        if (_objectsStorage.TryGet<IBlobData>(object_blob_handle, out var blobData)
-            && blobData != null)
+        if (_objectsStorage.TryGet<IBlobData>(object_blob_handle, out var blobData))
         {
             var length = blobData.Length;
             return length;
@@ -253,8 +251,7 @@ public partial class QueryCatIOHandler : global::QueryCat.Plugins.Sdk.QueryCatIO
     public virtual async Task<string> Blob_GetContentTypeAsync(long token, int object_blob_handle, CancellationToken cancellationToken = default)
     {
         await BeforeCallAsync(token, nameof(Blob_GetContentTypeAsync), cancellationToken);
-        if (_objectsStorage.TryGet<IBlobData>(object_blob_handle, out var blobData)
-            && blobData != null)
+        if (_objectsStorage.TryGet<IBlobData>(object_blob_handle, out var blobData))
         {
             return blobData.ContentType;
         }
@@ -265,8 +262,7 @@ public partial class QueryCatIOHandler : global::QueryCat.Plugins.Sdk.QueryCatIO
     public virtual async Task<string> Blob_GetNameAsync(long token, int object_blob_handle, CancellationToken cancellationToken = default)
     {
         await BeforeCallAsync(token, nameof(Blob_GetNameAsync), cancellationToken);
-        if (_objectsStorage.TryGet<IBlobData>(object_blob_handle, out var blobData)
-            && blobData != null)
+        if (_objectsStorage.TryGet<IBlobData>(object_blob_handle, out var blobData))
         {
             return blobData.Name;
         }
@@ -286,8 +282,7 @@ public partial class QueryCatIOHandler : global::QueryCat.Plugins.Sdk.QueryCatIO
     public virtual async Task RowsSet_OpenAsync(long token, int object_rows_set_handle, CancellationToken cancellationToken = default)
     {
         await BeforeCallAsync(token, nameof(RowsSet_OpenAsync), cancellationToken);
-        if (_objectsStorage.TryGet<IRowsSource>(object_rows_set_handle, out var rowsSource)
-            && rowsSource != null)
+        if (_objectsStorage.TryGet<IRowsSource>(object_rows_set_handle, out var rowsSource))
         {
             await rowsSource.OpenAsync(cancellationToken);
         }
@@ -297,8 +292,7 @@ public partial class QueryCatIOHandler : global::QueryCat.Plugins.Sdk.QueryCatIO
     public virtual async Task RowsSet_CloseAsync(long token, int object_rows_set_handle, CancellationToken cancellationToken = default)
     {
         await BeforeCallAsync(token, nameof(RowsSet_CloseAsync), cancellationToken);
-        if (_objectsStorage.TryGet<IRowsSource>(object_rows_set_handle, out var rowsSource)
-            && rowsSource != null)
+        if (_objectsStorage.TryGet<IRowsSource>(object_rows_set_handle, out var rowsSource))
         {
             await rowsSource.CloseAsync(cancellationToken);
         }
@@ -308,13 +302,11 @@ public partial class QueryCatIOHandler : global::QueryCat.Plugins.Sdk.QueryCatIO
     public virtual async Task RowsSet_ResetAsync(long token, int object_rows_set_handle, CancellationToken cancellationToken = default)
     {
         await BeforeCallAsync(token, nameof(RowsSet_ResetAsync), cancellationToken);
-        if (_objectsStorage.TryGet<IRowsSource>(object_rows_set_handle, out var rowsSource)
-            && rowsSource != null)
+        if (_objectsStorage.TryGet<IRowsSource>(object_rows_set_handle, out var rowsSource))
         {
             await rowsSource.ResetAsync(cancellationToken);
         }
-        else if (_objectsStorage.TryGet<IRowsIterator>(object_rows_set_handle, out var rowsIterator)
-                 && rowsIterator != null)
+        else if (_objectsStorage.TryGet<IRowsIterator>(object_rows_set_handle, out var rowsIterator))
         {
             await rowsIterator.ResetAsync(cancellationToken);
         }
@@ -325,8 +317,7 @@ public partial class QueryCatIOHandler : global::QueryCat.Plugins.Sdk.QueryCatIO
         ContextInfo? context_info, CancellationToken cancellationToken = default)
     {
         await BeforeCallAsync(token, nameof(RowsSet_SetContextAsync), cancellationToken);
-        if (_objectsStorage.TryGet<IRowsSource>(object_rows_set_handle, out var rowsSource)
-            && rowsSource != null)
+        if (_objectsStorage.TryGet<IRowsSource>(object_rows_set_handle, out var rowsSource))
         {
             if (context_query_info == null)
             {
@@ -361,8 +352,7 @@ public partial class QueryCatIOHandler : global::QueryCat.Plugins.Sdk.QueryCatIO
     public virtual async Task<int> RowsSet_PositionAsync(long token, int object_rows_set_handle, CancellationToken cancellationToken = default)
     {
         await BeforeCallAsync(token, nameof(RowsSet_PositionAsync), cancellationToken);
-        if (_objectsStorage.TryGet<ICursorRowsIterator>(object_rows_set_handle, out var rowsSource)
-            && rowsSource != null)
+        if (_objectsStorage.TryGet<ICursorRowsIterator>(object_rows_set_handle, out var rowsSource))
         {
             return rowsSource.Position;
         }
@@ -377,8 +367,7 @@ public partial class QueryCatIOHandler : global::QueryCat.Plugins.Sdk.QueryCatIO
     public virtual async Task<int> RowsSet_TotalRowsAsync(long token, int object_rows_set_handle, CancellationToken cancellationToken = default)
     {
         await BeforeCallAsync(token, nameof(RowsSet_TotalRowsAsync), cancellationToken);
-        if (_objectsStorage.TryGet<ICursorRowsIterator>(object_rows_set_handle, out var rowsSource)
-            && rowsSource != null)
+        if (_objectsStorage.TryGet<ICursorRowsIterator>(object_rows_set_handle, out var rowsSource))
         {
             return rowsSource.TotalRows;
         }
@@ -394,8 +383,7 @@ public partial class QueryCatIOHandler : global::QueryCat.Plugins.Sdk.QueryCatIO
         CancellationToken cancellationToken = default)
     {
         await BeforeCallAsync(token, nameof(RowsSet_SeekAsync), cancellationToken);
-        if (_objectsStorage.TryGet<ICursorRowsIterator>(object_rows_set_handle, out var rowsSource)
-            && rowsSource != null)
+        if (_objectsStorage.TryGet<ICursorRowsIterator>(object_rows_set_handle, out var rowsSource))
         {
             rowsSource.Seek(offset, SdkConvert.Convert(origin));
         }
@@ -412,8 +400,7 @@ public partial class QueryCatIOHandler : global::QueryCat.Plugins.Sdk.QueryCatIO
         await BeforeCallAsync(token, nameof(RowsSet_GetRowsAsync), cancellationToken);
 
         // Handle IRowsInput.
-        if (_objectsStorage.TryGet<IRowsInput>(object_rows_set_handle, out var rowsInput)
-            && rowsInput != null)
+        if (_objectsStorage.TryGet<IRowsInput>(object_rows_set_handle, out var rowsInput))
         {
             var values = new List<VariantValue>();
             var hasMore = true;
@@ -440,8 +427,7 @@ public partial class QueryCatIOHandler : global::QueryCat.Plugins.Sdk.QueryCatIO
         }
 
         // Handle IRowsIterator.
-        if (_objectsStorage.TryGet<IRowsIterator>(object_rows_set_handle, out var rowsIterator)
-            && rowsIterator != null)
+        if (_objectsStorage.TryGet<IRowsIterator>(object_rows_set_handle, out var rowsIterator))
         {
             var values = new List<VariantValue>();
             var hasMore = true;
@@ -466,8 +452,7 @@ public partial class QueryCatIOHandler : global::QueryCat.Plugins.Sdk.QueryCatIO
     public virtual async Task<List<string>> RowsSet_GetUniqueKeyAsync(long token, int object_rows_set_handle, CancellationToken cancellationToken = default)
     {
         await BeforeCallAsync(token, nameof(RowsSet_GetUniqueKeyAsync), cancellationToken);
-        if (_objectsStorage.TryGet<IRowsInput>(object_rows_set_handle, out var rowsInput)
-            && rowsInput != null)
+        if (_objectsStorage.TryGet<IRowsInput>(object_rows_set_handle, out var rowsInput))
         {
             return rowsInput.UniqueKey.ToList();
         }
@@ -482,8 +467,7 @@ public partial class QueryCatIOHandler : global::QueryCat.Plugins.Sdk.QueryCatIO
     public virtual async Task<List<KeyColumn>> RowsSet_GetKeyColumnsAsync(long token, int object_rows_set_handle, CancellationToken cancellationToken = default)
     {
         await BeforeCallAsync(token, nameof(RowsSet_GetKeyColumnsAsync), cancellationToken);
-        if (_objectsStorage.TryGet<IRowsInput>(object_rows_set_handle, out var rowsInput)
-            && rowsInput != null)
+        if (_objectsStorage.TryGet<IRowsInput>(object_rows_set_handle, out var rowsInput))
         {
             var result = rowsInput.GetKeyColumns()
                 .Select(c => new KeyColumn(
@@ -506,8 +490,7 @@ public partial class QueryCatIOHandler : global::QueryCat.Plugins.Sdk.QueryCatIO
     {
         await BeforeCallAsync(token, nameof(RowsSet_SetKeyColumnValueAsync), cancellationToken);
         if (value != null
-            && _objectsStorage.TryGet<IRowsInput>(object_rows_set_handle, out var rowsInput)
-            && rowsInput != null)
+            && _objectsStorage.TryGet<IRowsInput>(object_rows_set_handle, out var rowsInput))
         {
             rowsInput.SetKeyColumnValue(column_index, SdkConvert.Convert(value),
                 Enum.Parse<Backend.Core.Types.VariantValue.Operation>(operation));
@@ -523,8 +506,7 @@ public partial class QueryCatIOHandler : global::QueryCat.Plugins.Sdk.QueryCatIO
         CancellationToken cancellationToken = default)
     {
         await BeforeCallAsync(token, nameof(RowsSet_UnsetKeyColumnValueAsync), cancellationToken);
-        if (_objectsStorage.TryGet<IRowsInput>(object_rows_set_handle, out var rowsInput)
-            && rowsInput != null)
+        if (_objectsStorage.TryGet<IRowsInput>(object_rows_set_handle, out var rowsInput))
         {
             rowsInput.UnsetKeyColumnValue(column_index, Enum.Parse<Backend.Core.Types.VariantValue.Operation>(operation));
         }
@@ -540,8 +522,7 @@ public partial class QueryCatIOHandler : global::QueryCat.Plugins.Sdk.QueryCatIO
     {
         await BeforeCallAsync(token, nameof(RowsSet_UpdateValueAsync), cancellationToken);
         if (value != null
-            && _objectsStorage.TryGet<IRowsInputUpdate>(object_rows_set_handle, out var rowsInputUpdate)
-            && rowsInputUpdate != null)
+            && _objectsStorage.TryGet<IRowsInputUpdate>(object_rows_set_handle, out var rowsInputUpdate))
         {
             var result = await rowsInputUpdate.UpdateValueAsync(column_index, SdkConvert.Convert(value), cancellationToken);
             return SdkConvert.Convert(result);
@@ -557,8 +538,7 @@ public partial class QueryCatIOHandler : global::QueryCat.Plugins.Sdk.QueryCatIO
     {
         await BeforeCallAsync(token, nameof(RowsSet_WriteValuesAsync), cancellationToken);
         if (values != null
-            && _objectsStorage.TryGet<IRowsOutput>(object_rows_set_handle, out var rowsOutput)
-            && rowsOutput != null)
+            && _objectsStorage.TryGet<IRowsOutput>(object_rows_set_handle, out var rowsOutput))
         {
             var result = await rowsOutput.WriteValuesAsync(values.Select(SdkConvert.Convert).ToArray(), cancellationToken);
             return SdkConvert.Convert(result);
@@ -572,8 +552,7 @@ public partial class QueryCatIOHandler : global::QueryCat.Plugins.Sdk.QueryCatIO
     public virtual async Task<QueryCatErrorCode> RowsSet_DeleteRowAsync(long token, int object_rows_set_handle, CancellationToken cancellationToken = default)
     {
         await BeforeCallAsync(token, nameof(RowsSet_DeleteRowAsync), cancellationToken);
-        if (_objectsStorage.TryGet<IRowsInputDelete>(object_rows_set_handle, out var rowsInputDelete)
-            && rowsInputDelete != null)
+        if (_objectsStorage.TryGet<IRowsInputDelete>(object_rows_set_handle, out var rowsInputDelete))
         {
             var result = await rowsInputDelete.DeleteAsync(cancellationToken);
             return SdkConvert.Convert(result);
@@ -587,8 +566,7 @@ public partial class QueryCatIOHandler : global::QueryCat.Plugins.Sdk.QueryCatIO
     public virtual async Task<ModelDescription> RowsSet_GetDescriptionAsync(long token, int object_handle, CancellationToken cancellationToken = default)
     {
         await BeforeCallAsync(token, nameof(RowsSet_GetDescriptionAsync), cancellationToken);
-        if (_objectsStorage.TryGet<IModelDescription>(object_handle, out var model)
-            && model != null)
+        if (_objectsStorage.TryGet<IModelDescription>(object_handle, out var model))
         {
             return SdkConvert.Convert(model);
         }
@@ -600,8 +578,7 @@ public partial class QueryCatIOHandler : global::QueryCat.Plugins.Sdk.QueryCatIO
         CancellationToken cancellationToken = default)
     {
         await BeforeCallAsync(token, nameof(RowsFormatter_OpenInputAsync), cancellationToken);
-        if (_objectsStorage.TryGet<IRowsFormatter>(object_rows_formatter_handle, out var rowsFormatter)
-            && rowsFormatter != null)
+        if (_objectsStorage.TryGet<IRowsFormatter>(object_rows_formatter_handle, out var rowsFormatter))
         {
             var remoteBlob = new ThriftRemoteBlobProxy(
                 new SimpleThriftSessionProvider(this),
@@ -623,8 +600,7 @@ public partial class QueryCatIOHandler : global::QueryCat.Plugins.Sdk.QueryCatIO
         CancellationToken cancellationToken = default)
     {
         await BeforeCallAsync(token, nameof(RowsFormatter_OpenOutputAsync), cancellationToken);
-        if (_objectsStorage.TryGet<IRowsFormatter>(object_rows_formatter_handle, out var rowsFormatter)
-            && rowsFormatter != null)
+        if (_objectsStorage.TryGet<IRowsFormatter>(object_rows_formatter_handle, out var rowsFormatter))
         {
             var remoteBlob = new ThriftRemoteBlobProxy(
                 new SimpleThriftSessionProvider(this),
@@ -647,8 +623,7 @@ public partial class QueryCatIOHandler : global::QueryCat.Plugins.Sdk.QueryCatIO
     {
         await BeforeCallAsync(token, nameof(AnswerAgent_AskAsync), cancellationToken);
         if (request != null
-            && _objectsStorage.TryGet<IAnswerAgent>(object_answer_agent_handle, out var answerAgent)
-            && answerAgent != null)
+            && _objectsStorage.TryGet<IAnswerAgent>(object_answer_agent_handle, out var answerAgent))
         {
             var response = await answerAgent.AskAsync(SdkConvert.Convert(request), cancellationToken);
             return SdkConvert.Convert(response);

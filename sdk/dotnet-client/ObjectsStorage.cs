@@ -1,5 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
+using System.Threading;
+using QueryCat.Backend.Core.Utils;
 using QueryCat.Plugins.Sdk;
 
 namespace QueryCat.Plugins.Client;
@@ -9,7 +12,11 @@ namespace QueryCat.Plugins.Client;
 /// </summary>
 public sealed class ObjectsStorage
 {
+#if NET9_0_OR_GREATER
+    private readonly Lock _objLock = new();
+#else
     private readonly object _objLock = new();
+#endif
     private readonly List<object?> _objects = new();
 
     public int Count
@@ -36,7 +43,7 @@ public sealed class ObjectsStorage
     {
         lock (_objLock)
         {
-            if (index > _objects.Count - 1)
+            if (index < 0 || index >= _objects.Count)
             {
                 throw new QueryCatPluginException(ErrorType.INVALID_OBJECT, Resources.Errors.Object_InvalidHandle);
             }
@@ -56,11 +63,11 @@ public sealed class ObjectsStorage
         }
     }
 
-    public bool TryGet<T>(int index, out T? obj) where T : class
+    public bool TryGet<T>(int index, [NotNullWhen(true)] out T? obj) where T : class
     {
         lock (_objLock)
         {
-            if (index > _objects.Count - 1)
+            if (index < 0 || index >= _objects.Count)
             {
                 obj = null;
                 return false;
@@ -112,26 +119,37 @@ public sealed class ObjectsStorage
 
     public void Remove(int index)
     {
+        object? obj;
         lock (_objLock)
         {
-            var obj = _objects[index];
-            if (obj != null && obj is IDisposable disposable)
+            if (index < 0 || index >= _objects.Count)
             {
-                disposable.Dispose();
+                return;
             }
+            obj = _objects[index];
             _objects[index] = null;
+        }
+
+        if (obj is IAsyncDisposable asyncDisposable)
+        {
+            AsyncUtils.RunSync(async () => await asyncDisposable.DisposeAsync());
+        }
+        else if (obj is IDisposable disposable)
+        {
+            disposable.Dispose();
         }
     }
 
     public void Clean()
     {
+        int totalObjects;
         lock (_objLock)
         {
-            var totalObjects = _objects.Count;
-            for (var i = 0; i < totalObjects; i++)
-            {
-                Remove(i);
-            }
+            totalObjects = _objects.Count;
+        }
+        for (var i = 0; i < totalObjects; i++)
+        {
+            Remove(i);
         }
     }
 }

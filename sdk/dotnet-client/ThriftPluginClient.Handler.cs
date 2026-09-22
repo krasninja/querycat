@@ -32,7 +32,6 @@ public partial class ThriftPluginClient
         /// <inheritdoc />
         public async Task ShutdownAsync(CancellationToken cancellationToken = default)
         {
-            await BeforeCallAsync(0, nameof(ShutdownAsync), cancellationToken);
             _thriftPluginClient._objectsStorage.Clean();
             _thriftPluginClient.SignalExit();
         }
@@ -40,9 +39,18 @@ public partial class ThriftPluginClient
         /// <inheritdoc />
         public async Task<string> ServeAsync(CancellationToken cancellationToken = default)
         {
-            await BeforeCallAsync(0, nameof(ServeAsync), cancellationToken);
             var uri = _thriftPluginClient.StartNewServer();
             return uri.ToString();
+        }
+
+        /// <inheritdoc />
+        protected override Task BeforeCallAsync(long token, string methodName, CancellationToken cancellationToken = default)
+        {
+            if (token != _thriftPluginClient.Token)
+            {
+                throw new AuthorizationException(string.Format(Resources.Errors.InvalidToken, token));
+            }
+            return base.BeforeCallAsync(token, methodName, cancellationToken);
         }
     }
 
@@ -342,7 +350,7 @@ public partial class ThriftPluginClient
         /// <inheritdoc />
         public async Task<ModelDescription> RowsSet_GetDescriptionAsync(long token, int object_handle, CancellationToken cancellationToken = default)
         {
-            LogCallMethod(nameof(RowsFormatter_OpenInputAsync));
+            LogCallMethod(nameof(RowsSet_GetDescriptionAsync));
             try
             {
                 return await _handler.RowsSet_GetDescriptionAsync(token, object_handle, cancellationToken);

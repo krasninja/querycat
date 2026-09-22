@@ -81,6 +81,12 @@ namespace QueryCat.Plugins.Client.Resources {
             }
         }
 
+        internal static string NotSupported_Seek {
+            get {
+                return ResourceManager.GetString("NotSupported_Seek", resourceCulture);
+            }
+        }
+
         internal static string NotSupported_Scheme {
             get {
                 return ResourceManager.GetString("NotSupported_Scheme", resourceCulture);

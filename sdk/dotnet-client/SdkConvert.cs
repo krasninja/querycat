@@ -112,7 +112,7 @@ public static class SdkConvert
         }
         else if (value.AsObjectUnsafe is IRowsInput)
         {
-            type = ObjectType.BLOB;
+            type = ObjectType.ROWS_INPUT;
         }
         else if (value.AsObjectUnsafe is IRowsIterator)
         {
@@ -139,7 +139,7 @@ public static class SdkConvert
         {
             return Backend.Core.Types.VariantValue.Null;
         }
-        if (value.__isset.isNull)
+        if (value.__isset.isNull && value.IsNull)
         {
             return Backend.Core.Types.VariantValue.Null;
         }
@@ -169,7 +169,7 @@ public static class SdkConvert
         }
         if (value.__isset.interval)
         {
-            return new Backend.Core.Types.VariantValue(new TimeSpan(0, 0, 0, 0, (int)value.Interval));
+            return new Backend.Core.Types.VariantValue(TimeSpan.FromMilliseconds(value.Interval));
         }
         if (value.__isset.@object && value.Object != null)
         {
@@ -447,7 +447,20 @@ public static class SdkConvert
         };
 
     public static Backend.Core.Execution.ExecutionStatistic Convert(Sdk.Statistic statistic)
-        => new ThriftPluginStatistic();
+    {
+        var stat = new ThriftPluginStatistic
+        {
+            ProcessedCount = statistic.ProcessedCount,
+        };
+        if (statistic.Errors != null)
+        {
+            foreach (var statisticRowError in statistic.Errors)
+            {
+                stat.AddError(SdkConvert.Convert(statisticRowError));
+            }
+        }
+        return stat;
+    }
 
     public static Sdk.Statistic Convert(Backend.Core.Execution.ExecutionStatistic statistic)
     {

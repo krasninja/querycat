@@ -18,7 +18,7 @@ public static class QueryCatPluginExceptionUtils
     /// <returns>Instance of <see cref="QueryCatPluginException" />.</returns>
     public static QueryCatPluginException Create(
         Exception exception,
-        ErrorType? errorType = ErrorType.INTERNAL,
+        ErrorType? errorType = null,
         int objectHandle = -1)
     {
         var errorTypeLocal = ErrorType.INTERNAL;

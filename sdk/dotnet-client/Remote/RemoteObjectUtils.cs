@@ -50,7 +50,7 @@ public static class RemoteObjectUtils
         }
         if (type == RemoteObjectType.Blob)
         {
-            return new ThriftRemoteBlobProxy(new RemoteStream(remoteObject.Handle, sessionProvider, token: token));
+            return new ThriftRemoteBlobProxy(sessionProvider, remoteObject.Handle, token: token);
         }
         if (type == RemoteObjectType.RowsFormatter)
         {

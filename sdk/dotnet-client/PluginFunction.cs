@@ -86,6 +86,10 @@ internal sealed class PluginFunction : IFunction
                 }
                 result[i] = new FunctionSignatureArgument(parts[0], type);
             }
+            else
+            {
+                result[i] = new FunctionSignatureArgument("na", DataType.String);
+            }
         }
         return result;
     }
@@ -93,6 +97,6 @@ internal sealed class PluginFunction : IFunction
     public static string GetFunctionName(string signature)
     {
         var firstBracketIndex = signature.IndexOf('(');
-        return firstBracketIndex > -1 ? signature.Substring(0, firstBracketIndex).ToUpperInvariant() : "Unknown";
+        return firstBracketIndex > -1 ? signature.Substring(0, firstBracketIndex).ToUpperInvariant() : "UNKNOWN";
     }
 }
