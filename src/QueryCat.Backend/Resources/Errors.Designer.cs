@@ -452,5 +452,11 @@ namespace QueryCat.Backend.Resources {
                 return ResourceManager.GetString("InvalidFilterExpression", resourceCulture);
             }
         }
+        
+        internal static string InvalidNumericLiteral {
+            get {
+                return ResourceManager.GetString("InvalidNumericLiteral", resourceCulture);
+            }
+        }
     }
 }

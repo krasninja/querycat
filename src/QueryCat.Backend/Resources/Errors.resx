@@ -222,4 +222,7 @@
   <data name="InvalidFilterExpression" xml:space="preserve">
     <value>Invalid filter expression.</value>
   </data>
+  <data name="InvalidNumericLiteral" xml:space="preserve">
+    <value>Invalid numeric value.</value>
+  </data>
 </root>

@@ -9,20 +9,17 @@ namespace QueryCat.Backend.Parser;
 /// </summary>
 internal static class ProgramParserVisitorExtensions
 {
-    private static readonly ILogger Logger =
-        Application.LoggerFactory.CreateLogger(nameof(ProgramParserVisitorExtensions));
-
     #region Return single item
 
     public static TTarget Visit<TTarget>(
         this ProgramParserVisitor visitor,
-        IParseTree tree)
+        IParseTree? tree)
     {
         var result = VisitMaybe<TTarget>(visitor, tree);
         if (result == null)
         {
-            var invalidQueryText = tree.GetText();
-            Logger.LogCritical("Invalid query: {Query}", invalidQueryText);
+            var invalidQueryText = tree?.GetText();
+            GetLogger().LogCritical("Invalid query: {Query}", invalidQueryText);
             throw new InvalidOperationException(Resources.Errors.InvalidParserValue);
         }
         return result;
@@ -76,4 +73,6 @@ internal static class ProgramParserVisitorExtensions
         => tree.Select(visitor.VisitMaybe<TTarget>);
 
     #endregion
+
+    private static ILogger GetLogger() => Application.LoggerFactory.CreateLogger(nameof(ProgramParserVisitorExtensions));
 }

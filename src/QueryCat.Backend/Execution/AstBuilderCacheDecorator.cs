@@ -49,7 +49,7 @@ internal sealed class AstBuilderCacheDecorator : IAstBuilder
         }
 
         resultNode = _astBuilder.BuildProgramFromString(program);
-        _astCache[program] = resultNode;
+        _astCache[program] = (IAstNode)resultNode.Clone();
         return (ProgramNode)resultNode;
     }
 

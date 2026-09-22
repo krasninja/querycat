@@ -92,6 +92,7 @@ internal sealed class AstBuilder : IAstBuilder
         catch (ParseCanceledException)
         {
             // Retry with LL prediction mode that allows to parse complex queries.
+            _errorListener.Clear();
             _parser.ErrorHandler = _defaultErrorStrategy;
             _parser.Reset();
             _parser.Interpreter.PredictionMode = Antlr4.Runtime.Atn.PredictionMode.LL;

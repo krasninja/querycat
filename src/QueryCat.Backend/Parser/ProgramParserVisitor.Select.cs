@@ -40,9 +40,9 @@ internal partial class ProgramParserVisitor
     public override IAstNode VisitSelectQueryExpressionFull(QueryCatParser.SelectQueryExpressionFullContext context)
     {
         var query = this.Visit<SelectQueryNode>(context.selectQueryExpressionBody());
-        query.WithNode = this.VisitMaybe<SelectWithListNode>(context.selectWithClause());
-        query.OrderByNode = this.VisitMaybe<SelectOrderByNode>(context.selectOrderByClause());
-        query.OffsetNode = this.VisitMaybe<SelectOffsetNode>(context.selectOffsetClause());
+        query.WithNode ??= this.VisitMaybe<SelectWithListNode>(context.selectWithClause());
+        query.OrderByNode ??= this.VisitMaybe<SelectOrderByNode>(context.selectOrderByClause());
+        query.OffsetNode ??= this.VisitMaybe<SelectOffsetNode>(context.selectOffsetClause());
         query.FetchNode = query.FetchNode
             ?? this.VisitMaybe<SelectFetchNode>(context.selectFetchFirstClause())
             ?? this.VisitMaybe<SelectFetchNode>(context.selectLimitClause());
@@ -195,7 +195,7 @@ internal partial class ProgramParserVisitor
 
     /// <inheritdoc />
     public override IAstNode VisitSelectSublistExpression(QueryCatParser.SelectSublistExpressionContext context)
-        => new SelectColumnsSublistExpressionNode((ExpressionNode)Visit(context.expression()))
+        => new SelectColumnsSublistExpressionNode(this.Visit<ExpressionNode>(context.expression()))
         {
             Alias = GetContextAlias(context.selectAlias),
         };
@@ -217,7 +217,7 @@ internal partial class ProgramParserVisitor
                 QueryCatParser.SOME => SelectSubqueryConditionExpressionNode.QuantifierOperator.Any,
                 QueryCatParser.ANY => SelectSubqueryConditionExpressionNode.QuantifierOperator.Any,
                 QueryCatParser.ALL => SelectSubqueryConditionExpressionNode.QuantifierOperator.All,
-                _ => throw new ArgumentException(nameof(type)),
+                _ => throw new ArgumentException(Resources.Errors.InvalidOperation, nameof(type)),
             };
 
         var operation = ConvertOperationTokenToAst(context.op.Type);
@@ -371,14 +371,11 @@ internal partial class ProgramParserVisitor
     /// <inheritdoc />
     public override IAstNode VisitSelectTableJoinedOn(QueryCatParser.SelectTableJoinedOnContext context)
     {
-        var joinTypeNode = context.selectJoinType() != null
-            ? this.Visit<SelectTableJoinedTypeNode>(context.selectJoinType())
-            : new SelectTableJoinedTypeNode(SelectTableJoinedType.Inner);
         var rightExpression = this.Visit<ExpressionNode>(context.right);
         SetNodeAlias(rightExpression, context.selectAlias);
         return new SelectTableJoinedOnNode(
             rightExpression,
-            joinTypeNode,
+            GetJoinNode(context.selectJoinType()),
             this.Visit<ExpressionNode>(context.condition));
     }
 
@@ -394,7 +391,7 @@ internal partial class ProgramParserVisitor
         SetNodeAlias(rightExpression, context.selectAlias);
         return new SelectTableJoinedUsingNode(
             rightExpression,
-            this.Visit<SelectTableJoinedTypeNode>(context.selectJoinType()),
+            GetJoinNode(context.selectJoinType()),
             context.identifier().Select(GetUnwrappedText));
     }
 
@@ -424,6 +421,13 @@ internal partial class ProgramParserVisitor
     /// <inheritdoc />
     public override IAstNode VisitSelectTableValues(QueryCatParser.SelectTableValuesContext context)
         => new SelectTableValuesNode(this.Visit<SelectTableValuesRowNode>(context.selectTableValuesRow()));
+
+    private SelectTableJoinedTypeNode GetJoinNode(QueryCatParser.SelectJoinTypeContext? joinTypeContext)
+    {
+        return joinTypeContext != null
+            ? this.Visit<SelectTableJoinedTypeNode>(joinTypeContext)
+            : new SelectTableJoinedTypeNode(SelectTableJoinedType.Inner);
+    }
 
     #endregion
 
@@ -492,7 +496,8 @@ internal partial class ProgramParserVisitor
     /// <inheritdoc />
     public override IAstNode VisitSelectSortSpecification(QueryCatParser.SelectSortSpecificationContext context)
     {
-        var nullOrder = SelectNullOrder.NullsLast;
+        var order = context.DESC() != null ? SelectOrderSpecification.Descending : SelectOrderSpecification.Ascending;
+        SelectNullOrder nullOrder;
         if (context.LAST() != null)
         {
             nullOrder = SelectNullOrder.NullsLast;
@@ -501,9 +506,13 @@ internal partial class ProgramParserVisitor
         {
             nullOrder = SelectNullOrder.NullsFirst;
         }
+        else
+        {
+            nullOrder = order == SelectOrderSpecification.Ascending ? SelectNullOrder.NullsLast : SelectNullOrder.NullsFirst;
+        }
         return new SelectOrderBySpecificationNode(
             expressionNode: this.Visit<ExpressionNode>(context.expression()),
-            order: context.DESC() != null ? SelectOrderSpecification.Descending : SelectOrderSpecification.Ascending,
+            order: order,
             nullOrder);
     }
 
@@ -529,7 +538,8 @@ internal partial class ProgramParserVisitor
     public override IAstNode VisitSelectTopClause(QueryCatParser.SelectTopClauseContext context)
         => new SelectFetchNode(
             new LiteralNode(
-                new VariantValue(GetUnwrappedText(context.limit)))
+                new VariantValue(ParseInteger(
+                    GetUnwrappedText(context.limit))))
             );
 
     #endregion
