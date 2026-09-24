@@ -72,7 +72,7 @@ internal sealed class SelectTableNode : AstNode
     public override string ToString()
     {
         var sb = new StringBuilder();
-        sb.Append(string.Join(", ", TablesNode.ToString()));
+        sb.Append(TablesNode);
         if (SearchConditionNode != null)
         {
             sb.Append($" Where {SearchConditionNode}");

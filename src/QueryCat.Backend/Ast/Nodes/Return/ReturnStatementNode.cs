@@ -15,7 +15,6 @@ internal sealed class ReturnStatementNode : StatementNode, ICommandNode
     /// <inheritdoc />
     public ReturnStatementNode(ReturnStatementNode node) : base(node)
     {
-        node.CopyTo(this);
     }
 
     /// <inheritdoc />

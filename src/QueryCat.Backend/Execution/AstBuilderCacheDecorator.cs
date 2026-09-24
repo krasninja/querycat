@@ -29,6 +29,9 @@ internal sealed class AstBuilderCacheDecorator : IAstBuilder
         IDictionary<string, IAstNode>? cache = null,
         int maxQueryLengthForCache = DefaultMaxQueryLengthForCache)
     {
+        ArgumentNullException.ThrowIfNull(astBuilder);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maxQueryLengthForCache);
+
         _astBuilder = astBuilder;
         _astCache = cache ?? new Dictionary<string, IAstNode>();
         _maxQueryLengthForCache = maxQueryLengthForCache;

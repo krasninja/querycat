@@ -31,7 +31,7 @@ internal sealed class ForNode : AstNode
     }
 
     /// <inheritdoc />
-    public override object Clone() => new ForNode(TargetVariableName, QueryExpression, ProgramBodyNode);
+    public override object Clone() => new ForNode(this);
 
     /// <inheritdoc />
     public override IEnumerable<IAstNode> GetChildren()

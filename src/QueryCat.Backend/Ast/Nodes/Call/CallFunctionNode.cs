@@ -21,6 +21,12 @@ internal sealed class CallFunctionNode : AstNode
     }
 
     /// <inheritdoc />
+    public override IEnumerable<IAstNode> GetChildren()
+    {
+        yield return FunctionCallNode;
+    }
+
+    /// <inheritdoc />
     public override object Clone() => new CallFunctionNode(this);
 
     /// <inheritdoc />

@@ -14,6 +14,8 @@ internal sealed class BlockExpressionNode : ExpressionNode
             throw new ArgumentOutOfRangeException(nameof(statements), Resources.Errors.NoStatements);
         }
         Statements.AddRange(statements);
+
+        StatementNode.FixNextNodeLink(Statements);
     }
 
     public BlockExpressionNode(BlockExpressionNode node)

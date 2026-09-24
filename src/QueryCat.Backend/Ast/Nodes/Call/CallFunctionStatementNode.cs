@@ -15,7 +15,6 @@ internal sealed class CallFunctionStatementNode : StatementNode, ICommandNode
     /// <inheritdoc />
     public CallFunctionStatementNode(CallFunctionStatementNode node) : base(node)
     {
-        node.CopyTo(this);
     }
 
     /// <inheritdoc />

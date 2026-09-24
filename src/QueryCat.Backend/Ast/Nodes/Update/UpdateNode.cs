@@ -31,6 +31,7 @@ internal sealed class UpdateNode : AstNode, ISelectAliasNode
         {
             SearchConditionNode = (SelectSearchConditionNode)node.SearchConditionNode.Clone();
         }
+        Alias = node.Alias;
         node.CopyTo(this);
     }
 

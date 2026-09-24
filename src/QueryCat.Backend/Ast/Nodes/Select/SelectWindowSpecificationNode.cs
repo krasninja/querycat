@@ -39,6 +39,7 @@ internal sealed class SelectWindowSpecificationNode : AstNode
         {
             OrderNode = (SelectWindowOrderClauseNode)node.OrderNode.Clone();
         }
+        node.CopyTo(this);
     }
 
     /// <inheritdoc />

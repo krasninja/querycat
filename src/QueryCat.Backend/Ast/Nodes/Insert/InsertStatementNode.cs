@@ -15,7 +15,6 @@ internal sealed class InsertStatementNode : StatementNode, ICommandNode
     /// <inheritdoc />
     public InsertStatementNode(InsertStatementNode node) : base(node)
     {
-        node.CopyTo(this);
     }
 
     /// <inheritdoc />

@@ -13,7 +13,7 @@ internal sealed class DeleteStatementNode : StatementNode, ICommandNode
     }
 
     /// <inheritdoc />
-    public DeleteStatementNode(StatementNode node) : base(node)
+    public DeleteStatementNode(DeleteStatementNode node) : base(node)
     {
     }
 

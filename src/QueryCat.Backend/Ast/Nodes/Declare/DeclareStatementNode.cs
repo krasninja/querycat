@@ -15,7 +15,6 @@ internal class DeclareStatementNode : StatementNode, ICommandNode
     /// <inheritdoc />
     public DeclareStatementNode(DeclareStatementNode node) : base(node)
     {
-        node.CopyTo(this);
     }
 
     /// <inheritdoc />

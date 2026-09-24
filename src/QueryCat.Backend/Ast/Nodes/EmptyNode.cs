@@ -17,7 +17,7 @@ internal sealed class EmptyNode : AstNode
 
     public IReadOnlyList<IAstNode> Children => _children;
 
-    public static EmptyNode Instance { get; } = new("(empty node)");
+    public static EmptyNode Instance => new("(empty node)");
 
     public EmptyNode(string value, params IAstNode[] children)
     {

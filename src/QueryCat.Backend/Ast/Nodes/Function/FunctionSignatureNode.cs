@@ -85,7 +85,16 @@ internal sealed class FunctionSignatureNode : AstNode, IEquatable<FunctionSignat
 
     /// <inheritdoc />
     public override int GetHashCode()
-        => HashCode.Combine(Name, (int)ReturnType, ArgumentNodes);
+    {
+        var hash = default(HashCode);
+        hash.Add(Name);
+        hash.Add(ReturnTypeNode);
+        foreach (var argumentNode in ArgumentNodes)
+        {
+            hash.Add(argumentNode);
+        }
+        return hash.ToHashCode();
+    }
 
     public static bool operator ==(FunctionSignatureNode? left, FunctionSignatureNode? right)
         => Equals(left, right);

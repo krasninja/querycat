@@ -9,10 +9,19 @@ namespace QueryCat.Backend.Parser;
 public class SyntaxException : QueryCatException
 #pragma warning restore CA2229
 {
+    /// <summary>
+    /// Query text.
+    /// </summary>
     public string Query { get; }
 
+    /// <summary>
+    /// Line with syntax error.
+    /// </summary>
     public int Line { get; }
 
+    /// <summary>
+    /// Cursor position with syntax error.
+    /// </summary>
     public int Position { get; }
 
     /// <summary>

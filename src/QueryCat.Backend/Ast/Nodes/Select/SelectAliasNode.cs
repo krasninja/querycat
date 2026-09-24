@@ -5,7 +5,7 @@ namespace QueryCat.Backend.Ast.Nodes.Select;
 /// </summary>
 internal sealed class SelectAliasNode : AstNode
 {
-    public static SelectAliasNode Empty { get; } = new(string.Empty);
+    public static SelectAliasNode Empty => new(string.Empty);
 
     public string AliasName { get; }
 

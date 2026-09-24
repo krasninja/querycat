@@ -50,7 +50,7 @@ internal sealed class FunctionSignatureArgumentNode : AstNode, IEquatable<Functi
     public bool IsVariadic => SignatureArgument.IsVariadic;
 
     /// <inheritdoc />
-    public override string Code => "func_arg";
+    public override string Code => "func_sig_arg";
 
     public FunctionSignatureArgumentNode(
         string name,
@@ -66,7 +66,8 @@ internal sealed class FunctionSignatureArgumentNode : AstNode, IEquatable<Functi
     }
 
     public FunctionSignatureArgumentNode(FunctionSignatureArgumentNode node) :
-        this(node.Name, node.TypeNode, node.HasDefaultValue ? node.DefaultValue : null, node.IsOptional, node.IsArray, node.IsVariadic)
+        this(node.Name, (FunctionTypeNode)node.TypeNode.Clone(),
+            node.HasDefaultValue ? node.DefaultValue : null, node.IsOptional, node.IsArray, node.IsVariadic)
     {
         node.CopyTo(this);
     }

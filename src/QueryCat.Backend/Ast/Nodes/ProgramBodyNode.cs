@@ -10,6 +10,7 @@ internal sealed class ProgramBodyNode : AstNode
     public ProgramBodyNode(params IList<StatementNode> statements)
     {
         Statements.AddRange(statements);
+        StatementNode.FixNextNodeLink(Statements);
     }
 
     public ProgramBodyNode(ProgramBodyNode node) : this(

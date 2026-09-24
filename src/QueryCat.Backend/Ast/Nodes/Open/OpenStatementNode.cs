@@ -15,7 +15,6 @@ internal sealed class OpenStatementNode : StatementNode, ICommandNode
     /// <inheritdoc />
     public OpenStatementNode(OpenStatementNode node) : base(node)
     {
-        node.CopyTo(this);
     }
 
     /// <inheritdoc />

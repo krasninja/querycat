@@ -68,11 +68,12 @@ internal sealed class BetweenExpressionNode : ExpressionNode
     public override string ToString()
     {
         var sb = new StringBuilder();
+        sb.Append(Expression);
         if (IsNot)
         {
-            sb.Append("Not ");
+            sb.Append(" Not");
         }
-        sb.Append($"Between {AndExpression}");
+        sb.Append($" Between {AndExpression}");
         return sb.ToString();
     }
 }

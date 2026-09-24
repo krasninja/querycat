@@ -13,7 +13,7 @@ internal sealed class IfConditionStatementNode : StatementNode, ICommandNode
     }
 
     /// <inheritdoc />
-    public IfConditionStatementNode(StatementNode node) : base(node)
+    public IfConditionStatementNode(IfConditionStatementNode node) : base(node)
     {
     }
 

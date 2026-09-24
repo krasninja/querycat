@@ -16,7 +16,7 @@ internal sealed class LiteralNode : ExpressionNode
     /// <inheritdoc />
     public override string Code => "literal";
 
-    public static LiteralNode NullValueNode { get; } = new(VariantValue.Null);
+    public static LiteralNode NullValueNode => new(VariantValue.Null);
 
     public LiteralNode(VariantValue value)
     {

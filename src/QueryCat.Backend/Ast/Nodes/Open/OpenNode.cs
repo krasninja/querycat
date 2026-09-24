@@ -24,6 +24,12 @@ internal sealed class OpenNode : AstNode
     }
 
     /// <inheritdoc />
+    public override IEnumerable<IAstNode> GetChildren()
+    {
+        yield return Expression;
+    }
+
+    /// <inheritdoc />
     public override object Clone() => new OpenNode(this);
 
     /// <inheritdoc />
