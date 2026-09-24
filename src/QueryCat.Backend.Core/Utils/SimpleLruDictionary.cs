@@ -11,7 +11,7 @@ namespace QueryCat.Backend.Core.Utils;
 internal sealed class SimpleLruDictionary<TKey, TValue> : IDictionary<TKey, TValue> where TKey : notnull where TValue : class
 {
     private readonly int _capacity;
-    private readonly IDictionary<TKey, WeakReference<TValue>> _map;
+    private readonly IDictionary<TKey, TValue> _map;
     private readonly LinkedList<TKey> _lruList = [];
 
     /// <inheritdoc />
@@ -25,18 +25,18 @@ internal sealed class SimpleLruDictionary<TKey, TValue> : IDictionary<TKey, TVal
     {
         get
         {
-            if (_map.TryGetValue(key, out var weakRef) && weakRef.TryGetTarget(out var target))
+            if (_map.TryGetValue(key, out var value))
             {
-                return target;
+                return value;
             }
             throw new KeyNotFoundException($"The key '{key}' was not found or the value has been garbage collected.");
         }
 
         set
         {
-            if (!_map.TryAdd(key, new WeakReference<TValue>(value)))
+            if (!_map.TryAdd(key, value))
             {
-                _map[key] = new WeakReference<TValue>(value);
+                _map[key] = value;
             }
             else
             {
@@ -54,7 +54,7 @@ internal sealed class SimpleLruDictionary<TKey, TValue> : IDictionary<TKey, TVal
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(capacity, nameof(capacity));
         _capacity = capacity;
-        _map = new ConcurrentDictionary<TKey, WeakReference<TValue>>();
+        _map = new ConcurrentDictionary<TKey, TValue>();
     }
 
     /// <inheritdoc />
@@ -63,9 +63,7 @@ internal sealed class SimpleLruDictionary<TKey, TValue> : IDictionary<TKey, TVal
     /// <inheritdoc />
     public ICollection<TValue> Values =>
         _map.Values
-            .Select(wr => wr.TryGetTarget(out var t) ? t : null)
-            .Where(v => v != null)
-            .Select(v => v!)
+            .Select(wr => wr)
             .ToList();
 
     /// <inheritdoc />
@@ -74,7 +72,7 @@ internal sealed class SimpleLruDictionary<TKey, TValue> : IDictionary<TKey, TVal
     /// <inheritdoc />
     public void Add(TKey key, TValue value)
     {
-        _map.Add(key, new WeakReference<TValue>(value));
+        _map.Add(key, value);
         _lruList.AddLast(key);
         Evict();
     }
@@ -97,10 +95,7 @@ internal sealed class SimpleLruDictionary<TKey, TValue> : IDictionary<TKey, TVal
     {
         foreach (var keyValue in _map)
         {
-            if (keyValue.Value.TryGetTarget(out var target))
-            {
-                array[arrayIndex++] = new KeyValuePair<TKey, TValue>(keyValue.Key, target);
-            }
+            array[arrayIndex++] = new KeyValuePair<TKey, TValue>(keyValue.Key, keyValue.Value);
         }
     }
 
@@ -121,7 +116,7 @@ internal sealed class SimpleLruDictionary<TKey, TValue> : IDictionary<TKey, TVal
     /// <inheritdoc />
     public bool TryGetValue(TKey key, out TValue value)
     {
-        if (_map.TryGetValue(key, out var weakRef) && weakRef.TryGetTarget(out var target))
+        if (_map.TryGetValue(key, out var target))
         {
             value = target;
             return true;
@@ -154,10 +149,7 @@ internal sealed class SimpleLruDictionary<TKey, TValue> : IDictionary<TKey, TVal
     {
         foreach (var keyValue in _map)
         {
-            if (keyValue.Value.TryGetTarget(out var target))
-            {
-                yield return new KeyValuePair<TKey, TValue>(keyValue.Key, target);
-            }
+            yield return new KeyValuePair<TKey, TValue>(keyValue.Key, keyValue.Value);
         }
     }
 
