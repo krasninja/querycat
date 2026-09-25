@@ -51,25 +51,15 @@ public sealed partial class DefaultFunctionsManager : IFunctionsManager
 
     private static void RegisterFormatters(string callFunctionName, string[] formatters)
     {
-        var extension = string.Empty;
-        var mimeType = string.Empty;
+        var mimeType = formatters.FirstOrDefault(f => !f.StartsWith('.') && f.Contains('/'));
         foreach (var formatterId in formatters)
         {
             Formatters.FormattersInfo.RegisterFormatter(formatterId,
                 (fm, et, args) => fm.CallFunctionAsync(callFunctionName, et, args));
 
-            if (formatterId.StartsWith('.') && formatterId.Length < 10)
+            if (mimeType != null && formatterId.StartsWith('.') && formatterId.Length < 10)
             {
-                extension = formatterId;
-            }
-            else if (!formatterId.StartsWith('.') && formatterId.Contains('/'))
-            {
-                mimeType = formatterId;
-            }
-
-            if (!string.IsNullOrEmpty(extension) && !string.IsNullOrEmpty(mimeType))
-            {
-                IOFunctions.MimeTypesProvider.SetMimeAndExtension(extension, mimeType);
+                IOFunctions.MimeTypesProvider.AddOrUpdate(formatterId, mimeType);
             }
         }
     }

@@ -41,7 +41,7 @@ internal sealed partial class WebServer
     private readonly string? _password;
     private readonly string? _filesRoot;
     private readonly HashSet<IPAddress> _allowedAddresses;
-    private readonly MimeTypesProvider _mimeTypesProvider = new();
+    private readonly MimeTypesProvider _mimeTypesProvider = Backend.Functions.IOFunctions.MimeTypesProvider;
     private int? _allowedAddressesSlots;
     private readonly Lock _lockObj = new();
     private readonly int _acceptConnections;
@@ -186,7 +186,7 @@ internal sealed partial class WebServer
             catch (QueryCatException e)
             {
                 _logger.LogWarning(e, "Invalid input: {Error}", e.Message);
-                response.ContentType = MimeTypesProvider.ContentTypeJson;
+                response.ContentType = System.Net.Mime.MediaTypeNames.Application.Json;
                 response.StatusCode = (int)HttpStatusCode.BadRequest;
                 await using var jsonWriter = new Utf8JsonWriter(response.OutputStream);
                 WriteJsonMessage(jsonWriter, e.Message);
@@ -304,21 +304,21 @@ internal sealed partial class WebServer
             }
 
             var iterator = RowsIteratorConverter.Convert(value);
-            if (acceptedType == MimeTypesProvider.ContentTypeHtml)
+            if (acceptedType == System.Net.Mime.MediaTypeNames.Text.Html)
             {
-                response.ContentType = MimeTypesProvider.ContentTypeHtml;
+                response.ContentType = System.Net.Mime.MediaTypeNames.Text.Html;
                 await using var streamWriter = new StreamWriter(response.OutputStream);
                 await WriteHtmlAsync(iterator, streamWriter, cancellationToken);
             }
-            else if (acceptedType == MimeTypesProvider.ContentTypeJson)
+            else if (acceptedType == System.Net.Mime.MediaTypeNames.Application.Json)
             {
-                response.ContentType = MimeTypesProvider.ContentTypeJson;
+                response.ContentType = System.Net.Mime.MediaTypeNames.Application.Json;
                 await using var jsonWriter = new Utf8JsonWriter(response.OutputStream);
                 await WriteJsonAsync(iterator, jsonWriter, cancellationToken);
             }
             else
             {
-                response.ContentType = MimeTypesProvider.ContentTypeTextPlain;
+                response.ContentType = System.Net.Mime.MediaTypeNames.Text.Plain;
                 await WriteTextAsync(iterator, response.OutputStream, cancellationToken);
             }
         }
@@ -360,12 +360,12 @@ internal sealed partial class WebServer
             using var sr = new StreamReader(request.InputStream);
             var text = sr.ReadToEnd();
             var content = request.ContentType ?? string.Empty;
-            if (content.StartsWith(MimeTypesProvider.ContentTypeTextPlain, StringComparison.InvariantCultureIgnoreCase)
-                || content.StartsWith(MimeTypesProvider.ContentTypeForm, StringComparison.InvariantCultureIgnoreCase))
+            if (content.StartsWith(System.Net.Mime.MediaTypeNames.Text.Plain, StringComparison.InvariantCultureIgnoreCase)
+                || content.StartsWith(System.Net.Mime.MediaTypeNames.Application.FormUrlEncoded, StringComparison.InvariantCultureIgnoreCase))
             {
                 return new WebServerQueryData(text);
             }
-            else if (content.StartsWith(MimeTypesProvider.ContentTypeJson, StringComparison.InvariantCultureIgnoreCase))
+            else if (content.StartsWith(System.Net.Mime.MediaTypeNames.Application.Json, StringComparison.InvariantCultureIgnoreCase))
             {
                 try
                 {
@@ -379,7 +379,7 @@ internal sealed partial class WebServer
                 }
             }
             else if (!string.IsNullOrEmpty(content)
-                && content.StartsWith(MimeTypesProvider.ContentTypeMultipartFormData))
+                && content.StartsWith(System.Net.Mime.MediaTypeNames.Multipart.FormData))
             {
                 foreach (var pair in ParseMultipartData(text))
                 {

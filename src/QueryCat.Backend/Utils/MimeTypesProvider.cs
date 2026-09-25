@@ -1,5 +1,5 @@
+using System.Collections.Concurrent;
 using System.Collections.Frozen;
-using System.Collections.Immutable;
 
 namespace QueryCat.Backend.Utils;
 
@@ -8,19 +8,6 @@ namespace QueryCat.Backend.Utils;
 /// </summary>
 internal sealed class MimeTypesProvider
 {
-    public const string ContentTypeJson = "application/json";
-    public const string ContentTypeTextPlain = "text/plain";
-    public const string ContentTypeHtml = "text/html";
-    public const string ContentTypeForm = "application/x-www-form-urlencoded";
-    public const string ContentTypeOctetStream = "application/octet-stream";
-    public const string ContentTypeMultipartFormData = "multipart/form-data";
-
-#if NET9_0_OR_GREATER
-    private static readonly Lock _objLock = new();
-#else
-    private static readonly object _objLock = new();
-#endif
-
     /// <summary>
     /// MIME types conversion table.
     /// </summary>
@@ -43,23 +30,23 @@ internal sealed class MimeTypesProvider
             [".eml"] = "message/rfc822",
             [".epub"] = "application/epub+zip",
             [".flv"] = "video/x-flv",
-            [".gz"] = "application/x-gzip",
+            [".gz"] = "application/gzip",
             [".gif"] = "image/gif",
-            [".htm"] = ContentTypeHtml,
-            [".html"] = ContentTypeHtml,
+            [".htm"] = System.Net.Mime.MediaTypeNames.Text.Html,
+            [".html"] = System.Net.Mime.MediaTypeNames.Text.Html,
             [".ical"] = "text/calendar",
             [".icalendar"] = "text/calendar",
             [".ico"] = "image/x-icon",
-            [".jfif"] = "image/pjpeg",
+            [".jfif"] = "image/jpeg",
             [".jpeg"] = "image/jpeg",
             [".jpg"] = "image/jpeg",
-            [".js"] = "application/x-javascript",
-            [".json"] = ContentTypeJson,
-            [".log"] = ContentTypeTextPlain,
+            [".js"] = "text/javascript",
+            [".json"] = System.Net.Mime.MediaTypeNames.Application.Json,
+            [".log"] = System.Net.Mime.MediaTypeNames.Text.Plain,
             [".m3u"] = "audio/x-mpegurl",
             [".m4a"] = "audio/mp4",
             [".m4v"] = "video/mp4",
-            [".md"] = "text/markdown",
+            [".md"] = System.Net.Mime.MediaTypeNames.Text.Markdown,
             [".mka"] = "audio/x-matroska",
             [".mkv"] = "video/x-matroska",
             [".mov"] = "video/quicktime",
@@ -71,8 +58,8 @@ internal sealed class MimeTypesProvider
             [".odp"] = "application/vnd.oasis.opendocument.presentation",
             [".ods"] = "application/vnd.oasis.opendocument.spreadsheet",
             [".odt"] = "application/vnd.oasis.opendocument.text",
-            [".oga"] = "video/ogg",
-            [".ogg"] = "video/ogg",
+            [".oga"] = "audio/ogg",
+            [".ogg"] = "audio/ogg",
             [".ogv"] = "video/ogg",
             [".pdf"] = "application/pdf",
             [".pem"] = "application/x-x509-ca-cert",
@@ -82,9 +69,9 @@ internal sealed class MimeTypesProvider
             [".ppt"] = "application/vnd.ms-powerpoint",
             [".pptx"] = "application/vnd.openxmlformats-officedocument.presentationml.presentation",
             [".rar"] = "application/x-rar-compressed",
-            [".rss"] = "text/xml",
+            [".rss"] = "application/rss+xml",
             [".rtf"] = "application/rtf",
-            [".shtml"] = ContentTypeHtml,
+            [".shtml"] = System.Net.Mime.MediaTypeNames.Text.Html,
             [".svg"] = "image/svg+xml",
             [".swf"] = "application/x-shockwave-flash",
             [".tif"] = "image/tiff",
@@ -93,7 +80,7 @@ internal sealed class MimeTypesProvider
             [".tsv"] = "text/tab-separated-values",
             [".ttf"] = "font/ttf",
             [".tts"] = "video/vnd.dlna.mpeg-tts",
-            [".txt"] = ContentTypeTextPlain,
+            [".txt"] = System.Net.Mime.MediaTypeNames.Text.Plain,
             [".vsd"] = "application/vnd.visio",
             [".vst"] = "application/vnd.visio",
             [".vsx"] = "application/vnd.visio",
@@ -105,18 +92,16 @@ internal sealed class MimeTypesProvider
             [".webp"] = "image/webp",
             [".wma"] = "audio/x-ms-wma",
             [".wmv"] = "video/x-ms-wmv",
-            [".woff"] = "application/font-woff",
+            [".woff"] = "font/woff",
             [".woff2"] = "font/woff2",
             [".xhtml"] = "application/xhtml+xml",
             [".xls"] = "application/vnd.ms-excel",
             [".xlsx"] = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            [".xml"] = "text/xml",
+            [".xml"] = "application/xml",
             [".zip"] = "application/zip",
         }.ToFrozenDictionary();
 
-    private readonly IDictionary<string, string> _additionalExtensionMimeMapping;
-
-    private static readonly IReadOnlyDictionary<string, string> _emptyDictionary = ImmutableDictionary<string, string>.Empty;
+    private readonly ConcurrentDictionary<string, string> _additionalExtensionMimeMapping;
 
     /// <summary>
     /// Constructor.
@@ -124,7 +109,9 @@ internal sealed class MimeTypesProvider
     /// <param name="mapping">Additional mappings.</param>
     public MimeTypesProvider(IReadOnlyDictionary<string, string>? mapping = null)
     {
-        _additionalExtensionMimeMapping = (mapping ?? _emptyDictionary).ToDictionary();
+        _additionalExtensionMimeMapping = mapping != null
+            ? new ConcurrentDictionary<string, string>(mapping, StringComparer.OrdinalIgnoreCase)
+            : new ConcurrentDictionary<string, string>(StringComparer.OrdinalIgnoreCase);
     }
 
     /// <summary>
@@ -134,11 +121,9 @@ internal sealed class MimeTypesProvider
     /// <returns>Specified content type or default binary type.</returns>
     public string GetContentTypeByExtension(string extension)
     {
-        extension = extension.ToLowerInvariant();
-        return _additionalExtensionMimeMapping.TryGetValue(extension, out var mime)
-            || _extensionMimeMapping.TryGetValue(extension, out mime)
+        return TryGetContentTypeByExtension(extension, out var mime)
             ? mime
-            : ContentTypeOctetStream;
+            : System.Net.Mime.MediaTypeNames.Application.Octet;
     }
 
     /// <summary>
@@ -149,6 +134,10 @@ internal sealed class MimeTypesProvider
     /// <returns><c>True</c> if content type was found, <c>false</c> otherwise.</returns>
     public bool TryGetContentTypeByExtension(string extension, out string mime)
     {
+        if (!extension.StartsWith('.'))
+        {
+            extension = '.' + extension;
+        }
         if (_additionalExtensionMimeMapping.TryGetValue(extension, out var outMime)
             || _extensionMimeMapping.TryGetValue(extension, out outMime))
         {
@@ -164,11 +153,15 @@ internal sealed class MimeTypesProvider
     /// </summary>
     /// <param name="extension">File extension (like .avi).</param>
     /// <param name="mime">MIME type.</param>
-    public void SetMimeAndExtension(string extension, string mime)
+    public void AddOrUpdate(string extension, string mime)
     {
-        lock (_objLock)
+        ArgumentException.ThrowIfNullOrEmpty(extension);
+        ArgumentException.ThrowIfNullOrEmpty(mime);
+
+        if (!extension.StartsWith('.'))
         {
-            _additionalExtensionMimeMapping[extension.ToLowerInvariant()] = mime;
+            extension = '.' + extension;
         }
+        _additionalExtensionMimeMapping[extension] = mime;
     }
 }
