@@ -101,7 +101,8 @@ internal sealed class PluginDebugCommand : BaseQueryCommand
                     transport,
 #endif
                     token),
-                NullPluginsStorage.Instance
+                NullPluginsStorage.Instance,
+                Application.GetPlatform()
             );
 
             await debugPluginsManager.PluginsLoader.LoadAsync(new PluginsLoadingOptions(), cts.Token);

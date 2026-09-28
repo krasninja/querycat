@@ -1,4 +1,5 @@
-using System.Runtime.InteropServices;
+using QueryCat.Backend.Core;
+using QueryCat.Backend.Core.Plugins;
 
 namespace QueryCat.Backend.PluginsManager;
 
@@ -7,7 +8,7 @@ namespace QueryCat.Backend.PluginsManager;
 /// </summary>
 internal static class FilesUtils
 {
-    private static string[] _unixExeExtensions = [".sh", ".py", ".pl", ".rb", ".run", ".elf"];
+    private static readonly string[] _unixExeExtensions = [".sh", ".py", ".pl", ".rb", ".run", ".elf"];
 
     /// <summary>
     /// Add executable flag to file for Posix systems.
@@ -15,21 +16,22 @@ internal static class FilesUtils
     /// <param name="file">File to make executable.</param>
     public static void MakeUnixExecutable(string file)
     {
-        var extension = Path.GetExtension(file);
-        if (extension.Equals(".exe", StringComparison.OrdinalIgnoreCase))
+        if (!OperatingSystem.IsLinux() && !OperatingSystem.IsMacOS() && !OperatingSystem.IsFreeBSD())
         {
             return;
         }
 
-        if ((RuntimeInformation.IsOSPlatform(OSPlatform.OSX)
-            || RuntimeInformation.IsOSPlatform(OSPlatform.Linux)
-            || RuntimeInformation.IsOSPlatform(OSPlatform.FreeBSD))
-                && (string.IsNullOrEmpty(extension) || _unixExeExtensions.Contains(extension)))
+        // Skip Windows exe and .NET assemblies.
+        var info = PluginInfo.CreateFromUniversalName(Path.GetFileName(file));
+        if (info.Platform == Application.PlatformWindows
+            || info.Platform == Application.PlatformMulti)
         {
-            var mode = File.GetUnixFileMode(file);
-            mode |= UnixFileMode.UserExecute | UnixFileMode.GroupExecute | UnixFileMode.OtherExecute;
-            File.SetUnixFileMode(file, mode);
+            return;
         }
+
+        var mode = File.GetUnixFileMode(file);
+        mode |= UnixFileMode.UserExecute | UnixFileMode.GroupExecute | UnixFileMode.OtherExecute;
+        File.SetUnixFileMode(file, mode);
     }
 
     /// <summary>
@@ -51,16 +53,24 @@ internal static class FilesUtils
             Directory.CreateDirectory(fileDirectory);
         }
 
-        var stream = await fileStreamFactory.Invoke(cancellationToken)
+        await using var stream = await fileStreamFactory.Invoke(cancellationToken)
             .ConfigureAwait(false);
         var fullFileNameDownloading = targetFile + ".downloading";
-        await using var outputFileStream = new FileStream(fullFileNameDownloading, FileMode.OpenOrCreate);
-        await stream.CopyToAsync(outputFileStream, cancellationToken)
-            .ConfigureAwait(false);
-        stream.Close();
-        outputFileStream.Close();
-        var overwrite = File.Exists(targetFile);
-        File.Move(fullFileNameDownloading, targetFile, overwrite);
+        try
+        {
+            await using var outputFileStream = new FileStream(fullFileNameDownloading, FileMode.Create);
+            await stream.CopyToAsync(outputFileStream, cancellationToken)
+                .ConfigureAwait(false);
+            stream.Close();
+            outputFileStream.Close();
+
+            File.Move(fullFileNameDownloading, targetFile, true);
+        }
+        catch (Exception)
+        {
+            File.Delete(fullFileNameDownloading);
+            throw;
+        }
 
         return targetFile;
     }

@@ -41,7 +41,7 @@ internal sealed class PluginProxyDownloader
             var stream = await ExtractFileFromArchiveAsync(_proxyFileName, archiveFile, cancellationToken);
 
             // Save and make executable.
-            await using var writeStream = File.OpenWrite(pluginsProxyLocalFile);
+            await using var writeStream = File.Create(pluginsProxyLocalFile);
             await stream.CopyToAsync(writeStream, cancellationToken);
             writeStream.Close();
             FilesUtils.MakeUnixExecutable(pluginsProxyLocalFile);

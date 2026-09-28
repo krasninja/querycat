@@ -42,9 +42,10 @@ public sealed class LocalPluginsStorage : IPluginsStorage
     /// <inheritdoc />
     public Task<Stream> DownloadAsync(string uri, CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrEmpty(uri) || !File.Exists(uri))
+        ArgumentException.ThrowIfNullOrEmpty(uri);
+        if (!File.Exists(uri))
         {
-            return Task.FromResult(Stream.Null);
+            throw new PluginException(string.Format(Resources.Errors.FileNoExists, uri));
         }
         return Task.FromResult<Stream>(File.OpenRead(uri));
     }

@@ -5,8 +5,9 @@ namespace QueryCat.Backend.Utils;
 /// </summary>
 internal sealed class TwoPhaseRemove : IDisposable
 {
-    private readonly List<string> _files = new();
-    private readonly Random _random = new();
+    private const string DownloadExtension = "temp";
+
+    private readonly List<(string Original, string Renamed)> _files = new();
 
     public bool RenameBeforeRemove { get; }
 
@@ -31,13 +32,13 @@ internal sealed class TwoPhaseRemove : IDisposable
         {
             var fileName = Path.GetFileName(file);
             var filePath = Path.GetDirectoryName(file)!;
-            var newFile = Path.Combine(filePath, $".{fileName}.old{_random.Next(0, 99)}");
-            File.Move(file, newFile);
-            _files.Add(newFile);
+            var renamedFile = Path.Combine(filePath, $".{fileName}.{Guid.NewGuid():N}.{DownloadExtension}");
+            File.Move(file, renamedFile);
+            _files.Add((file, renamedFile));
         }
         else
         {
-            _files.Add(file);
+            _files.Add((file, file));
         }
     }
 
@@ -59,23 +60,40 @@ internal sealed class TwoPhaseRemove : IDisposable
     public void Remove()
     {
         var files = _files.ToList();
-        for (var i = 0; i < files.Count; i++)
+        foreach (var file in files)
         {
-            File.Delete(files[i]);
-            _files.RemoveAt(i);
+            File.Delete(file.Renamed);
+            _files.Remove(file);
+        }
+    }
+
+    /// <summary>
+    /// Clean up not downloaded files.
+    /// </summary>
+    /// <param name="path">Path.</param>
+    public static void Cleanup(string path)
+    {
+        foreach (var file in Directory.EnumerateFiles(path, $"*.{DownloadExtension}", SearchOption.TopDirectoryOnly))
+        {
+            File.Delete(file);
         }
     }
 
     /// <inheritdoc />
     public void Dispose()
     {
-        if (RenameBeforeRemove)
+        if (!RenameBeforeRemove)
         {
-            foreach (var file in _files)
+            return;
+        }
+
+        foreach (var (original, renamed) in _files)
+        {
+            if (File.Exists(renamed))
             {
-                var oldFileName = file.Substring(1, file.Length - 7);
-                File.Move(file, oldFileName);
+                File.Move(renamed, original, overwrite: true);
             }
         }
+        _files.Clear();
     }
 }
