@@ -39,6 +39,7 @@ public sealed class DefaultExecutionStatistic : ExecutionStatistic
     {
         base.Clear();
         _statistic.Clear();
+        _errorRows.Clear();
     }
 
     /// <inheritdoc />

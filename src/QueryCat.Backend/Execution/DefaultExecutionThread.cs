@@ -24,6 +24,7 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IExecu
 
     private readonly Func<IExecutionScope?, IExecutionScope> _executionScopeFactory;
     private int _deepLevel;
+    private readonly bool _ownsPluginsManager = true;
     private bool _isDisposed;
 
     /// <inheritdoc />
@@ -191,6 +192,7 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IExecu
 #if ENABLE_PLUGINS
         PluginsManager = executionThread.PluginsManager;
 #endif
+        _ownsPluginsManager = false;
     }
 
     /// <inheritdoc />
@@ -216,8 +218,8 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IExecu
             // Bootstrap.
             if (_deepLevel == 1)
             {
-                await RunBootstrapScriptAsync(cancellationToken);
                 await LoadConfigAsync(cancellationToken);
+                await RunBootstrapScriptAsync(cancellationToken);
             }
             if (_deepLevel > Options.MaxRecursionDepth)
             {
@@ -457,8 +459,11 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IExecu
         {
             _asyncLock.Dispose();
 #if ENABLE_PLUGINS
-            (PluginsManager as IDisposable)?.Dispose();
-            (PluginsManager.PluginsLoader as IDisposable)?.Dispose();
+            if (_ownsPluginsManager)
+            {
+                (PluginsManager.PluginsLoader as IDisposable)?.Dispose();
+                (PluginsManager as IDisposable)?.Dispose();
+            }
 #endif
         }
     }
@@ -474,15 +479,18 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IExecu
     {
         await _asyncLock.DisposeAsync();
 #if ENABLE_PLUGINS
-        if (PluginsManager is IAsyncDisposable asyncDisposable)
+        if (_ownsPluginsManager)
         {
-            await asyncDisposable.DisposeAsync();
+            (PluginsManager.PluginsLoader as IDisposable)?.Dispose();
+            if (PluginsManager is IAsyncDisposable asyncDisposable)
+            {
+                await asyncDisposable.DisposeAsync();
+            }
+            else
+            {
+                (PluginsManager as IDisposable)?.Dispose();
+            }
         }
-        else
-        {
-            (PluginsManager as IDisposable)?.Dispose();
-        }
-        (PluginsManager.PluginsLoader as IDisposable)?.Dispose();
 #endif
     }
 

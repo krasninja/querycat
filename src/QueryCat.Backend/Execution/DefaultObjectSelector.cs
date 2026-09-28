@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Reflection;
 using QueryCat.Backend.Core.Execution;
 
@@ -170,7 +171,8 @@ public class DefaultObjectSelector : IObjectSelector
                     found = true;
                 }
                 // Skip out of range exception.
-                catch (TargetInvocationException e) when (e.InnerException is ArgumentOutOfRangeException)
+                catch (TargetInvocationException e) when (
+                    e.InnerException is ArgumentOutOfRangeException or KeyNotFoundException or IndexOutOfRangeException)
                 {
                 }
             }
@@ -241,7 +243,7 @@ public class DefaultObjectSelector : IObjectSelector
         for (var i = 0; i < indexParameters.Length; i++)
         {
             var indexParameterType = indexParameters[i].ParameterType;
-            if (indexParameterType == typeof(int) && indexes[i] is long)
+            if (indexParameterType == typeof(int) && TryGetIntegerIndex(indexes[i], out _))
             {
                 continue;
             }
@@ -346,6 +348,7 @@ public class DefaultObjectSelector : IObjectSelector
                     return ValueTask.FromResult(false);
                 }
                 dictionary[key] = ConvertValue(newValue, GetElementType(dictionary, true));
+                return ValueTask.FromResult(true);
             }
             if (TryGetIntegerIndex(indexes[0], out var intIndex))
             {
@@ -454,7 +457,7 @@ public class DefaultObjectSelector : IObjectSelector
 
         try
         {
-            return Convert.ChangeType(value, underlyingType);
+            return Convert.ChangeType(value, underlyingType, CultureInfo.InvariantCulture);
         }
         catch (Exception e) when (e is InvalidCastException or FormatException or OverflowException)
         {

@@ -9,7 +9,7 @@ public abstract class BinarySearchCompletionSource : ICompletionSource
 
     protected BinarySearchCompletionSource(IEnumerable<Completion> completions)
     {
-        _completions = completions.OrderBy(c => c.Label).ToArray();
+        _completions = completions.OrderBy(c => c.Label, StringComparer.OrdinalIgnoreCase).ToArray();
     }
 
     /// <inheritdoc />
@@ -27,6 +27,7 @@ public abstract class BinarySearchCompletionSource : ICompletionSource
             {
                 yield return completion;
             }
+            yield break;
         }
 
         var startIndex = BinarySearchStartsWith(completions, term);
@@ -35,10 +36,10 @@ public abstract class BinarySearchCompletionSource : ICompletionSource
             yield break;
         }
 
-        for (var i = startIndex - 1; i > 0; i--)
+        for (var i = startIndex - 1; i >= 0; i--)
         {
             var completion = completions[i];
-            if (completion.Label.StartsWith(term, StringComparison.InvariantCultureIgnoreCase))
+            if (completion.Label.StartsWith(term, StringComparison.OrdinalIgnoreCase))
             {
                 yield return completion;
             }
@@ -51,7 +52,7 @@ public abstract class BinarySearchCompletionSource : ICompletionSource
         for (var i = startIndex; i < completions.Length; i++)
         {
             var completion = completions[i];
-            if (completion.Label.StartsWith(term, StringComparison.InvariantCultureIgnoreCase))
+            if (completion.Label.StartsWith(term, StringComparison.OrdinalIgnoreCase))
             {
                 yield return completion;
             }

@@ -33,7 +33,7 @@ public abstract class BaseObjectPropertiesCompletionSource : ICompletionSource
         }
         else
         {
-            periodPosition = context.TriggerTokens.Count > 0 ? context.TriggerTokens[0].StartIndex : 0;
+            periodPosition = context.TriggerTokens.Count > 0 ? context.TriggerTokens[^1].StartIndex : 0;
         }
 
         // Find completions.
@@ -106,7 +106,7 @@ public abstract class BaseObjectPropertiesCompletionSource : ICompletionSource
         {
             return (
                 ObjectExpression: string.Empty,
-                Term: triggerTokens.Count > 0 ? triggerTokens[0].Text.Trim() : string.Empty
+                Term: triggerTokens.Count > 0 ? triggerTokens[^1].Text.Trim() : string.Empty
             );
         }
 

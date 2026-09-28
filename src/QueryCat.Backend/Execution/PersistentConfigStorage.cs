@@ -53,6 +53,7 @@ public class PersistentConfigStorage : MemoryConfigStorage
             {
                 _logger.LogTrace("Skip saving config with key '{Key}'. Only simple types save is supported.",
                     variantValueWithKey.Key);
+                continue;
             }
             var type = variantValueWithKey.Value.Type;
             if (!DataTypeUtils.IsSimple(type))
@@ -64,7 +65,15 @@ public class PersistentConfigStorage : MemoryConfigStorage
         }
 
         var json = JsonSerializer.Serialize(dict, SourceGenerationContext.Default.ConfigDictionary);
-        await File.WriteAllTextAsync(_configFile, json, CancellationToken.None);
+        var tempConfigFile = _configFile + ".tmp";
+        try
+        {
+            await File.WriteAllTextAsync(tempConfigFile, json, cancellationToken);
+        }
+        finally
+        {
+            File.Move(tempConfigFile, _configFile, overwrite: true);
+        }
 
         _writesCount = 0;
     }
