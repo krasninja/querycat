@@ -238,7 +238,7 @@ public class RowsFrame : IRowsSchema, IEnumerable<Row>
         foreach (var item in this)
         {
             i++;
-            if (numberOfRows == -1 || i >= numberOfRows)
+            if (numberOfRows > -1 && i >= numberOfRows)
             {
                 break;
             }
