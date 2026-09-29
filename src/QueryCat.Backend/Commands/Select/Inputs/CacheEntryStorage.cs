@@ -17,24 +17,14 @@ internal sealed class CacheEntryStorage : ICacheEntryStorage
     {
         RemoveExpiredAndIncompleteKeys();
 
-        if (_entries.TryGetValue(key, out entry!))
+        if (_entries.TryGetValue(key, out var existing))
         {
             if (_logger.IsEnabled(LogLevel.Debug))
             {
                 _logger.LogDebug("Reuse existing cache entry with key {Key}.", key);
             }
+            entry = existing;
             return false;
-        }
-        foreach (var cacheEntry in _entries.Values)
-        {
-            if (cacheEntry.Key.Match(key))
-            {
-                if (_logger.IsEnabled(LogLevel.Debug))
-                {
-                    _logger.LogDebug("Reuse existing cache entry with key {Key}.", key);
-                }
-                return false;
-            }
         }
 
         entry = new CacheEntry(key);

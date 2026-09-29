@@ -93,7 +93,7 @@ internal sealed class CacheRowsInput : IRowsInput, IRowsIteratorParent
     /// <inheritdoc />
     public ErrorCode ReadValue(int columnIndex, out VariantValue value)
     {
-        if (_rowIndex < 0)
+        if (_currentCacheEntry == null || _rowIndex < 0 || _rowIndex >= _currentCacheEntry.CacheLength)
         {
             value = VariantValue.Null;
             return ErrorCode.NoData;
@@ -186,7 +186,10 @@ internal sealed class CacheRowsInput : IRowsInput, IRowsIteratorParent
         for (var columnIndex = 0; columnIndex < _cacheReadMap.Length; columnIndex++)
         {
             var offset = baseOffset + columnIndex;
-            _rowsInput.ReadValue(columnIndex, out var value);
+            if (_rowsInput.ReadValue(columnIndex, out var value) != ErrorCode.OK)
+            {
+                value = VariantValue.Null;
+            }
             InputReads++;
             cacheEntry.Cache[offset] = value;
         }
@@ -210,7 +213,10 @@ internal sealed class CacheRowsInput : IRowsInput, IRowsIteratorParent
                 }
                 else
                 {
-                    _logger.LogDebug("Reuse previous cache with key {Key}.", _currentCacheEntry.Key);
+                    if (_logger.IsEnabled(LogLevel.Debug))
+                    {
+                        _logger.LogDebug("Reuse previous cache with key {Key}.", _currentCacheEntry.Key);
+                    }
                     return _currentCacheEntry;
                 }
             }
@@ -274,7 +280,8 @@ internal sealed class CacheRowsInput : IRowsInput, IRowsIteratorParent
     /// <inheritdoc />
     public void Explain(IndentedStringBuilder stringBuilder)
     {
-        stringBuilder.AppendRowsInputsWithIndent("Cache", _rowsInput);
+        stringBuilder.AppendRowsInputsWithIndent(
+            $"entries={_cacheEntries.Count} cache_reads={CacheReads} input_reads={InputReads}", _rowsInput);
     }
 
     /// <inheritdoc />

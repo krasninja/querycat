@@ -67,7 +67,7 @@ public sealed class TailRowsIterator : IRowsIterator, IRowsIteratorParent
     {
         if (_rowsIterator is ICursorRowsIterator cursorRowsIterator)
         {
-            cursorRowsIterator.Seek(-_tailCount, CursorSeekOrigin.End);
+            cursorRowsIterator.Seek(_tailCount - 1, CursorSeekOrigin.End);
             _currentRowsIterator = _rowsIterator;
         }
         else
