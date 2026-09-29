@@ -55,7 +55,7 @@ public sealed class FunctionsCompletionSource : ICompletionSource
     {
         _completions = _functionsManager
             .GetFunctions()
-            .Select(f => new Completion(f.Name, CompletionItemKind.Variable, f.Description, relevance: 0.6f))
+            .Select(f => new Completion(f.Name, CompletionItemKind.Function, f.Description, relevance: 0.6f))
             .ToArray();
     }
 }

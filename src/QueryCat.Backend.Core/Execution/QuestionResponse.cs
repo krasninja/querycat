@@ -20,7 +20,7 @@ public class QuestionResponse
     /// <summary>
     /// Constructor.
     /// </summary>
-    /// <param name="answer">Query.</param>
+    /// <param name="answer">Answer.</param>
     /// <param name="messageId">Message identifier.</param>
     public QuestionResponse(string answer, string? messageId = null)
     {

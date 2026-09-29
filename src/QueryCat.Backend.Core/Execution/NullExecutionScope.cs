@@ -22,9 +22,9 @@ public sealed class NullExecutionScope : IExecutionScope
     public bool TryGetVariable(string name, out VariantValue value)
     {
         value = VariantValue.Null;
-        return true;
+        return false;
     }
 
     /// <inheritdoc />
-    public bool TrySetVariable(string name, VariantValue value) => true;
+    public bool TrySetVariable(string name, VariantValue value) => false;
 }
