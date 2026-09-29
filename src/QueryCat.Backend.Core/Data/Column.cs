@@ -59,7 +59,7 @@ public class Column : ICloneable, IModelDescription
     /// <summary>
     /// Should the column be visible on output. It doesn't affect column search.
     /// </summary>
-    public bool IsHidden => Name.StartsWith("__");
+    public bool IsHidden => Name.StartsWith("__", StringComparison.Ordinal);
 
     /// <summary>
     /// Constructor.

@@ -45,6 +45,7 @@ public sealed class KeyColumn
         bool isRequired,
         VariantValue.Operation[] operations) : this(columnIndex, isRequired)
     {
+        ArgumentOutOfRangeException.ThrowIfZero(operations.Length, nameof(operations));
         _operations = operations;
     }
 

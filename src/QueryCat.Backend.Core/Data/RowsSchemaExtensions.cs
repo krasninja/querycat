@@ -14,9 +14,10 @@ public static class RowsSchemaExtensions
     /// <returns>Found column index or -1.</returns>
     public static int GetColumnIndexByName(this IRowsSchema schema, string name, string? sourceName = null)
     {
-        for (var i = 0; i < schema.Columns.Length; i++)
+        var columns = schema.Columns;
+        for (var i = 0; i < columns.Length; i++)
         {
-            if (Column.NameEquals(schema.Columns[i], name, sourceName))
+            if (Column.NameEquals(columns[i], name, sourceName))
             {
                 return i;
             }
@@ -51,7 +52,7 @@ public static class RowsSchemaExtensions
     }
 
     /// <summary>
-    /// Compares two schemas. It makes sure that tho schema can be combined. The only validation conditions
+    /// Compares two schemas. It makes sure that two schema can be combined. The only validation conditions
     /// for that is columns types equality and columns count equality.
     /// </summary>
     /// <param name="schema">Source schema.</param>

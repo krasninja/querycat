@@ -19,8 +19,8 @@ public class NullConfigStorage : IConfigStorage
     public ValueTask<VariantValue> GetAsync(string key, CancellationToken cancellationToken = default) => ValueTask.FromResult(VariantValue.Null);
 
     /// <inheritdoc />
-    public Task SaveAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+    public Task SaveAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
 
     /// <inheritdoc />
-    public Task LoadAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+    public Task LoadAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
 }
