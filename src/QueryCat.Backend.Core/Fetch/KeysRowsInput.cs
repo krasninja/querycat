@@ -70,7 +70,7 @@ public abstract class KeysRowsInput : RowsInput, IDisposable
         var queryLimit = QueryContext.QueryInfo.Limit + QueryContext.QueryInfo.Offset;
         if (queryLimit.HasValue)
         {
-            fetcher.Limit = Math.Min((int)queryLimit.Value, fetcher.Limit);
+            fetcher.Limit = (int)Math.Clamp(queryLimit.Value, 1, fetcher.Limit);
         }
         return fetcher;
     }
