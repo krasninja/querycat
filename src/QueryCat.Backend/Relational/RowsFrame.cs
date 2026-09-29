@@ -50,14 +50,11 @@ public class RowsFrame : IRowsSchema, IEnumerable<Row>
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(options.ChunkSize, nameof(options.ChunkSize));
         ArgumentOutOfRangeException.ThrowIfLessThan(columns.Length, 1, nameof(columns));
-        _chunkSize = options.ChunkSize;
         _columns = columns;
-        _rowsPerChunk = _chunkSize / _columns.Length;
-        // Align.
-        var remains = _chunkSize - _rowsPerChunk * _columns.Length;
-        _chunkSize -= remains;
+        _rowsPerChunk = Math.Max(1, options.ChunkSize / columns.Length);
+        _chunkSize = _rowsPerChunk * _columns.Length;
 
-        _storage = new List<VariantValue[]>(_chunkSize);
+        _storage = new List<VariantValue[]>();
     }
 
     /// <summary>
@@ -75,7 +72,11 @@ public class RowsFrame : IRowsSchema, IEnumerable<Row>
     /// <returns>The first value or null.</returns>
     public VariantValue GetFirstValue(int rowIndex = 0)
     {
-        (int chunkIndex, int offset) = EnsureCapacityAndGetStartOffset(rowIndex);
+        if (rowIndex < 0 || rowIndex >= TotalRows || IsRemoved(rowIndex))
+        {
+            return VariantValue.Null;
+        }
+        (int chunkIndex, int offset) = GetChunkAndOffsetValidate(rowIndex);
         return _storage[chunkIndex][offset];
     }
 
@@ -120,6 +121,11 @@ public class RowsFrame : IRowsSchema, IEnumerable<Row>
     /// <param name="values">Values to add.</param>
     public void AddRow(params object[] values)
     {
+        if (values.Length != Columns.Length)
+        {
+            throw new QueryCatException(Resources.Errors.ColumnsCountNoMatch);
+        }
+
         (int chunkIndex, int offset) = EnsureCapacityAndGetStartOffset(TotalRows);
         for (int i = 0; i < _columns.Length; i++)
         {
@@ -179,6 +185,11 @@ public class RowsFrame : IRowsSchema, IEnumerable<Row>
     /// <param name="rowIndex">Row index.</param>
     public bool RemoveRow(int rowIndex)
     {
+        if (rowIndex < 0 || rowIndex >= TotalRows)
+        {
+            return false;
+        }
+
         (int chunkIndex, int offset) = GetChunkAndOffset(rowIndex);
         if (chunkIndex > _storage.Count - 1)
         {
@@ -188,7 +199,7 @@ public class RowsFrame : IRowsSchema, IEnumerable<Row>
         {
             for (int i = 0; i < _columns.Length; i++)
             {
-                _storage[chunkIndex][offset] = VariantValue.Null;
+                _storage[chunkIndex][offset + i] = VariantValue.Null;
             }
         }
         return true;
@@ -223,8 +234,14 @@ public class RowsFrame : IRowsSchema, IEnumerable<Row>
     {
         var max = numberOfRows > 0 ? numberOfRows : TotalRows;
         var values = new List<VariantValue>(max);
+        var i = 0;
         foreach (var item in this)
         {
+            i++;
+            if (numberOfRows == -1 || i >= numberOfRows)
+            {
+                break;
+            }
             values.Add(item[columnIndex]);
         }
         return values;
@@ -280,11 +297,10 @@ public class RowsFrame : IRowsSchema, IEnumerable<Row>
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
     /// <summary>
-    /// Creates new rows iterator.
+    /// Create a new rows iterator.
     /// </summary>
-    /// <param name="childIterator">Child iterator.</param>
     /// <returns>Instance of <see cref="IRowsIterator" />.</returns>
-    public RowsFrameIterator GetIterator(IRowsIterator? childIterator = null) => new(this);
+    public RowsFrameIterator GetIterator() => new(this);
 
     /// <inheritdoc />
     public override string ToString() => $"Table (rows: {TotalRows})";

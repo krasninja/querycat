@@ -52,11 +52,16 @@ internal sealed class MapRowsIterator : IRowsIterator, IRowsIteratorParent
     public async ValueTask<bool> MoveNextAsync(CancellationToken cancellationToken = default)
     {
         var hasData = await _rowsIterator.MoveNextAsync(cancellationToken);
+        if (!hasData)
+        {
+            return false;
+        }
         for (var i = 0; i < _mapping.Length; i++)
         {
-            if (_rowsIterator.Columns[i].DataType != _mappingTypesCast[i])
+            var mappedIndex = _mapping[i];
+            if (_rowsIterator.Columns[mappedIndex].DataType != _mappingTypesCast[i])
             {
-                var value = _rowsIterator.Current[_mapping[i]];
+                var value = _rowsIterator.Current[mappedIndex];
                 if (value.TryCast(_mappingTypesCast[i], out var outValue))
                 {
                     _row[i] = outValue;
@@ -68,7 +73,7 @@ internal sealed class MapRowsIterator : IRowsIterator, IRowsIteratorParent
             }
             else
             {
-                _row[i] = _rowsIterator.Current[_mapping[i]];
+                _row[i] = _rowsIterator.Current[mappedIndex];
             }
         }
         return hasData;

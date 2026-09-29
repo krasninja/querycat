@@ -193,6 +193,7 @@ public sealed class CacheRowsIterator : IRowsIteratorParent, ICursorRowsIterator
     {
         await _rowsIterator.ResetAsync(cancellationToken);
         _rowsIteratorCursor = InitialPosition;
+        _isFrozen = false;
         _cache.Clear();
         _cursor = InitialPosition;
         _currentRow = new Row(_rowsIterator);

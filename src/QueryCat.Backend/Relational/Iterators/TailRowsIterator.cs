@@ -53,6 +53,7 @@ public sealed class TailRowsIterator : IRowsIterator, IRowsIteratorParent
     public async Task ResetAsync(CancellationToken cancellationToken = default)
     {
         await _cacheRowsIterator.ResetAsync(cancellationToken);
+        _currentRowsIterator = _cacheRowsIterator;
         _isInitialized = false;
     }
 
