@@ -15,6 +15,7 @@ public abstract class EnumerableRowsInput<[DynamicallyAccessedMembers(Dynamicall
     private readonly ClassRowsFrameBuilder<TClass> _builder = new();
 
     private IEnumerator<TClass>? _enumerator;
+    private bool _isInitialized;
 
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(EnumerableRowsInput<TClass>));
 
@@ -62,7 +63,7 @@ public abstract class EnumerableRowsInput<[DynamicallyAccessedMembers(Dynamicall
     /// <param name="builder">Frame builder.</param>
     protected virtual void Initialize(ClassRowsFrameBuilder<TClass> builder)
     {
-        if (builder.Columns.Count < 1)
+        if (builder.Count < 1)
         {
             builder.AddPublicProperties();
         }
@@ -74,7 +75,7 @@ public abstract class EnumerableRowsInput<[DynamicallyAccessedMembers(Dynamicall
         if (_enumerator == null)
         {
             value = VariantValue.Null;
-            return ErrorCode.NoData;
+            return ErrorCode.NotInitialized;
         }
 
         try
@@ -105,9 +106,13 @@ public abstract class EnumerableRowsInput<[DynamicallyAccessedMembers(Dynamicall
     /// <inheritdoc />
     public override Task OpenAsync(CancellationToken cancellationToken = default)
     {
-        Initialize(_builder);
-        Columns = _builder.Columns.ToArray();
-        AddKeyColumns(_builder.KeyColumns);
+        if (!_isInitialized)
+        {
+            Initialize(_builder);
+            Columns = _builder.Columns.ToArray();
+            AddKeyColumns(_builder.KeyColumns);
+            _isInitialized = true;
+        }
         return base.OpenAsync(cancellationToken);
     }
 
@@ -117,14 +122,6 @@ public abstract class EnumerableRowsInput<[DynamicallyAccessedMembers(Dynamicall
         var fetcher = CreateFetcher<TClass>();
         _enumerator = GetData(fetcher).GetEnumerator();
         await base.LoadAsync(cancellationToken);
-    }
-
-    /// <inheritdoc />
-    public override async Task ResetAsync(CancellationToken cancellationToken = default)
-    {
-        await CloseAsync(cancellationToken);
-        await OpenAsync(cancellationToken);
-        await base.ResetAsync(cancellationToken);
     }
 
     /// <inheritdoc />

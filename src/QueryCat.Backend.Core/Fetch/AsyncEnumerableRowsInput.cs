@@ -14,6 +14,7 @@ public abstract class AsyncEnumerableRowsInput<[DynamicallyAccessedMembers(Dynam
     private readonly ClassRowsFrameBuilder<TClass> _builder = new();
 
     private IAsyncEnumerator<TClass>? _enumerator;
+    private bool _isInitialized;
 
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(AsyncEnumerableRowsInput<TClass>));
 
@@ -62,7 +63,7 @@ public abstract class AsyncEnumerableRowsInput<[DynamicallyAccessedMembers(Dynam
     /// <param name="builder">Frame builder.</param>
     protected virtual void Initialize(ClassRowsFrameBuilder<TClass> builder)
     {
-        if (builder.Columns.Count < 1)
+        if (builder.Count < 1)
         {
             builder.AddPublicProperties();
         }
@@ -105,9 +106,13 @@ public abstract class AsyncEnumerableRowsInput<[DynamicallyAccessedMembers(Dynam
     /// <inheritdoc />
     public override Task OpenAsync(CancellationToken cancellationToken = default)
     {
-        Initialize(_builder);
-        Columns = _builder.Columns.ToArray();
-        AddKeyColumns(_builder.KeyColumns);
+        if (!_isInitialized)
+        {
+            Initialize(_builder);
+            Columns = _builder.Columns.ToArray();
+            AddKeyColumns(_builder.KeyColumns);
+            _isInitialized = true;
+        }
         return base.OpenAsync(cancellationToken);
     }
 
@@ -149,13 +154,18 @@ public abstract class AsyncEnumerableRowsInput<[DynamicallyAccessedMembers(Dynam
     /// <inheritdoc />
     protected override void Dispose(bool disposing)
     {
-        if (disposing)
+        if (disposing && _enumerator != null)
         {
-            if (_enumerator != null && _enumerator is IDisposable disposable)
+            if (_enumerator is IDisposable disposable)
             {
                 disposable.Dispose();
-                _enumerator = null;
             }
+            else if (_enumerator is IAsyncDisposable asyncDisposable)
+            {
+                // Compiler-generated async iterators are IAsyncDisposable only.
+                asyncDisposable.DisposeAsync().AsTask().GetAwaiter().GetResult();
+            }
+            _enumerator = null;
         }
         base.Dispose(disposing);
     }
@@ -173,6 +183,7 @@ public abstract class AsyncEnumerableRowsInput<[DynamicallyAccessedMembers(Dynam
     public async ValueTask DisposeAsync()
     {
         await DisposeAsyncCore();
+        Dispose(disposing: false);
         GC.SuppressFinalize(this);
     }
 

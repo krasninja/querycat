@@ -267,7 +267,7 @@ internal sealed partial class SelectPlanner
             if (keyCondition.KeyColumn.IsRequired && keyCondition.Conditions.Length < 1)
             {
                 var column = keyCondition.RowsInput.Columns[keyCondition.KeyColumn.ColumnIndex];
-                throw new QueryMissedCondition(column.FullName, keyCondition.KeyColumn.GetOperations());
+                throw new QueryMissedConditionException(column.FullName, keyCondition.KeyColumn.GetOperations());
             }
         }
     }

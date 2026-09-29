@@ -221,19 +221,10 @@ public abstract class KeysRowsInput : RowsInput, IDisposable
             return false;
         }
 
-        var keyValue = FindKeyColumnValue(columnIndex, ref operations);
+        var keyValue = FindKeyColumnValue(columnIndex, operations);
         if (keyValue == null || !keyValue.IsSet)
         {
-            // Check if it was a required condition.
-            foreach (var operation in operations)
-            {
-                var keyColumn = TryGetKeyColumn(columnIndex, operation);
-                if (keyColumn != null && keyColumn.IsRequired)
-                {
-                    throw new QueryMissedCondition(Columns[columnIndex].FullName, keyColumn.GetOperations());
-                }
-            }
-
+            ThrowIfRequiredKeyColumn(columnIndex, operations);
             value = VariantValue.Null;
             return false;
         }
@@ -242,9 +233,36 @@ public abstract class KeysRowsInput : RowsInput, IDisposable
         return true;
     }
 
+    private void ThrowIfRequiredKeyColumn(int columnIndex, ReadOnlySpan<VariantValue.Operation> operations)
+    {
+        foreach (var keyColumn in _keyColumns)
+        {
+            if (keyColumn.ColumnIndex != columnIndex || !keyColumn.IsRequired)
+            {
+                continue;
+            }
+            if (operations.IsEmpty || ContainsAnyOperation(keyColumn, operations))
+            {
+                throw new QueryMissedConditionException(Columns[columnIndex].FullName, keyColumn.GetOperations());
+            }
+        }
+    }
+
+    private static bool ContainsAnyOperation(KeyColumn keyColumn, ReadOnlySpan<VariantValue.Operation> operations)
+    {
+        foreach (var operation in operations)
+        {
+            if (keyColumn.ContainsOperation(operation))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private KeyColumnValue? FindKeyColumnValue(
         int keyColumnIndex,
-        ref ReadOnlySpan<VariantValue.Operation> operations)
+        ReadOnlySpan<VariantValue.Operation> operations)
     {
         bool OperationsContains(ReadOnlySpan<VariantValue.Operation> localOperations, KeyColumnValue kcv)
         {

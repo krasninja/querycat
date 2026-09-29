@@ -8,10 +8,19 @@ namespace QueryCat.Backend.Core.Functions;
 /// </summary>
 public sealed class FunctionMetadata
 {
+    /// <summary>
+    /// Function description.
+    /// </summary>
     public string Description { get; set; } = string.Empty;
 
+    /// <summary>
+    /// <c>True</c> if function has no side effects.
+    /// </summary>
     public bool IsSafe { get; set; } = true;
 
+    /// <summary>
+    /// <c>True</c> if it is the function used for aggregates.
+    /// </summary>
     public bool IsAggregate { get; set; }
 
     public string[] Formatters { get; set; } = [];
