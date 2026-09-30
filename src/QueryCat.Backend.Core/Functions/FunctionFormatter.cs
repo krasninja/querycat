@@ -13,7 +13,7 @@ namespace QueryCat.Backend.Core.Functions;
 /// </summary>
 internal static class FunctionFormatter
 {
-    internal static string GetSignatureFromParameters(string name, ParameterInfo[] parameterInfos, Type outputType)
+    internal static string GetSignatureFromParameters(ReadOnlySpan<char> name, ParameterInfo[] parameterInfos, Type outputType)
     {
         var sb = new StringBuilder();
         sb.Append(name);
@@ -64,16 +64,17 @@ internal static class FunctionFormatter
         // Unwrap generic types.
         if (type.IsGenericType)
         {
-            if (type.GetGenericTypeDefinition() == typeof(Nullable<>))
+            var genericTypeDefinition = type.GetGenericTypeDefinition();
+            if (genericTypeDefinition == typeof(Nullable<>))
             {
                 type = Nullable.GetUnderlyingType(type)!;
             }
-            else if (type.GetGenericTypeDefinition() == typeof(Task<>))
+            else if (genericTypeDefinition == typeof(Task<>) || genericTypeDefinition == typeof(ValueTask<>))
             {
                 type = type.GetGenericArguments()[0];
             }
         }
-        else if (type == typeof(Task))
+        else if (type == typeof(Task) || type == typeof(ValueTask))
         {
             type = typeof(void);
         }
@@ -103,7 +104,7 @@ internal static class FunctionFormatter
             if (char.IsUpper(ch))
             {
                 sb.Append('_');
-                sb.Append(char.ToLower(ch));
+                sb.Append(char.ToLowerInvariant(ch));
             }
             else
             {

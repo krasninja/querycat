@@ -10,7 +10,7 @@ public sealed class FunctionCallArguments
     private readonly Dictionary<string, VariantValue> _named = new();
     private readonly List<VariantValue> _positional = new();
 
-    internal static FunctionCallArguments Empty { get; } = new();
+    internal static FunctionCallArguments Empty => new();
 
     /// <summary>
     /// Named arguments.
@@ -96,6 +96,10 @@ public sealed class FunctionCallArguments
         return this;
     }
 
+    /// <summary>
+    /// Get instance of <see cref="FunctionCallArgumentsTypes" />.
+    /// </summary>
+    /// <returns>Instance of <see cref="FunctionCallArgumentsTypes" />.</returns>
     public FunctionCallArgumentsTypes GetTypes()
     {
         return new FunctionCallArgumentsTypes(

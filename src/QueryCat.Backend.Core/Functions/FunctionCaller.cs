@@ -16,7 +16,7 @@ public static class FunctionCaller
     /// <param name="args">Arguments.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Return value.</returns>
-    public static ValueTask<VariantValue> CallWithArgumentsAsync(
+    public static async ValueTask<VariantValue> CallWithArgumentsAsync(
         Delegate @delegate, IExecutionThread executionThread, object[]? args = null, CancellationToken cancellationToken = default)
     {
         using var frame = executionThread.Stack.CreateFrame();
@@ -25,7 +25,7 @@ public static class FunctionCaller
         {
             frame.Push(VariantValue.CreateFromObject(arg));
         }
-        return CallAsync(@delegate, executionThread, cancellationToken);
+        return await CallAsync(@delegate, executionThread, cancellationToken);
     }
 
     /// <summary>

@@ -75,11 +75,7 @@ public sealed class FunctionCallArgumentsTypes : IEqualityComparer<FunctionCallA
         {
             return true;
         }
-        if (x is null)
-        {
-            return false;
-        }
-        if (y is null)
+        if (x is null || y is null)
         {
             return false;
         }
@@ -95,14 +91,14 @@ public sealed class FunctionCallArgumentsTypes : IEqualityComparer<FunctionCallA
 
         for (var i = 0; i < x.Positional.Length; i++)
         {
-            if (x.Positional[i].Key != y.Positional[i].Key)
+            if (x.Positional[i].Key != y.Positional[i].Key || x.Positional[i].Value != y.Positional[i].Value)
             {
                 return false;
             }
         }
         for (var i = 0; i < x.Named.Length; i++)
         {
-            if (x.Named[i].Key != y.Named[i].Key)
+            if (x.Named[i].Key != y.Named[i].Key || x.Named[i].Value != y.Named[i].Value)
             {
                 return false;
             }
@@ -122,12 +118,12 @@ public sealed class FunctionCallArgumentsTypes : IEqualityComparer<FunctionCallA
     public int GetHashCode(FunctionCallArgumentsTypes obj)
     {
         var hashCode = default(HashCode);
-        foreach (var pair in Positional)
+        foreach (var pair in obj.Positional)
         {
             hashCode.Add(pair.Key);
             hashCode.Add(pair.Value);
         }
-        foreach (var pair in Named)
+        foreach (var pair in obj.Named)
         {
             hashCode.Add(pair.Key);
             hashCode.Add(pair.Value);

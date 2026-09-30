@@ -43,7 +43,7 @@ public interface IFunction
     FunctionSignatureArgument[] Arguments { get; }
 
     /// <summary>
-    /// Does function has side effects (can write anything to the system).
+    /// <c>True</c> if function has no side effects (cannot write anything to the system).
     /// </summary>
     bool IsSafe { get; }
 

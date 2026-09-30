@@ -4,10 +4,7 @@ namespace QueryCat.Backend.Core.Functions;
 /// The exception occurs when function cannot be found within
 /// current execution context.
 /// </summary>
-[Serializable]
-#pragma warning disable CA2229
 public class CannotFindFunctionException : QueryCatException
-#pragma warning restore CA2229
 {
     /// <summary>
     /// Constructor.

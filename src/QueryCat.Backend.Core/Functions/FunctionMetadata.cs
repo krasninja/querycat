@@ -16,7 +16,7 @@ public sealed class FunctionMetadata
     /// <summary>
     /// <c>True</c> if function has no side effects.
     /// </summary>
-    public bool IsSafe { get; set; } = true;
+    public bool IsSafe { get; set; }
 
     /// <summary>
     /// <c>True</c> if it is the function used for aggregates.
@@ -31,8 +31,8 @@ public sealed class FunctionMetadata
         var metadata = new FunctionMetadata
         {
             Description = memberInfo.GetCustomAttribute<DescriptionAttribute>()?.Description ?? string.Empty,
-            IsSafe = memberInfo.GetCustomAttribute<SafeFunctionAttribute>() != null,
-            IsAggregate = memberInfo.GetCustomAttribute<AggregateFunctionSignatureAttribute>() != null,
+            IsSafe = memberInfo.IsDefined(typeof(SafeFunctionAttribute)),
+            IsAggregate = memberInfo.IsDefined(typeof(AggregateFunctionSignatureAttribute)),
             Formatters = formatterAttribute != null ? formatterAttribute.FormatterIds : [],
         };
         return metadata;

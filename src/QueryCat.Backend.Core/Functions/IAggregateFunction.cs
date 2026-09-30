@@ -11,7 +11,7 @@ namespace QueryCat.Backend.Core.Functions;
 public interface IAggregateFunction
 {
     /// <summary>
-    /// Initialize the context. The function is called once before values processing.
+    /// Create a new aggregate function instance.
     /// </summary>
     /// <returns>Initial state.</returns>
     static virtual IAggregateFunction CreateInstance() => NullAggregateFunction.Instance;
