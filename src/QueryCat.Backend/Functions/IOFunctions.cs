@@ -179,13 +179,6 @@ internal static class IOFunctions
 
     private static IEnumerable<string> File_GetFilesByPath(string path)
     {
-        // Try parse file URI scheme.
-        if (path.StartsWith("file:", StringComparison.OrdinalIgnoreCase)
-            && Uri.TryCreate(path, UriKind.Absolute, out var uri))
-        {
-            path = uri.LocalPath;
-        }
-
         // The case when we query from a single file.
         if (File.Exists(path))
         {
@@ -338,8 +331,8 @@ internal static class IOFunctions
     [FunctionSignature("ls_dir(path: string): object<IRowsInput>")]
     public static VariantValue ListDirectory(IExecutionThread thread)
     {
-        var path = thread.Stack.Pop().AsString;
-        path = ResolveHomeDirectory(path);
+        var path = thread.Stack[0].AsString;
+        path = ResolveLocalPath(path);
 
         var items = ListDirectoryInternal(path);
         var input = EnumerableRowsInput<ListDirectoryEntry>.FromSource(items,
@@ -352,6 +345,21 @@ internal static class IOFunctions
                 .AddProperty("last_access_time", f => f.LastAccessedAt)
                 .AddProperty("last_write_time", f => f.LastWriteTime));
         return VariantValue.CreateFromObject(input);
+    }
+
+    internal static string ResolveLocalPath(string path)
+    {
+        var delimiterIndex = path.IndexOf(QueryDelimiter, StringComparison.Ordinal);
+        if (delimiterIndex > -1)
+        {
+            path = path.Substring(0, delimiterIndex);
+        }
+        if (path.StartsWith("file:", StringComparison.OrdinalIgnoreCase)
+            && Uri.TryCreate(path, UriKind.Absolute, out var uri))
+        {
+            path = uri.LocalPath;
+        }
+        return ResolveHomeDirectory(path);
     }
 
     internal static string ResolveHomeDirectory(string dir)
@@ -450,13 +458,13 @@ internal static class IOFunctions
         if (delimiterIndex == -1)
         {
             return (
-                ResolveHomeDirectory(uri),
+                ResolveLocalPath(uri),
                 new FunctionCallArguments());
         }
         else
         {
             return (
-                ResolveHomeDirectory(uri.Substring(0, delimiterIndex)),
+                ResolveLocalPath(uri),
                 FromQueryString(uri.Substring(delimiterIndex + QueryDelimiter.Length))
             );
         }

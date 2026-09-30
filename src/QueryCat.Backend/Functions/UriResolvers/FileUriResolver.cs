@@ -13,11 +13,13 @@ internal sealed class FileUriResolver : IUriResolver
     /// <inheritdoc />
     public bool TryResolve(string uri, out string? functionName)
     {
-        if (uri.StartsWith("file://", StringComparison.OrdinalIgnoreCase))
+        if (uri.StartsWith("file:", StringComparison.OrdinalIgnoreCase)
+            && Uri.TryCreate(uri, UriKind.Absolute, out _))
         {
             functionName = "read_file";
             return true;
         }
+
         functionName = null;
         return false;
     }

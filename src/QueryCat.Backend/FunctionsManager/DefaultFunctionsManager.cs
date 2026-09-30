@@ -84,7 +84,10 @@ public sealed partial class DefaultFunctionsManager : IFunctionsManager
                 && !string.IsNullOrEmpty(functionName))
             {
                 var functions = FindByName(functionName);
-                return functions.Length > 0 ? functions[0] : null;
+                if (functions.Length > 0)
+                {
+                    return functions[0];
+                }
             }
         }
 
