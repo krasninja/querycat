@@ -16,7 +16,7 @@ public sealed class CacheRowsIterator : IRowsIteratorParent, ICursorRowsIterator
     private readonly IRowsIterator _rowsIterator;
     private int _rowsIteratorCursor = InitialPosition; // The index of last row read.
     private readonly int _cacheSize;
-    private readonly List<Row> _cache;
+    private List<Row> _cache;
     private int _cursor = InitialPosition; // Absolute cursor position, might be within cache of rows iterator.
     private Row _currentRow;
     private bool _isFrozen;
@@ -34,6 +34,11 @@ public sealed class CacheRowsIterator : IRowsIteratorParent, ICursorRowsIterator
 
     /// <inheritdoc />
     public int TotalRows => Count;
+
+    /// <summary>
+    /// Whether the cache is complete and no more rows can be added.
+    /// </summary>
+    internal bool IsFrozen => _isFrozen;
 
     /// <summary>
     /// Total cache rows.
@@ -56,7 +61,7 @@ public sealed class CacheRowsIterator : IRowsIteratorParent, ICursorRowsIterator
     /// <summary>
     /// If cache is expired.
     /// </summary>
-    public bool IsExpired => _expiresIn != TimeSpan.Zero && DateTime.UtcNow > _expiresAt;
+    public bool IsExpired => _expiresIn != TimeSpan.Zero && _expiresAt != default && DateTime.UtcNow > _expiresAt;
 
     /// <summary>
     /// Constructor.
@@ -75,7 +80,7 @@ public sealed class CacheRowsIterator : IRowsIteratorParent, ICursorRowsIterator
 
     internal CacheRowsIterator(IRowsIterator rowsIterator, CacheRowsIterator cache) : this(rowsIterator)
     {
-        _cache = cache._cache;
+        _cache = cache._isFrozen ? cache._cache : new List<Row>(cache._cache);
         _cacheSize = cache._cacheSize;
         _expiresIn = cache._expiresIn;
         _expiresAt = cache._expiresAt;
@@ -99,6 +104,10 @@ public sealed class CacheRowsIterator : IRowsIteratorParent, ICursorRowsIterator
     /// <param name="row">Row to add.</param>
     public void AddLast(Row row)
     {
+        if (IsFrozen)
+        {
+            return;
+        }
         _cache.Add(new Row(row));
     }
 
@@ -109,7 +118,7 @@ public sealed class CacheRowsIterator : IRowsIteratorParent, ICursorRowsIterator
     public bool RemoveFirst(int count = 1)
     {
         ArgumentOutOfRangeException.ThrowIfNegative(count);
-        if (count > _cache.Count)
+        if (count > _cache.Count || IsFrozen)
         {
             return false;
         }
@@ -122,7 +131,7 @@ public sealed class CacheRowsIterator : IRowsIteratorParent, ICursorRowsIterator
     public async ValueTask<bool> MoveNextAsync(CancellationToken cancellationToken = default)
     {
         // If this is the first call, make new expiration date.
-        if (_cursor == InitialPosition)
+        if (_cursor == InitialPosition && _expiresAt == default)
         {
             ResetExpiration();
         }
@@ -199,7 +208,7 @@ public sealed class CacheRowsIterator : IRowsIteratorParent, ICursorRowsIterator
         await _rowsIterator.ResetAsync(cancellationToken);
         _rowsIteratorCursor = InitialPosition;
         _isFrozen = false;
-        _cache.Clear();
+        _cache = new List<Row>(_cacheSize > 0 ? _cacheSize : 32);
         _cursor = InitialPosition;
         _currentRow = new Row(_rowsIterator);
         ResetExpiration();

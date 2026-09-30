@@ -1,5 +1,8 @@
 using System.Collections.Concurrent;
 using System.ComponentModel;
+using System.Globalization;
+using System.Runtime.CompilerServices;
+using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
@@ -51,35 +54,43 @@ internal static class MiscFunctions
         return new VariantValue(Guid.NewGuid().ToString("D"));
     }
 
+    private static readonly string[] _sizeSuffixes = ["B", "K", "M", "G", "T", "P", "E"];
+
     [SafeFunction]
     [Description("Converts a size in bytes into a more easily human-readable format with size units.")]
     [FunctionSignature("size_pretty(size: integer, base: integer = 1024): string")]
     public static VariantValue SizePretty(IExecutionThread thread)
     {
-        if (thread.Stack[0].IsNull)
-        {
-            return VariantValue.Null;
-        }
-
         var byteCount = thread.Stack[0].AsInteger;
         var @base = thread.Stack[1].AsInteger;
         if (!byteCount.HasValue || !@base.HasValue)
         {
             return VariantValue.Null;
         }
-
-        // For reference: https://stackoverflow.com/questions/281640/how-do-i-get-a-human-readable-file-size-in-bytes-abbreviation-using-net.
-        string[] suffix = ["B", "K", "M", "G", "T", "P", "E"];
-        if (byteCount == 0)
+        if (@base.Value < 2)
         {
-            return new VariantValue("0 " + suffix[0]);
+            throw new QueryCatException(Resources.Errors.InvalidSizeBase);
         }
-        var bytes = Math.Abs(byteCount.Value);
-        var place = Convert.ToInt64(Math.Floor(Math.Log(bytes, @base.Value)));
-        var num = Math.Round(bytes / Math.Pow(@base.Value, place), 1);
-        var size = string.Concat(Math.Sign(byteCount.Value) * num, ' ', suffix[place]);
 
-        return new VariantValue(size);
+        // Convert before Abs so long.MinValue cannot overflow.
+        var size = Math.Abs((double)byteCount.Value);
+        var place = 0;
+        while (size >= @base.Value && place < _sizeSuffixes.Length - 1)
+        {
+            size /= @base.Value;
+            place++;
+        }
+        size = Math.Round(size, 1);
+        // Rounding may reach the next unit (1023.96 K -> 1024.0 K -> 1 M).
+        if (size >= @base.Value && place < _sizeSuffixes.Length - 1)
+        {
+            size /= @base.Value;
+            place++;
+        }
+
+        var sign = byteCount.Value < 0 ? "-" : string.Empty;
+        return new VariantValue(
+            string.Concat(sign, size.ToString(CultureInfo.InvariantCulture), ' ', _sizeSuffixes[place]));
     }
 
     [SafeFunction]
@@ -91,21 +102,26 @@ internal static class MiscFunctions
     }
 
     [SafeFunction]
-    [Description("Implements rows input caching.")]
+    [Description("Caches rows of the input by key. The cache expires after 'expire' (1 hour by default, interval '0' disables expiration).")]
     [FunctionSignature("cache_input(input: object<IRowsIterator>, key: string, expire?: interval := null): object<IRowsIterator>")]
     [FunctionSignature("cache_input(input: object<IRowsInput>, key: string, expire?: interval := null): object<IRowsIterator>")]
     public static VariantValue CacheInput(IExecutionThread thread)
     {
-        var iterator = thread.Stack[0].AsObjectUnsafe as IRowsIterator;
-        if (iterator == null && thread.Stack[0].AsObjectUnsafe is IRowsInput rowsInput)
+        var iterator = thread.Stack[0].AsObjectUnsafe switch
         {
-            iterator = new RowsInputIterator(rowsInput);
-        }
-        iterator ??= EmptyIterator.Instance;
+            IRowsIterator rowsIterator => rowsIterator,
+            IRowsInput ri => new RowsInputIterator(ri),
+            _ => throw new QueryCatException(Resources.Errors.InvalidRowsInput),
+        };
         var key = thread.Stack[1].AsString;
+        if (string.IsNullOrEmpty(key))
+        {
+            throw new QueryCatException(string.Format(Resources.Errors.InvalidField, nameof(key)));
+        }
         var expireTime = thread.Stack[2].AsInterval ?? TimeSpan.FromHours(1);
 
-        var cacheIterator = _cacheStorage.AddOrUpdate(key,
+        var cacheStorage = GetCacheStorage(thread);
+        var cacheIterator = cacheStorage.AddOrUpdate(key,
             addValueFactory: (k) => new CacheRowsIterator(iterator, expiresIn: expireTime),
             updateValueFactory: (k, cache) =>
             {
@@ -115,7 +131,6 @@ internal static class MiscFunctions
                 }
                 else
                 {
-                    cache.SeekCacheCursorToHead();
                     return new CacheRowsIterator(iterator, cache);
                 }
             });
@@ -123,7 +138,23 @@ internal static class MiscFunctions
         return VariantValue.CreateFromObject(cacheIterator);
     }
 
-    private static readonly ConcurrentDictionary<string, CacheRowsIterator> _cacheStorage = new();
+    /// <summary>
+    /// Store cache per threads.
+    /// </summary>
+    private static readonly ConditionalWeakTable<IExecutionThread, ConcurrentDictionary<string, CacheRowsIterator>> _cacheStorage = new();
+
+    private static ConcurrentDictionary<string, CacheRowsIterator> GetCacheStorage(IExecutionThread thread)
+    {
+        var storage = _cacheStorage.GetValue(thread, static _ => new ConcurrentDictionary<string, CacheRowsIterator>());
+        foreach (var item in storage)
+        {
+            if (item.Value.IsExpired)
+            {
+                storage.TryRemove(item);
+            }
+        }
+        return storage;
+    }
 
     public static void RegisterFunctions(IFunctionsManager functionsManager)
     {

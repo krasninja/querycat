@@ -225,4 +225,7 @@
   <data name="InvalidNumericLiteral" xml:space="preserve">
     <value>Invalid numeric value.</value>
   </data>
+  <data name="InvalidSizeBase" xml:space="preserve">
+    <value>Invalid base size.</value>
+  </data>
 </root>

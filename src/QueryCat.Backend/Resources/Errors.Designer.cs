@@ -458,5 +458,11 @@ namespace QueryCat.Backend.Resources {
                 return ResourceManager.GetString("InvalidNumericLiteral", resourceCulture);
             }
         }
+        
+        internal static string InvalidSizeBase {
+            get {
+                return ResourceManager.GetString("InvalidSizeBase", resourceCulture);
+            }
+        }
     }
 }
