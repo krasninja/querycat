@@ -11,7 +11,7 @@ public interface IBlobData
     string Name { get; }
 
     /// <summary>
-    /// Length in bytes of the data.
+    /// Length in bytes of the data. Returns -1 if length is not available.
     /// </summary>
     long Length { get; }
 

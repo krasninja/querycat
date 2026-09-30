@@ -31,7 +31,8 @@ public sealed class RemoteStream : Stream
             return AsyncUtils.RunSync(async ct =>
             {
                 using var session = await _sessionProvider.GetAsync(ct);
-                return await session.Client.Blob_GetLengthAsync(_token, _objectHandle, ct);
+                var length = await session.Client.Blob_GetLengthAsync(_token, _objectHandle, ct);
+                return length > -1 ? length : throw new NotSupportedException();;
             });
         }
     }

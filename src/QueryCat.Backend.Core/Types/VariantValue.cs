@@ -954,7 +954,7 @@ public readonly partial struct VariantValue :
     {
         // Convert BLOB into string: ABC\5C.
         const int maxChars = 64 * 1024;
-        var sb = new StringBuilder((int)Math.Min(blobData.Length * 3, maxChars));
+        var sb = new StringBuilder();
         using var stream = blobData.GetStream();
         var buffer = ArrayPool<byte>.Shared.Rent(1024);
         try

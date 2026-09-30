@@ -73,7 +73,11 @@ internal static class IOFunctions
         var text = thread.Stack[0].AsString;
         var formatter = (IRowsFormatter)thread.Stack[1].AsObject!;
 
-        var blobStream = new StreamBlobData(() => new MemoryStream(System.Text.Encoding.UTF8.GetBytes(text)));
+        var bytes = System.Text.Encoding.UTF8.GetBytes(text);
+        var blobStream = new StreamBlobData(() =>
+        {
+            return new MemoryStream(bytes);
+        }, length: bytes.Length);
         return VariantValue.CreateFromObject(formatter.OpenInput(blobStream));
     }
 
@@ -133,7 +137,8 @@ internal static class IOFunctions
                 return file;
             },
             File_GetContentType(path),
-            Path.GetFileName(path)
+            Path.GetFileName(path),
+            length: -1
         );
         return VariantValue.CreateFromObject(formatter.OpenOutput(blobFile));
     }
@@ -491,7 +496,11 @@ internal static class IOFunctions
             formatter = new TextTableFormatter();
         }
 
-        var blobFile = new StreamBlobData(Stdio.GetConsoleOutput);
+        var blobFile = new StreamBlobData(() =>
+        {
+            var stream = Stdio.GetConsoleOutput();
+            return new StreamWrapper(stream, leaveOpen: true);
+        }, length: -1);
         var output = formatter.OpenOutput(blobFile);
 
         return VariantValue.CreateFromObject(output);
@@ -506,15 +515,20 @@ internal static class IOFunctions
         var formatter = thread.Stack[1].AsObject as IRowsFormatter;
 
         formatter ??= new TextTableFormatter();
+        var skipped = false;
         var blobStream = new StreamBlobData(() =>
         {
             var stream = Stdio.GetConsoleInput();
-            for (var i = 0; i < skipLines; i++)
+            if (!skipped)
             {
-                ReadToEndOfLine(stream);
+                for (var i = 0; i < skipLines; i++)
+                {
+                    ReadToEndOfLine(stream);
+                }
+                skipped = true;
             }
-            return stream;
-        });
+            return new StreamWrapper(stream, leaveOpen: true);
+        }, length: -1);
         var input = formatter.OpenInput(blobStream);
         return VariantValue.CreateFromObject(input);
     }

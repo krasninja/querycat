@@ -11,6 +11,7 @@ internal sealed class MultiStream : Stream
 
     private int _index;
     private long _position;
+    private bool _isDisposed;
 
     public MultiStream(params Stream[] streams)
     {
@@ -144,4 +145,39 @@ internal sealed class MultiStream : Stream
 
     /// <inheritdoc />
     public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+
+    /// <inheritdoc />
+    protected override void Dispose(bool disposing)
+    {
+        if (_isDisposed)
+        {
+            return;
+        }
+        _isDisposed = true;
+
+        if (disposing)
+        {
+            foreach (var stream in _streams)
+            {
+                stream.Dispose();
+            }
+        }
+        base.Dispose(disposing);
+    }
+
+    /// <inheritdoc />
+    public override async ValueTask DisposeAsync()
+    {
+        if (_isDisposed)
+        {
+            return;
+        }
+        _isDisposed = true;
+
+        foreach (var stream in _streams)
+        {
+            await stream.DisposeAsync();
+        }
+        await base.DisposeAsync();
+    }
 }

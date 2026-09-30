@@ -492,7 +492,7 @@ internal sealed partial class WebServer
     private async Task WriteTextAsync(IRowsIterator iterator, Stream stream, CancellationToken cancellationToken)
     {
         var formatter = new TextTableFormatter();
-        var blobStream = new StreamBlobData(() => stream);
+        var blobStream = new StreamBlobData(() => new StreamWrapper(stream, leaveOpen: true));
         var output = formatter.OpenOutput(blobStream);
         await output.WriteAsync(iterator, adjustColumnsLengths: true, _executionThread.ConfigStorage,
             cancellationToken: cancellationToken);
