@@ -92,7 +92,7 @@ public sealed class CacheRowsIterator : IRowsIteratorParent, ICursorRowsIterator
     }
 
     /// <summary>
-    /// Get row at the specified position.
+    /// Get row at the specified position. IsFrozen flag is skipped.
     /// </summary>
     /// <param name="position">Row index/position.</param>
     /// <returns>Row instance.</returns>
@@ -112,13 +112,13 @@ public sealed class CacheRowsIterator : IRowsIteratorParent, ICursorRowsIterator
     }
 
     /// <summary>
-    /// Remove row at beginning of cache.
+    /// Remove row at beginning of cache. IsFrozen flag is skipped.
     /// </summary>
     /// <param name="count">How many rows to remove.</param>
     public bool RemoveFirst(int count = 1)
     {
         ArgumentOutOfRangeException.ThrowIfNegative(count);
-        if (count > _cache.Count || IsFrozen)
+        if (count > _cache.Count)
         {
             return false;
         }
