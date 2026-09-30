@@ -11,7 +11,7 @@ namespace QueryCat.Backend.Formatters;
 public static class FormattersInfo
 {
     private static readonly Dictionary<string, Func<IFunctionsManager, IExecutionThread, FunctionCallArguments, ValueTask<VariantValue>>> _formatters
-        = new(capacity: 64);
+        = new(capacity: 64, StringComparer.OrdinalIgnoreCase);
 
     /// <summary>
     /// Create formatter by file extension or content type.
@@ -27,7 +27,7 @@ public static class FormattersInfo
         FunctionCallArguments? args = null,
         CancellationToken cancellationToken = default)
     {
-        if (_formatters.TryGetValue(id.ToLower(), out var factory))
+        if (_formatters.TryGetValue(id, out var factory))
         {
             var value = await factory.Invoke(thread.FunctionsManager, thread, args ?? FunctionCallArguments.Empty);
             return value.AsRequired<IRowsFormatter>();

@@ -464,5 +464,17 @@ namespace QueryCat.Backend.Resources {
                 return ResourceManager.GetString("InvalidSizeBase", resourceCulture);
             }
         }
+        
+        internal static string HttpRequestFailed {
+            get {
+                return ResourceManager.GetString("HttpRequestFailed", resourceCulture);
+            }
+        }
+        
+        internal static string PathNotExists {
+            get {
+                return ResourceManager.GetString("PathNotExists", resourceCulture);
+            }
+        }
     }
 }
