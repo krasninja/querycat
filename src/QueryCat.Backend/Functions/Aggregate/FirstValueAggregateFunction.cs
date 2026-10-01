@@ -24,21 +24,21 @@ internal sealed class FirstValueAggregateFunction : IAggregateFunction
     public static IAggregateFunction CreateInstance() => new FirstValueAggregateFunction();
 
     /// <inheritdoc />
-    public VariantValue[] GetInitialState(DataType type) => [VariantValue.Null];
+    public VariantValue[] GetInitialState(DataType type) =>
+    [
+        VariantValue.Null,
+        new(false) // 1: seen flag
+    ];
 
     /// <inheritdoc />
     public void Invoke(VariantValue[] state, IExecutionThread thread)
     {
-        if (!state[0].IsNull)
+        if (state[1].AsBoolean)
         {
             return;
         }
-
-        var value = thread.Stack[0];
-        if (!value.IsNull)
-        {
-            state[0] = value;
-        }
+        state[0] = thread.Stack[0];
+        state[1] = new VariantValue(true);
     }
 
     /// <inheritdoc />

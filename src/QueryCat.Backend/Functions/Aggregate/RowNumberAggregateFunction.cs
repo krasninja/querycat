@@ -25,7 +25,7 @@ internal sealed class RowNumberAggregateFunction : IAggregateFunction
     public static IAggregateFunction CreateInstance() => new RowNumberAggregateFunction();
 
     /// <inheritdoc />
-    public VariantValue[] GetInitialState(DataType type) => [VariantValue.OneIntegerValue];
+    public VariantValue[] GetInitialState(DataType type) => [new(0)];
 
     /// <inheritdoc />
     public void Invoke(VariantValue[] state, IExecutionThread thread)

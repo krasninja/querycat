@@ -1,9 +1,9 @@
 expected: |
-  1,aleksander,999,aleksander,999
-  2,aleksander,999,elina,800
-  1,aleksander,999,ivan,1000
-  3,aleksander,999,lena,780
-  2,aleksander,999,sergey,500
+  2,aleksander,999,aleksander,999
+  1,aleksander,999,elina,800
+  3,aleksander,999,ivan,1000
+  2,aleksander,999,lena,780
+  1,aleksander,999,sergey,500
 query: |
   select
     row_number() over (partition by city order by balance),
