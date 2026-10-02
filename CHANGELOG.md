@@ -7,11 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## Fixed
+
 - Improve parser handling in ambiguity paths.
 - Fix WebServer bugger leaks, query processing improvements.
 - Reduce memory usage for GreaterOrEquals, LessOrEquals, NotEquals, Subtract operations.
 - Improve Window functions support.
 - Obsolete plugins clean up.
+- "row_number()" now respects ORDER BY inside the OVER clause.
+- "avg()" returns correct values and types for numeric, interval and timestamp arguments.
+- "first_value()" returns NULL when the first row's value is NULL.
+- Fix and improve "generate_series()" function.
 - Overall bugfixes and improvements.
 
 ## [0.17.5] - 2026-07-31

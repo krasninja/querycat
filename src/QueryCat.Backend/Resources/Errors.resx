@@ -240,4 +240,7 @@
   <data name="BufferKeysAfterRead" xml:space="preserve">
     <value>Cannot change key columns of the buffered input while it is being read.</value>
   </data>
+  <data name="InvalidStepSize" xml:space="preserve">
+    <value>Step size cannot equal zero.</value>
+  </data>
 </root>

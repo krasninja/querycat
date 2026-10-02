@@ -719,6 +719,45 @@ public readonly partial struct VariantValue :
     /// </summary>
     public bool IsNull => _object == null;
 
+    /// <summary>
+    /// Determines if the value is negative.
+    /// </summary>
+    public bool IsNegative => Type switch
+    {
+        DataType.Integer => long.IsNegative(AsIntegerUnsafe),
+        DataType.Boolean => false,
+        DataType.Float => double.IsNegative(AsFloatUnsafe),
+        DataType.Numeric => decimal.IsNegative(AsNumericUnsafe),
+        DataType.Interval => AsIntervalUnsafe.Ticks < 0,
+        _ => false,
+    };
+
+    /// <summary>
+    /// Determines if the value is zero or positive.
+    /// </summary>
+    public bool IsPositive => Type switch
+    {
+        DataType.Integer => long.IsPositive(AsIntegerUnsafe),
+        DataType.Boolean => true,
+        DataType.Float => double.IsPositive(AsFloatUnsafe),
+        DataType.Numeric => decimal.IsPositive(AsNumericUnsafe),
+        DataType.Interval => AsIntervalUnsafe.Ticks >= 0,
+        _ => false,
+    };
+
+    /// <summary>
+    /// Determines if the value is zero.
+    /// </summary>
+    public bool IsZero => Type switch
+    {
+        DataType.Integer => AsIntegerUnsafe == 0,
+        DataType.Float => AsFloatUnsafe == 0.0,
+        DataType.Numeric => AsNumericUnsafe == decimal.Zero,
+        DataType.Boolean => AsBooleanUnsafe == false,
+        DataType.Interval => AsIntervalUnsafe == TimeSpan.Zero,
+        _ => false,
+    };
+
     #region Casting
 
     /// <summary>

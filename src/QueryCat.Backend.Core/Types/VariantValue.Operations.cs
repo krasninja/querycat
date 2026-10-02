@@ -284,22 +284,6 @@ public readonly partial struct VariantValue
         return false;
     }
 
-    /// <summary>
-    /// Tests if value is zero. For non-numeric types returns false.
-    /// </summary>
-    /// <param name="value">Value to test.</param>
-    /// <returns><c>True</c> of zero, <c>false</c> otherwise.</returns>
-    internal static bool IsZero(in VariantValue value)
-    {
-        return value.Type switch
-        {
-            DataType.Integer => value.AsIntegerUnsafe == 0,
-            DataType.Float => value.AsFloatUnsafe == 0.0,
-            DataType.Numeric => value.AsNumericUnsafe == decimal.Zero,
-            _ => false,
-        };
-    }
-
     #region Algebraic operations
 
     public delegate VariantValue UnaryFunction(in VariantValue left);

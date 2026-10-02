@@ -11,12 +11,16 @@ namespace QueryCat.Backend.Inputs;
 internal sealed class GenerateSeriesInput : IRowsInput
 {
     [Description("Generates a series of values from start to stop, with a step size of step.")]
-    [FunctionSignature("generate_series(start: integer, stop: integer, step: integer = 1): object<IRowsInput>")]
-    [FunctionSignature("generate_series(start: float, stop: float, step: float = 1): object<IRowsInput>")]
-    [FunctionSignature("generate_series(start: numeric, stop: numeric, step: numeric = 1): object<IRowsInput>")]
-    [FunctionSignature("generate_series(start: timestamp, stop: timestamp, step: timestamp): object<IRowsInput>")]
+    [FunctionSignature("generate_series(start: integer, stop: integer, step: integer := 1): object<IRowsInput>")]
+    [FunctionSignature("generate_series(start: float, stop: float, step: float := 1): object<IRowsInput>")]
+    [FunctionSignature("generate_series(start: numeric, stop: numeric, step: numeric := 1): object<IRowsInput>")]
+    [FunctionSignature("generate_series(start: timestamp, stop: timestamp, step: interval): object<IRowsInput>")]
     public static VariantValue GenerateSeries(IExecutionThread thread)
     {
+        if (thread.Stack[2].IsZero)
+        {
+            throw new QueryCatException(Resources.Errors.InvalidStepSize);
+        }
         return VariantValue.CreateFromObject(
             new GenerateSeriesInput(thread.Stack[0], thread.Stack[1], thread.Stack[2]));
     }
@@ -26,6 +30,7 @@ internal sealed class GenerateSeriesInput : IRowsInput
     private readonly VariantValue _end;
     private readonly VariantValue _step;
     private readonly VariantValue.BinaryFunction _addFunction;
+    private readonly VariantValue.BinaryFunction _withinBoundsDelegate;
     private bool _isInProgress;
 
     /// <inheritdoc />
@@ -49,7 +54,10 @@ internal sealed class GenerateSeriesInput : IRowsInput
         _end = end;
         _step = step;
 
-        _addFunction = VariantValue.GetAddDelegate(_current.Type, _step.Type);
+        _addFunction = VariantValue.GetAddDelegate(_current.Type, _end.Type);
+        _withinBoundsDelegate = step.IsPositive
+            ? VariantValue.GetLessOrEqualsDelegate(_current.Type, _end.Type)
+            : VariantValue.GetGreaterOrEqualsDelegate(_current.Type, _end.Type);
         Columns =
         [
             new Column(Column.ValueColumnTitle, _current.Type, "The series value.")
@@ -107,7 +115,7 @@ internal sealed class GenerateSeriesInput : IRowsInput
         }
 
         var next = _addFunction.Invoke(_current, _step);
-        if (next <= _end)
+        if (_withinBoundsDelegate.Invoke(in next, in _end).AsBooleanUnsafe)
         {
             _current = next;
             return ValueTask.FromResult(true);
@@ -118,7 +126,7 @@ internal sealed class GenerateSeriesInput : IRowsInput
     /// <inheritdoc />
     public void Explain(IndentedStringBuilder stringBuilder)
     {
-        stringBuilder.AppendLine("Series");
+        stringBuilder.AppendLine($"Series (start={_start}, stop={_end}, step={_step})");
     }
 
     /// <inheritdoc />

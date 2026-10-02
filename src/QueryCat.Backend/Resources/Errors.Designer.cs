@@ -488,5 +488,11 @@ namespace QueryCat.Backend.Resources {
                 return ResourceManager.GetString("BufferKeysAfterRead", resourceCulture);
             }
         }
+        
+        internal static string InvalidStepSize {
+            get {
+                return ResourceManager.GetString("InvalidStepSize", resourceCulture);
+            }
+        }
     }
 }
