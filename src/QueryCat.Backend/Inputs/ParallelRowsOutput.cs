@@ -1,5 +1,4 @@
 using System.ComponentModel;
-using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
@@ -13,17 +12,21 @@ namespace QueryCat.Backend.Inputs;
 /// </summary>
 internal sealed class ParallelRowsOutput : ParallelRowsSource, IRowsOutput
 {
+    [SafeFunction]
     [Description("Allows to run output write operations in parallel. Must be used only for rows outputs that support this!")]
     [FunctionSignature("parallel_output(output: object<IRowsOutput>, max_degree?: integer): object<IRowsOutput>")]
     public static VariantValue ParallelOutput(IExecutionThread thread)
     {
         var output = thread.Stack[0].AsRequired<IRowsOutput>();
         var maxDegree = (int?)thread.Stack[1].AsInteger;
+        if (maxDegree < 1)
+        {
+            maxDegree = 1;
+        }
         return VariantValue.CreateFromObject(new ParallelRowsOutput(output, maxDegree));
     }
 
     private readonly IRowsOutput _output;
-    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(ParallelRowsOutput));
 
     /// <inheritdoc />
     public RowsOutputOptions Options => _output.Options;
@@ -39,7 +42,8 @@ internal sealed class ParallelRowsOutput : ParallelRowsSource, IRowsOutput
     {
         var localValues = new VariantValue[values.Length];
         Array.Copy(values, localValues, values.Length);
-        await AddTask(ct => _output.WriteValuesAsync(localValues, ct).AsTask(), cancellationToken);
+        await AddTaskAsync(ct => _output.WriteValuesAsync(localValues, ct), cancellationToken)
+            .ConfigureAwait(false);
         return ErrorCode.OK;
     }
 }
