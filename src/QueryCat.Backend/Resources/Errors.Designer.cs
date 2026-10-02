@@ -476,5 +476,17 @@ namespace QueryCat.Backend.Resources {
                 return ResourceManager.GetString("PathNotExists", resourceCulture);
             }
         }
+        
+        internal static string InvalidBufferSize {
+            get {
+                return ResourceManager.GetString("InvalidBufferSize", resourceCulture);
+            }
+        }
+        
+        internal static string BufferKeysAfterRead {
+            get {
+                return ResourceManager.GetString("BufferKeysAfterRead", resourceCulture);
+            }
+        }
     }
 }

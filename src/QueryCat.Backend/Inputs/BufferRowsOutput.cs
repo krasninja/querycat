@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Threading.Channels;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
@@ -15,73 +16,48 @@ internal sealed class BufferRowsOutput : BufferRowsSource, IRowsOutput
     public static VariantValue BufferOutput(IExecutionThread thread)
     {
         var output = thread.Stack[0].AsRequired<IRowsOutput>();
-        var bufferSize = (int)(thread.Stack[1].AsInteger ?? 1024);
+        var bufferSize = GetBufferSize(thread.Stack[1]);
         return VariantValue.CreateFromObject(new BufferRowsOutput(output, bufferSize));
     }
 
-    private readonly IRowsOutput _rowsSource;
-    private bool _isEndOfData;
+    private readonly IRowsOutput _rowsOutput;
 
     /// <inheritdoc />
-    public RowsOutputOptions Options => _rowsSource.Options;
+    protected override bool FlushOnStop => true;
 
     /// <inheritdoc />
-    public BufferRowsOutput(IRowsOutput rowsSource, int bufferSize) : base(rowsSource, bufferSize)
+    public RowsOutputOptions Options => _rowsOutput.Options;
+
+    public BufferRowsOutput(IRowsOutput rowsOutput, int bufferSize) : base(rowsOutput, bufferSize)
     {
-        _rowsSource = rowsSource;
+        _rowsOutput = rowsOutput;
     }
 
     /// <inheritdoc />
-    protected override async ValueTask<bool> CallbackAsync(CancellationToken cancellationToken)
+    protected override async Task RunWorkerAsync(Channel<VariantValue[]> channel, CancellationToken cancellationToken)
     {
-        if (_isEndOfData)
+        var reader = channel.Reader;
+        while (await reader.WaitToReadAsync(cancellationToken))
         {
-            return false;
+            while (reader.TryRead(out var values))
+            {
+                await _rowsOutput.WriteValuesAsync(values, cancellationToken);
+            }
         }
-
-        if (RowsQueue.TryDequeue(out var row))
-        {
-            await _rowsSource.WriteValuesAsync(row.AsArray(copy: false), cancellationToken);
-        }
-        else
-        {
-            await Task.Delay(DelayMs, cancellationToken);
-        }
-
-        return true;
-    }
-
-    /// <inheritdoc />
-    public override async Task ResetAsync(CancellationToken cancellationToken = default)
-    {
-        await WaitForQueueEmptyAsync(cancellationToken);
-        _isEndOfData = false;
-        await base.ResetAsync(cancellationToken);
-    }
-
-    /// <inheritdoc />
-    public override async Task CloseAsync(CancellationToken cancellationToken = default)
-    {
-        await WaitForQueueEmptyAsync(cancellationToken);
-        _isEndOfData = true;
-        await base.CloseAsync(cancellationToken);
     }
 
     /// <inheritdoc />
     public async ValueTask<ErrorCode> WriteValuesAsync(VariantValue[] values, CancellationToken cancellationToken = default)
     {
-        StartThread();
-        await QueueCountSemaphore.WaitAsync(cancellationToken);
-
+        var channel = EnsureWorkerStarted();
         try
-        {
-            var row = new Row(_rowsSource.QueryContext.QueryInfo.Columns);
-            Row.Copy(values, row);
-            RowsQueue.Enqueue(row);
+        {.
+            await channel.Writer.WriteAsync(values.ToArray(), cancellationToken);
         }
-        finally
+        catch (ChannelClosedException)
         {
-            QueueCountSemaphore.Release();
+            ThrowIfWorkerFailed();
+            throw;
         }
 
         return ErrorCode.OK;
