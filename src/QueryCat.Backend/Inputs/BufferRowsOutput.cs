@@ -51,7 +51,7 @@ internal sealed class BufferRowsOutput : BufferRowsSource, IRowsOutput
     {
         var channel = EnsureWorkerStarted();
         try
-        {.
+        {
             await channel.Writer.WriteAsync(values.ToArray(), cancellationToken);
         }
         catch (ChannelClosedException)
