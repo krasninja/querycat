@@ -4,7 +4,7 @@ using QueryCat.Cli.Infrastructure;
 
 namespace QueryCat.Cli.Commands;
 
-internal class ServeCommand : BaseCommand
+internal sealed class ServeCommand : BaseCommand
 {
     /// <inheritdoc />
     public ServeCommand() : base("serve", Resources.Messages.ServeCommand_Description)

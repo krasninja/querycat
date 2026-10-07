@@ -1,6 +1,8 @@
+using QueryCat.Backend.Execution;
+
 namespace QueryCat.Cli.Commands;
 
-internal class AstCommand : BaseQueryCommand
+internal sealed class AstCommand : BaseQueryCommand
 {
     /// <inheritdoc />
     public AstCommand() : base("ast", Resources.Messages.AstCommand_Description)
@@ -17,10 +19,14 @@ internal class AstCommand : BaseQueryCommand
 
             applicationOptions.InitializeLogger();
             applicationOptions.InitializeAIAssistant();
-            var root = await applicationOptions.CreateApplicationRootAsync();
-            root.Thread.StatementExecuting += async (_, threadArgs) =>
+            await using var root = await applicationOptions.CreateApplicationRootAsync();
+            root.Thread.StatementExecuting += async (sender, threadArgs) =>
             {
-                Console.WriteLine(await root.Thread.DumpAstAsync(threadArgs));
+                if (sender is not DefaultExecutionThread executionThread)
+                {
+                    return;
+                }
+                Console.WriteLine(await executionThread.DumpAstAsync(threadArgs));
                 threadArgs.ContinueExecution = false;
             };
             await AddVariablesAsync(root.Thread, variables, cancellationToken);

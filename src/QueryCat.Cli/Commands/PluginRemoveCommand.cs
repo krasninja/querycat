@@ -3,7 +3,7 @@ using System.CommandLine;
 namespace QueryCat.Cli.Commands;
 
 #if ENABLE_PLUGINS
-internal class PluginRemoveCommand : BaseCommand
+internal sealed class PluginRemoveCommand : BaseCommand
 {
     /// <inheritdoc />
     public PluginRemoveCommand() : base("remove", Resources.Messages.PluginRemoveCommand_Description)

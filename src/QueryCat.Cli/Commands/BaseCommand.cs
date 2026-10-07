@@ -118,7 +118,7 @@ internal abstract class BaseCommand : Command
                 cancellationToken.ThrowIfCancellationRequested();
 
                 var requestQuit = false;
-                Thread.Sleep(options.FollowTimeout);
+                await Task.Delay(options.FollowTimeout, cancellationToken);
                 await StartWriterLoop(cancellationToken);
                 ProcessInput(ref requestQuit);
                 if (requestQuit)

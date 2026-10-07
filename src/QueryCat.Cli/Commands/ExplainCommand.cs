@@ -3,7 +3,7 @@ using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Cli.Commands;
 
-internal class ExplainCommand : BaseQueryCommand
+internal sealed class ExplainCommand : BaseQueryCommand
 {
     /// <inheritdoc />
     public ExplainCommand() : base("explain", Resources.Messages.ExplainCommand_Description)

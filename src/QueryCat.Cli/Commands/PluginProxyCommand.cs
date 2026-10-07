@@ -1,13 +1,13 @@
 #if ENABLE_PLUGINS && PLUGIN_THRIFT
 using QueryCat.Backend.Core;
 using QueryCat.Backend.ThriftPlugins;
-#endif
 using QueryCat.Cli.Infrastructure;
+#endif
 
 namespace QueryCat.Cli.Commands;
 
 #if ENABLE_PLUGINS && PLUGIN_THRIFT
-internal class PluginProxyCommand : BaseCommand
+internal sealed class PluginProxyCommand : BaseCommand
 {
     /// <inheritdoc />
     public PluginProxyCommand() : base("install-proxy", Resources.Messages.PluginInstallProxyCommand_Description)

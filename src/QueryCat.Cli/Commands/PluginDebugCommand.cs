@@ -83,7 +83,7 @@ internal sealed class PluginDebugCommand : BaseQueryCommand
 
             options.PluginDirectories.AddRange(applicationOptions.PluginDirectories);
             options.FollowTimeout = follow ? QueryCommand.FollowDefaultTimeout : TimeSpan.Zero;
-            var root = await applicationOptions.CreateApplicationRootAsync(options, cts.Token);
+            await using var root = await applicationOptions.CreateApplicationRootAsync(options, cts.Token);
             var thread = root.Thread;
             await AddVariablesAsync(thread, variables, cancellationToken);
             await AddInputsAsync(thread, inputs, cancellationToken);

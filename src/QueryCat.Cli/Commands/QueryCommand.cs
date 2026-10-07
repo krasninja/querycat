@@ -5,7 +5,7 @@ using QueryCat.Cli.Infrastructure;
 
 namespace QueryCat.Cli.Commands;
 
-internal class QueryCommand : BaseQueryCommand
+internal sealed class QueryCommand : BaseQueryCommand
 {
     public const string QueryCommandName = "query";
 
