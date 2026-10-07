@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Specialized;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
@@ -10,13 +11,16 @@ namespace QueryCat.Backend.Relational;
 /// can be used for internal operations. The remove operation doesn't physically remove
 /// it from memory and just marks the row. Use IsRemoved method to check by the row index.
 /// </summary>
-public class RowsFrame : IRowsSchema, IEnumerable<Row>
+public class RowsFrame : IRowsSchema, IEnumerable<Row>, INotifyCollectionChanged
 {
     private readonly int _chunkSize;
     private readonly int _rowsPerChunk;
     private readonly List<VariantValue[]> _storage;
     private readonly Column[] _columns;
     private readonly HashSet<int> _removedRows = new();
+
+    /// <inheritdoc />
+    public event NotifyCollectionChangedEventHandler? CollectionChanged;
 
     /// <summary>
     /// Total rows.
@@ -112,6 +116,8 @@ public class RowsFrame : IRowsSchema, IEnumerable<Row>
         }
         (int chunkIndex, int offset) = EnsureCapacityAndGetStartOffset(TotalRows);
         Array.Copy(values, 0, _storage[chunkIndex], offset, _columns.Length);
+
+        CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, values));
         return TotalRows++;
     }
 
@@ -119,7 +125,8 @@ public class RowsFrame : IRowsSchema, IEnumerable<Row>
     /// Add row.
     /// </summary>
     /// <param name="values">Values to add.</param>
-    public void AddRow(params object[] values)
+    /// <returns>Inserted row index.</returns>
+    public int AddRow(params object[] values)
     {
         if (values.Length != Columns.Length)
         {
@@ -138,7 +145,9 @@ public class RowsFrame : IRowsSchema, IEnumerable<Row>
                 _storage[chunkIndex][offset + i] = VariantValue.CreateFromObject(values[i]);
             }
         }
-        TotalRows++;
+
+        CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, values));
+        return TotalRows++;
     }
 
     /// <summary>
@@ -202,6 +211,13 @@ public class RowsFrame : IRowsSchema, IEnumerable<Row>
                 _storage[chunkIndex][offset + i] = VariantValue.Null;
             }
         }
+
+        if (CollectionChanged != null)
+        {
+            var removed = GetRow(rowIndex);
+            CollectionChanged.Invoke(this,
+                new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Remove, removed.Values));
+        }
         return true;
     }
 
@@ -255,6 +271,8 @@ public class RowsFrame : IRowsSchema, IEnumerable<Row>
         _storage.Clear();
         _removedRows.Clear();
         TotalRows = 0;
+        CollectionChanged?.Invoke(this,
+            new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
     }
 
     private (int ChunkIndex, int Offset) GetChunkAndOffsetValidate(int rowIndex)
