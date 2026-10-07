@@ -6,6 +6,7 @@ internal sealed class ZipStreamWrapper : Stream
 {
     private readonly Stream _stream;
     private readonly ZipArchive _zip;
+    private bool _isDisposed;
 
     /// <inheritdoc />
     public override bool CanRead => _stream.CanRead;
@@ -85,8 +86,31 @@ internal sealed class ZipStreamWrapper : Stream
     /// <inheritdoc />
     public override async ValueTask DisposeAsync()
     {
+        if (_isDisposed)
+        {
+            return;
+        }
+        _isDisposed = true;
+
         await _stream.DisposeAsync();
         await _zip.DisposeAsync();
         await base.DisposeAsync();
+    }
+
+    /// <inheritdoc />
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            if (_isDisposed)
+            {
+                return;
+            }
+            _isDisposed = true;
+
+            _stream.Dispose();
+            _zip.Dispose();
+        }
+        base.Dispose(disposing);
     }
 }

@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Runtime.InteropServices;
 using System.Runtime.Loader;
 using Microsoft.Extensions.Logging;
@@ -12,7 +13,7 @@ internal sealed class PluginAssemblyLoadContext : AssemblyLoadContext
     private readonly string _pluginName;
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(PluginAssemblyLoadContext));
 
-    private static readonly Dictionary<string, IntPtr> _loaded = new();
+    private static readonly ConcurrentDictionary<string, IntPtr> _loaded = new();
 
     public PluginAssemblyLoadContext(
         IPluginLoadStrategy pluginLoadStrategy,
@@ -25,20 +26,20 @@ internal sealed class PluginAssemblyLoadContext : AssemblyLoadContext
     /// <inheritdoc />
     protected override IntPtr LoadUnmanagedDll(string unmanagedDllName)
     {
-        // 1. Try to use standard approach first.
+        // 1. Try to get cached.
+        if (_loaded.TryGetValue(unmanagedDllName, out var ptr))
+        {
+            return ptr;
+        }
+
+        // 2. Try to use standard approach first.
         var address = base.LoadUnmanagedDll(unmanagedDllName);
         if (address != IntPtr.Zero)
         {
             return address;
         }
 
-        // Try to get cached.
-        if (_loaded.TryGetValue(unmanagedDllName, out var ptr))
-        {
-            return ptr;
-        }
-
-        // 2. Try to load from "runtimes" folder.
+        // 3. Try to load from "runtimes" folder.
 
         // Format native library name.
         var targetDllName = GetTargetDllName(unmanagedDllName);
@@ -75,25 +76,17 @@ internal sealed class PluginAssemblyLoadContext : AssemblyLoadContext
 
     private static string FindTargetIgnorePathSeparator(string target, string[] files)
     {
+        var normalizedTarget = target.Replace('\\', '/');
         foreach (var file in files)
         {
-            if (file.EndsWith(target))
+            var normalizedFile = file.Replace('\\', '/');
+            if (normalizedFile == normalizedTarget || normalizedFile.EndsWith("/" + normalizedTarget, StringComparison.Ordinal))
             {
                 return file;
             }
-            // Attempt to find using alternative separator.
-            if (file.IndexOf(Path.DirectorySeparatorChar) < 0)
-            {
-                if (file
-                    .Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar)
-                    .EndsWith(target))
-                {
-                    return file;
-                }
-            }
         }
 
-        return target.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
+        return string.Empty;
     }
 
     private IntPtr LoadLibrary(string? libraryPath)
@@ -132,7 +125,7 @@ internal sealed class PluginAssemblyLoadContext : AssemblyLoadContext
         }
         var cacheTargetDirectory = Path.Combine(Application.GetApplicationDirectory(), "native-cache", _pluginName);
         Directory.CreateDirectory(cacheTargetDirectory);
-        libraryPath = Path.Combine(cacheTargetDirectory, libraryName);
+        var targetPath = Path.Combine(cacheTargetDirectory, libraryName);
         long fileSize = 0;
         if (file.CanSeek)
         {
@@ -143,20 +136,39 @@ internal sealed class PluginAssemblyLoadContext : AssemblyLoadContext
         {
             fileSize = await _pluginLoadStrategy.GetFileSizeAsync(libraryPath, cancellationToken);
         }
-        if (!File.Exists(libraryPath) ||
-            new FileInfo(libraryPath).Length != fileSize)
+        if (!File.Exists(targetPath)
+            || new FileInfo(targetPath).Length != fileSize)
         {
-            await using var newFile = File.Create(libraryPath);
-            await file.CopyToAsync(newFile, cancellationToken);
-            newFile.Close();
-            _logger.LogDebug("Cached native library '{FilePath}'.", libraryPath);
+            var tempTargetPath = $"{targetPath}.{Environment.ProcessId}.tmp";
+            try
+            {
+                await using (var newFile = File.Create(tempTargetPath))
+                {
+                    await file.CopyToAsync(newFile, cancellationToken);
+                }
+                File.Move(tempTargetPath, targetPath, overwrite: true);
+                _logger.LogDebug("Cached native library '{FilePath}'.", targetPath);
+            }
+            catch (IOException e) when (File.Exists(targetPath))
+            {
+                _logger.LogDebug(e, "Cannot update native library '{FilePath}', use existing.", targetPath);
+            }
+            finally
+            {
+                if (File.Exists(tempTargetPath))
+                {
+                    File.Delete(tempTargetPath);
+                }
+            }
         }
-        return libraryPath;
+        return targetPath;
     }
 
     private static string GetTargetDllName(string unmanagedDllName)
     {
-        var prefix = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? string.Empty : "lib";
+        var prefix = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) || unmanagedDllName.StartsWith("lib", StringComparison.Ordinal)
+            ? string.Empty
+            : "lib";
 
         var fileExtension = Path.GetExtension(unmanagedDllName);
         var targetExtension = string.Empty;
@@ -167,17 +179,17 @@ internal sealed class PluginAssemblyLoadContext : AssemblyLoadContext
         }
         if ((RuntimeInformation.IsOSPlatform(OSPlatform.Linux)
             || RuntimeInformation.IsOSPlatform(OSPlatform.FreeBSD))
-            && !fileExtension.Equals(".so"))
+            && !fileExtension.Equals(".so", StringComparison.Ordinal))
         {
             targetExtension = ".so";
         }
         if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX)
-            && !fileExtension.Equals(".dylib"))
+            && !fileExtension.Equals(".dylib", StringComparison.Ordinal))
         {
             targetExtension = ".dylib";
         }
         if (OperatingSystem.IsBrowser()
-            && !fileExtension.Equals(".a"))
+            && !fileExtension.Equals(".a", StringComparison.Ordinal))
         {
             targetExtension = ".a";
         }
