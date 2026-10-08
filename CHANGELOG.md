@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - "first_value()" returns NULL when the first row's value is NULL.
 - Fix and improve "generate_series()" function.
 - Assembly plugins host: a broken plugin no longer stops loading of other plugins, native libraries cached fixes, Windows native library lookup is fixed.
+- JsonInput types detection.
+- JsonOutput supports objects and arrays.
 - Overall bugfixes and improvements.
 
 ### Changed

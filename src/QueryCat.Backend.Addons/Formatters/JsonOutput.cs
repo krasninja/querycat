@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Types;
@@ -81,7 +82,7 @@ internal sealed class JsonOutput : RowsOutput, IDisposable
                 jsonWriter.WriteNumberValue(value.AsIntegerUnsafe);
                 break;
             case DataType.Float:
-                if (!double.IsFinite(value.AsFloatUnsafe))
+                if (double.IsFinite(value.AsFloatUnsafe))
                 {
                     jsonWriter.WriteNumberValue(value.AsFloatUnsafe);
                 }
@@ -98,6 +99,33 @@ internal sealed class JsonOutput : RowsOutput, IDisposable
                 break;
             case DataType.Boolean:
                 jsonWriter.WriteBooleanValue(value.AsBoolean);
+                break;
+            case DataType.Object:
+                WriteJsonObjectValue(jsonWriter, value);
+                break;
+            case DataType.Array:
+                jsonWriter.WriteStartArray();
+                foreach (var item in value.AsArrayUnsafe)
+                {
+                    WriteJsonVariantValue(jsonWriter, item);
+                }
+                jsonWriter.WriteEndArray();
+                break;
+            default:
+                jsonWriter.WriteStringValue(value.ToString(CultureInfo.InvariantCulture));
+                break;
+        }
+    }
+
+    private static void WriteJsonObjectValue(Utf8JsonWriter jsonWriter, in VariantValue value)
+    {
+        switch (value.AsObjectUnsafe)
+        {
+            case JsonElement jsonElement:
+                jsonElement.WriteTo(jsonWriter);
+                break;
+            case JsonNode jsonNode:
+                jsonNode.WriteTo(jsonWriter);
                 break;
             default:
                 jsonWriter.WriteStringValue(value.ToString(CultureInfo.InvariantCulture));
