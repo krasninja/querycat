@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Assembly plugins host: a broken plugin no longer stops loading of other plugins, native libraries cached fixes, Windows native library lookup is fixed.
 - JsonInput types detection.
 - JsonOutput supports objects and arrays.
+- XmlInput, XmlOutput improvements.
 - Overall bugfixes and improvements.
 
 ### Changed
