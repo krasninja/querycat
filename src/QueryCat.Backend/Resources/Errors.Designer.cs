@@ -494,5 +494,11 @@ namespace QueryCat.Backend.Resources {
                 return ResourceManager.GetString("InvalidStepSize", resourceCulture);
             }
         }
+        
+        internal static string CannotSetValue {
+            get {
+                return ResourceManager.GetString("CannotSetValue", resourceCulture);
+            }
+        }
     }
 }

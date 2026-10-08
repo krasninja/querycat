@@ -22,12 +22,7 @@ internal sealed class DeclareCommand : ICommand
         if (declareNode.ValueNode != null)
         {
             valueHandler = await new StatementsVisitor(executionThread).RunAndReturnAsync(declareNode.ValueNode, cancellationToken);
-            // There is a special case for SELECT command. We prefer assign first value instead of iterator object.
-            if (valueHandler is SelectCommandHandler selectCommandHandler
-                && selectCommandHandler.SelectCommandContext.IsSingleValue)
-            {
-                valueHandler = new FuncUnitRowsIteratorScalar(selectCommandHandler.SelectCommandContext.CurrentIterator);
-            }
+            valueHandler = FixSelectSingleValueCase(valueHandler);
         }
 
         IFuncUnit handler = new FuncCommandHandler(async (thread, ct) =>
@@ -37,5 +32,16 @@ internal sealed class DeclareCommand : ICommand
             return VariantValue.Null;
         });
         return handler;
+    }
+
+    internal static IFuncUnit FixSelectSingleValueCase(IFuncUnit valueHandler)
+    {
+        // There is a special case for SELECT command. We prefer assign first value instead of iterator object.
+        if (valueHandler is SelectCommandHandler selectCommandHandler
+            && selectCommandHandler.SelectCommandContext.IsSingleValue)
+        {
+            return new FuncUnitRowsIteratorScalar(selectCommandHandler.SelectCommandContext.CurrentIterator);
+        }
+        return valueHandler;
     }
 }

@@ -243,4 +243,7 @@
   <data name="InvalidStepSize" xml:space="preserve">
     <value>Step size cannot equal zero.</value>
   </data>
+  <data name="CannotSetValue" xml:space="preserve">
+    <value>Cannot set value '{0}'.</value>
+  </data>
 </root>

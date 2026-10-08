@@ -21,6 +21,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Assembly plugins host: a broken plugin no longer stops loading of other plugins, native libraries cached fixes, Windows native library lookup is fixed.
 - Overall bugfixes and improvements.
 
+### Changed
+
+- CannotSetValueException is thrown if value cannot be set with SET expression.
+
 ## [0.17.5] - 2026-07-31
 
 ### Fixed

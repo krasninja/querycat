@@ -28,18 +28,17 @@ internal sealed class SetIdentifierDelegateVisitor : CreateDelegateVisitor
         return base.RunAndReturnAsync(node, cancellationToken);
     }
 
+    /// <inheritdoc />
     public override async ValueTask VisitAsync(IdentifierExpressionNode node, CancellationToken cancellationToken)
     {
         await ResolveTypesVisitor.VisitAsync(node, cancellationToken);
 
         if (ExecutionThread.ContainsVariable(node.Name))
         {
-            var context = new ObjectSelectorContext();
             var strategies = GetObjectSelectStrategies(node, NodeIdFuncMap);
             async ValueTask<VariantValue> Func(IExecutionThread thread, CancellationToken ct)
             {
-                var newValue = await SetValueAsync(thread, node, strategies, context, ct);
-                context.Clear();
+                var newValue = await SetValueAsync(thread, node, strategies, ct);
                 return newValue;
             }
             NodeIdFuncMap[node.Id] = new FuncUnitDelegate(Func, node.Type);
@@ -53,11 +52,11 @@ internal sealed class SetIdentifierDelegateVisitor : CreateDelegateVisitor
         IExecutionThread thread,
         IdentifierExpressionNode node,
         SelectStrategyContainer selectStrategyContainer,
-        ObjectSelectorContext context,
         CancellationToken cancellationToken)
     {
         var startObject = thread.GetVariable(node.Name);
         var newValue = await _funcUnit.InvokeAsync(thread, cancellationToken);
+        var context = new ObjectSelectorContext();
 
         // This is expression object.
         context.ExecutionThread = thread;
@@ -68,7 +67,12 @@ internal sealed class SetIdentifierDelegateVisitor : CreateDelegateVisitor
         // Not an expression - variable.
         if (!set && !node.HasSelectors)
         {
-            thread.TopScope.TrySetVariable(node.Name, newValue);
+            set = thread.TopScope.TrySetVariable(node.Name, newValue);
+        }
+
+        if (!set)
+        {
+            throw new CannotSetValueException(node.FullName);
         }
 
         return newValue;
