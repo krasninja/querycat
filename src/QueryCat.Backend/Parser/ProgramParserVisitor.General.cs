@@ -399,7 +399,7 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
     public override IAstNode VisitStandardFunctionTrim(QueryCatParser.StandardFunctionTrimContext context)
     {
         var targetNode = this.Visit<ExpressionNode>(context.target);
-        var characters = context.characters != null ? GetUnwrappedText(context.characters) : string.Empty;
+        var characters = context.characters != null ? GetUnwrappedText(context.characters) : " ";
         if (context.spec == null || context.spec.Type == QueryCatLexer.BOTH)
         {
             return new FunctionCallNode("btrim",
