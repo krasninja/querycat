@@ -142,9 +142,24 @@ internal partial class CreateDelegateVisitor : AstVisitor
         /// <inheritdoc />
         public async ValueTask<VariantValue> InvokeAsync(IExecutionThread thread, CancellationToken cancellationToken = default)
         {
-            var leftValue = await _leftAction.InvokeAsync(thread, cancellationToken);
-            var rightValue = await _rightAction.InvokeAsync(thread, cancellationToken);
-            var @delegate = _operationDelegate != null && leftValue.Type == _declaredLeftType && rightValue.Type == _declaredRightType
+            var leftValueTask = _leftAction.InvokeAsync(thread, cancellationToken);
+            var rightValueTask = _rightAction.InvokeAsync(thread, cancellationToken);
+            VariantValue.BinaryFunction @delegate;
+            VariantValue leftValue;
+            VariantValue rightValue;
+            if (leftValueTask.IsCompletedSuccessfully && rightValueTask.IsCompletedSuccessfully)
+            {
+                leftValue = leftValueTask.Result;
+                rightValue = rightValueTask.Result;
+                @delegate = _operationDelegate != null && leftValue.Type == _declaredLeftType && rightValue.Type == _declaredRightType
+                    ? _operationDelegate
+                    : VariantValue.GetOperationDelegate(_operation, leftValue.Type, rightValue.Type);
+                return @delegate.Invoke(in leftValue, in rightValue);
+            }
+
+            leftValue = await leftValueTask;
+            rightValue = await rightValueTask;
+            @delegate = _operationDelegate != null && leftValue.Type == _declaredLeftType && rightValue.Type == _declaredRightType
                 ? _operationDelegate
                 : VariantValue.GetOperationDelegate(_operation, leftValue.Type, rightValue.Type);
             return @delegate.Invoke(in leftValue, in rightValue);
@@ -378,8 +393,20 @@ internal partial class CreateDelegateVisitor : AstVisitor
         /// <inheritdoc />
         public async ValueTask<VariantValue> InvokeAsync(IExecutionThread thread, CancellationToken cancellationToken = default)
         {
-            var value = await _action.InvokeAsync(thread, cancellationToken);
-            var @delegate = _operationDelegate != null && value.Type == _declaredType
+            var valueTask = _action.InvokeAsync(thread, cancellationToken);
+            VariantValue.UnaryFunction @delegate;
+            VariantValue value;
+            if (valueTask.IsCompletedSuccessfully)
+            {
+                value = valueTask.Result;
+                @delegate = _operationDelegate != null && value.Type == _declaredType
+                    ? _operationDelegate
+                    : VariantValue.GetNegationDelegate(value.Type);
+                return @delegate.Invoke(in value);
+            }
+
+            value = await valueTask;
+            @delegate = _operationDelegate != null && value.Type == _declaredType
                 ? _operationDelegate
                 : VariantValue.GetNegationDelegate(value.Type);
             return @delegate.Invoke(in value);
@@ -396,9 +423,19 @@ internal partial class CreateDelegateVisitor : AstVisitor
         /// <inheritdoc />
         public async ValueTask<VariantValue> InvokeAsync(IExecutionThread thread, CancellationToken cancellationToken = default)
         {
-            var value = await action.InvokeAsync(thread, cancellationToken);
-            var notDelegate = VariantValue.GetOperationDelegate(VariantValue.Operation.Not, value.Type);
-            return notDelegate.Invoke(value);
+            var valueTask = action.InvokeAsync(thread, cancellationToken);
+            VariantValue.UnaryFunction notDelegate;
+            VariantValue value;
+            if (valueTask.IsCompletedSuccessfully)
+            {
+                value = valueTask.Result;
+                notDelegate = VariantValue.GetOperationDelegate(VariantValue.Operation.Not, value.Type);
+                return notDelegate.Invoke(in value);
+            }
+
+            value = await valueTask;
+            notDelegate = VariantValue.GetOperationDelegate(VariantValue.Operation.Not, value.Type);
+            return notDelegate.Invoke(in value);
         }
     }
 
@@ -477,8 +514,10 @@ internal partial class CreateDelegateVisitor : AstVisitor
     }
 
     /// <inheritdoc />
-    public override ValueTask VisitAsync(ArrayValuesNode node, CancellationToken cancellationToken)
+    public override async ValueTask VisitAsync(ArrayValuesNode node, CancellationToken cancellationToken)
     {
+        await ResolveTypesVisitor.RunAsync(node, cancellationToken);
+
         var nodeFuncs = node.ValuesNodes.Select(v => NodeIdFuncMap[v.Id]).ToArray();
         var capacity = nodeFuncs.Length;
         async ValueTask<VariantValue> Func(IExecutionThread thread, CancellationToken ct)
@@ -492,12 +531,13 @@ internal partial class CreateDelegateVisitor : AstVisitor
             return VariantValue.CreateFromObject(array);
         }
         NodeIdFuncMap[node.Id] = new FuncUnitDelegate(Func, node.Type);
-        return ValueTask.CompletedTask;
     }
 
     /// <inheritdoc />
-    public override ValueTask VisitAsync(MapValuesNode node, CancellationToken cancellationToken)
+    public override async ValueTask VisitAsync(MapValuesNode node, CancellationToken cancellationToken)
     {
+        await ResolveTypesVisitor.RunAsync(node, cancellationToken);
+
         var nodeFuncs = node.Map.ToDictionary(k => k.Key, v => NodeIdFuncMap[v.Value.Id]);
         var capacity = node.Map.Count;
         async ValueTask<VariantValue> Func(IExecutionThread thread, CancellationToken ct)
@@ -511,7 +551,6 @@ internal partial class CreateDelegateVisitor : AstVisitor
             return VariantValue.CreateFromObject(map);
         }
         NodeIdFuncMap[node.Id] = new FuncUnitDelegate(Func, node.Type);
-        return ValueTask.CompletedTask;
     }
 
     #endregion
