@@ -113,26 +113,13 @@ The tutorial explains how to create custom plugin based on `IRowsInput` interfac
     }
     ```
 
-2. Add function definition for the new source. For example:
-
-    ```csharp
-    [Description("Sample input.")]
-    [FunctionSignature("plugin(start: integer = 0): object<IRowsInput>")]
-    public static VariantValue SamplePlugin(IExecutionThread thread)
-    {
-        var startValue = thread.Stack.Pop().AsInteger;
-        var rowsSource = new SamplePluginRowsInput(startValue ?? 0);
-        return VariantValue.CreateFromObject(rowsSource);
-    }
-    ```
-
-3. Publish the plugin:
+2. Publish the plugin:
 
     ```bash
     dotnet publish ./SimplePlugin/
     ```
 
-4. Run QueryCat with the new plugin.
+3. Run QueryCat with the new plugin.
 
     ```bash
     qcat "select * from plugin()" --plugin-dirs /mnt/data/work/SimplePlugin/SimplePlugin/bin/Debug/net10.0/publish/

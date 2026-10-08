@@ -16,11 +16,11 @@ To prepare a plugin follow the steps:
 
     **NOTE:** The plugin must contain "Plugin" (case insensitive) word in its name.
 
-2. Reference `QueryCat.Plugins.Client` project. Right now it is not available in NuGet, you can clone the repository somewhere and reference it. For example:
+2. Reference `QueryCat.Plugins.Client` package: [NuGet](https://www.nuget.org/packages/QueryCat.Plugins.Client). For example:
 
     ```
     <ItemGroup>
-        <ProjectReference Include="..\querycat\src\QueryCat.Plugins.Client\QueryCat.Plugins.Client.csproj" />
+        <PackageReference Include="QueryCat.Plugins.Client" Version="0.11.0" />
     </ItemGroup>
     ```
 

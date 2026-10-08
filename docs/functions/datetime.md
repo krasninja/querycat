@@ -12,11 +12,11 @@
 The `interval` type is also supported. It can be applied to timestamp values using `+` and `-` operators. Examples:
 
 - Add 1 day to the specific date: `select cast('2022-01-01' as timestamp) + interval '1d'` -> `01/02/2022 00:00:00`.
-- Remove 1 day and 25 seconds: `select cast('2022-01-01' as timestamp) - interval '1 day 24 seconds' - interval '1s'` -> `12/30/2021 23:59:35`.
+- Remove 1 day and 25 seconds: `select cast('2022-01-01' as timestamp) - interval '1 day 24 seconds' - interval '1s'` -> `12/31/2021 23:59:35`.
 
 The following date and time parts are supported:
 
-- `ms`, `milliseconds`, `milliseconds`;
+- `ms`, `milliseconds`;
 - `s`, `sec`, `second`, `seconds`;
 - `m`, `min`, `minute`, `minutes`;
 - `h`, `hour`, `hours`;
@@ -54,10 +54,6 @@ To get the timestamp part use `EXTRACT` function. The syntax is `EXTRACT(part FR
 - `DAYOFYEAR` (`DOY`);
 - `MONTH`;
 - `WEEKDAY` (`DOW`);
-- `DAY`;
-- `HOUR`;
-- `MINUTE`;
-- `SECOND`;
 - `DAY`;
 - `HOUR`;
 - `MINUTE`;

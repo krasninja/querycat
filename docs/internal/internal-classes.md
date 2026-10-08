@@ -53,7 +53,7 @@ var span2 = dynamicBuffer.GetSequence(); // 89000
 Simple tracer to measure execution time. Measures time between StartMethod and EndMethod calls.
 
 ```csharp
-Tracer.File = @"Q:\1.log";
+Tracer.File = @"/tmp/tracer.log";
 Tracer.StartMethod(nameof(MyMethod));
 Tracer.EndMethod(nameof(MyMethod));
 ```

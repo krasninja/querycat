@@ -1,6 +1,6 @@
 # Text Table
 
-The text table output renders the rows in a plain text format. The "|" is used to separated fields. Example:
+The text table output renders the rows in a plain text format. The "|" is used to separate fields. Example:
 
 ```
 $ qcat "SELECT * FROM '/home/ivan/1/data.tsv'"
@@ -12,7 +12,7 @@ $ qcat "SELECT * FROM '/home/ivan/1/data.tsv'"
 | /home/ivan/1/data.tsv | 10/02/2022 10:35:50 | Ivan       | Log-out                       |
 ```
 
-This is the default output format if nothing has been is specified.
+This is the default output format if nothing has been specified.
 
 ## Layout
 

@@ -23,7 +23,7 @@ public static VariantValue SumIntegers(IExecutionThread thread)
 1. The function name is `add`.
 2. The function has two integer arguments (`a` and `b`), it returns `integer` and also has description. If function doesn't return anything the type should be `void`.
 3. The second argument (`b`) is optional, and the default value is `2`.
-4. The `callInfo` argument is used to get arguments values (use `GetAt` method).
+4. Arguments are read from `thread.Stack` (e.g., `thread.Stack[0]`, `thread.Stack[1]`).
 5. The `FunctionSignature` attribute might appear several times for method.
 
 Async function definition:

@@ -9,7 +9,7 @@
 | `lower(target: string): string`<br /><br /> Convert a string to lower case. |
 | `ltrim(target: string, characters: string = ' '): string`<br /><br /> Removes the longest string containing only characters in characters from the start of string. |
 | `position(substring: string, target: string): integer`<br /><br /> Returns first starting index of the specified substring within string, or zero if it's not present. |
-| `regexp_count(target: string, pattern: string, start?: integer = 1, flags?: string := null): integer`<br /><br /> Replaces all substrings that match the regular expression pattern with the replacement. |
+| `regexp_count(target: string, pattern: string, start?: integer = 1, flags?: string := null): integer`<br /><br /> Counts all non-overlapping matches of the regular expression pattern in the string. |
 | `regexp_replace(target: string, pattern: string, replacement: string, start?: integer = 1, flags?: string := null): string`<br /><br /> Provides substitution of new text for substrings that match regular expression patterns. |
 | `regexp_split_to_table(target: string, pattern: string, flags?: string := null): object<IRowsIterator>`<br /><br /> Splits string using a regular expression as the delimiter, producing a set of results. |
 | `regexp_substr(target: string, pattern: string, start?: integer = 1, n?: integer = 1, subexpr?: integer = 1, flags?: string := null): string`<br /><br /> Returns the substring within string that matches the N'th occurrence of the regular expression pattern, or NULL. |

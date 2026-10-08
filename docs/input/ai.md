@@ -39,7 +39,7 @@ There are two ways to set up the AI answer agent.
     ai_input('select all actors', 'actors=/home/ivan/temp/MoviesActors.csv', ollama_agent('qwen3:8b'));
     ```
 
-    As you can see we used Ollama agent and provided it as source. The `ai_input` functions understands this and use it to format SQL.
+    As you can see we used Ollama agent and provided it as source. The `ai_input` function understands this and use it to format SQL.
 
 ## Examples
 

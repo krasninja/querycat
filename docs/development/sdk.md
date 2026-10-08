@@ -28,11 +28,11 @@ result1.Close();
 result2.Close();
 ```
 
-Result is the `VariantValue` returned by the last statement in the script. Note, that it is a good practice to call `Close()` method to release all managed used resources.
+Result is the `VariantValue` returned by the last statement in the script. Note, that it is a good practice to call `Close()` method to release all managed resources used.
 
 ## Execution Thread Options
 
-`ExecutionOptions` class that allows to customize execution thread:
+The `ExecutionOptions` class allows you to customize the execution thread:
 
 - `DefaultRowsOutput: IRowsOutput`. Default output target if INTO clause is not specified.
 - `AddRowNumberColumn: bool`. Adds `row_number` column with the current row number.

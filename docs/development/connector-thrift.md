@@ -87,7 +87,7 @@ It will enforce QueryCat to run your plugin with the specific query.
 
 ### .NET Approach With NuGet
 
-Using this approach you will prepare the NuGet package (or .NET dll) that will interact with QueryCat host with proxy special proxy.
+Using this approach you will prepare the NuGet package (or .NET dll) that will interact with QueryCat host with the special proxy.
 
 ```
 QueryCat Host <---> QueryCat Proxy <---> Plugin Executable
@@ -186,7 +186,7 @@ Use the following Thrift file to generate a proxy: https://github.com/krasninja/
 
 ## Debug Mode
 
-To debug your plugins easier, the QueryCat has a special command. It will call your plugin in a special test mode.
+To debug your plugins more easily, the QueryCat has a special command. It will call your plugin in a special test mode.
 
 ```bash
 qcat plugin debug

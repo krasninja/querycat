@@ -1,6 +1,6 @@
 # SELECT
 
-Executes the SQL query against input. If not output is specified (with `INTO` clause) the system console will be used.
+Executes the SQL query against input. If no output is specified (with `INTO` clause) the system console will be used.
 
 ## Syntax
 
@@ -42,7 +42,7 @@ The INTO clause specifies the custom output target.
 
 ## FROM
 
-The FROM clause specified the input format source(-s). The next expression must be function call that returns rows set. Example:
+The FROM clause specifies the input format source(-s). The next expression must be function call that returns rows set. Example:
 
 ```sql
 SELECT * FROM curl('https://tinyurl.com/24buj7mb')
@@ -83,7 +83,7 @@ SELECT state, min(population) FROM 'https://tinyurl.com/24buj7mb' GROUP BY state
 
 ## WINDOW
 
-A window function performs a calculation across a set of table rows that are somehow related to the current row. Right now, only PARTITION BY and ORDER clauses are supported.
+A window function performs a calculation across a set of table rows that are somehow related to the current row. Right now, only PARTITION BY and ORDER BY clauses are supported.
 
 ## UNION
 
@@ -111,12 +111,12 @@ The ORDER BY clause specifies which SELECT clause field-expressions the query ou
 SELECT * FROM 'https://tinyurl.com/24buj7mb' ORDER BY "year", population DESC
 ```
 
-## LIMIT AND OFFSET
+## LIMIT, OFFSET AND FETCH
 
-The FETCH and OFFSET clauses specifies how many records should be returned.
+The FETCH and OFFSET clauses specify how many records should be returned.
 
 ```sql
 SELECT * FROM 'https://tinyurl.com/24buj7mb' OFFSET 2 FETCH FIRST 5 ROWS
 ```
 
-Also, the LIMIT clause is support for those who used to use it. But it is out of SQL standard. It is much more preferable to use FETCH clause for such cases.
+Also, the LIMIT clause is supported for those who used to use it. But it is out of SQL standard. It is much more preferable to use FETCH clause for such cases.

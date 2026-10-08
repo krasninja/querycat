@@ -1,6 +1,6 @@
 # Web Server
 
-The QueryCat has internal simple web server. You can also specify what network interface and port to use. Use the command below to run it.
+QueryCat has internal simple web server. You can also specify what network interface and port to use. Use the command below to run it.
 
 You can find OpenAPI specification here:
 
@@ -10,7 +10,7 @@ You can find OpenAPI specification here:
 Features:
 
 - Simple web UI.
-- Basic authentication.
+- Authentication (basic).
 - CORS.
 - JSON/HTML/Text output.
 - Files browser.
@@ -22,7 +22,7 @@ Features:
 $ qcat serve
 ```
 
-**Note: Do not run web server on external interface (that is accessable over internal or external network). It doesn't support any authentication methods and there is not SSL support as well. Setup any proxy (like nginx) in front of it.**
+**Note: Do not run web server on external interface (that is accessible over internal or external network). It doesn't support advanced authentication methods and there is no SSL support as well. Setup any proxy (like nginx) in front of it.**
 
 There are supported input and output types. See the example below.
 

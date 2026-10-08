@@ -2,7 +2,7 @@
 
 There are alternative and similar tools:
 
-- [Steampipe](https://steampipe.io/). The powerful tool that can query data using SQL from cloud providers (AWS, Azure). There are a lot of plugguble data providers. Internally, it uses Postgres FDW to query various data sources.
+- [Steampipe](https://steampipe.io/). The powerful tool that can query data using SQL from cloud providers (AWS, Azure). There are a lot of pluggable data providers. Internally, it uses Postgres FDW to query various data sources.
 
 - [CloudQuery](https://www.cloudquery.io/). The open-source cloud asset inventory powered by SQL.
 
@@ -30,11 +30,11 @@ There are alternative and similar tools:
 
 - [Sep](https://github.com/nietras/Sep). CSV parser NuGet package. Really fast.
 
-- [sqly](https://github.com/nao1215/sqly). Eaisly execute SQL against CSV/TSV/LTSV and Microsoft Excel with shell. Golang. It imports files into SQLite table on run.
+- [sqly](https://github.com/nao1215/sqly). Easily execute SQL against CSV/TSV/LTSV and Microsoft Excel with shell. Golang. It imports files into SQLite table on run.
 
 No active support:
 
-- [Log Parser](https://www.microsoft.com/en-us/download/details.aspx?id=24659). The is the command line tool to query various logs files (CSV, IIS logs, event logs, XML, etc). It can run aggregate and filter queries. Only for Windows. Not supported anymore. [Documentation](https://documentation.help/Log-Parser/index.htm).
+- [Log Parser](https://www.microsoft.com/en-us/download/details.aspx?id=24659). This is the command line tool to query various logs files (CSV, IIS logs, event logs, XML, etc). It can run aggregate and filter queries. Only for Windows. Not supported anymore. [Documentation](https://documentation.help/Log-Parser/index.htm).
 
 - [logdissect](https://github.com/dogoncouch/logdissect/). Logdissect is a CLI utility and Python library for analyzing log files and other data. It can parse, merge, filter, and export data (to log files, or JSON). Last commit more than 3 years ago.
 
@@ -45,6 +45,5 @@ No active support:
 - [TextQL](https://github.com/dinedal/textql). Executes SQL against CSV or TSV. Golang.
 
 - [dsq](https://github.com/multiprocessio/dsq). Command line tool for running SQL queries against JSON, CSV, Excel, Parquet, and more. Not under active development: "While development may continue in the future with a different architecture, for the moment you should probably instead use DuckDB, ClickHouse-local, or GlareDB (based on DataFusion)."
-https://github.com/cube2222/octosql
 
 - [OctoSQL](https://github.com/cube2222/octosql). OctoSQL is a query tool that allows you to join, analyse and transform data from multiple databases and file formats using SQL.

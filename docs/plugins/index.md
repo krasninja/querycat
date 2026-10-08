@@ -8,13 +8,13 @@ You can easily extend QueryCat functionality by installing plugins. Plugins allo
 - `plugin update <name>`. Update the plugin. If you provide `*` as name all plugins will be updated.
 - `plugin install-proxy`. Download plugin proxy executable from GitHub.
 
-**Note**: Before use, your should install the special plugin proxy using `plugin install-proxy` command. It is the special software needed to run plugin `.dll` files.
+**Note**: Before use, you should install the special plugin proxy using `plugin install-proxy` command. It is the special software needed to run plugin `.dll` files.
 
-Make sure you keep you plugins versions up to date.
+Make sure you keep your plugins versions up to date.
 
 ## Locations
 
-The plugin files are DLLs or NuGet packages that must contain "Plugin" within name. For example, `QueryCat.Plugins.Logs.nupkg`, `Plugin.AWS.dll` are correct names. The application searchs plugins within following locations:
+The plugin files are DLLs or NuGet packages that must contain "Plugin" within name. For example, `QueryCat.Plugins.Logs.nupkg`, `Plugin.AWS.dll` are correct names. The application searches plugins within following locations:
 
 - Local application data directory. For example, `/home/user/.local/share/qcat/plugins/` for Unix or `C:\Users\user\AppData\Local\qcat\plugins\` for Windows.
 - Current executable directory.

@@ -1,6 +1,6 @@
 # Autoexec
 
-The `rc.sql` file is automatically execution upon application startup. You can use it to declare common variables and/or execute initialization commands. Example:
+The `rc.sql` file is automatically executed upon application startup. You can use it to declare common variables and/or execute initialization commands. Example:
 
 ```
 declare GITHUB_TOKEN := 'token';

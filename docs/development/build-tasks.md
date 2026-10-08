@@ -11,7 +11,7 @@ The following tasks will build the platform specific binaries into `./output/` d
 - `Build-Mac`. Build project for Mac target.
 - `Build-Package`. Build NuGet package.
 
-The following parameters available:
+The following parameters are available:
 
 - `PublishAot`. Boolean parameter to turn on/off AOT build. Enabled by default.
 - `Properties`. Provides additional key-value pairs for MSBuild.
