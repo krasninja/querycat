@@ -166,14 +166,14 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable, IModelDescripti
 
     private bool TryReadVirtualOrCachedColumnValue(int columnIndex, out VariantValue value, out ErrorCode errorCode)
     {
-        string stringValue;
+        VariantValue sourceValue;
         if (_cacheIterator != null)
         {
-            stringValue = _cacheIterator.Current[columnIndex].AsString;
+            sourceValue = _cacheIterator.Current[columnIndex];
         }
         else if (columnIndex < _virtualColumnsCount)
         {
-            stringValue = GetVirtualColumnValue(_rowIndex, columnIndex).AsString;
+            sourceValue = GetVirtualColumnValue(_rowIndex, columnIndex);
         }
         else
         {
@@ -182,8 +182,15 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable, IModelDescripti
             return false;
         }
 
+        if (sourceValue.Type == Columns[columnIndex].DataType)
+        {
+            errorCode = ErrorCode.OK;
+            value = sourceValue;
+            return true;
+        }
+
         errorCode = VariantValue.TryCreateFromString(
-            stringValue,
+            sourceValue.AsString,
             Columns[columnIndex].DataType,
             out value)
             ? ErrorCode.OK : ErrorCode.Error;

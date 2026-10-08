@@ -146,9 +146,15 @@ public static class JsonFunctions
     [SafeFunction]
     [Description("Expands the top-level JSON array into a set of values.")]
     [FunctionSignature("json_array_elements(json: string): object<IRowsIterator>")]
+    [FunctionSignature("json_array_elements(json: array): object<IRowsIterator>")]
     public static VariantValue JsonArrayElements(IExecutionThread thread)
     {
-        var json = thread.Stack.Pop().AsString;
+        var json = thread.Stack.Pop();
+        if (json.Type == DataType.Array)
+        {
+            return VariantValue.CreateFromObject(new ListRowsIterator(json.AsArrayUnsafe.AsReadOnly()));
+        }
+
         var jsonNode = GetJsonNodeFromString(json);
 
         if (jsonNode is not JsonArray array)
@@ -164,11 +170,16 @@ public static class JsonFunctions
     [SafeFunction]
     [Description("Returns the number of elements in the top-level JSON array.")]
     [FunctionSignature("json_array_length(json: string): integer")]
+    [FunctionSignature("json_array_length(json: array): integer")]
     public static VariantValue JsonArrayLength(IExecutionThread thread)
     {
-        var json = thread.Stack.Pop().AsString;
-        var jsonNode = GetJsonNodeFromString(json);
+        var json = thread.Stack.Pop();
+        if (json.Type == DataType.Array)
+        {
+            return new VariantValue(json.AsArrayUnsafe.Count);
+        }
 
+        var jsonNode = GetJsonNodeFromString(json);
         if (jsonNode is not JsonArray array)
         {
             return VariantValue.Null;

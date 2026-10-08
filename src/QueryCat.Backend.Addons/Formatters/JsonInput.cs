@@ -13,7 +13,7 @@ using QueryCat.Backend.Utils;
 namespace QueryCat.Backend.Addons.Formatters;
 
 /// <summary>
-/// Input that parser JSON data.
+/// Input that parses JSON data.
 /// </summary>
 internal class JsonInput : StreamRowsInput
 {
@@ -106,6 +106,14 @@ internal class JsonInput : StreamRowsInput
     }
 
     /// <inheritdoc />
+    public override Task ResetAsync(CancellationToken cancellationToken = default)
+    {
+        _bracketsCount = 0;
+        _jsonElement = null;
+        return base.ResetAsync(cancellationToken);
+    }
+
+    /// <inheritdoc />
     protected override ErrorCode ReadValueInternal(int nonVirtualColumnIndex, DataType type, out VariantValue value)
     {
         if (_jsonElement == null)
@@ -115,6 +123,11 @@ internal class JsonInput : StreamRowsInput
         }
 
         if (!_jsonElement.Value.TryGetProperty(_properties[nonVirtualColumnIndex], out var property))
+        {
+            value = VariantValue.Null;
+            return ErrorCode.OK;
+        }
+        if (property.ValueKind == JsonValueKind.Null || property.ValueKind == JsonValueKind.Undefined)
         {
             value = VariantValue.Null;
             return ErrorCode.OK;
@@ -158,7 +171,18 @@ internal class JsonInput : StreamRowsInput
         }
         if (property.ValueKind == JsonValueKind.Array && type == DataType.Array)
         {
-            value = VariantValue.CreateFromObject(property.EnumerateArray().ToList());
+            value = VariantValue.CreateFromObject(property);
+            return ErrorCode.OK;
+        }
+        if (property.ValueKind == JsonValueKind.Object && type == DataType.Object)
+        {
+            value = VariantValue.CreateFromObject(property);
+            return ErrorCode.OK;
+        }
+        if ((property.ValueKind == JsonValueKind.True || property.ValueKind == JsonValueKind.False)
+            && type == DataType.Boolean)
+        {
+            value = new VariantValue(property.ValueKind == JsonValueKind.True);
             return ErrorCode.OK;
         }
 
@@ -204,7 +228,7 @@ internal class JsonInput : StreamRowsInput
     protected override async Task<Column[]> InitializeColumnsAsync(IRowsInput input,
         CancellationToken cancellationToken = default)
     {
-        var list = new HashSet<string>();
+        var list = new List<Column>();
 
         for (var i = 0; i < QueryContext.PrereadRowsCount; i++)
         {
@@ -217,13 +241,16 @@ internal class JsonInput : StreamRowsInput
             var jsonElement = GetParsedJsonElement();
             foreach (var field in GetJsonObjectFields(jsonElement))
             {
+                if (list.Any(c => c.Name.Equals(field.Name)))
+                {
+                    continue;
+                }
                 list.Add(field);
             }
         }
 
-        _properties = list.ToArray();
-        var columns = _properties.Select(p => new Column(p, DataType.String));
-        return columns.ToArray();
+        _properties = list.Select(p => p.Name).ToArray();
+        return list.ToArray();
     }
 
     private JsonElement? GetParsedJsonElement()
@@ -233,12 +260,20 @@ internal class JsonInput : StreamRowsInput
         if (reader.TryAdvanceTo('{', advancePastDelimiter: false))
         {
             var json = reader.UnreadSequence.ToString();
-            return JsonSerializer.Deserialize(json, SourceGenerationContext.Default.JsonElement);
+            try
+            {
+                return JsonSerializer.Deserialize(json, SourceGenerationContext.Default.JsonElement);
+            }
+            catch (Exception e)
+            {
+                _logger.LogWarning("Cannot parse row during initialization: {Error}", e.Message);
+                return null;
+            }
         }
         return null;
     }
 
-    private IEnumerable<string> GetJsonObjectFields(JsonElement? jsonElement)
+    private IEnumerable<Column> GetJsonObjectFields(JsonElement? jsonElement)
     {
         if (jsonElement == null)
         {
@@ -251,7 +286,24 @@ internal class JsonInput : StreamRowsInput
             {
                 continue;
             }
-            yield return jsonProperty.Name;
+            yield return new Column(jsonProperty.Name, GetDataTypeByJsonKind(jsonProperty.Value.ValueKind));
         }
+    }
+
+    private static DataType GetDataTypeByJsonKind(JsonValueKind kind)
+    {
+        // For Null, Number we will decide the exact type later.
+        return kind switch
+        {
+            JsonValueKind.True => DataType.Boolean,
+            JsonValueKind.False => DataType.Boolean,
+            JsonValueKind.Undefined => DataType.String,
+            JsonValueKind.Object => DataType.Object,
+            JsonValueKind.Array => DataType.Array,
+            JsonValueKind.String => DataType.String,
+            JsonValueKind.Number => DataType.String,
+            JsonValueKind.Null => DataType.String,
+            _ => DataType.Null,
+        };
     }
 }

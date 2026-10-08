@@ -421,9 +421,13 @@ public readonly partial struct VariantValue :
         {
             return new VariantValue(obj.ToString());
         }
-        if (obj is JsonValue jsonValue && TryGetValueFromJsonValue(jsonValue, out var jsonResult))
+        if (obj is JsonElement jsonElement && TryGetValueFromJsonElement(jsonElement, out var jsonElementResult))
         {
-            return jsonResult;
+            return jsonElementResult;
+        }
+        if (obj is JsonValue jsonValue && TryGetValueFromJsonValue(jsonValue, out var jsonValueResult))
+        {
+            return jsonValueResult;
         }
         if (obj is JsonNode jsonNode)
         {
@@ -452,9 +456,15 @@ public readonly partial struct VariantValue :
         return new VariantValue(obj);
     }
 
-    internal static bool TryGetValueFromJsonValue(JsonValue jsonValue, out VariantValue value)
+    internal static bool TryGetValueFromJsonValue(JsonValue? jsonValue, out VariantValue value)
     {
-        var jsonType = jsonValue.GetValue<JsonElement>().ValueKind;
+        if (jsonValue == null)
+        {
+            value = Null;
+            return true;
+        }
+
+        var jsonType = jsonValue.GetValueKind();
         if (jsonType == JsonValueKind.Number)
         {
             if (jsonValue.TryGetValue(out long jsonLongValue))
@@ -495,9 +505,86 @@ public readonly partial struct VariantValue :
             return true;
         }
 
+        if (jsonType is JsonValueKind.Array or JsonValueKind.Object
+            && jsonValue.TryGetValue(out JsonElement element))
+        {
+            return TryGetValueFromJsonElement(element, out value);
+        }
+
         value = Null;
         return false;
     }
+
+    internal static bool TryGetValueFromJsonElement(JsonElement jsonElement, out VariantValue value)
+    {
+        var jsonType = jsonElement.ValueKind;
+        if (jsonType == JsonValueKind.Number)
+        {
+            if (jsonElement.TryGetInt64(out var jsonLongValue))
+            {
+                value = new VariantValue(jsonLongValue);
+                return true;
+            }
+            if (jsonElement.TryGetDecimal(out var jsonDecimalValue))
+            {
+                value = new VariantValue(jsonDecimalValue);
+                return true;
+            }
+            if (jsonElement.TryGetDouble(out var jsonDoubleValue))
+            {
+                value = new VariantValue(jsonDoubleValue);
+                return true;
+            }
+        }
+
+        if (jsonType == JsonValueKind.String)
+        {
+            value = new VariantValue(jsonElement.GetString());
+            return true;
+        }
+        if (jsonType == JsonValueKind.True)
+        {
+            value = TrueValue;
+            return true;
+        }
+        if (jsonType == JsonValueKind.False)
+        {
+            value = FalseValue;
+            return true;
+        }
+        if (jsonType == JsonValueKind.Null || jsonType == JsonValueKind.Undefined)
+        {
+            value = Null;
+            return true;
+        }
+
+        if (jsonType == JsonValueKind.Array)
+        {
+            var list = new List<VariantValue>(jsonElement.GetArrayLength());
+            foreach (var item in jsonElement.EnumerateArray())
+            {
+                list.Add(FromJsonElement(item));
+            }
+            value = new VariantValue(list);
+            return true;
+        }
+        if (jsonType == JsonValueKind.Object)
+        {
+            var map = new Dictionary<VariantValue, VariantValue>();
+            foreach (var property in jsonElement.EnumerateObject())
+            {
+                map[new VariantValue(property.Name)] = FromJsonElement(property.Value);
+            }
+            value = new VariantValue(map);
+            return true;
+        }
+
+        value = Null;
+        return false;
+    }
+
+    private static VariantValue FromJsonElement(JsonElement element)
+        => TryGetValueFromJsonElement(element, out var value) ? value : Null;
 
     private bool IsValueType() =>
         _object == _integerObject || _object == _floatObject ||

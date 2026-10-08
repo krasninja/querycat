@@ -81,7 +81,14 @@ internal sealed class JsonOutput : RowsOutput, IDisposable
                 jsonWriter.WriteNumberValue(value.AsIntegerUnsafe);
                 break;
             case DataType.Float:
-                jsonWriter.WriteNumberValue(value.AsFloatUnsafe);
+                if (!double.IsFinite(value.AsFloatUnsafe))
+                {
+                    jsonWriter.WriteNumberValue(value.AsFloatUnsafe);
+                }
+                else
+                {
+                    jsonWriter.WriteNullValue();
+                }
                 break;
             case DataType.Numeric:
                 jsonWriter.WriteNumberValue(value.AsNumericUnsafe);
