@@ -5,7 +5,6 @@ namespace QueryCat.Backend.Commands;
 /// <summary>
 /// Exception occurs when not safe operation is executed in safe mode.
 /// </summary>
-[Serializable]
 public sealed class SafeModeException : QueryCatException
 {
     /// <summary>

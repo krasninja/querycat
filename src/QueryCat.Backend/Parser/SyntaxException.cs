@@ -5,9 +5,7 @@ namespace QueryCat.Backend.Parser;
 /// <summary>
 /// The exception occurs on semantic error.
 /// </summary>
-#pragma warning disable CA2229
 public class SyntaxException : QueryCatException
-#pragma warning restore CA2229
 {
     /// <summary>
     /// Query text.
