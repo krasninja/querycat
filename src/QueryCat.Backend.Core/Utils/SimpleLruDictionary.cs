@@ -1,156 +1,247 @@
 using System.Collections;
-using System.Collections.Concurrent;
 
 namespace QueryCat.Backend.Core.Utils;
 
 /// <summary>
-/// Simple LRU cache implementation using dictionary and linked list.
+/// Simple thread-safe LRU cache implementation using dictionary and linked list.
+/// Read and write operations mark the item as most recently used. When the capacity
+/// is exceeded the least recently used item is evicted.
 /// </summary>
 /// <typeparam name="TKey">Key type.</typeparam>
 /// <typeparam name="TValue">Value type.</typeparam>
-internal sealed class SimpleLruDictionary<TKey, TValue> : IDictionary<TKey, TValue> where TKey : notnull where TValue : class
+internal sealed class SimpleLruDictionary<TKey, TValue> : IDictionary<TKey, TValue> where TKey : notnull
 {
     private readonly int _capacity;
-    private readonly IDictionary<TKey, TValue> _map;
-    private readonly LinkedList<TKey> _lruList = [];
+    private readonly Dictionary<TKey, LinkedListNode<KeyValuePair<TKey, TValue>>> _map;
+
+    // The first item is the least recently used, the last is the most recently used.
+    private readonly LinkedList<KeyValuePair<TKey, TValue>> _lruList = [];
+#if NET9_0_OR_GREATER
+    private readonly Lock _objLock = new();
+#else
+    private readonly object _objLock = new();
+#endif
 
     /// <inheritdoc />
-    public int Count => _map.Count;
+    public int Count
+    {
+        get
+        {
+            lock (_objLock)
+            {
+                return _map.Count;
+            }
+        }
+    }
 
     /// <inheritdoc />
     public bool IsReadOnly => false;
+
+    /// <summary>
+    /// Max number of items.
+    /// </summary>
+    public int Capacity => _capacity;
 
     /// <inheritdoc />
     public TValue this[TKey key]
     {
         get
         {
-            if (_map.TryGetValue(key, out var value))
+            if (TryGetValue(key, out var value))
             {
                 return value;
             }
-            throw new KeyNotFoundException($"The key '{key}' was not found or the value has been garbage collected.");
+            throw new KeyNotFoundException($"The key '{key}' was not found.");
         }
 
-        set
-        {
-            if (!_map.TryAdd(key, value))
-            {
-                _map[key] = value;
-            }
-            else
-            {
-                MakeKeyLast(key);
-            }
-            Evict();
-        }
+        set => AddOrUpdate(key, value, overwrite: true);
     }
 
     /// <summary>
     /// Constructor.
     /// </summary>
     /// <param name="capacity">Max number of items.</param>
-    public SimpleLruDictionary(int capacity)
+    /// <param name="comparer">Optional keys' comparer.</param>
+    public SimpleLruDictionary(int capacity, IEqualityComparer<TKey>? comparer = null)
     {
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(capacity, nameof(capacity));
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(capacity);
         _capacity = capacity;
-        _map = new ConcurrentDictionary<TKey, TValue>();
+        _map = new Dictionary<TKey, LinkedListNode<KeyValuePair<TKey, TValue>>>(comparer);
     }
 
     /// <inheritdoc />
-    public ICollection<TKey> Keys => _map.Keys;
+    public ICollection<TKey> Keys
+    {
+        get
+        {
+            lock (_objLock)
+            {
+                return _lruList.Select(kv => kv.Key).ToList();
+            }
+        }
+    }
 
     /// <inheritdoc />
-    public ICollection<TValue> Values =>
-        _map.Values
-            .Select(wr => wr)
-            .ToList();
+    public ICollection<TValue> Values
+    {
+        get
+        {
+            lock (_objLock)
+            {
+                return _lruList.Select(kv => kv.Value).ToList();
+            }
+        }
+    }
 
     /// <inheritdoc />
     public void Add(KeyValuePair<TKey, TValue> item) => Add(item.Key, item.Value);
 
     /// <inheritdoc />
-    public void Add(TKey key, TValue value)
-    {
-        _map.Add(key, value);
-        _lruList.AddLast(key);
-        Evict();
-    }
+    public void Add(TKey key, TValue value) => AddOrUpdate(key, value, overwrite: false);
 
     /// <inheritdoc />
     public void Clear()
     {
-        _map.Clear();
-        _lruList.Clear();
+        lock (_objLock)
+        {
+            _map.Clear();
+            _lruList.Clear();
+        }
     }
 
     /// <inheritdoc />
-    public bool Contains(KeyValuePair<TKey, TValue> item) => _map.ContainsKey(item.Key);
+    public bool Contains(KeyValuePair<TKey, TValue> item)
+    {
+        lock (_objLock)
+        {
+            return _map.TryGetValue(item.Key, out var node)
+                && EqualityComparer<TValue>.Default.Equals(node.Value.Value, item.Value);
+        }
+    }
 
     /// <inheritdoc />
-    public bool ContainsKey(TKey key) => _map.ContainsKey(key);
+    public bool ContainsKey(TKey key)
+    {
+        lock (_objLock)
+        {
+            return _map.ContainsKey(key);
+        }
+    }
 
     /// <inheritdoc />
     public void CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex)
     {
-        foreach (var keyValue in _map)
+        ArgumentNullException.ThrowIfNull(array);
+        ArgumentOutOfRangeException.ThrowIfNegative(arrayIndex);
+
+        lock (_objLock)
         {
-            array[arrayIndex++] = new KeyValuePair<TKey, TValue>(keyValue.Key, keyValue.Value);
+            if (array.Length - arrayIndex < _lruList.Count)
+            {
+                throw new ArgumentException("Destination array is not long enough.", nameof(array));
+            }
+            _lruList.CopyTo(array, arrayIndex);
         }
     }
 
     /// <inheritdoc />
-    public bool Remove(KeyValuePair<TKey, TValue> item) => Remove(item.Key);
+    public bool Remove(KeyValuePair<TKey, TValue> item)
+    {
+        lock (_objLock)
+        {
+            if (_map.TryGetValue(item.Key, out var node)
+                && EqualityComparer<TValue>.Default.Equals(node.Value.Value, item.Value))
+            {
+                _map.Remove(item.Key);
+                _lruList.Remove(node);
+                return true;
+            }
+            return false;
+        }
+    }
 
     /// <inheritdoc />
     public bool Remove(TKey key)
     {
-        if (_map.Remove(key))
+        lock (_objLock)
         {
-            _lruList.Remove(key);
-            return true;
+            if (_map.Remove(key, out var node))
+            {
+                _lruList.Remove(node);
+                return true;
+            }
+            return false;
         }
-        return false;
     }
 
     /// <inheritdoc />
     public bool TryGetValue(TKey key, out TValue value)
     {
-        if (_map.TryGetValue(key, out var target))
+        lock (_objLock)
         {
-            value = target;
-            return true;
+            if (_map.TryGetValue(key, out var node))
+            {
+                MoveToLast(node);
+                value = node.Value.Value;
+                return true;
+            }
         }
-        value = null!;
+        value = default!;
         return false;
     }
 
-    private void Evict()
+    private void AddOrUpdate(TKey key, TValue value, bool overwrite)
     {
-        while (_map.Count > _capacity)
+        lock (_objLock)
         {
-            var item = _lruList.First;
-            if (item != null)
+            if (_map.TryGetValue(key, out var node))
             {
-                _map.Remove(item.Value);
-                _lruList.RemoveFirst();
+                if (!overwrite)
+                {
+                    throw new ArgumentException($"An item with the same key '{key}' has already been added.", nameof(key));
+                }
+                node.Value = new KeyValuePair<TKey, TValue>(key, value);
+                MoveToLast(node);
+                return;
             }
+
+            if (_map.Count >= _capacity)
+            {
+                EvictFirst();
+            }
+            _map.Add(key, _lruList.AddLast(new KeyValuePair<TKey, TValue>(key, value)));
         }
     }
 
-    private void MakeKeyLast(TKey key)
+    private void EvictFirst()
     {
-        _lruList.Remove(key);
-        _lruList.AddLast(key);
+        var first = _lruList.First;
+        if (first != null)
+        {
+            _map.Remove(first.Value.Key);
+            _lruList.RemoveFirst();
+        }
+    }
+
+    private void MoveToLast(LinkedListNode<KeyValuePair<TKey, TValue>> node)
+    {
+        if (node != _lruList.Last)
+        {
+            _lruList.Remove(node);
+            _lruList.AddLast(node);
+        }
     }
 
     /// <inheritdoc />
     public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator()
     {
-        foreach (var keyValue in _map)
+        // Enumerate the snapshot to avoid holding the lock and concurrent modification issues.
+        KeyValuePair<TKey, TValue>[] items;
+        lock (_objLock)
         {
-            yield return new KeyValuePair<TKey, TValue>(keyValue.Key, keyValue.Value);
+            items = _lruList.ToArray();
         }
+        return ((IEnumerable<KeyValuePair<TKey, TValue>>)items).GetEnumerator();
     }
 
     /// <inheritdoc />
