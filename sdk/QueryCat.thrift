@@ -10,7 +10,7 @@ namespace js QueryCat.Plugins.Sdk
  */
 
 typedef i64 Timestamp; // Unix timestamp ms.
-typedef i64 Duration;
+typedef i64 Duration; // ms.
 typedef i32 Handle;
 
 // Decimal value. See the doc below for more info:
@@ -36,8 +36,13 @@ enum ObjectType {
 // To refer to objects we use special identifiers: handles.
 struct ObjectValue {
   1: required ObjectType type,
-  2: required i32 handle,
+  2: required Handle handle,
   3: required string name
+}
+
+struct MapEntry {
+  1: required VariantValue key,
+  2: required VariantValue value
 }
 
 union VariantValue {
@@ -52,7 +57,7 @@ union VariantValue {
   9: ObjectValue object,
   10: string json,
   11: list<VariantValue> array,
-  12: map<VariantValue, VariantValue> map
+  12: list<MapEntry> map
 }
 
 enum DataType {
@@ -92,7 +97,7 @@ enum ErrorType {
   ARGUMENT = 5,
 
   INVALID_REGISTRATION_TOKEN = 10,
-  INVALID_AUTH_TOKEN = 11
+  INVALID_AUTH_TOKEN = 11,
 
   INVALID_FUNCTION = 20,
 }
@@ -129,7 +134,7 @@ enum CompletionKind {
   FUNCTION = 2,
   VARIABLE = 3,
   PROPERTY = 4,
-  TEXT = 5,
+  TEXT = 5
 }
 
 exception QueryCatPluginException {
@@ -163,7 +168,7 @@ struct PluginData {
   1: required list<Function> functions,
   // Plugin name.
   2: required string name,
-  // Plugin version. Format is MAJOR.MINOR.PATCH .
+  // Plugin version. Format is MAJOR.MINOR.PATCH.
   3: required string version,
   // Metadata.
   4: optional map<string, VariantValue> metadata
@@ -218,14 +223,14 @@ struct ModelDescription {
   2: required string description
 }
 
-struct QuestionRequest {
-  1: required list<QuestionMessage> messages,
-  2: required string type
-}
-
 struct QuestionMessage {
   1: required string content,
   2: required string role
+}
+
+struct QuestionRequest {
+  1: required list<QuestionMessage> messages,
+  2: required string type
 }
 
 struct QuestionResponse {
@@ -234,14 +239,15 @@ struct QuestionResponse {
 }
 
 struct Column {
-  1: i32 id,
+  1: required i32 id,
   2: required string name,
   3: required DataType type,
-  4: optional string description
+  4: optional string description,
+  5: optional map<string, VariantValue> attributes
 }
 
 struct RowsList {
-  1: bool has_more, // True if has more values. If false - no need to call MoveNext() method.
+  1: required bool has_more, // True if has more values. If false - no need to call MoveNext() method.
   2: required list<VariantValue> values // Values, in total should be ColumnsCount * BatchSize.
 }
 
@@ -290,7 +296,7 @@ service QueryCatIO {
   binary Blob_Read(
     1: required i64 token, // Authorization token.
     2: required Handle object_blob_handle,
-    3: required i32 offset,
+    3: required i64 offset,
     4: required i32 count
   ) throws (1: QueryCatPluginException e),
 
@@ -358,14 +364,14 @@ service QueryCatIO {
 
   // Current cursor position.
   // Supported objects: ROWS_ITERATOR with cursor support (ICursorRowsIterator).
-  i32 RowsSet_Position(
+  i64 RowsSet_Position(
     1: required i64 token, // Authorization token.
     2: required Handle object_rows_set_handle
   ) throws (1: QueryCatPluginException e),
 
   // Total rows.
   // Supported objects: ROWS_ITERATOR with cursor support (ICursorRowsIterator).
-  i32 RowsSet_TotalRows(
+  i64 RowsSet_TotalRows(
     1: required i64 token, // Authorization token.
     2: required Handle object_rows_set_handle
   ) throws (1: QueryCatPluginException e),
@@ -375,7 +381,7 @@ service QueryCatIO {
   void RowsSet_Seek(
     1: required i64 token, // Authorization token.
     2: required Handle object_rows_set_handle,
-    3: required i32 offset,
+    3: required i64 offset,
     4: required CursorSeekOrigin origin
   ) throws (1: QueryCatPluginException e),
 
@@ -384,7 +390,7 @@ service QueryCatIO {
   RowsList RowsSet_GetRows(
     1: required i64 token, // Authorization token.
     2: required Handle object_rows_set_handle,
-    3: i32 count
+    3: required i32 count
   ) throws (1: QueryCatPluginException e),
 
   // Get unique key. It is a list of input data (input arguments) that
@@ -399,8 +405,8 @@ service QueryCatIO {
   // Supported objects: ROWS_INPUT with keys columns support (IRowsInputKeys).
   list<KeyColumn> RowsSet_GetKeyColumns(
     1: required i64 token, // Authorization token.
-    2: Handle object_rows_set_handle
-  ),
+    2: required Handle object_rows_set_handle
+  ) throws (1: QueryCatPluginException e),
 
   // Set value for a key column.
   // Supported objects: ROWS_INPUT with keys columns support (IRowsInputKeys).
@@ -410,7 +416,7 @@ service QueryCatIO {
     3: required i32 column_index,
     4: required string operation,
     5: required VariantValue value
-  ),
+  ) throws (1: QueryCatPluginException e),
 
   // Unset value for a key column.
   // Supported objects: ROWS_INPUT with keys columns support (IRowsInputKeys).
@@ -419,7 +425,7 @@ service QueryCatIO {
     2: required Handle object_rows_set_handle,
     3: required i32 column_index,
     4: required string operation
-  ),
+  ) throws (1: QueryCatPluginException e),
 
   // Update the rows set value.
   // Supported objects: ROWS_INPUT with rows update support.
@@ -447,7 +453,7 @@ service QueryCatIO {
   // Get rows set model description.
   ModelDescription RowsSet_GetDescription(
     1: required i64 token, // Authorization token.
-    2: required Handle object_handle
+    2: required Handle object_rows_set_handle
   ) throws (1: QueryCatPluginException e),
 
   // Create input from BLOB.
@@ -535,7 +541,7 @@ service PluginsManager extends QueryCatIO {
   ) throws (1: QueryCatPluginException e),
 
   // Set the variable value. The new variable will be created or the existing value will
-  // be overriden.
+  // be overridden.
   VariantValue SetVariable(
     1: required i64 token, // Authorization token.
     2: required string name,
@@ -566,7 +572,7 @@ service PluginsManager extends QueryCatIO {
     1: required i64 token, // Authorization token.
     2: required string text,
     3: required i32 position
-  ),
+  ) throws (1: QueryCatPluginException e),
 
   // Logging.
   void Log(
@@ -600,7 +606,7 @@ service PluginsManager extends QueryCatIO {
   ) throws (1: QueryCatPluginException e),
 
   // Register plugin functions.
-  void RegisterFunction(
+  void RegisterFunctions(
     1: required i64 token, // Authorization token.
     2: required list<Function> functions
   ) throws (1: QueryCatPluginException e),
@@ -613,9 +619,12 @@ service PluginsManager extends QueryCatIO {
 
 service Plugin extends QueryCatIO {
   // Shutdown plugin. This should release all objects.
-  void Shutdown() throws (1: QueryCatPluginException e),
+  void Shutdown(
+    1: required i64 token, // Authorization token.
+  ) throws (1: QueryCatPluginException e),
 
   // The method is called to ask client to start new server so QueryCat host can make additional connection.
   string Serve(
+    1: required i64 token, // Authorization token.
   ) throws (1: QueryCatPluginException e)
 }

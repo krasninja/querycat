@@ -32,20 +32,20 @@ using Thrift.Processor;
 namespace QueryCat.Plugins.Sdk
 {
 
-  public partial class ScopeVariable : TBase
+  public partial class MapEntry : TBase
   {
 
-    public string Name { get; set; } = string.Empty;
+    public global::QueryCat.Plugins.Sdk.VariantValue? Key { get; set; }
 
     public global::QueryCat.Plugins.Sdk.VariantValue? Value { get; set; }
 
-    public ScopeVariable()
+    public MapEntry()
     {
     }
 
-    public ScopeVariable(string @name, global::QueryCat.Plugins.Sdk.VariantValue? @value) : this()
+    public MapEntry(global::QueryCat.Plugins.Sdk.VariantValue? @key, global::QueryCat.Plugins.Sdk.VariantValue? @value) : this()
     {
-      this.Name = @name;
+      this.Key = @key;
       this.Value = @value;
     }
 
@@ -54,7 +54,7 @@ namespace QueryCat.Plugins.Sdk
       iprot.IncrementRecursionDepth();
       try
       {
-        bool isset_name = false;
+        bool isset_key = false;
         bool isset_value = false;
         TField field;
         await iprot.ReadStructBeginAsync(cancellationToken);
@@ -69,10 +69,11 @@ namespace QueryCat.Plugins.Sdk
           switch (field.ID)
           {
             case 1:
-              if (field.Type == TType.String)
+              if (field.Type == TType.Struct)
               {
-                Name = await iprot.ReadStringAsync(cancellationToken);
-                isset_name = true;
+                Key = new global::QueryCat.Plugins.Sdk.VariantValue();
+                await Key.ReadAsync(iprot, cancellationToken);
+                isset_key = true;
               }
               else
               {
@@ -100,7 +101,7 @@ namespace QueryCat.Plugins.Sdk
         }
 
         await iprot.ReadStructEndAsync(cancellationToken);
-        if (!isset_name)
+        if (!isset_key)
         {
           throw new TProtocolException(TProtocolException.INVALID_DATA);
         }
@@ -120,25 +121,25 @@ namespace QueryCat.Plugins.Sdk
       oprot.IncrementRecursionDepth();
       try
       {
-        var tmp57 = new TStruct("ScopeVariable");
-        await oprot.WriteStructBeginAsync(tmp57, cancellationToken);
+        var tmp8 = new TStruct("MapEntry");
+        await oprot.WriteStructBeginAsync(tmp8, cancellationToken);
         #pragma warning disable IDE0017  // simplified init
-        var tmp58 = new TField();
-        if((Name != null))
+        var tmp9 = new TField();
+        if((Key != null))
         {
-          tmp58.Name = "name";
-          tmp58.Type = TType.String;
-          tmp58.ID = 1;
-          await oprot.WriteFieldBeginAsync(tmp58, cancellationToken);
-          await oprot.WriteStringAsync(Name, cancellationToken);
+          tmp9.Name = "key";
+          tmp9.Type = TType.Struct;
+          tmp9.ID = 1;
+          await oprot.WriteFieldBeginAsync(tmp9, cancellationToken);
+          await Key.WriteAsync(oprot, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
         if((Value != null))
         {
-          tmp58.Name = "value";
-          tmp58.Type = TType.Struct;
-          tmp58.ID = 2;
-          await oprot.WriteFieldBeginAsync(tmp58, cancellationToken);
+          tmp9.Name = "value";
+          tmp9.Type = TType.Struct;
+          tmp9.ID = 2;
+          await oprot.WriteFieldBeginAsync(tmp9, cancellationToken);
           await Value.WriteAsync(oprot, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
@@ -154,18 +155,18 @@ namespace QueryCat.Plugins.Sdk
 
     public override bool Equals(object? that)
     {
-      if (that is not ScopeVariable other) return false;
+      if (that is not MapEntry other) return false;
       if (ReferenceEquals(this, other)) return true;
-      return global::System.Object.Equals(Name, other.Name)
+      return global::System.Object.Equals(Key, other.Key)
         && global::System.Object.Equals(Value, other.Value);
     }
 
     public override int GetHashCode() {
       int hashcode = 157;
       unchecked {
-        if((Name != null))
+        if((Key != null))
         {
-          hashcode = (hashcode * 397) + Name.GetHashCode();
+          hashcode = (hashcode * 397) + Key.GetHashCode();
         }
         if((Value != null))
         {
@@ -177,19 +178,19 @@ namespace QueryCat.Plugins.Sdk
 
     public override string ToString()
     {
-      var tmp59 = new StringBuilder("ScopeVariable(");
-      if((Name != null))
+      var tmp10 = new StringBuilder("MapEntry(");
+      if((Key != null))
       {
-        tmp59.Append(", Name: ");
-        Name.ToString(tmp59);
+        tmp10.Append(", Key: ");
+        Key.ToString(tmp10);
       }
       if((Value != null))
       {
-        tmp59.Append(", Value: ");
-        Value.ToString(tmp59);
+        tmp10.Append(", Value: ");
+        Value.ToString(tmp10);
       }
-      tmp59.Append(')');
-      return tmp59.ToString();
+      tmp10.Append(')');
+      return tmp10.ToString();
     }
   }
 

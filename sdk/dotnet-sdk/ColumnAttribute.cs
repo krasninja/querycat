@@ -32,20 +32,20 @@ using Thrift.Processor;
 namespace QueryCat.Plugins.Sdk
 {
 
-  public partial class ScopeVariable : TBase
+  public partial class ColumnAttribute : TBase
   {
 
-    public string Name { get; set; } = string.Empty;
+    public string Key { get; set; } = string.Empty;
 
     public global::QueryCat.Plugins.Sdk.VariantValue? Value { get; set; }
 
-    public ScopeVariable()
+    public ColumnAttribute()
     {
     }
 
-    public ScopeVariable(string @name, global::QueryCat.Plugins.Sdk.VariantValue? @value) : this()
+    public ColumnAttribute(string @key, global::QueryCat.Plugins.Sdk.VariantValue? @value) : this()
     {
-      this.Name = @name;
+      this.Key = @key;
       this.Value = @value;
     }
 
@@ -54,7 +54,7 @@ namespace QueryCat.Plugins.Sdk
       iprot.IncrementRecursionDepth();
       try
       {
-        bool isset_name = false;
+        bool isset_key = false;
         bool isset_value = false;
         TField field;
         await iprot.ReadStructBeginAsync(cancellationToken);
@@ -71,8 +71,8 @@ namespace QueryCat.Plugins.Sdk
             case 1:
               if (field.Type == TType.String)
               {
-                Name = await iprot.ReadStringAsync(cancellationToken);
-                isset_name = true;
+                Key = await iprot.ReadStringAsync(cancellationToken);
+                isset_key = true;
               }
               else
               {
@@ -100,7 +100,7 @@ namespace QueryCat.Plugins.Sdk
         }
 
         await iprot.ReadStructEndAsync(cancellationToken);
-        if (!isset_name)
+        if (!isset_key)
         {
           throw new TProtocolException(TProtocolException.INVALID_DATA);
         }
@@ -120,25 +120,25 @@ namespace QueryCat.Plugins.Sdk
       oprot.IncrementRecursionDepth();
       try
       {
-        var tmp57 = new TStruct("ScopeVariable");
-        await oprot.WriteStructBeginAsync(tmp57, cancellationToken);
+        var tmp105 = new TStruct("ColumnAttribute");
+        await oprot.WriteStructBeginAsync(tmp105, cancellationToken);
         #pragma warning disable IDE0017  // simplified init
-        var tmp58 = new TField();
-        if((Name != null))
+        var tmp106 = new TField();
+        if((Key != null))
         {
-          tmp58.Name = "name";
-          tmp58.Type = TType.String;
-          tmp58.ID = 1;
-          await oprot.WriteFieldBeginAsync(tmp58, cancellationToken);
-          await oprot.WriteStringAsync(Name, cancellationToken);
+          tmp106.Name = "key";
+          tmp106.Type = TType.String;
+          tmp106.ID = 1;
+          await oprot.WriteFieldBeginAsync(tmp106, cancellationToken);
+          await oprot.WriteStringAsync(Key, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
         if((Value != null))
         {
-          tmp58.Name = "value";
-          tmp58.Type = TType.Struct;
-          tmp58.ID = 2;
-          await oprot.WriteFieldBeginAsync(tmp58, cancellationToken);
+          tmp106.Name = "value";
+          tmp106.Type = TType.Struct;
+          tmp106.ID = 2;
+          await oprot.WriteFieldBeginAsync(tmp106, cancellationToken);
           await Value.WriteAsync(oprot, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
@@ -154,18 +154,18 @@ namespace QueryCat.Plugins.Sdk
 
     public override bool Equals(object? that)
     {
-      if (that is not ScopeVariable other) return false;
+      if (that is not ColumnAttribute other) return false;
       if (ReferenceEquals(this, other)) return true;
-      return global::System.Object.Equals(Name, other.Name)
+      return global::System.Object.Equals(Key, other.Key)
         && global::System.Object.Equals(Value, other.Value);
     }
 
     public override int GetHashCode() {
       int hashcode = 157;
       unchecked {
-        if((Name != null))
+        if((Key != null))
         {
-          hashcode = (hashcode * 397) + Name.GetHashCode();
+          hashcode = (hashcode * 397) + Key.GetHashCode();
         }
         if((Value != null))
         {
@@ -177,19 +177,19 @@ namespace QueryCat.Plugins.Sdk
 
     public override string ToString()
     {
-      var tmp59 = new StringBuilder("ScopeVariable(");
-      if((Name != null))
+      var tmp107 = new StringBuilder("ColumnAttribute(");
+      if((Key != null))
       {
-        tmp59.Append(", Name: ");
-        Name.ToString(tmp59);
+        tmp107.Append(", Key: ");
+        Key.ToString(tmp107);
       }
       if((Value != null))
       {
-        tmp59.Append(", Value: ");
-        Value.ToString(tmp59);
+        tmp107.Append(", Value: ");
+        Value.ToString(tmp107);
       }
-      tmp59.Append(')');
-      return tmp59.ToString();
+      tmp107.Append(')');
+      return tmp107.ToString();
     }
   }
 

@@ -132,14 +132,14 @@ namespace QueryCat.Plugins.Sdk
               if (field.Type == TType.List)
               {
                 {
-                  var _list62 = await iprot.ReadListBeginAsync(cancellationToken);
-                  Edits = new List<global::QueryCat.Plugins.Sdk.CompletionTextEdit>(_list62.Count);
-                  for(int _i63 = 0; _i63 < _list62.Count; ++_i63)
+                  var _list65 = await iprot.ReadListBeginAsync(cancellationToken);
+                  Edits = new List<global::QueryCat.Plugins.Sdk.CompletionTextEdit>(_list65.Count);
+                  for(int _i66 = 0; _i66 < _list65.Count; ++_i66)
                   {
-                    global::QueryCat.Plugins.Sdk.CompletionTextEdit _elem64;
-                    _elem64 = new global::QueryCat.Plugins.Sdk.CompletionTextEdit();
-                    await _elem64.ReadAsync(iprot, cancellationToken);
-                    Edits.Add(_elem64);
+                    global::QueryCat.Plugins.Sdk.CompletionTextEdit _elem67;
+                    _elem67 = new global::QueryCat.Plugins.Sdk.CompletionTextEdit();
+                    await _elem67.ReadAsync(iprot, cancellationToken);
+                    Edits.Add(_elem67);
                   }
                   await iprot.ReadListEndAsync(cancellationToken);
                 }
@@ -191,50 +191,50 @@ namespace QueryCat.Plugins.Sdk
       oprot.IncrementRecursionDepth();
       try
       {
-        var tmp65 = new TStruct("CompletionResult");
-        await oprot.WriteStructBeginAsync(tmp65, cancellationToken);
+        var tmp68 = new TStruct("CompletionResult");
+        await oprot.WriteStructBeginAsync(tmp68, cancellationToken);
         #pragma warning disable IDE0017  // simplified init
-        var tmp66 = new TField();
-        tmp66.Name = "kind";
-        tmp66.Type = TType.I32;
-        tmp66.ID = 1;
-        await oprot.WriteFieldBeginAsync(tmp66, cancellationToken);
+        var tmp69 = new TField();
+        tmp69.Name = "kind";
+        tmp69.Type = TType.I32;
+        tmp69.ID = 1;
+        await oprot.WriteFieldBeginAsync(tmp69, cancellationToken);
         await oprot.WriteI32Async((int)Kind, cancellationToken);
         await oprot.WriteFieldEndAsync(cancellationToken);
         if((Label != null))
         {
-          tmp66.Name = "label";
-          tmp66.Type = TType.String;
-          tmp66.ID = 2;
-          await oprot.WriteFieldBeginAsync(tmp66, cancellationToken);
+          tmp69.Name = "label";
+          tmp69.Type = TType.String;
+          tmp69.ID = 2;
+          await oprot.WriteFieldBeginAsync(tmp69, cancellationToken);
           await oprot.WriteStringAsync(Label, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
         if((Documentation != null))
         {
-          tmp66.Name = "documentation";
-          tmp66.Type = TType.String;
-          tmp66.ID = 3;
-          await oprot.WriteFieldBeginAsync(tmp66, cancellationToken);
+          tmp69.Name = "documentation";
+          tmp69.Type = TType.String;
+          tmp69.ID = 3;
+          await oprot.WriteFieldBeginAsync(tmp69, cancellationToken);
           await oprot.WriteStringAsync(Documentation, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
-        tmp66.Name = "relevance";
-        tmp66.Type = TType.Double;
-        tmp66.ID = 4;
-        await oprot.WriteFieldBeginAsync(tmp66, cancellationToken);
+        tmp69.Name = "relevance";
+        tmp69.Type = TType.Double;
+        tmp69.ID = 4;
+        await oprot.WriteFieldBeginAsync(tmp69, cancellationToken);
         await oprot.WriteDoubleAsync(Relevance, cancellationToken);
         await oprot.WriteFieldEndAsync(cancellationToken);
         if((Edits != null))
         {
-          tmp66.Name = "edits";
-          tmp66.Type = TType.List;
-          tmp66.ID = 5;
-          await oprot.WriteFieldBeginAsync(tmp66, cancellationToken);
+          tmp69.Name = "edits";
+          tmp69.Type = TType.List;
+          tmp69.ID = 5;
+          await oprot.WriteFieldBeginAsync(tmp69, cancellationToken);
           await oprot.WriteListBeginAsync(new TList(TType.Struct, Edits.Count), cancellationToken);
-          foreach (global::QueryCat.Plugins.Sdk.CompletionTextEdit _iter67 in Edits)
+          foreach (global::QueryCat.Plugins.Sdk.CompletionTextEdit _iter70 in Edits)
           {
-            await _iter67.WriteAsync(oprot, cancellationToken);
+            await _iter70.WriteAsync(oprot, cancellationToken);
           }
           await oprot.WriteListEndAsync(cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
@@ -283,28 +283,28 @@ namespace QueryCat.Plugins.Sdk
 
     public override string ToString()
     {
-      var tmp68 = new StringBuilder("CompletionResult(");
-      tmp68.Append(", Kind: ");
-      Kind.ToString(tmp68);
+      var tmp71 = new StringBuilder("CompletionResult(");
+      tmp71.Append(", Kind: ");
+      Kind.ToString(tmp71);
       if((Label != null))
       {
-        tmp68.Append(", Label: ");
-        Label.ToString(tmp68);
+        tmp71.Append(", Label: ");
+        Label.ToString(tmp71);
       }
       if((Documentation != null))
       {
-        tmp68.Append(", Documentation: ");
-        Documentation.ToString(tmp68);
+        tmp71.Append(", Documentation: ");
+        Documentation.ToString(tmp71);
       }
-      tmp68.Append(", Relevance: ");
-      Relevance.ToString(tmp68);
+      tmp71.Append(", Relevance: ");
+      Relevance.ToString(tmp71);
       if((Edits != null))
       {
-        tmp68.Append(", Edits: ");
-        Edits.ToString(tmp68);
+        tmp71.Append(", Edits: ");
+        Edits.ToString(tmp71);
       }
-      tmp68.Append(')');
-      return tmp68.ToString();
+      tmp71.Append(')');
+      return tmp71.ToString();
     }
   }
 

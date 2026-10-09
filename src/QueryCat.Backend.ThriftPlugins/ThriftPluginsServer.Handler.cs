@@ -328,9 +328,9 @@ public partial class ThriftPluginsServer
             };
 
         /// <inheritdoc />
-        public async Task RegisterFunctionAsync(long token, List<Function>? functions, CancellationToken cancellationToken = default)
+        public async Task RegisterFunctionsAsync(long token, List<Function>? functions, CancellationToken cancellationToken = default)
         {
-            await BeforeCallAsync(token, nameof(RegisterFunctionAsync), cancellationToken);
+            await BeforeCallAsync(token, nameof(RegisterFunctionsAsync), cancellationToken);
             var context = _thriftPluginsServer.GetPluginContextByToken(token);
             if (functions == null)
             {
@@ -570,7 +570,7 @@ public partial class ThriftPluginsServer
         }
 
         /// <inheritdoc />
-        public async Task<byte[]> Blob_ReadAsync(long token, int object_blob_handle, int offset, int count,
+        public async Task<byte[]> Blob_ReadAsync(long token, int object_blob_handle, long offset, int count,
             CancellationToken cancellationToken = default)
         {
             try
@@ -714,7 +714,7 @@ public partial class ThriftPluginsServer
         }
 
         /// <inheritdoc />
-        public async Task<int> RowsSet_PositionAsync(long token, int object_rows_set_handle, CancellationToken cancellationToken = default)
+        public async Task<long> RowsSet_PositionAsync(long token, int object_rows_set_handle, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -728,7 +728,7 @@ public partial class ThriftPluginsServer
         }
 
         /// <inheritdoc />
-        public async Task<int> RowsSet_TotalRowsAsync(long token, int object_rows_set_handle, CancellationToken cancellationToken = default)
+        public async Task<long> RowsSet_TotalRowsAsync(long token, int object_rows_set_handle, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -742,7 +742,7 @@ public partial class ThriftPluginsServer
         }
 
         /// <inheritdoc />
-        public async Task RowsSet_SeekAsync(long token, int object_rows_set_handle, int offset, CursorSeekOrigin origin,
+        public async Task RowsSet_SeekAsync(long token, int object_rows_set_handle, long offset, CursorSeekOrigin origin,
             CancellationToken cancellationToken = default)
         {
             try
@@ -1046,11 +1046,11 @@ public partial class ThriftPluginsServer
         }
 
         /// <inheritdoc />
-        public async Task RegisterFunctionAsync(long token, List<Function>? functions, CancellationToken cancellationToken = default)
+        public async Task RegisterFunctionsAsync(long token, List<Function>? functions, CancellationToken cancellationToken = default)
         {
             try
             {
-                await _handler.RegisterFunctionAsync(token, functions, cancellationToken);
+                await _handler.RegisterFunctionsAsync(token, functions, cancellationToken);
             }
             catch (Exception ex)
             {

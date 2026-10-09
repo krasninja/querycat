@@ -128,6 +128,7 @@ public sealed partial class ThriftPluginsServer : IDisposable
 
     private void RegisterPluginContext(ThriftPluginContext context, string registrationToken, long token)
     {
+        context.Token = token;
         _plugins.Add(context);
         _tokenPluginContextMap[token] = context;
         _pluginsReady[token] = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);

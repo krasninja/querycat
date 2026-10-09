@@ -34,21 +34,10 @@ namespace QueryCat.Plugins.Sdk
 
   public partial class Column : TBase
   {
-    private int _id;
     private string? _description;
+    private Dictionary<string, global::QueryCat.Plugins.Sdk.VariantValue>? _attributes;
 
-    public int Id
-    {
-      get
-      {
-        return _id;
-      }
-      set
-      {
-        __isset.@id = true;
-        this._id = value;
-      }
-    }
+    public int Id { get; set; } = 0;
 
     public string Name { get; set; } = string.Empty;
 
@@ -71,20 +60,34 @@ namespace QueryCat.Plugins.Sdk
       }
     }
 
+    public Dictionary<string, global::QueryCat.Plugins.Sdk.VariantValue>? Attributes
+    {
+      get
+      {
+        return _attributes;
+      }
+      set
+      {
+        __isset.@attributes = true;
+        this._attributes = value;
+      }
+    }
+
 
     public Isset __isset;
     public struct Isset
     {
-      public bool @id;
       public bool @description;
+      public bool @attributes;
     }
 
     public Column()
     {
     }
 
-    public Column(string @name, global::QueryCat.Plugins.Sdk.DataType @type) : this()
+    public Column(int @id, string @name, global::QueryCat.Plugins.Sdk.DataType @type) : this()
     {
+      this.Id = @id;
       this.Name = @name;
       this.Type = @type;
     }
@@ -94,6 +97,7 @@ namespace QueryCat.Plugins.Sdk
       iprot.IncrementRecursionDepth();
       try
       {
+        bool isset_id = false;
         bool isset_name = false;
         bool isset_type = false;
         TField field;
@@ -112,6 +116,7 @@ namespace QueryCat.Plugins.Sdk
               if (field.Type == TType.I32)
               {
                 Id = await iprot.ReadI32Async(cancellationToken);
+                isset_id = true;
               }
               else
               {
@@ -150,6 +155,29 @@ namespace QueryCat.Plugins.Sdk
                 await TProtocolUtil.SkipAsync(iprot, field.Type, cancellationToken);
               }
               break;
+            case 5:
+              if (field.Type == TType.Map)
+              {
+                {
+                  var _map105 = await iprot.ReadMapBeginAsync(cancellationToken);
+                  Attributes = new Dictionary<string, global::QueryCat.Plugins.Sdk.VariantValue>(_map105.Count);
+                  for(int _i106 = 0; _i106 < _map105.Count; ++_i106)
+                  {
+                    string _key107;
+                    global::QueryCat.Plugins.Sdk.VariantValue _val108;
+                    _key107 = await iprot.ReadStringAsync(cancellationToken);
+                    _val108 = new global::QueryCat.Plugins.Sdk.VariantValue();
+                    await _val108.ReadAsync(iprot, cancellationToken);
+                    Attributes[_key107] = _val108;
+                  }
+                  await iprot.ReadMapEndAsync(cancellationToken);
+                }
+              }
+              else
+              {
+                await TProtocolUtil.SkipAsync(iprot, field.Type, cancellationToken);
+              }
+              break;
             default: 
               await TProtocolUtil.SkipAsync(iprot, field.Type, cancellationToken);
               break;
@@ -159,6 +187,10 @@ namespace QueryCat.Plugins.Sdk
         }
 
         await iprot.ReadStructEndAsync(cancellationToken);
+        if (!isset_id)
+        {
+          throw new TProtocolException(TProtocolException.INVALID_DATA);
+        }
         if (!isset_name)
         {
           throw new TProtocolException(TProtocolException.INVALID_DATA);
@@ -179,41 +211,53 @@ namespace QueryCat.Plugins.Sdk
       oprot.IncrementRecursionDepth();
       try
       {
-        var tmp102 = new TStruct("Column");
-        await oprot.WriteStructBeginAsync(tmp102, cancellationToken);
+        var tmp109 = new TStruct("Column");
+        await oprot.WriteStructBeginAsync(tmp109, cancellationToken);
         #pragma warning disable IDE0017  // simplified init
-        var tmp103 = new TField();
-        if(__isset.@id)
-        {
-          tmp103.Name = "id";
-          tmp103.Type = TType.I32;
-          tmp103.ID = 1;
-          await oprot.WriteFieldBeginAsync(tmp103, cancellationToken);
-          await oprot.WriteI32Async(Id, cancellationToken);
-          await oprot.WriteFieldEndAsync(cancellationToken);
-        }
+        var tmp110 = new TField();
+        tmp110.Name = "id";
+        tmp110.Type = TType.I32;
+        tmp110.ID = 1;
+        await oprot.WriteFieldBeginAsync(tmp110, cancellationToken);
+        await oprot.WriteI32Async(Id, cancellationToken);
+        await oprot.WriteFieldEndAsync(cancellationToken);
         if((Name != null))
         {
-          tmp103.Name = "name";
-          tmp103.Type = TType.String;
-          tmp103.ID = 2;
-          await oprot.WriteFieldBeginAsync(tmp103, cancellationToken);
+          tmp110.Name = "name";
+          tmp110.Type = TType.String;
+          tmp110.ID = 2;
+          await oprot.WriteFieldBeginAsync(tmp110, cancellationToken);
           await oprot.WriteStringAsync(Name, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
-        tmp103.Name = "type";
-        tmp103.Type = TType.I32;
-        tmp103.ID = 3;
-        await oprot.WriteFieldBeginAsync(tmp103, cancellationToken);
+        tmp110.Name = "type";
+        tmp110.Type = TType.I32;
+        tmp110.ID = 3;
+        await oprot.WriteFieldBeginAsync(tmp110, cancellationToken);
         await oprot.WriteI32Async((int)Type, cancellationToken);
         await oprot.WriteFieldEndAsync(cancellationToken);
         if((Description != null) && __isset.@description)
         {
-          tmp103.Name = "description";
-          tmp103.Type = TType.String;
-          tmp103.ID = 4;
-          await oprot.WriteFieldBeginAsync(tmp103, cancellationToken);
+          tmp110.Name = "description";
+          tmp110.Type = TType.String;
+          tmp110.ID = 4;
+          await oprot.WriteFieldBeginAsync(tmp110, cancellationToken);
           await oprot.WriteStringAsync(Description, cancellationToken);
+          await oprot.WriteFieldEndAsync(cancellationToken);
+        }
+        if((Attributes != null) && __isset.@attributes)
+        {
+          tmp110.Name = "attributes";
+          tmp110.Type = TType.Map;
+          tmp110.ID = 5;
+          await oprot.WriteFieldBeginAsync(tmp110, cancellationToken);
+          await oprot.WriteMapBeginAsync(new TMap(TType.String, TType.Struct, Attributes.Count), cancellationToken);
+          foreach (string _iter111 in Attributes.Keys)
+          {
+            await oprot.WriteStringAsync(_iter111, cancellationToken);
+            await Attributes[_iter111].WriteAsync(oprot, cancellationToken);
+          }
+          await oprot.WriteMapEndAsync(cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
         #pragma warning restore IDE0017  // simplified init
@@ -230,19 +274,17 @@ namespace QueryCat.Plugins.Sdk
     {
       if (that is not Column other) return false;
       if (ReferenceEquals(this, other)) return true;
-      return ((__isset.@id == other.__isset.@id) && ((!__isset.@id) || (global::System.Object.Equals(Id, other.Id))))
+      return global::System.Object.Equals(Id, other.Id)
         && global::System.Object.Equals(Name, other.Name)
         && global::System.Object.Equals(Type, other.Type)
-        && ((__isset.@description == other.__isset.@description) && ((!__isset.@description) || (global::System.Object.Equals(Description, other.Description))));
+        && ((__isset.@description == other.__isset.@description) && ((!__isset.@description) || (global::System.Object.Equals(Description, other.Description))))
+        && ((__isset.@attributes == other.__isset.@attributes) && ((!__isset.@attributes) || (TCollections.Equals(Attributes, other.Attributes))));
     }
 
     public override int GetHashCode() {
       int hashcode = 157;
       unchecked {
-        if(__isset.@id)
-        {
-          hashcode = (hashcode * 397) + Id.GetHashCode();
-        }
+        hashcode = (hashcode * 397) + Id.GetHashCode();
         if((Name != null))
         {
           hashcode = (hashcode * 397) + Name.GetHashCode();
@@ -252,35 +294,38 @@ namespace QueryCat.Plugins.Sdk
         {
           hashcode = (hashcode * 397) + Description.GetHashCode();
         }
+        if((Attributes != null) && __isset.@attributes)
+        {
+          hashcode = (hashcode * 397) + TCollections.GetHashCode(Attributes);
+        }
       }
       return hashcode;
     }
 
     public override string ToString()
     {
-      var tmp104 = new StringBuilder("Column(");
-      int tmp105 = 0;
-      if(__isset.@id)
-      {
-        if(0 < tmp105++) { tmp104.Append(", "); }
-        tmp104.Append("Id: ");
-        Id.ToString(tmp104);
-      }
+      var tmp112 = new StringBuilder("Column(");
+      tmp112.Append(", Id: ");
+      Id.ToString(tmp112);
       if((Name != null))
       {
-        if(0 < tmp105) { tmp104.Append(", "); }
-        tmp104.Append("Name: ");
-        Name.ToString(tmp104);
+        tmp112.Append(", Name: ");
+        Name.ToString(tmp112);
       }
-      tmp104.Append(", Type: ");
-      Type.ToString(tmp104);
+      tmp112.Append(", Type: ");
+      Type.ToString(tmp112);
       if((Description != null) && __isset.@description)
       {
-        tmp104.Append(", Description: ");
-        Description.ToString(tmp104);
+        tmp112.Append(", Description: ");
+        Description.ToString(tmp112);
       }
-      tmp104.Append(')');
-      return tmp104.ToString();
+      if((Attributes != null) && __isset.@attributes)
+      {
+        tmp112.Append(", Attributes: ");
+        Attributes.ToString(tmp112);
+      }
+      tmp112.Append(')');
+      return tmp112.ToString();
     }
   }
 

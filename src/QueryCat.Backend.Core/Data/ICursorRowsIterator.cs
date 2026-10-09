@@ -9,17 +9,17 @@ public interface ICursorRowsIterator : IRowsIterator
     /// <summary>
     /// Current cursor position.
     /// </summary>
-    int Position { get; }
+    long Position { get; }
 
     /// <summary>
     /// Total rows.
     /// </summary>
-    int TotalRows { get; }
+    long TotalRows { get; }
 
     /// <summary>
     /// Move cursor to the specific position. -1 is the special initial position.
     /// </summary>
     /// <param name="offset">Position to move.</param>
     /// <param name="origin">Specifies seek mode.</param>
-    void Seek(int offset, CursorSeekOrigin origin);
+    void Seek(long offset, CursorSeekOrigin origin);
 }

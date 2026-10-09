@@ -119,25 +119,25 @@ namespace QueryCat.Plugins.Sdk
       oprot.IncrementRecursionDepth();
       try
       {
-        var tmp98 = new TStruct("QuestionResponse");
-        await oprot.WriteStructBeginAsync(tmp98, cancellationToken);
+        var tmp101 = new TStruct("QuestionResponse");
+        await oprot.WriteStructBeginAsync(tmp101, cancellationToken);
         #pragma warning disable IDE0017  // simplified init
-        var tmp99 = new TField();
+        var tmp102 = new TField();
         if((Answer != null))
         {
-          tmp99.Name = "answer";
-          tmp99.Type = TType.String;
-          tmp99.ID = 1;
-          await oprot.WriteFieldBeginAsync(tmp99, cancellationToken);
+          tmp102.Name = "answer";
+          tmp102.Type = TType.String;
+          tmp102.ID = 1;
+          await oprot.WriteFieldBeginAsync(tmp102, cancellationToken);
           await oprot.WriteStringAsync(Answer, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
         if((MessageId != null))
         {
-          tmp99.Name = "message_id";
-          tmp99.Type = TType.String;
-          tmp99.ID = 2;
-          await oprot.WriteFieldBeginAsync(tmp99, cancellationToken);
+          tmp102.Name = "message_id";
+          tmp102.Type = TType.String;
+          tmp102.ID = 2;
+          await oprot.WriteFieldBeginAsync(tmp102, cancellationToken);
           await oprot.WriteStringAsync(MessageId, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
@@ -176,19 +176,19 @@ namespace QueryCat.Plugins.Sdk
 
     public override string ToString()
     {
-      var tmp100 = new StringBuilder("QuestionResponse(");
+      var tmp103 = new StringBuilder("QuestionResponse(");
       if((Answer != null))
       {
-        tmp100.Append(", Answer: ");
-        Answer.ToString(tmp100);
+        tmp103.Append(", Answer: ");
+        Answer.ToString(tmp103);
       }
       if((MessageId != null))
       {
-        tmp100.Append(", MessageId: ");
-        MessageId.ToString(tmp100);
+        tmp103.Append(", MessageId: ");
+        MessageId.ToString(tmp103);
       }
-      tmp100.Append(')');
-      return tmp100.ToString();
+      tmp103.Append(')');
+      return tmp103.ToString();
     }
   }
 

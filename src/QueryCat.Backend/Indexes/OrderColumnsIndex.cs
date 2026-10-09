@@ -103,7 +103,7 @@ internal sealed class OrderColumnsIndex : IOrderIndex
         internal async ValueTask LoadAsync(CancellationToken cancellationToken = default)
         {
             _values.Clear();
-            _values.EnsureCapacity(_orderColumnsIndex.RowsFrameIterator.TotalRows * _orderColumnsIndex._valueGetters.Length);
+            _values.EnsureCapacity((int)_orderColumnsIndex.RowsFrameIterator.TotalRows * _orderColumnsIndex._valueGetters.Length);
             while (await _orderColumnsIndex.RowsFrameIterator.MoveNextAsync(cancellationToken))
             {
                 foreach (var valueGetter in _orderColumnsIndex._valueGetters)
@@ -146,7 +146,7 @@ internal sealed class OrderColumnsIndex : IOrderIndex
     private sealed class OrderColumnsIterator : ICursorRowsIterator
     {
         private readonly OrderColumnsIndex _orderColumnsIndex;
-        private int _currentRowIndex = -1;
+        private long _currentRowIndex = -1;
 
         /// <inheritdoc />
         public Column[] Columns => _orderColumnsIndex.RowsFrameIterator.Columns;
@@ -155,10 +155,10 @@ internal sealed class OrderColumnsIndex : IOrderIndex
         public Row Current => _orderColumnsIndex.RowsFrameIterator.Current;
 
         /// <inheritdoc />
-        public int Position => _orderColumnsIndex._rowsOrder[_currentRowIndex];
+        public long Position => _orderColumnsIndex._rowsOrder[_currentRowIndex];
 
         /// <inheritdoc />
-        public int TotalRows => _orderColumnsIndex.RowsFrameIterator.TotalRows;
+        public long TotalRows => _orderColumnsIndex.RowsFrameIterator.TotalRows;
 
         public OrderColumnsIterator(OrderColumnsIndex orderColumnsIndex)
         {
@@ -192,7 +192,7 @@ internal sealed class OrderColumnsIndex : IOrderIndex
         }
 
         /// <inheritdoc />
-        public void Seek(int offset, CursorSeekOrigin origin)
+        public void Seek(long offset, CursorSeekOrigin origin)
         {
             if (origin == CursorSeekOrigin.Begin)
             {

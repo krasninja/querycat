@@ -85,7 +85,7 @@ public sealed class ThriftPluginFunctionsManager : IFunctionsManager
         {
             AsyncUtils.RunSync(async ct =>
             {
-                await _client.ThriftClient.RegisterFunctionAsync(
+                await _client.ThriftClient.RegisterFunctionsAsync(
                     _client.Token,
                     [new Function(
                         FunctionFormatter.GetSignature(function),

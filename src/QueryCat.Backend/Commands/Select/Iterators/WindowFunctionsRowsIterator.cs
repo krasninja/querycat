@@ -260,7 +260,7 @@ internal sealed class WindowFunctionsRowsIterator : IRowsIterator
             foreach (var partition in _partitions)
             {
                 var aggregateValue = await ProcessPartitionAsync(iterator, partition, cancellationToken);
-                _rowsFrame.UpdateValue(iterator.Position, partition.OriginalColumnIndex, aggregateValue);
+                _rowsFrame.UpdateValue((int)iterator.Position, partition.OriginalColumnIndex, aggregateValue);
             }
         }
     }
@@ -268,7 +268,7 @@ internal sealed class WindowFunctionsRowsIterator : IRowsIterator
     private async ValueTask<VariantValue> ProcessPartitionAsync(ICursorRowsIterator iterator, PartitionInfo partitionInfo,
         CancellationToken cancellationToken)
     {
-        var rowIdData = partitionInfo.RowIdToPartition[iterator.Position];
+        var rowIdData = partitionInfo.RowIdToPartition[(int)iterator.Position];
 
         var aggregateTarget = partitionInfo.WindowFunctionInfo.AggregateTarget;
         var aggregateState = aggregateTarget.AggregateFunction.GetInitialState(aggregateTarget.ReturnType);

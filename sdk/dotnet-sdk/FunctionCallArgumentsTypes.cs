@@ -72,15 +72,15 @@ namespace QueryCat.Plugins.Sdk
               if (field.Type == TType.Map)
               {
                 {
-                  var _map147 = await iprot.ReadMapBeginAsync(cancellationToken);
-                  Named = new Dictionary<string, global::QueryCat.Plugins.Sdk.DataType>(_map147.Count);
-                  for(int _i148 = 0; _i148 < _map147.Count; ++_i148)
+                  var _map155 = await iprot.ReadMapBeginAsync(cancellationToken);
+                  Named = new Dictionary<string, global::QueryCat.Plugins.Sdk.DataType>(_map155.Count);
+                  for(int _i156 = 0; _i156 < _map155.Count; ++_i156)
                   {
-                    string _key149;
-                    global::QueryCat.Plugins.Sdk.DataType _val150;
-                    _key149 = await iprot.ReadStringAsync(cancellationToken);
-                    _val150 = (global::QueryCat.Plugins.Sdk.DataType)await iprot.ReadI32Async(cancellationToken);
-                    Named[_key149] = _val150;
+                    string _key157;
+                    global::QueryCat.Plugins.Sdk.DataType _val158;
+                    _key157 = await iprot.ReadStringAsync(cancellationToken);
+                    _val158 = (global::QueryCat.Plugins.Sdk.DataType)await iprot.ReadI32Async(cancellationToken);
+                    Named[_key157] = _val158;
                   }
                   await iprot.ReadMapEndAsync(cancellationToken);
                 }
@@ -95,15 +95,15 @@ namespace QueryCat.Plugins.Sdk
               if (field.Type == TType.Map)
               {
                 {
-                  var _map151 = await iprot.ReadMapBeginAsync(cancellationToken);
-                  Positional = new Dictionary<int, global::QueryCat.Plugins.Sdk.DataType>(_map151.Count);
-                  for(int _i152 = 0; _i152 < _map151.Count; ++_i152)
+                  var _map159 = await iprot.ReadMapBeginAsync(cancellationToken);
+                  Positional = new Dictionary<int, global::QueryCat.Plugins.Sdk.DataType>(_map159.Count);
+                  for(int _i160 = 0; _i160 < _map159.Count; ++_i160)
                   {
-                    int _key153;
-                    global::QueryCat.Plugins.Sdk.DataType _val154;
-                    _key153 = await iprot.ReadI32Async(cancellationToken);
-                    _val154 = (global::QueryCat.Plugins.Sdk.DataType)await iprot.ReadI32Async(cancellationToken);
-                    Positional[_key153] = _val154;
+                    int _key161;
+                    global::QueryCat.Plugins.Sdk.DataType _val162;
+                    _key161 = await iprot.ReadI32Async(cancellationToken);
+                    _val162 = (global::QueryCat.Plugins.Sdk.DataType)await iprot.ReadI32Async(cancellationToken);
+                    Positional[_key161] = _val162;
                   }
                   await iprot.ReadMapEndAsync(cancellationToken);
                 }
@@ -143,36 +143,36 @@ namespace QueryCat.Plugins.Sdk
       oprot.IncrementRecursionDepth();
       try
       {
-        var tmp155 = new TStruct("FunctionCallArgumentsTypes");
-        await oprot.WriteStructBeginAsync(tmp155, cancellationToken);
+        var tmp163 = new TStruct("FunctionCallArgumentsTypes");
+        await oprot.WriteStructBeginAsync(tmp163, cancellationToken);
         #pragma warning disable IDE0017  // simplified init
-        var tmp156 = new TField();
+        var tmp164 = new TField();
         if((Named != null))
         {
-          tmp156.Name = "named";
-          tmp156.Type = TType.Map;
-          tmp156.ID = 1;
-          await oprot.WriteFieldBeginAsync(tmp156, cancellationToken);
+          tmp164.Name = "named";
+          tmp164.Type = TType.Map;
+          tmp164.ID = 1;
+          await oprot.WriteFieldBeginAsync(tmp164, cancellationToken);
           await oprot.WriteMapBeginAsync(new TMap(TType.String, TType.I32, Named.Count), cancellationToken);
-          foreach (string _iter157 in Named.Keys)
+          foreach (string _iter165 in Named.Keys)
           {
-            await oprot.WriteStringAsync(_iter157, cancellationToken);
-            await oprot.WriteI32Async((int)Named[_iter157], cancellationToken);
+            await oprot.WriteStringAsync(_iter165, cancellationToken);
+            await oprot.WriteI32Async((int)Named[_iter165], cancellationToken);
           }
           await oprot.WriteMapEndAsync(cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
         if((Positional != null))
         {
-          tmp156.Name = "positional";
-          tmp156.Type = TType.Map;
-          tmp156.ID = 2;
-          await oprot.WriteFieldBeginAsync(tmp156, cancellationToken);
+          tmp164.Name = "positional";
+          tmp164.Type = TType.Map;
+          tmp164.ID = 2;
+          await oprot.WriteFieldBeginAsync(tmp164, cancellationToken);
           await oprot.WriteMapBeginAsync(new TMap(TType.I32, TType.I32, Positional.Count), cancellationToken);
-          foreach (int _iter158 in Positional.Keys)
+          foreach (int _iter166 in Positional.Keys)
           {
-            await oprot.WriteI32Async(_iter158, cancellationToken);
-            await oprot.WriteI32Async((int)Positional[_iter158], cancellationToken);
+            await oprot.WriteI32Async(_iter166, cancellationToken);
+            await oprot.WriteI32Async((int)Positional[_iter166], cancellationToken);
           }
           await oprot.WriteMapEndAsync(cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
@@ -212,19 +212,19 @@ namespace QueryCat.Plugins.Sdk
 
     public override string ToString()
     {
-      var tmp159 = new StringBuilder("FunctionCallArgumentsTypes(");
+      var tmp167 = new StringBuilder("FunctionCallArgumentsTypes(");
       if((Named != null))
       {
-        tmp159.Append(", Named: ");
-        Named.ToString(tmp159);
+        tmp167.Append(", Named: ");
+        Named.ToString(tmp167);
       }
       if((Positional != null))
       {
-        tmp159.Append(", Positional: ");
-        Positional.ToString(tmp159);
+        tmp167.Append(", Positional: ");
+        Positional.ToString(tmp167);
       }
-      tmp159.Append(')');
-      return tmp159.ToString();
+      tmp167.Append(')');
+      return tmp167.ToString();
     }
   }
 

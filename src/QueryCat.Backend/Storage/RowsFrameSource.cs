@@ -79,7 +79,7 @@ public class RowsFrameSource : RowsOutput, IRowsInputDelete, IRowsIteratorParent
         {
             return ValueTask.FromResult(ErrorCode.Deleted);
         }
-        var removed = _rowsFrame.RemoveRow(_frameIterator.Position);
+        var removed = _rowsFrame.RemoveRow((int)_frameIterator.Position);
         if (removed)
         {
             _deletedCurrentRowMark = true;

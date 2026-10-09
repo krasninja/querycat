@@ -21,10 +21,10 @@ public sealed class RowsFrameIterator : ICursorRowsIterator
     public RowsFrame RowsFrame => _rowsFrame;
 
     /// <inheritdoc />
-    public int Position => _absoluteCursor;
+    public long Position => _absoluteCursor;
 
     /// <inheritdoc />
-    public int TotalRows => _rowsFrame.TotalActiveRows;
+    public long TotalRows => _rowsFrame.TotalActiveRows;
 
     /// <inheritdoc />
     public Row Current
@@ -48,9 +48,9 @@ public sealed class RowsFrameIterator : ICursorRowsIterator
     }
 
     /// <inheritdoc />
-    public void Seek(int offset, CursorSeekOrigin origin)
+    public void Seek(long offset, CursorSeekOrigin origin)
     {
-        ArgumentOutOfRangeException.ThrowIfNegative(offset, nameof(offset));
+        ArgumentOutOfRangeException.ThrowIfNegative(offset);
 
         if (origin == CursorSeekOrigin.End)
         {

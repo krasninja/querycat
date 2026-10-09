@@ -72,14 +72,14 @@ namespace QueryCat.Plugins.Sdk
               if (field.Type == TType.List)
               {
                 {
-                  var _list86 = await iprot.ReadListBeginAsync(cancellationToken);
-                  Messages = new List<global::QueryCat.Plugins.Sdk.QuestionMessage>(_list86.Count);
-                  for(int _i87 = 0; _i87 < _list86.Count; ++_i87)
+                  var _list93 = await iprot.ReadListBeginAsync(cancellationToken);
+                  Messages = new List<global::QueryCat.Plugins.Sdk.QuestionMessage>(_list93.Count);
+                  for(int _i94 = 0; _i94 < _list93.Count; ++_i94)
                   {
-                    global::QueryCat.Plugins.Sdk.QuestionMessage _elem88;
-                    _elem88 = new global::QueryCat.Plugins.Sdk.QuestionMessage();
-                    await _elem88.ReadAsync(iprot, cancellationToken);
-                    Messages.Add(_elem88);
+                    global::QueryCat.Plugins.Sdk.QuestionMessage _elem95;
+                    _elem95 = new global::QueryCat.Plugins.Sdk.QuestionMessage();
+                    await _elem95.ReadAsync(iprot, cancellationToken);
+                    Messages.Add(_elem95);
                   }
                   await iprot.ReadListEndAsync(cancellationToken);
                 }
@@ -130,30 +130,30 @@ namespace QueryCat.Plugins.Sdk
       oprot.IncrementRecursionDepth();
       try
       {
-        var tmp89 = new TStruct("QuestionRequest");
-        await oprot.WriteStructBeginAsync(tmp89, cancellationToken);
+        var tmp96 = new TStruct("QuestionRequest");
+        await oprot.WriteStructBeginAsync(tmp96, cancellationToken);
         #pragma warning disable IDE0017  // simplified init
-        var tmp90 = new TField();
+        var tmp97 = new TField();
         if((Messages != null))
         {
-          tmp90.Name = "messages";
-          tmp90.Type = TType.List;
-          tmp90.ID = 1;
-          await oprot.WriteFieldBeginAsync(tmp90, cancellationToken);
+          tmp97.Name = "messages";
+          tmp97.Type = TType.List;
+          tmp97.ID = 1;
+          await oprot.WriteFieldBeginAsync(tmp97, cancellationToken);
           await oprot.WriteListBeginAsync(new TList(TType.Struct, Messages.Count), cancellationToken);
-          foreach (global::QueryCat.Plugins.Sdk.QuestionMessage _iter91 in Messages)
+          foreach (global::QueryCat.Plugins.Sdk.QuestionMessage _iter98 in Messages)
           {
-            await _iter91.WriteAsync(oprot, cancellationToken);
+            await _iter98.WriteAsync(oprot, cancellationToken);
           }
           await oprot.WriteListEndAsync(cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
         if((Type != null))
         {
-          tmp90.Name = "type";
-          tmp90.Type = TType.String;
-          tmp90.ID = 2;
-          await oprot.WriteFieldBeginAsync(tmp90, cancellationToken);
+          tmp97.Name = "type";
+          tmp97.Type = TType.String;
+          tmp97.ID = 2;
+          await oprot.WriteFieldBeginAsync(tmp97, cancellationToken);
           await oprot.WriteStringAsync(Type, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
@@ -192,19 +192,19 @@ namespace QueryCat.Plugins.Sdk
 
     public override string ToString()
     {
-      var tmp92 = new StringBuilder("QuestionRequest(");
+      var tmp99 = new StringBuilder("QuestionRequest(");
       if((Messages != null))
       {
-        tmp92.Append(", Messages: ");
-        Messages.ToString(tmp92);
+        tmp99.Append(", Messages: ");
+        Messages.ToString(tmp99);
       }
       if((Type != null))
       {
-        tmp92.Append(", Type: ");
-        Type.ToString(tmp92);
+        tmp99.Append(", Type: ");
+        Type.ToString(tmp99);
       }
-      tmp92.Append(')');
-      return tmp92.ToString();
+      tmp99.Append(')');
+      return tmp99.ToString();
     }
   }
 

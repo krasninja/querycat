@@ -30,6 +30,8 @@ internal sealed class ThriftPluginContext : IDisposable, IAsyncDisposable
 
     public string PluginName { get; set; } = "N/A";
 
+    public long Token { get; set; } = -1;
+
     public IReadOnlyList<PluginContextFunction> Functions => _functions;
 
     public ObjectsStorage ObjectsStorage { get; }
@@ -122,7 +124,7 @@ internal sealed class ThriftPluginContext : IDisposable, IAsyncDisposable
             if (!_pluginCallbackUris.TryDequeue(out var uri)
                 && client != null)
             {
-                uri = await client.ServeAsync(cancellationToken)
+                uri = await client.ServeAsync(Token, cancellationToken)
                     .ConfigureAwait(false);
             }
             if (string.IsNullOrWhiteSpace(uri))

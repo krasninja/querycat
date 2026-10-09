@@ -48,7 +48,7 @@ public static class SdkConvert
             },
             Backend.Core.Types.DataType.Timestamp => new VariantValue
             {
-                Timestamp = (long)(value.AsTimestampUnsafe - DateTime.UnixEpoch).TotalSeconds,
+                Timestamp = (long)(value.AsTimestampUnsafe - DateTime.UnixEpoch).TotalMilliseconds,
             },
             Backend.Core.Types.DataType.Boolean => new VariantValue
             {
@@ -69,7 +69,8 @@ public static class SdkConvert
             Backend.Core.Types.DataType.Map => new VariantValue
             {
                 Map = ((IDictionary<Backend.Core.Types.VariantValue, Backend.Core.Types.VariantValue>)value.AsObjectUnsafe!)
-                    .ToDictionary(k => Convert(k.Key), v => Convert(v.Value)),
+                    .Select(kvp => new MapEntry(Convert(kvp.Key), Convert(kvp.Value)))
+                    .ToList(),
             },
             Backend.Core.Types.DataType.Object or Backend.Core.Types.DataType.Blob => ConvertObject(value),
             _ => throw new ArgumentOutOfRangeException(),
@@ -157,7 +158,7 @@ public static class SdkConvert
         }
         if (value.__isset.timestamp)
         {
-            return new Backend.Core.Types.VariantValue(DateTime.UnixEpoch.AddSeconds(value.Timestamp));
+            return new Backend.Core.Types.VariantValue(DateTime.UnixEpoch.AddMilliseconds(value.Timestamp));
         }
         if (value.__isset.boolean)
         {
@@ -257,18 +258,29 @@ public static class SdkConvert
 
     public static Column Convert(Backend.Core.Data.Column column)
     {
-        return new Column(column.Name, Convert(column.DataType))
+        return new Column(column.Id, column.Name, Convert(column.DataType))
         {
-            Description = column.Description
+            Description = column.Description,
+            Attributes = column.Attributes.Count > 0
+                ? column.Attributes.ToDictionary(a => a.Key, a => Convert(a.Value))
+                : null,
         };
     }
 
     public static Backend.Core.Data.Column Convert(Column column)
     {
-        return new Backend.Core.Data.Column(column.Name, Convert(column.Type))
+        var result = new Backend.Core.Data.Column(column.Name, Convert(column.Type))
         {
             Description = column.Description ?? string.Empty,
         };
+        if (column.Attributes != null)
+        {
+            foreach (var attribute in column.Attributes)
+            {
+                result.SetAttribute(attribute.Key, Convert(attribute.Value));
+            }
+        }
+        return result;
     }
 
     // Source:

@@ -31,10 +31,10 @@ public sealed class CacheRowsIterator : IRowsIteratorParent, ICursorRowsIterator
     /// <summary>
     /// Cursor position.
     /// </summary>
-    public int Position => _cursor;
+    public long Position => _cursor;
 
     /// <inheritdoc />
-    public int TotalRows => Count;
+    public long TotalRows => Count;
 
     /// <summary>
     /// Whether the cache is complete and no more rows can be added.
@@ -255,7 +255,7 @@ public sealed class CacheRowsIterator : IRowsIteratorParent, ICursorRowsIterator
     }
 
     /// <inheritdoc />
-    public void Seek(int offset, CursorSeekOrigin origin)
+    public void Seek(long offset, CursorSeekOrigin origin)
     {
         var newPosition = origin switch
         {
@@ -266,7 +266,7 @@ public sealed class CacheRowsIterator : IRowsIteratorParent, ICursorRowsIterator
         };
         ArgumentOutOfRangeException.ThrowIfLessThan(newPosition, InitialPosition, nameof(offset));
         ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(newPosition, _cache.Count, nameof(offset));
-        SetCursor(newPosition);
+        SetCursor((int)newPosition);
     }
 
     private void SetCursor(int newPosition)

@@ -45,7 +45,7 @@ namespace QueryCat.Plugins.Sdk
     private global::QueryCat.Plugins.Sdk.ObjectValue? _object;
     private string? _json;
     private List<global::QueryCat.Plugins.Sdk.VariantValue>? _array;
-    private Dictionary<global::QueryCat.Plugins.Sdk.VariantValue, global::QueryCat.Plugins.Sdk.VariantValue>? _map;
+    private List<global::QueryCat.Plugins.Sdk.MapEntry>? _map;
 
     public bool IsNull
     {
@@ -190,7 +190,7 @@ namespace QueryCat.Plugins.Sdk
       }
     }
 
-    public Dictionary<global::QueryCat.Plugins.Sdk.VariantValue, global::QueryCat.Plugins.Sdk.VariantValue>? Map
+    public List<global::QueryCat.Plugins.Sdk.MapEntry>? Map
     {
       get
       {
@@ -348,14 +348,14 @@ namespace QueryCat.Plugins.Sdk
               if (field.Type == TType.List)
               {
                 {
-                  var _list8 = await iprot.ReadListBeginAsync(cancellationToken);
-                  Array = new List<global::QueryCat.Plugins.Sdk.VariantValue>(_list8.Count);
-                  for(int _i9 = 0; _i9 < _list8.Count; ++_i9)
+                  var _list12 = await iprot.ReadListBeginAsync(cancellationToken);
+                  Array = new List<global::QueryCat.Plugins.Sdk.VariantValue>(_list12.Count);
+                  for(int _i13 = 0; _i13 < _list12.Count; ++_i13)
                   {
-                    global::QueryCat.Plugins.Sdk.VariantValue _elem10;
-                    _elem10 = new global::QueryCat.Plugins.Sdk.VariantValue();
-                    await _elem10.ReadAsync(iprot, cancellationToken);
-                    Array.Add(_elem10);
+                    global::QueryCat.Plugins.Sdk.VariantValue _elem14;
+                    _elem14 = new global::QueryCat.Plugins.Sdk.VariantValue();
+                    await _elem14.ReadAsync(iprot, cancellationToken);
+                    Array.Add(_elem14);
                   }
                   await iprot.ReadListEndAsync(cancellationToken);
                 }
@@ -366,22 +366,19 @@ namespace QueryCat.Plugins.Sdk
               }
               break;
             case 12:
-              if (field.Type == TType.Map)
+              if (field.Type == TType.List)
               {
                 {
-                  var _map11 = await iprot.ReadMapBeginAsync(cancellationToken);
-                  Map = new Dictionary<global::QueryCat.Plugins.Sdk.VariantValue, global::QueryCat.Plugins.Sdk.VariantValue>(_map11.Count);
-                  for(int _i12 = 0; _i12 < _map11.Count; ++_i12)
+                  var _list15 = await iprot.ReadListBeginAsync(cancellationToken);
+                  Map = new List<global::QueryCat.Plugins.Sdk.MapEntry>(_list15.Count);
+                  for(int _i16 = 0; _i16 < _list15.Count; ++_i16)
                   {
-                    global::QueryCat.Plugins.Sdk.VariantValue _key13;
-                    global::QueryCat.Plugins.Sdk.VariantValue _val14;
-                    _key13 = new global::QueryCat.Plugins.Sdk.VariantValue();
-                    await _key13.ReadAsync(iprot, cancellationToken);
-                    _val14 = new global::QueryCat.Plugins.Sdk.VariantValue();
-                    await _val14.ReadAsync(iprot, cancellationToken);
-                    Map[_key13] = _val14;
+                    global::QueryCat.Plugins.Sdk.MapEntry _elem17;
+                    _elem17 = new global::QueryCat.Plugins.Sdk.MapEntry();
+                    await _elem17.ReadAsync(iprot, cancellationToken);
+                    Map.Add(_elem17);
                   }
-                  await iprot.ReadMapEndAsync(cancellationToken);
+                  await iprot.ReadListEndAsync(cancellationToken);
                 }
               }
               else
@@ -410,127 +407,126 @@ namespace QueryCat.Plugins.Sdk
       oprot.IncrementRecursionDepth();
       try
       {
-        var tmp15 = new TStruct("VariantValue");
-        await oprot.WriteStructBeginAsync(tmp15, cancellationToken);
+        var tmp18 = new TStruct("VariantValue");
+        await oprot.WriteStructBeginAsync(tmp18, cancellationToken);
         #pragma warning disable IDE0017  // simplified init
-        var tmp16 = new TField();
+        var tmp19 = new TField();
         if(__isset.isNull)
         {
-          tmp16.Name = "isNull";
-          tmp16.Type = TType.Bool;
-          tmp16.ID = 1;
-          await oprot.WriteFieldBeginAsync(tmp16, cancellationToken);
+          tmp19.Name = "isNull";
+          tmp19.Type = TType.Bool;
+          tmp19.ID = 1;
+          await oprot.WriteFieldBeginAsync(tmp19, cancellationToken);
           await oprot.WriteBoolAsync(IsNull, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
         if(__isset.@integer)
         {
-          tmp16.Name = "integer";
-          tmp16.Type = TType.I64;
-          tmp16.ID = 2;
-          await oprot.WriteFieldBeginAsync(tmp16, cancellationToken);
+          tmp19.Name = "integer";
+          tmp19.Type = TType.I64;
+          tmp19.ID = 2;
+          await oprot.WriteFieldBeginAsync(tmp19, cancellationToken);
           await oprot.WriteI64Async(Integer, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
         if((String != null) && __isset.@string)
         {
-          tmp16.Name = "string";
-          tmp16.Type = TType.String;
-          tmp16.ID = 3;
-          await oprot.WriteFieldBeginAsync(tmp16, cancellationToken);
+          tmp19.Name = "string";
+          tmp19.Type = TType.String;
+          tmp19.ID = 3;
+          await oprot.WriteFieldBeginAsync(tmp19, cancellationToken);
           await oprot.WriteStringAsync(String, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
         if(__isset.@float)
         {
-          tmp16.Name = "float";
-          tmp16.Type = TType.Double;
-          tmp16.ID = 4;
-          await oprot.WriteFieldBeginAsync(tmp16, cancellationToken);
+          tmp19.Name = "float";
+          tmp19.Type = TType.Double;
+          tmp19.ID = 4;
+          await oprot.WriteFieldBeginAsync(tmp19, cancellationToken);
           await oprot.WriteDoubleAsync(Float, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
         if(__isset.@timestamp)
         {
-          tmp16.Name = "timestamp";
-          tmp16.Type = TType.I64;
-          tmp16.ID = 5;
-          await oprot.WriteFieldBeginAsync(tmp16, cancellationToken);
+          tmp19.Name = "timestamp";
+          tmp19.Type = TType.I64;
+          tmp19.ID = 5;
+          await oprot.WriteFieldBeginAsync(tmp19, cancellationToken);
           await oprot.WriteI64Async(Timestamp, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
         if(__isset.@boolean)
         {
-          tmp16.Name = "boolean";
-          tmp16.Type = TType.Bool;
-          tmp16.ID = 6;
-          await oprot.WriteFieldBeginAsync(tmp16, cancellationToken);
+          tmp19.Name = "boolean";
+          tmp19.Type = TType.Bool;
+          tmp19.ID = 6;
+          await oprot.WriteFieldBeginAsync(tmp19, cancellationToken);
           await oprot.WriteBoolAsync(Boolean, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
         if((Decimal != null) && __isset.@decimal)
         {
-          tmp16.Name = "decimal";
-          tmp16.Type = TType.Struct;
-          tmp16.ID = 7;
-          await oprot.WriteFieldBeginAsync(tmp16, cancellationToken);
+          tmp19.Name = "decimal";
+          tmp19.Type = TType.Struct;
+          tmp19.ID = 7;
+          await oprot.WriteFieldBeginAsync(tmp19, cancellationToken);
           await Decimal.WriteAsync(oprot, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
         if(__isset.@interval)
         {
-          tmp16.Name = "interval";
-          tmp16.Type = TType.I64;
-          tmp16.ID = 8;
-          await oprot.WriteFieldBeginAsync(tmp16, cancellationToken);
+          tmp19.Name = "interval";
+          tmp19.Type = TType.I64;
+          tmp19.ID = 8;
+          await oprot.WriteFieldBeginAsync(tmp19, cancellationToken);
           await oprot.WriteI64Async(Interval, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
         if((Object != null) && __isset.@object)
         {
-          tmp16.Name = "object";
-          tmp16.Type = TType.Struct;
-          tmp16.ID = 9;
-          await oprot.WriteFieldBeginAsync(tmp16, cancellationToken);
+          tmp19.Name = "object";
+          tmp19.Type = TType.Struct;
+          tmp19.ID = 9;
+          await oprot.WriteFieldBeginAsync(tmp19, cancellationToken);
           await Object.WriteAsync(oprot, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
         if((Json != null) && __isset.@json)
         {
-          tmp16.Name = "json";
-          tmp16.Type = TType.String;
-          tmp16.ID = 10;
-          await oprot.WriteFieldBeginAsync(tmp16, cancellationToken);
+          tmp19.Name = "json";
+          tmp19.Type = TType.String;
+          tmp19.ID = 10;
+          await oprot.WriteFieldBeginAsync(tmp19, cancellationToken);
           await oprot.WriteStringAsync(Json, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
         if((Array != null) && __isset.@array)
         {
-          tmp16.Name = "array";
-          tmp16.Type = TType.List;
-          tmp16.ID = 11;
-          await oprot.WriteFieldBeginAsync(tmp16, cancellationToken);
+          tmp19.Name = "array";
+          tmp19.Type = TType.List;
+          tmp19.ID = 11;
+          await oprot.WriteFieldBeginAsync(tmp19, cancellationToken);
           await oprot.WriteListBeginAsync(new TList(TType.Struct, Array.Count), cancellationToken);
-          foreach (global::QueryCat.Plugins.Sdk.VariantValue _iter17 in Array)
+          foreach (global::QueryCat.Plugins.Sdk.VariantValue _iter20 in Array)
           {
-            await _iter17.WriteAsync(oprot, cancellationToken);
+            await _iter20.WriteAsync(oprot, cancellationToken);
           }
           await oprot.WriteListEndAsync(cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
         if((Map != null) && __isset.@map)
         {
-          tmp16.Name = "map";
-          tmp16.Type = TType.Map;
-          tmp16.ID = 12;
-          await oprot.WriteFieldBeginAsync(tmp16, cancellationToken);
-          await oprot.WriteMapBeginAsync(new TMap(TType.Struct, TType.Struct, Map.Count), cancellationToken);
-          foreach (global::QueryCat.Plugins.Sdk.VariantValue _iter18 in Map.Keys)
+          tmp19.Name = "map";
+          tmp19.Type = TType.List;
+          tmp19.ID = 12;
+          await oprot.WriteFieldBeginAsync(tmp19, cancellationToken);
+          await oprot.WriteListBeginAsync(new TList(TType.Struct, Map.Count), cancellationToken);
+          foreach (global::QueryCat.Plugins.Sdk.MapEntry _iter21 in Map)
           {
-            await _iter18.WriteAsync(oprot, cancellationToken);
-            await Map[_iter18].WriteAsync(oprot, cancellationToken);
+            await _iter21.WriteAsync(oprot, cancellationToken);
           }
-          await oprot.WriteMapEndAsync(cancellationToken);
+          await oprot.WriteListEndAsync(cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
         #pragma warning restore IDE0017  // simplified init
@@ -618,82 +614,82 @@ namespace QueryCat.Plugins.Sdk
 
     public override string ToString()
     {
-      var tmp19 = new StringBuilder("VariantValue(");
-      int tmp20 = 0;
+      var tmp22 = new StringBuilder("VariantValue(");
+      int tmp23 = 0;
       if(__isset.isNull)
       {
-        if(0 < tmp20++) { tmp19.Append(", "); }
-        tmp19.Append("IsNull: ");
-        IsNull.ToString(tmp19);
+        if(0 < tmp23++) { tmp22.Append(", "); }
+        tmp22.Append("IsNull: ");
+        IsNull.ToString(tmp22);
       }
       if(__isset.@integer)
       {
-        if(0 < tmp20++) { tmp19.Append(", "); }
-        tmp19.Append("Integer: ");
-        Integer.ToString(tmp19);
+        if(0 < tmp23++) { tmp22.Append(", "); }
+        tmp22.Append("Integer: ");
+        Integer.ToString(tmp22);
       }
       if((String != null) && __isset.@string)
       {
-        if(0 < tmp20++) { tmp19.Append(", "); }
-        tmp19.Append("String: ");
-        String.ToString(tmp19);
+        if(0 < tmp23++) { tmp22.Append(", "); }
+        tmp22.Append("String: ");
+        String.ToString(tmp22);
       }
       if(__isset.@float)
       {
-        if(0 < tmp20++) { tmp19.Append(", "); }
-        tmp19.Append("Float: ");
-        Float.ToString(tmp19);
+        if(0 < tmp23++) { tmp22.Append(", "); }
+        tmp22.Append("Float: ");
+        Float.ToString(tmp22);
       }
       if(__isset.@timestamp)
       {
-        if(0 < tmp20++) { tmp19.Append(", "); }
-        tmp19.Append("Timestamp: ");
-        Timestamp.ToString(tmp19);
+        if(0 < tmp23++) { tmp22.Append(", "); }
+        tmp22.Append("Timestamp: ");
+        Timestamp.ToString(tmp22);
       }
       if(__isset.@boolean)
       {
-        if(0 < tmp20++) { tmp19.Append(", "); }
-        tmp19.Append("Boolean: ");
-        Boolean.ToString(tmp19);
+        if(0 < tmp23++) { tmp22.Append(", "); }
+        tmp22.Append("Boolean: ");
+        Boolean.ToString(tmp22);
       }
       if((Decimal != null) && __isset.@decimal)
       {
-        if(0 < tmp20++) { tmp19.Append(", "); }
-        tmp19.Append("Decimal: ");
-        Decimal.ToString(tmp19);
+        if(0 < tmp23++) { tmp22.Append(", "); }
+        tmp22.Append("Decimal: ");
+        Decimal.ToString(tmp22);
       }
       if(__isset.@interval)
       {
-        if(0 < tmp20++) { tmp19.Append(", "); }
-        tmp19.Append("Interval: ");
-        Interval.ToString(tmp19);
+        if(0 < tmp23++) { tmp22.Append(", "); }
+        tmp22.Append("Interval: ");
+        Interval.ToString(tmp22);
       }
       if((Object != null) && __isset.@object)
       {
-        if(0 < tmp20++) { tmp19.Append(", "); }
-        tmp19.Append("Object: ");
-        Object.ToString(tmp19);
+        if(0 < tmp23++) { tmp22.Append(", "); }
+        tmp22.Append("Object: ");
+        Object.ToString(tmp22);
       }
       if((Json != null) && __isset.@json)
       {
-        if(0 < tmp20++) { tmp19.Append(", "); }
-        tmp19.Append("Json: ");
-        Json.ToString(tmp19);
+        if(0 < tmp23++) { tmp22.Append(", "); }
+        tmp22.Append("Json: ");
+        Json.ToString(tmp22);
       }
       if((Array != null) && __isset.@array)
       {
-        if(0 < tmp20++) { tmp19.Append(", "); }
-        tmp19.Append("Array: ");
-        Array.ToString(tmp19);
+        if(0 < tmp23++) { tmp22.Append(", "); }
+        tmp22.Append("Array: ");
+        Array.ToString(tmp22);
       }
       if((Map != null) && __isset.@map)
       {
-        if(0 < tmp20++) { tmp19.Append(", "); }
-        tmp19.Append("Map: ");
-        Map.ToString(tmp19);
+        if(0 < tmp23++) { tmp22.Append(", "); }
+        tmp22.Append("Map: ");
+        Map.ToString(tmp22);
       }
-      tmp19.Append(')');
-      return tmp19.ToString();
+      tmp22.Append(')');
+      return tmp22.ToString();
     }
   }
 

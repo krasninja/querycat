@@ -55,7 +55,7 @@ internal sealed class OffsetRowsIterator : IRowsIterator, IRowsIteratorParent
     {
         if (_rowsIterator is ICursorRowsIterator cursor && cursor.TotalRows > 0)
         {
-            var seekPosition = (int)Math.Min(_offset, cursor.TotalRows);
+            var seekPosition = Math.Min(_offset, cursor.TotalRows);
             cursor.Seek(seekPosition, CursorSeekOrigin.Begin);
             _count = _offset; // Mark skip phase as complete.
         }

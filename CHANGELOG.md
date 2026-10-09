@@ -27,6 +27,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - CannotSetValueException is thrown if value cannot be set with SET expression.
+- [Breaking] Plugins protocol changes.
+- [Breaking] `ICursorRowsIterator` `Position`, `TotalRows` and `Seek` use `long` instead of `int`.
 
 ## [0.17.5] - 2026-07-31
 

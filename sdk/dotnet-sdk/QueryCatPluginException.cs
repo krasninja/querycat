@@ -230,58 +230,58 @@ namespace QueryCat.Plugins.Sdk
       oprot.IncrementRecursionDepth();
       try
       {
-        var tmp21 = new TStruct("QueryCatPluginException");
-        await oprot.WriteStructBeginAsync(tmp21, cancellationToken);
+        var tmp24 = new TStruct("QueryCatPluginException");
+        await oprot.WriteStructBeginAsync(tmp24, cancellationToken);
         #pragma warning disable IDE0017  // simplified init
-        var tmp22 = new TField();
-        tmp22.Name = "type";
-        tmp22.Type = TType.I32;
-        tmp22.ID = 1;
-        await oprot.WriteFieldBeginAsync(tmp22, cancellationToken);
+        var tmp25 = new TField();
+        tmp25.Name = "type";
+        tmp25.Type = TType.I32;
+        tmp25.ID = 1;
+        await oprot.WriteFieldBeginAsync(tmp25, cancellationToken);
         await oprot.WriteI32Async((int)Type, cancellationToken);
         await oprot.WriteFieldEndAsync(cancellationToken);
         if((ErrorMessage != null))
         {
-          tmp22.Name = "error_message";
-          tmp22.Type = TType.String;
-          tmp22.ID = 2;
-          await oprot.WriteFieldBeginAsync(tmp22, cancellationToken);
+          tmp25.Name = "error_message";
+          tmp25.Type = TType.String;
+          tmp25.ID = 2;
+          await oprot.WriteFieldBeginAsync(tmp25, cancellationToken);
           await oprot.WriteStringAsync(ErrorMessage, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
         if(__isset.object_handle)
         {
-          tmp22.Name = "object_handle";
-          tmp22.Type = TType.I32;
-          tmp22.ID = 3;
-          await oprot.WriteFieldBeginAsync(tmp22, cancellationToken);
+          tmp25.Name = "object_handle";
+          tmp25.Type = TType.I32;
+          tmp25.ID = 3;
+          await oprot.WriteFieldBeginAsync(tmp25, cancellationToken);
           await oprot.WriteI32Async(ObjectHandle, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
         if((ExceptionType != null) && __isset.exception_type)
         {
-          tmp22.Name = "exception_type";
-          tmp22.Type = TType.String;
-          tmp22.ID = 4;
-          await oprot.WriteFieldBeginAsync(tmp22, cancellationToken);
+          tmp25.Name = "exception_type";
+          tmp25.Type = TType.String;
+          tmp25.ID = 4;
+          await oprot.WriteFieldBeginAsync(tmp25, cancellationToken);
           await oprot.WriteStringAsync(ExceptionType, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
         if((ExceptionStackTrace != null) && __isset.exception_stack_trace)
         {
-          tmp22.Name = "exception_stack_trace";
-          tmp22.Type = TType.String;
-          tmp22.ID = 5;
-          await oprot.WriteFieldBeginAsync(tmp22, cancellationToken);
+          tmp25.Name = "exception_stack_trace";
+          tmp25.Type = TType.String;
+          tmp25.ID = 5;
+          await oprot.WriteFieldBeginAsync(tmp25, cancellationToken);
           await oprot.WriteStringAsync(ExceptionStackTrace, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
         if((ExceptionNested != null) && __isset.exception_nested)
         {
-          tmp22.Name = "exception_nested";
-          tmp22.Type = TType.Struct;
-          tmp22.ID = 6;
-          await oprot.WriteFieldBeginAsync(tmp22, cancellationToken);
+          tmp25.Name = "exception_nested";
+          tmp25.Type = TType.Struct;
+          tmp25.ID = 6;
+          await oprot.WriteFieldBeginAsync(tmp25, cancellationToken);
           await ExceptionNested.WriteAsync(oprot, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
@@ -337,36 +337,36 @@ namespace QueryCat.Plugins.Sdk
 
     public override string ToString()
     {
-      var tmp23 = new StringBuilder("QueryCatPluginException(");
-      tmp23.Append(", Type: ");
-      Type.ToString(tmp23);
+      var tmp26 = new StringBuilder("QueryCatPluginException(");
+      tmp26.Append(", Type: ");
+      Type.ToString(tmp26);
       if((ErrorMessage != null))
       {
-        tmp23.Append(", ErrorMessage: ");
-        ErrorMessage.ToString(tmp23);
+        tmp26.Append(", ErrorMessage: ");
+        ErrorMessage.ToString(tmp26);
       }
       if(__isset.object_handle)
       {
-        tmp23.Append(", ObjectHandle: ");
-        ObjectHandle.ToString(tmp23);
+        tmp26.Append(", ObjectHandle: ");
+        ObjectHandle.ToString(tmp26);
       }
       if((ExceptionType != null) && __isset.exception_type)
       {
-        tmp23.Append(", ExceptionType: ");
-        ExceptionType.ToString(tmp23);
+        tmp26.Append(", ExceptionType: ");
+        ExceptionType.ToString(tmp26);
       }
       if((ExceptionStackTrace != null) && __isset.exception_stack_trace)
       {
-        tmp23.Append(", ExceptionStackTrace: ");
-        ExceptionStackTrace.ToString(tmp23);
+        tmp26.Append(", ExceptionStackTrace: ");
+        ExceptionStackTrace.ToString(tmp26);
       }
       if((ExceptionNested != null) && __isset.exception_nested)
       {
-        tmp23.Append(", ExceptionNested: ");
-        ExceptionNested.ToString(tmp23);
+        tmp26.Append(", ExceptionNested: ");
+        ExceptionNested.ToString(tmp26);
       }
-      tmp23.Append(')');
-      return tmp23.ToString();
+      tmp26.Append(')');
+      return tmp26.ToString();
     }
   }
 

@@ -195,7 +195,7 @@ public partial class QueryCatIOHandler : global::QueryCat.Plugins.Sdk.QueryCatIO
     }
 
     /// <inheritdoc />
-    public virtual async Task<byte[]> Blob_ReadAsync(long token, int object_blob_handle, int offset, int count,
+    public virtual async Task<byte[]> Blob_ReadAsync(long token, int object_blob_handle, long offset, int count,
         CancellationToken cancellationToken = default)
     {
         await BeforeCallAsync(token, nameof(Blob_ReadAsync), cancellationToken);
@@ -349,7 +349,7 @@ public partial class QueryCatIOHandler : global::QueryCat.Plugins.Sdk.QueryCatIO
     }
 
     /// <inheritdoc />
-    public virtual async Task<int> RowsSet_PositionAsync(long token, int object_rows_set_handle, CancellationToken cancellationToken = default)
+    public virtual async Task<long> RowsSet_PositionAsync(long token, int object_rows_set_handle, CancellationToken cancellationToken = default)
     {
         await BeforeCallAsync(token, nameof(RowsSet_PositionAsync), cancellationToken);
         if (_objectsStorage.TryGet<ICursorRowsIterator>(object_rows_set_handle, out var rowsSource))
@@ -364,7 +364,7 @@ public partial class QueryCatIOHandler : global::QueryCat.Plugins.Sdk.QueryCatIO
     }
 
     /// <inheritdoc />
-    public virtual async Task<int> RowsSet_TotalRowsAsync(long token, int object_rows_set_handle, CancellationToken cancellationToken = default)
+    public virtual async Task<long> RowsSet_TotalRowsAsync(long token, int object_rows_set_handle, CancellationToken cancellationToken = default)
     {
         await BeforeCallAsync(token, nameof(RowsSet_TotalRowsAsync), cancellationToken);
         if (_objectsStorage.TryGet<ICursorRowsIterator>(object_rows_set_handle, out var rowsSource))
@@ -379,7 +379,7 @@ public partial class QueryCatIOHandler : global::QueryCat.Plugins.Sdk.QueryCatIO
     }
 
     /// <inheritdoc />
-    public virtual async Task RowsSet_SeekAsync(long token, int object_rows_set_handle, int offset, CursorSeekOrigin origin,
+    public virtual async Task RowsSet_SeekAsync(long token, int object_rows_set_handle, long offset, CursorSeekOrigin origin,
         CancellationToken cancellationToken = default)
     {
         await BeforeCallAsync(token, nameof(RowsSet_SeekAsync), cancellationToken);
@@ -419,10 +419,7 @@ public partial class QueryCatIOHandler : global::QueryCat.Plugins.Sdk.QueryCatIO
                 }
             }
 
-            var result = new RowsList(values)
-            {
-                HasMore = hasMore,
-            };
+            var result = new RowsList(hasMore, values);
             return result;
         }
 
@@ -438,10 +435,7 @@ public partial class QueryCatIOHandler : global::QueryCat.Plugins.Sdk.QueryCatIO
                     values.Add(SdkConvert.Convert(value));
                 }
             }
-            var result = new RowsList(values)
-            {
-                HasMore = hasMore,
-            };
+            var result = new RowsList(hasMore, values);
             return result;
         }
 
