@@ -14,7 +14,7 @@ internal sealed class ForCommandHandler : StatementsBlockFuncUnit
         StatementsVisitor statementsVisitor,
         ProgramBodyNode bodyNode,
         string variable,
-        IRowsIterator iterator) : base(statementsVisitor, bodyNode.Statements.ToArray())
+        IRowsIterator iterator) : base(statementsVisitor, bodyNode.Statements)
     {
         _variableName = variable;
         _rowsIterator = iterator;
@@ -31,9 +31,15 @@ internal sealed class ForCommandHandler : StatementsBlockFuncUnit
             {
                 scope.Variables[_variableName] = VariantValue.CreateFromObject(_rowsIterator.Current);
                 await base.InvokeAsync(thread, cancellationToken);
-                if (Jump == ExecutionJump.Break)
+                if (Jump == ExecutionJump.Break
+                    || Jump == ExecutionJump.Return
+                    || Jump == ExecutionJump.Halt)
                 {
                     break;
+                }
+                if (Jump == ExecutionJump.Continue)
+                {
+                    Jump = ExecutionJump.Next;
                 }
             }
         }
