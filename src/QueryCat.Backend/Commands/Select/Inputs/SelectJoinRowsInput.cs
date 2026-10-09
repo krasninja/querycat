@@ -13,6 +13,7 @@ internal sealed class SelectJoinRowsInput : IRowsInput, IRowsIteratorParent
     private readonly JoinType _joinType;
     private readonly IFuncUnit _condition;
     private readonly bool _reverseColumnsOrder;
+    private readonly int _leftInputColumnsOffset;
     private readonly int _rightInputColumnsOffset;
     private bool _rightHasData;
     private bool _rightIsNull;
@@ -53,13 +54,15 @@ internal sealed class SelectJoinRowsInput : IRowsInput, IRowsIteratorParent
         _reverseColumnsOrder = reverseColumnsOrder;
         if (reverseColumnsOrder)
         {
-            _rightInputColumnsOffset = rightInput.Columns.Length;
-            Columns = rightInput.Columns.Union(leftInput.Columns).ToArray();
+            _rightInputColumnsOffset = 0;
+            _leftInputColumnsOffset = rightInput.Columns.Length;
+            Columns = rightInput.Columns.Concat(leftInput.Columns).ToArray();
         }
         else
         {
+            _leftInputColumnsOffset = 0;
             _rightInputColumnsOffset = leftInput.Columns.Length;
-            Columns = leftInput.Columns.Union(rightInput.Columns).ToArray();
+            Columns = leftInput.Columns.Concat(rightInput.Columns).ToArray();
         }
     }
 
@@ -80,36 +83,13 @@ internal sealed class SelectJoinRowsInput : IRowsInput, IRowsIteratorParent
     /// <inheritdoc />
     public ErrorCode ReadValue(int columnIndex, out VariantValue value)
     {
-        if (_reverseColumnsOrder)
+        var (input, inputColumnIndex) = GetInputColumn(columnIndex);
+        if (input == _leftInput ? _leftIsNull : _rightIsNull)
         {
-            if (columnIndex >= _rightInputColumnsOffset)
-            {
-                columnIndex -= _rightInputColumnsOffset;
-            }
-            else
-            {
-                columnIndex += _rightInputColumnsOffset;
-            }
+            value = VariantValue.Null;
+            return ErrorCode.OK;
         }
-
-        if (columnIndex >= _rightInputColumnsOffset)
-        {
-            if (_rightIsNull)
-            {
-                value = VariantValue.Null;
-                return ErrorCode.OK;
-            }
-            return _rightInput.ReadValue(columnIndex - _rightInputColumnsOffset, out value);
-        }
-        else
-        {
-            if (_leftIsNull)
-            {
-                value = VariantValue.Null;
-                return ErrorCode.OK;
-            }
-            return _leftInput.ReadValue(columnIndex, out value);
-        }
+        return input.ReadValue(inputColumnIndex, out value);
     }
 
     /// <inheritdoc />
@@ -170,6 +150,11 @@ internal sealed class SelectJoinRowsInput : IRowsInput, IRowsIteratorParent
     {
         await _leftInput.ResetAsync(cancellationToken);
         await _rightInput.ResetAsync(cancellationToken);
+        _rightHasData = false;
+        _rightIsNull = false;
+        _leftIsNull = false;
+        _rightRowIndex = -1;
+        _fullJoinRightIncludes.Clear();
     }
 
     /// <inheritdoc />
@@ -185,26 +170,46 @@ internal sealed class SelectJoinRowsInput : IRowsInput, IRowsIteratorParent
         yield return _rightInput;
     }
 
+    /// <summary>
+    /// Map the join column index to the source input and its own column index.
+    /// </summary>
+    /// <param name="columnIndex">Column index within <see cref="Columns" />.</param>
+    /// <returns>Source input and column index within it.</returns>
+    private (IRowsInput Input, int ColumnIndex) GetInputColumn(int columnIndex)
+    {
+        var isLeft = _reverseColumnsOrder
+            ? columnIndex >= _leftInputColumnsOffset
+            : columnIndex < _rightInputColumnsOffset;
+        return isLeft
+            ? (_leftInput, columnIndex - _leftInputColumnsOffset)
+            : (_rightInput, columnIndex - _rightInputColumnsOffset);
+    }
+
+    private static KeyColumn ShiftKeyColumn(KeyColumn keyColumn, int offset)
+        => offset == 0
+            ? keyColumn
+            : new KeyColumn(keyColumn.ColumnIndex + offset, keyColumn.IsRequired, keyColumn.GetOperations().ToArray());
+
     /// <inheritdoc />
     public IReadOnlyList<KeyColumn> GetKeyColumns()
     {
-        return new[] { _leftInput, _rightInput }
-            .SelectMany(i => i.GetKeyColumns())
+        return _leftInput.GetKeyColumns().Select(k => ShiftKeyColumn(k, _leftInputColumnsOffset))
+            .Concat(_rightInput.GetKeyColumns().Select(k => ShiftKeyColumn(k, _rightInputColumnsOffset)))
             .ToArray();
     }
 
     /// <inheritdoc />
     public void SetKeyColumnValue(int columnIndex, VariantValue value, VariantValue.Operation operation)
     {
-        _leftInput.SetKeyColumnValue(columnIndex, value, operation);
-        _rightInput.SetKeyColumnValue(columnIndex, value, operation);
+        var (input, inputColumnIndex) = GetInputColumn(columnIndex);
+        input.SetKeyColumnValue(inputColumnIndex, value, operation);
     }
 
     /// <inheritdoc />
     public void UnsetKeyColumnValue(int columnIndex, VariantValue.Operation operation)
     {
-        _leftInput.UnsetKeyColumnValue(columnIndex, operation);
-        _rightInput.UnsetKeyColumnValue(columnIndex, operation);
+        var (input, inputColumnIndex) = GetInputColumn(columnIndex);
+        input.UnsetKeyColumnValue(inputColumnIndex, operation);
     }
 
     /// <inheritdoc />
