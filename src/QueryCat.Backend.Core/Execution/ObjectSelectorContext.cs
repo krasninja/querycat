@@ -153,7 +153,7 @@ public sealed class ObjectSelectorContext
 
     [UnconditionalSuppressMessage("Trimming", "IL2070",
         Justification = "Object selector works with arbitrary runtime objects whose properties cannot be statically annotated.")]
-    [UnconditionalSuppressMessage("Trimming", "IL2072",
+    [UnconditionalSuppressMessage("Trimming", "IL2075",
         Justification = "Object selector works with arbitrary runtime objects whose properties cannot be statically annotated.")]
     private static PropertyInfo ResolveOwnerProperty(Type runtimeType, PropertyInfo declaredProperty)
     {
