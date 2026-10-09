@@ -14,7 +14,7 @@ internal readonly struct CacheKeyCondition : IEquatable<CacheKeyCondition>
     /// <summary>
     /// First value.
     /// </summary>
-    public VariantValue Value => ValuesArray[0];
+    public VariantValue Value => ValuesArray.Length > 0 ? ValuesArray[0] : VariantValue.Null;
 
     public VariantValue[] ValuesArray { get; }
 

@@ -52,7 +52,7 @@ internal sealed class LtsvInput : StreamRowsInput
 
         var columns = list.Select(l => new Column(l, DataType.String)).ToArray();
         _values = new string[columns.Length];
-        _virtualColumnsCount = GetVirtualColumns().Length;
+        _virtualColumnsCount = GetVirtualColumns().Count;
         return columns;
     }
 

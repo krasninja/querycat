@@ -11,7 +11,9 @@ namespace QueryCat.Backend.Storage;
 /// </summary>
 internal static class RowsInputConverter
 {
-    private static int NextInputIndex { get; set; }
+    private static int _nextInputIndex;
+
+    private static int NextInputIndex => _nextInputIndex;
 
     public static KeyValuePair<string, IRowsInput?> Convert(VariantValue source)
     {
@@ -61,5 +63,5 @@ internal static class RowsInputConverter
         return new KeyValuePair<string, IRowsInput?>(name, rowsInput);
     }
 
-    private static string GetNextInputName() => "input" + NextInputIndex++;
+    private static string GetNextInputName() => "input" + Interlocked.Increment(ref _nextInputIndex);
 }

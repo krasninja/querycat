@@ -38,7 +38,7 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable, IModelDescripti
 
     private readonly StreamRowsInputOptions _options;
 
-    private static readonly VirtualColumn[] _customColumns =
+    private static readonly IReadOnlyList<VirtualColumn> _customColumns =
     [
         new("filename", DataType.String, "File path.") // Index 0.
     ];
@@ -209,7 +209,7 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable, IModelDescripti
         }
 
         var virtualColumns = GetVirtualColumns();
-        _virtualColumnsCount = virtualColumns.Length;
+        _virtualColumnsCount = virtualColumns.Count;
         var nonVirtualColumns = newColumns.Where(c => c is not VirtualColumn).ToArray();
         var newColumnsLength = nonVirtualColumns.Length + _virtualColumnsCount;
         Array.Resize(ref _columns, newColumnsLength);
@@ -424,7 +424,7 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable, IModelDescripti
 
         _logger.LogDebug("Start stream open.");
         SkipIfNoColumns = QueryContext.SkipIfNoColumns;
-        _virtualColumnsCount = GetVirtualColumns().Length;
+        _virtualColumnsCount = GetVirtualColumns().Count;
         var inputIterator = new RowsInputIterator(this, autoFetch: true);
         var cacheIterator = new CacheRowsIterator(inputIterator);
 
@@ -458,7 +458,7 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable, IModelDescripti
     /// The method should return custom (virtual) columns array.
     /// </summary>
     /// <returns>Virtual columns array.</returns>
-    protected virtual VirtualColumn[] GetVirtualColumns()
+    protected virtual IReadOnlyList<VirtualColumn> GetVirtualColumns()
     {
         return _options.AddInputSourceColumn && GetFileNameFromStream(_baseStream).Length > 0
             ? _customColumns

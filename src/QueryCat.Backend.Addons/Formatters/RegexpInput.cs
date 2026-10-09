@@ -100,7 +100,7 @@ internal sealed class RegexpInput : StreamRowsInput
         }
         _valuesArray = new VariantValue[columns.Count];
         Array.Fill(_valuesArray, VariantValue.Null);
-        _virtualColumnsOffset = this.GetVirtualColumns().Length;
+        _virtualColumnsOffset = GetVirtualColumns().Count;
         return Task.FromResult(columns.ToArray());
     }
 }
