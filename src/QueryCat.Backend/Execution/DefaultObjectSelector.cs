@@ -258,6 +258,10 @@ public class DefaultObjectSelector : IObjectSelector
 
     private static object?[] PrepareObjectMatchTypes(ParameterInfo[] parameters, object?[] indexes)
     {
+        if (parameters.Length == 0)
+        {
+            return [];
+        }
         if (parameters.Length != indexes.Length)
         {
             return indexes;
