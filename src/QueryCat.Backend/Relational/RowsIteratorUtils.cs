@@ -8,41 +8,6 @@ namespace QueryCat.Backend.Relational;
 /// </summary>
 public static class RowsIteratorUtils
 {
-    private sealed class EmptyRowsIterator : IRowsIterator
-    {
-        /// <inheritdoc />
-        public Column[] Columns => [];
-
-        /// <inheritdoc />
-        public Row Current { get; }
-
-        public EmptyRowsIterator()
-        {
-            Current = new Row(this);
-        }
-
-        /// <inheritdoc />
-        public ValueTask<bool> MoveNextAsync(CancellationToken cancellationToken = default)
-            => ValueTask.FromResult(false);
-
-        /// <inheritdoc />
-        public Task ResetAsync(CancellationToken cancellationToken = default)
-        {
-            return Task.CompletedTask;
-        }
-
-        /// <inheritdoc />
-        public void Explain(IndentedStringBuilder stringBuilder)
-        {
-            stringBuilder.AppendLine("Empty");
-        }
-    }
-
-    /// <summary>
-    /// Empty rows iterator.
-    /// </summary>
-    public static IRowsIterator Empty => new EmptyRowsIterator();
-
     /// <summary>
     /// Read the rows from iterator and try to determine better type for string columns.
     /// For example, if column contains only numbers the rows set will set "integer" data type for it.

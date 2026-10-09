@@ -8,7 +8,7 @@ namespace QueryCat.UnitTests.Utils;
 /// <summary>
 /// Tests for <see cref="RowsIteratorUtils" />.
 /// </summary>
-public class RowIteratorUtilsTests
+public class RowsIteratorUtilsTests
 {
     [Fact]
     public async Task DetermineIfHasHeader_RowsFrameWithHeader_ShouldReturnTrue()
