@@ -39,6 +39,6 @@ internal sealed class RetryRowsOutput : RetryRowsSource, IRowsOutput
     public ValueTask<ErrorCode> WriteValuesAsync(VariantValue[] values, CancellationToken cancellationToken = default)
     {
         return RetryWrapperAsync(async (localValues, ct)
-            => await _rowsOutput.WriteValuesAsync(localValues, ct), values, cancellationToken);
+            => await _rowsOutput.WriteValuesAsync(localValues, ct).ConfigureAwait(false), values, cancellationToken);
     }
 }
