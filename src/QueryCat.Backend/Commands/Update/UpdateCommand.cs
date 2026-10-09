@@ -23,16 +23,16 @@ internal sealed class UpdateCommand : ICommand
             throw new SafeModeException();
         }
 
-        var insertNode = (UpdateNode)node.RootNode;
+        var updateNode = (UpdateNode)node.RootNode;
 
         // Format SELECT statement and use it for further iterations.
         var selectNode = new SelectQuerySpecificationNode(
-            new SelectColumnsListNode(insertNode.SetNodes.Select(n => new SelectColumnsSublistExpressionNode(n.SetTargetNode))
+            new SelectColumnsListNode(updateNode.SetNodes.Select(n => new SelectColumnsSublistExpressionNode(n.SetTargetNode))
         ));
         selectNode.TableExpressionNode =
             new SelectTableNode(
-                new SelectTableReferenceListNode(insertNode.TargetExpressionNode));
-        selectNode.TableExpressionNode.SearchConditionNode = insertNode.SearchConditionNode;
+                new SelectTableReferenceListNode(updateNode.TargetExpressionNode));
+        selectNode.TableExpressionNode.SearchConditionNode = updateNode.SearchConditionNode;
         await new SelectPlanner(executionThread, operationIntentionType: SelectPlanner.OperationIntentionType.Update)
             .CreateIteratorAsync(selectNode, cancellationToken: cancellationToken);
         var context = selectNode.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
@@ -44,7 +44,7 @@ internal sealed class UpdateCommand : ICommand
         }
         var setters = new List<UpdateSetter>();
         var createDelegateVisitor = new SelectCreateDelegateVisitor(executionThread, context);
-        foreach (var setNode in insertNode.SetNodes)
+        foreach (var setNode in updateNode.SetNodes)
         {
             var columnIndex = rowsInput.GetColumnIndexByName(setNode.SetTargetNode.TableFieldName,
                 setNode.SetTargetNode.TableSourceName);
