@@ -190,7 +190,7 @@ public sealed class DefaultFunctionsFactory : FunctionsFactory
         private readonly IAstBuilder _astBuilder;
 
         /// <inheritdoc />
-        public Delegate Delegate => DelegateMethod;
+        public Delegate Delegate { get; }
 
         /// <inheritdoc />
         public string Name
@@ -235,15 +235,16 @@ public sealed class DefaultFunctionsFactory : FunctionsFactory
         /// <inheritdoc />
         public string[] Formatters => [];
 
-        private VariantValue DelegateMethod(IExecutionThread executionThread)
-        {
-            return VariantValue.CreateFromObject(TAggregate.CreateInstance());
-        }
-
         public LazyAggregateFunction(string signature, IAstBuilder astBuilder)
         {
             _signature = signature;
             _astBuilder = astBuilder;
+            Delegate = new Func<IExecutionThread, VariantValue>(DelegateMethod);
+        }
+
+        private VariantValue DelegateMethod(IExecutionThread executionThread)
+        {
+            return VariantValue.CreateFromObject(TAggregate.CreateInstance());
         }
 
         private FunctionSignatureNode GetSignature()

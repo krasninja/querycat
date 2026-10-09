@@ -151,7 +151,7 @@ public sealed partial class DefaultFunctionsManager : IFunctionsManager
     {
         var positionalIndex = 0;
 
-        var frame = executionThread.Stack.CreateFrame();
+        using var frame = executionThread.Stack.CreateFrame();
         foreach (var argument in function.Arguments)
         {
             if (callArguments.Positional.Count >= positionalIndex + 1)
@@ -171,7 +171,6 @@ public sealed partial class DefaultFunctionsManager : IFunctionsManager
         }
 
         var result = await FunctionCaller.CallAsync(function.Delegate, executionThread, cancellationToken);
-        frame.Dispose();
         return result;
     }
 

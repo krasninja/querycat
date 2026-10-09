@@ -4,6 +4,9 @@ using QueryCat.Backend.Core.Utils;
 
 namespace QueryCat.Backend.FunctionsManager;
 
+/// <summary>
+/// Completion source that returns available functions.
+/// </summary>
 public sealed class FunctionsCompletionSource : ICompletionSource
 {
     private readonly IFunctionsManager _functionsManager;
@@ -48,7 +51,7 @@ public sealed class FunctionsCompletionSource : ICompletionSource
             }
         }
 
-        return AsyncUtils.ToAsyncEnumerable(Filter(_completions));
+        return AsyncUtils.ToAsyncEnumerable(Filter(_completions), cancellationToken);
     }
 
     private void Initialize()

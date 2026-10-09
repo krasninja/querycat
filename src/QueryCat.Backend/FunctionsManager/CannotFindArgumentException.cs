@@ -6,7 +6,7 @@ namespace QueryCat.Backend.FunctionsManager;
 /// The exception occurs when provided argument is not part of
 /// function signature.
 /// </summary>
-public class CannotFindArgumentException : QueryCatException
+public sealed class CannotFindArgumentException : QueryCatException
 {
     /// <summary>
     /// Constructor.
