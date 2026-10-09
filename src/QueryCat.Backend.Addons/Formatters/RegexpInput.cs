@@ -50,6 +50,7 @@ internal sealed class RegexpInput : StreamRowsInput
         }
 
         var line = GetInputColumnValue(0);
+        Array.Fill(_valuesArray, VariantValue.Null);
         var match = _regex.Match(line.ToString());
         while (match.Success)
         {
@@ -98,6 +99,7 @@ internal sealed class RegexpInput : StreamRowsInput
             _targetColumnIndexes[i] = columns.Count - 1;
         }
         _valuesArray = new VariantValue[columns.Count];
+        Array.Fill(_valuesArray, VariantValue.Null);
         _virtualColumnsOffset = this.GetVirtualColumns().Length;
         return Task.FromResult(columns.ToArray());
     }
