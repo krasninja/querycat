@@ -22,7 +22,7 @@ internal sealed partial class GrokInput : IRowsInput, IRowsIteratorParent
 
     private readonly IRowsInput _grokImpl;
 
-    private readonly Dictionary<string, string> _localPatterns = new(capacity: 24);
+    private readonly Dictionary<string, string> _localPatterns = new(capacity: 24, StringComparer.OrdinalIgnoreCase);
 
     private readonly Dictionary<string, DataType> _userTypesMap = new();
     private readonly Dictionary<string, string> _semanticPatternNameMap = new();
@@ -174,35 +174,36 @@ internal sealed partial class GrokInput : IRowsInput, IRowsIteratorParent
 
     private static string FindGlobalPattern(string name)
     {
-        var assembly = Assembly.GetExecutingAssembly();
+        return _globalPatterns.Value.TryGetValue(name, out var pattern) ? pattern : string.Empty;
+    }
 
+    private static readonly Lazy<Dictionary<string, string>> _globalPatterns = new(LoadGlobalPatterns);
+
+    private static Dictionary<string, string> LoadGlobalPatterns()
+    {
+        var patterns = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        var assembly = Assembly.GetExecutingAssembly();
         using var stream = assembly.GetManifestResourceStream("QueryCat.Backend.Addons.Formatters.grok-patterns");
         if (stream == null)
         {
-            return string.Empty;
+            return patterns;
         }
 
-        using var streamReader = new StreamReader(stream);
-
-        while (streamReader.ReadLine() is { } line)
+        using var reader = new StreamReader(stream);
+        while (reader.ReadLine() is { } line)
         {
             if (line.Length < 2 || line.StartsWith('#'))
             {
                 continue;
             }
-
             var spaceIndex = line.IndexOf(' ');
             if (spaceIndex < 0)
             {
                 continue;
             }
-            if (line.Substring(0, spaceIndex) == name)
-            {
-                return line.Substring(spaceIndex + 1);
-            }
+            patterns[line.Substring(0, spaceIndex)] = line.Substring(spaceIndex + 1);
         }
-
-        return string.Empty;
+        return patterns;
     }
 
     /// <summary>
@@ -212,12 +213,11 @@ internal sealed partial class GrokInput : IRowsInput, IRowsIteratorParent
     /// <param name="pattern">Pattern.</param>
     public void AddPattern(string semantic, string pattern)
     {
-        _localPatterns[pattern] = semantic;
+        _localPatterns[semantic] = pattern;
     }
 
     private string FindPattern(string name)
     {
-        name = name.ToUpper();
         if (_localPatterns.TryGetValue(name, out var pattern))
         {
             return pattern;
@@ -268,7 +268,7 @@ internal sealed partial class GrokInput : IRowsInput, IRowsIteratorParent
 
     private void AddColumnUserType(ReadOnlySpan<char> name, string type)
     {
-        var dataType = type.ToLower() switch
+        var dataType = type.ToLowerInvariant() switch
         {
             "int" => DataType.Integer,
             "float" => DataType.Float,

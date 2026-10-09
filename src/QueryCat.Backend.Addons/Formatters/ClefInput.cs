@@ -3,6 +3,10 @@ using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Backend.Addons.Formatters;
 
+/// <summary>
+/// Input that parses CLEF (Compact Log Event Format) data.
+/// Renames standard CLEF properties (@t, @m, etc.) to human-friendly column names.
+/// </summary>
 internal sealed class ClefInput : JsonInput
 {
     /// <inheritdoc />
@@ -16,7 +20,7 @@ internal sealed class ClefInput : JsonInput
         CancellationToken cancellationToken = default)
     {
         var columns = await base.InitializeColumnsAsync(input, cancellationToken);
-        var newColumns = new List<Column>(capacity: Columns.Length);
+        var newColumns = new List<Column>(capacity: columns.Length);
         foreach (var column in columns)
         {
             switch (column.Name)
@@ -41,7 +45,7 @@ internal sealed class ClefInput : JsonInput
                     newColumns.Add(new Column("event_id", column.DataType, "An implementation specific event id, identifying the type of the event (string or number)."));
                     break;
                 case "@r":
-                    newColumns.Add(new Column("renderings", DataType.String,
+                    newColumns.Add(new Column("renderings", DataType.Array,
                         "If @mt includes tokens with programming-language-specific formatting, an array of pre-rendered values for each such token."));
                     break;
                 case "@tr":
