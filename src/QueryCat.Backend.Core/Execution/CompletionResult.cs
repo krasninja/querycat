@@ -57,8 +57,9 @@ public class CompletionResult
     /// <param name="sb">Target instance of <see cref="StringBuilder" />.</param>
     public void Apply(StringBuilder sb)
     {
-        foreach (var edit in Edits)
+        for (var i = Edits.Length - 1; i >= 0; i--)
         {
+            var edit = Edits[i];
             sb.Remove(edit.Start, edit.ReplaceLength);
             sb.Insert(edit.Start, edit.NewText);
         }
