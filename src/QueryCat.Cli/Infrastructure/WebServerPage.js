@@ -64,12 +64,12 @@ const queryPage = {
             const self = this;
             separator = separator || ',';
             function formatCsvValue(value) {
-                if (!value) {
+                if (value === null || value === undefined || value === '') {
                     return '';
                 }
                 return '"' + value.toString().replace(/"/g, '""') + '"';
             }
-            const csvLines = [];
+            const csvLines= [];
             const csvLine= [];
 
             // https://quasar.dev/vue-components/table/#exporting-data.
@@ -123,7 +123,7 @@ const queryPage = {
     },
     mounted: function() {
         const self = this;
-        self.query = localStorage.getItem('lastQuery');
+        self.query = localStorage.getItem('lastQuery') || '';
         if (location.protocol !== 'https:') {
             Quasar.Notify.create({
                 type: 'warning',
@@ -330,21 +330,22 @@ const filesPage = {
             })
             .then(function(response) {
                 self.rows = response.data.data;
+            })
+            .catch(function(error) {
+                self.$router.go(-1);
             });
         },
         setPathElements: function(to) {
             to = to ?? '';
-            const elements = ['/'].concat(to.split('/'));
-            // Convert /home/user/temp/.. to /home/user/.
-            for (let i = 1; i < elements.length; i++) {
-                if (elements[i] === '..') {
-                    elements[i] = '';
-                    elements[i - 1] = '';
+            const stack = [];
+            for (const segment of to.split('/')) {
+                if (segment === '..') {
+                    stack.pop();
+                } else if (segment.length > 0) {
+                    stack.push(segment);
                 }
             }
-            this.pathElements = elements.filter(function (el) {
-                return el.length > 0;
-            });
+            this.pathElements = ['/'].concat(stack);
         },
         setPathQuery: function(path) {
             app.config.globalProperties.path = path;

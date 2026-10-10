@@ -55,7 +55,7 @@ internal partial class WebServer
         query = query.Replace('/', Path.DirectorySeparatorChar);
         var root = Path.GetFullPath(_filesRoot);
         var path = Path.GetFullPath(Path.Combine(root, query));
-        if (!path.StartsWith(root + Path.DirectorySeparatorChar, StringComparison.Ordinal) && path != root)
+        if (!path.StartsWith(root, StringComparison.Ordinal))
         {
             response.StatusCode = (int)HttpStatusCode.Forbidden;
             return;
