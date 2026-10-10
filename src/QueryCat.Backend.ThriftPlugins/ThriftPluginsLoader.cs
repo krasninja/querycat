@@ -74,13 +74,17 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
                 named: new Dictionary<string, VariantValue>(),
                 positional: arguments.ToList());
             using var session = await context.GetSessionAsync(cancellationToken);
-            var rawValue = await session.ClientProxy.CallFunctionAsync(0, functionName, callArguments, -1, cancellationToken);
+            var rawValue = await session.ClientProxy.CallFunctionAsync(context.Token, functionName, callArguments, -1, cancellationToken);
             var result = SdkConvert.Convert(rawValue);
             if (result.Type == DataType.Object && result.AsObjectUnsafe is RemoteObject remoteObject)
             {
                 var sessionProvider = new ServerThriftSessionProvider(context);
-                var obj = await RemoteObjectUtils.ToLocalObjectAsync(remoteObject,
-                    sessionProvider, context.ObjectsStorage, cancellationToken: cancellationToken);
+                var obj = await RemoteObjectUtils.ToLocalObjectAsync(
+                    remoteObject,
+                    sessionProvider,
+                    context.ObjectsStorage,
+                    context.Token,
+                    cancellationToken: cancellationToken);
                 if (obj != null)
                 {
                     context.ObjectsStorage.Add(obj);
