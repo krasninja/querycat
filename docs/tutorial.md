@@ -18,14 +18,14 @@ $ qcat "SELECT sum(column0) as s, count(*) AS total FROM './example.csv' WHERE c
 | 250500  | 500   |
 ```
 
-*Tip: You can also pass file name as command line argument: `qcat --var f=/tmp/example.csv "SELECT * FROM f"`.*
+*Tip: You can also pass file name as command line argument: `qcat --var f=./example.csv "SELECT * FROM f"`.*
 
 As you can see, you can specify file name in `FROM` clause. QueryCat tries to understand file format by file extension. Also, if column names are not specified, the default columns names are set (like "column1" in example). QueryCat has a simple analyzer to understand whether file has header row or not. But if it doesn't work correctly, you can set it directly within `FORMAT` clause:
 
 ```
-$ qcat "SELECT avg([1]) AS avg FROM './example.csv' FORMAT csv(has_header=>true)"
+$ qcat "SELECT avg(\"1\") AS avg FROM './example.csv' FORMAT csv(has_header=>true)"
 
-| total  |
+| avg    |
 | ------ |
 | 501.00 |
 ```

@@ -26,19 +26,28 @@ internal class DsvInput : StreamRowsInput
         var hasHeader = _hasHeader ?? await RowsIteratorUtils.DetermineIfHasHeaderAsync(iterator, cancellationToken: cancellationToken);
         _hasHeader = hasHeader;
 
-        if (hasHeader && iterator.TotalRows > 0)
+        if (hasHeader)
         {
-            // Parse head columns names.
-            var firstRow = iterator.GetAt(0);
-            var columnNames = GetCurrentInputValues(firstRow);
-            if (columnNames.Length < 1)
+            // No rows? Try to read first as a header. If no row - no header.
+            if (iterator.TotalRows < 1)
             {
-                throw new IOSourceException(Resources.Errors.NoColumns);
+                hasHeader = await iterator.MoveNextAsync(cancellationToken);
             }
-            var columns = GetInputColumns();
-            for (var i = 0; i < columns.Length; i++)
+
+            if (hasHeader)
             {
-                columns[i].Name = columnNames[i].AsString.Trim();
+                // Parse head columns names.
+                var firstRow = iterator.GetAt(0);
+                var columnNames = GetCurrentInputValues(firstRow);
+                if (columnNames.Length < 1)
+                {
+                    throw new IOSourceException(Resources.Errors.NoColumns);
+                }
+                var columns = GetInputColumns();
+                for (var i = 0; i < columns.Length; i++)
+                {
+                    columns[i].Name = columnNames[i].AsString.Trim();
+                }
             }
         }
 
