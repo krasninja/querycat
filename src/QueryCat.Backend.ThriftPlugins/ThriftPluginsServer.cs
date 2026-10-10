@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Security.Cryptography;
 using System.Text;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -161,10 +162,15 @@ public sealed partial class ThriftPluginsServer : IDisposable
     }
 
     /// <summary>
-    /// Generate new authorization token.
+    /// Generate new authorization token using a cryptographically secure random number generator.
     /// </summary>
     /// <returns>New token.</returns>
-    public long GenerateToken() => Random.Shared.NextInt64();
+    public long GenerateToken()
+    {
+        Span<byte> bytes = stackalloc byte[8];
+        RandomNumberGenerator.Fill(bytes);
+        return BitConverter.ToInt64(bytes);
+    }
 
     #endregion
 
