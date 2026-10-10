@@ -25,6 +25,12 @@ public readonly struct CompletionTextEdit
     /// </summary>
     public int ReplaceLength => End - Start;
 
+    /// <summary>
+    /// Constructor.
+    /// </summary>
+    /// <param name="start">Start of edit text.</param>
+    /// <param name="end">End of edit text.</param>
+    /// <param name="newText">New text.</param>
     public CompletionTextEdit(int start, int end, string newText)
     {
         Start = end > -1 ? start : start + end;

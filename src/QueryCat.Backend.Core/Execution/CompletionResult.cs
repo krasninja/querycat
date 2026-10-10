@@ -22,12 +22,25 @@ public class CompletionResult
     /// </summary>
     public CompletionTextEdit[] Edits { get; }
 
+    /// <summary>
+    /// Constructor.
+    /// </summary>
+    /// <param name="completion">Completion instance.</param>
+    /// <param name="edits">Related edits to apply.</param>
     public CompletionResult(Completion completion, CompletionTextEdit[] edits)
     {
         Completion = completion;
         Edits = edits;
     }
 
+    /// <summary>
+    /// Completion result.
+    /// </summary>
+    /// <param name="label">Label.</param>
+    /// <param name="kind">Kind.</param>
+    /// <param name="documentation">Optional documentation.</param>
+    /// <param name="relevance">Relevance.</param>
+    /// <param name="edits">Edits to apply.</param>
     public CompletionResult(
         string label,
         CompletionItemKind kind = CompletionItemKind.Misc,

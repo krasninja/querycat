@@ -368,7 +368,8 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IExecu
         object? tag = null,
         CancellationToken cancellationToken = default)
     {
-        var source = await CompletionSource.GetAsync(CreateCompletionContext(text, position, tag), cancellationToken)
+        var source = await CompletionSource.GetAsync(
+                CreateCompletionContext(text, position, tag), cancellationToken)
             .ToListAsync(cancellationToken);
         return source.OrderByDescending(c => c.Completion.Relevance).ToList();
     }
@@ -377,8 +378,13 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IExecu
     {
         var sourceTokens = AstBuilder.GetTokens(text);
         var tokens = new List<ParserToken>(sourceTokens.Count);
+        var limit = position > -1 ? position : text.Length;
         foreach (var token in sourceTokens)
         {
+            if (token.StartIndex >= limit)
+            {
+                break;
+            }
             tokens.Add(new ParserToken(token.Text, token.Type, token.StartIndex));
         }
         return new CompletionContext(this, text, tokens, position)
@@ -409,14 +415,14 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IExecu
                 await RunInternalAsync(query, cancellationToken: cancellationToken);
             }
 
-            rcFile = Path.Combine(Directory.GetCurrentDirectory(), BootstrapFileName);
+            rcFile = Path.Combine(Application.GetConfigDirectory(), BootstrapFileName);
             if (File.Exists(rcFile))
             {
                 var query = await File.ReadAllTextAsync(rcFile, cancellationToken);
                 await RunInternalAsync(query, cancellationToken: cancellationToken);
             }
 
-            rcFile = Path.Combine(Application.GetConfigDirectory(), BootstrapFileName);
+            rcFile = Path.Combine(Directory.GetCurrentDirectory(), BootstrapFileName);
             if (File.Exists(rcFile))
             {
                 var query = await File.ReadAllTextAsync(rcFile, cancellationToken);
@@ -450,6 +456,43 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IExecu
                 }
             }
         };
+    }
+
+    /// <summary>
+    /// Evaluate an expression for completion purposes: safe mode, no statement events,
+    /// no config save, no CommandResultOutput, no statistic changes.
+    /// </summary>
+    /// <param name="expression">Expression to evaluate.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Evaluated value.</returns>
+    internal async Task<VariantValue> EvaluateForCompletionAsync(string expression, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrEmpty(expression))
+        {
+            return VariantValue.Null;
+        }
+
+        var programNode = AstBuilder.BuildProgramFromString(expression);
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        cts.CancelAfter(TimeSpan.FromMilliseconds(500));
+
+        IAsyncDisposable? @lock = null;
+        try
+        {
+            if (Options.PreventConcurrentRun)
+            {
+                @lock = await _asyncLock.LockAsync(cts.Token);
+            }
+            var funcUnit = new StatementsBlockFuncUnit(new StatementsVisitor(this), programNode.Body.Statements);
+            return await funcUnit.InvokeAsync(this, cts.Token);
+        }
+        finally
+        {
+            if (@lock != null)
+            {
+                await @lock.DisposeAsync();
+            }
+        }
     }
 
     #region Dispose

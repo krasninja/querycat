@@ -46,7 +46,8 @@ public sealed class FunctionsCompletionSource : ICompletionSource
                         context.TriggerTokenPosition,
                         context.TriggerTokenPosition + searchTerm.Length,
                         completion.Label);
-                    yield return new CompletionResult(completion, [textEdit]);
+                    yield return new CompletionResult(
+                        new Completion(completion.Label, completion.Kind, completion.Documentation, relevance), [textEdit]);
                 }
             }
         }

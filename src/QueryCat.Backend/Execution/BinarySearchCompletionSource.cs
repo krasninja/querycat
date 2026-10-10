@@ -78,7 +78,7 @@ public abstract class BinarySearchCompletionSource : ICompletionSource
             var mid = min + ((max - min) >> 1);
             var len = Math.Min(completions[mid].Label.Length, term.Length);
             var label = completions[mid].Label.AsSpan()[..len];
-            var index = compareInfo.Compare(label, term, CompareOptions.IgnoreCase);
+            var index = compareInfo.Compare(label, term, CompareOptions.OrdinalIgnoreCase);
             if (index == 0)
             {
                 return mid;
