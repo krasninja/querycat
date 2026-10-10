@@ -68,7 +68,7 @@ public class DotNetAssemblyPluginsLoader : PluginsLoader, IDisposable
     /// <summary>
     /// Loaded plugins assemblies.
     /// </summary>
-    public IEnumerable<Assembly> LoadedAssemblies => _loadedAssemblies.Values;
+    public ICollection<Assembly> LoadedAssemblies => _loadedAssemblies.Values;
 
     public DotNetAssemblyPluginsLoader(
         IFunctionsManager functionsManager,
