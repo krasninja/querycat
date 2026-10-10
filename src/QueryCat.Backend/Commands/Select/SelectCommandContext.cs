@@ -27,7 +27,7 @@ internal sealed class SelectCommandContext(SelectQueryNode queryNode) : CommandC
     /// <summary>
     /// Current iterator.
     /// </summary>
-    public IRowsIterator CurrentIterator => _currentIterator ?? EmptyIterator.Instance;
+    public IRowsIterator CurrentIterator => _currentIterator ?? EmptyRowsIterator.Instance;
 
     /// <summary>
     /// Append (overwrite) current iterator.

@@ -71,7 +71,7 @@ internal sealed class AIAssistantInput : IRowsInput, IRowsIteratorParent
     private readonly string _question;
     private readonly IExecutionThread _thread;
     private readonly KeyValuePair<string, IRowsInput>[] _inputs;
-    private IRowsIterator _rowsIterator = EmptyIterator.Instance;
+    private IRowsIterator _rowsIterator = EmptyRowsIterator.Instance;
 
     /// <inheritdoc />
     public QueryContext QueryContext { get; set; } = NullQueryContext.Instance;

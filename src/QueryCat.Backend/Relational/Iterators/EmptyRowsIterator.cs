@@ -3,7 +3,10 @@ using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Backend.Relational.Iterators;
 
-internal sealed class EmptyIterator : IRowsIterator
+/// <summary>
+/// Iterator with no implementation.
+/// </summary>
+public sealed class EmptyRowsIterator : IRowsIterator
 {
     /// <inheritdoc />
     public Column[] Columns { get; }
@@ -11,9 +14,15 @@ internal sealed class EmptyIterator : IRowsIterator
     /// <inheritdoc />
     public Row Current { get; }
 
-    public static EmptyIterator Instance { get; } = new();
+    /// <summary>
+    /// Instance of <see cref="EmptyRowsIterator" />.
+    /// </summary>
+    public static EmptyRowsIterator Instance { get; } = new();
 
-    public EmptyIterator()
+    /// <summary>
+    /// Constructor.
+    /// </summary>
+    public EmptyRowsIterator()
     {
         Columns = [new Column("empty", DataType.Integer)];
         var frame = new RowsFrame(Columns);
@@ -21,7 +30,11 @@ internal sealed class EmptyIterator : IRowsIterator
         frame.AddRow(Current);
     }
 
-    public EmptyIterator(IRowsSchema schema)
+    /// <summary>
+    /// Constructor.
+    /// </summary>
+    /// <param name="schema">Target schema.</param>
+    public EmptyRowsIterator(IRowsSchema schema)
     {
         Columns = schema.Columns;
         Current = new Row(schema);
