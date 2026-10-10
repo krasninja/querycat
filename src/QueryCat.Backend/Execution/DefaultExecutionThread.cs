@@ -1,4 +1,3 @@
-using System.Runtime.CompilerServices;
 using System.Text;
 using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes;
@@ -23,9 +22,10 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IExecu
 {
     private const string BootstrapFileName = "rc.sql";
 
-    private readonly AstVisitor _statementsVisitor;
     private readonly Func<IExecutionScope?, IExecutionScope> _executionScopeFactory;
     private int _deepLevel;
+    private readonly bool _ownsPluginsManager = true;
+    private bool _isDisposed;
 
     /// <inheritdoc />
     public IConfigStorage ConfigStorage { get; }
@@ -41,13 +41,10 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IExecu
 
     private sealed class DefaultBodyFuncUnit : StatementsBlockFuncUnit
     {
-        private readonly DefaultExecutionThread _executionThread;
-
         /// <inheritdoc />
         public DefaultBodyFuncUnit(DefaultExecutionThread executionThread, ProgramBodyNode programBodyNode)
-            : base(new StatementsVisitor(executionThread), programBodyNode.Statements.ToArray())
+            : base(new StatementsVisitor(executionThread), programBodyNode.Statements)
         {
-            _executionThread = executionThread;
         }
 
         /// <inheritdoc />
@@ -58,14 +55,22 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IExecu
             CancellationToken cancellationToken = default)
         {
             var executionThread = (DefaultExecutionThread)thread;
+            var statementExecuting = executionThread.StatementExecuting;
+            var statementExecuted = executionThread.StatementExecuted;
 
             // Before.
-            if (executionThread.StatementExecuting != null && !_executionThread.IsInCallback)
+            if (statementExecuting != null && !executionThread.IsInCallback)
             {
-                _executionThread.IsInCallback = true;
+                executionThread.IsInCallback = true;
                 var executeEventArgs = new ExecuteEventArgs(statementNode);
-                executionThread.StatementExecuting.Invoke(this, executeEventArgs);
-                _executionThread.IsInCallback = false;
+                try
+                {
+                    statementExecuting.Invoke(executionThread, executeEventArgs);
+                }
+                finally
+                {
+                    executionThread.IsInCallback = false;
+                }
                 if (!executeEventArgs.ContinueExecution)
                 {
                     Jump = ExecutionJump.Halt;
@@ -77,13 +82,19 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IExecu
             var result = await base.InvokeStatementAsync(thread, funcUnit, statementNode, cancellationToken);
 
             // After.
-            if (executionThread.StatementExecuted != null && !_executionThread.IsInCallback)
+            if (statementExecuted != null && !executionThread.IsInCallback)
             {
-                _executionThread.IsInCallback = true;
+                executionThread.IsInCallback = true;
                 var executeEventArgs = new ExecuteEventArgs(statementNode);
                 executeEventArgs.Result = result;
-                executionThread.StatementExecuted.Invoke(this, executeEventArgs);
-                _executionThread.IsInCallback = false;
+                try
+                {
+                    statementExecuted.Invoke(executionThread, executeEventArgs);
+                }
+                finally
+                {
+                    executionThread.IsInCallback = false;
+                }
                 if (!executeEventArgs.ContinueExecution)
                 {
                     Jump = ExecutionJump.Halt;
@@ -159,7 +170,6 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IExecu
         AstBuilder = astBuilder;
         CompletionSource = completionSource;
         Tag = tag;
-        _statementsVisitor = new StatementsVisitor(this);
 
         _executionScopeFactory = executionScopeFactory ?? (parent => new DefaultExecutionScope(parent));
         _topScope = _executionScopeFactory.Invoke(null);
@@ -182,7 +192,7 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IExecu
 #if ENABLE_PLUGINS
         PluginsManager = executionThread.PluginsManager;
 #endif
-        _statementsVisitor = executionThread._statementsVisitor;
+        _ownsPluginsManager = false;
     }
 
     /// <inheritdoc />
@@ -193,20 +203,23 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IExecu
     {
         // Run with lock and timer.
         IAsyncDisposable? @lock = null;
+        var previousQuery = CurrentQuery;
+        var depthIncremented = false;
         try
         {
             if (Options.PreventConcurrentRun)
             {
                 @lock = await _asyncLock.LockAsync(cancellationToken);
             }
+            _deepLevel++;
+            depthIncremented = true;
             CurrentQuery = query;
 
             // Bootstrap.
-            _deepLevel++;
             if (_deepLevel == 1)
             {
-                await RunBootstrapScriptAsync(cancellationToken);
                 await LoadConfigAsync(cancellationToken);
+                await RunBootstrapScriptAsync(cancellationToken);
             }
             if (_deepLevel > Options.MaxRecursionDepth)
             {
@@ -218,16 +231,15 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IExecu
         }
         finally
         {
-            if (parameters != null && parameters.Keys.Count > 0)
+            if (depthIncremented)
             {
-                PopScope();
+                if (_deepLevel == 1)
+                {
+                    Statistic.StopStopwatch();
+                }
+                _deepLevel--;
             }
-            if (_deepLevel == 1)
-            {
-                Statistic.StopStopwatch();
-            }
-            _deepLevel--;
-            CurrentQuery = string.Empty;
+            CurrentQuery = previousQuery;
             if (@lock != null)
             {
                 await @lock.DisposeAsync();
@@ -263,16 +275,6 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IExecu
         }
     }
 
-    private async Task<T> RunWithTimeoutAsync<T>(Func<CancellationToken, Task<T>> func, CancellationToken cancellationToken)
-    {
-        var task = func.Invoke(cancellationToken);
-        if (task.IsCompleted)
-        {
-            return task.Result;
-        }
-        return await task.WaitAsync(Options.QueryTimeout, cancellationToken);
-    }
-
     private async Task<VariantValue> RunInternalAsync(
         string query,
         IDictionary<string, VariantValue>? parameters = null,
@@ -291,14 +293,40 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IExecu
             Statistic.RestartStopwatch();
         }
 
-        if (parameters != null && parameters.Keys.Count > 0)
+        IExecutionScope? pushedScope = null;
+        if (parameters != null && parameters.Count > 0)
         {
-            var scope = PushScope();
-            SetScopeVariables(scope, parameters);
+            pushedScope = PushScope();
+            SetScopeVariables(pushedScope, parameters);
         }
-        return Options.QueryTimeout != TimeSpan.Zero
-            ? await RunWithTimeoutAsync(ct => ExecuteStatementAsync(programNode.Body, ct), cancellationToken)
-            : await ExecuteStatementAsync(programNode.Body, cancellationToken);
+
+        try
+        {
+            if (Options.QueryTimeout == TimeSpan.Zero)
+            {
+                return await ExecuteStatementAsync(programNode.Body, cancellationToken);
+            }
+            else
+            {
+                using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                cts.CancelAfter(Options.QueryTimeout);
+                try
+                {
+                    return await ExecuteStatementAsync(programNode.Body, cts.Token);
+                }
+                catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+                {
+                    throw new TimeoutException(Resources.Errors.QueryTimeout);
+                }
+            }
+        }
+        finally
+        {
+            if (pushedScope != null)
+            {
+                PopScope();
+            }
+        }
     }
 
     private async Task<VariantValue> ExecuteStatementAsync(ProgramBodyNode bodyNode, CancellationToken cancellationToken)
@@ -334,21 +362,35 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IExecu
     }
 
     /// <inheritdoc />
-    public async IAsyncEnumerable<CompletionResult> GetCompletionsAsync(string text, int position = -1, object? tag = null,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyCollection<CompletionResult>> GetCompletionsAsync(
+        string text,
+        int position = -1,
+        object? tag = null,
+        CancellationToken cancellationToken = default)
     {
-        var tokens = AstBuilder
-            .GetTokens(text)
-            .Select(t => new ParserToken(t.Text, t.Type, t.StartIndex))
-            .ToList();
-        var context = new CompletionContext(this, text, tokens, position);
-        context.Tag = tag;
-        var items = await CompletionSource.GetAsync(context, cancellationToken)
-            .ToListAsync(cancellationToken: cancellationToken);
-        foreach (var item in items.OrderByDescending(c => c.Completion.Relevance))
+        var source = await CompletionSource.GetAsync(
+                CreateCompletionContext(text, position, tag), cancellationToken)
+            .ToListAsync(cancellationToken);
+        return source.OrderByDescending(c => c.Completion.Relevance).ToList();
+    }
+
+    private CompletionContext CreateCompletionContext(string text, int position, object? tag)
+    {
+        var sourceTokens = AstBuilder.GetTokens(text);
+        var tokens = new List<ParserToken>(sourceTokens.Count);
+        var limit = position > -1 ? position : text.Length;
+        foreach (var token in sourceTokens)
         {
-            yield return item;
+            if (token.StartIndex >= limit)
+            {
+                break;
+            }
+            tokens.Add(new ParserToken(token.Text, token.Type, token.StartIndex));
         }
+        return new CompletionContext(this, text, tokens, position)
+        {
+            Tag = tag,
+        };
     }
 
     private async Task LoadConfigAsync(CancellationToken cancellationToken)
@@ -373,6 +415,13 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IExecu
                 await RunInternalAsync(query, cancellationToken: cancellationToken);
             }
 
+            rcFile = Path.Combine(Application.GetConfigDirectory(), BootstrapFileName);
+            if (File.Exists(rcFile))
+            {
+                var query = await File.ReadAllTextAsync(rcFile, cancellationToken);
+                await RunInternalAsync(query, cancellationToken: cancellationToken);
+            }
+
             rcFile = Path.Combine(Directory.GetCurrentDirectory(), BootstrapFileName);
             if (File.Exists(rcFile))
             {
@@ -386,13 +435,13 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IExecu
     public Func<CancellationToken, ValueTask<VariantValue>> Prepare(string query)
     {
         var programNode = AstBuilder.BuildProgramFromString(query);
+        var bodyFuncUnit = new DefaultBodyFuncUnit(this, programNode.Body);
 
         return async ct =>
         {
             IAsyncDisposable? @lock = null;
             try
             {
-                var bodyFuncUnit = new DefaultBodyFuncUnit(this, programNode.Body);
                 if (Options.PreventConcurrentRun)
                 {
                     @lock = await _asyncLock.LockAsync(ct);
@@ -409,16 +458,62 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IExecu
         };
     }
 
+    /// <summary>
+    /// Evaluate an expression for completion purposes: safe mode, no statement events,
+    /// no config save, no CommandResultOutput, no statistic changes.
+    /// </summary>
+    /// <param name="expression">Expression to evaluate.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Evaluated value.</returns>
+    internal async Task<VariantValue> EvaluateForCompletionAsync(string expression, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrEmpty(expression))
+        {
+            return VariantValue.Null;
+        }
+
+        var programNode = AstBuilder.BuildProgramFromString(expression);
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        cts.CancelAfter(TimeSpan.FromMilliseconds(500));
+
+        IAsyncDisposable? @lock = null;
+        try
+        {
+            if (Options.PreventConcurrentRun)
+            {
+                @lock = await _asyncLock.LockAsync(cts.Token);
+            }
+            var funcUnit = new StatementsBlockFuncUnit(new StatementsVisitor(this), programNode.Body.Statements);
+            return await funcUnit.InvokeAsync(this, cts.Token);
+        }
+        finally
+        {
+            if (@lock != null)
+            {
+                await @lock.DisposeAsync();
+            }
+        }
+    }
+
     #region Dispose
 
     protected virtual void Dispose(bool disposing)
     {
+        if (_isDisposed)
+        {
+            return;
+        }
+        _isDisposed = true;
+
         if (disposing)
         {
             _asyncLock.Dispose();
 #if ENABLE_PLUGINS
-            (PluginsManager as IDisposable)?.Dispose();
-            (PluginsManager.PluginsLoader as IDisposable)?.Dispose();
+            if (_ownsPluginsManager)
+            {
+                (PluginsManager.PluginsLoader as IDisposable)?.Dispose();
+                (PluginsManager as IDisposable)?.Dispose();
+            }
 #endif
         }
     }
@@ -433,11 +528,31 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IExecu
     protected virtual async ValueTask DisposeAsyncCore()
     {
         await _asyncLock.DisposeAsync();
+#if ENABLE_PLUGINS
+        if (_ownsPluginsManager)
+        {
+            (PluginsManager.PluginsLoader as IDisposable)?.Dispose();
+            if (PluginsManager is IAsyncDisposable asyncDisposable)
+            {
+                await asyncDisposable.DisposeAsync();
+            }
+            else
+            {
+                (PluginsManager as IDisposable)?.Dispose();
+            }
+        }
+#endif
     }
 
     /// <inheritdoc />
     public async ValueTask DisposeAsync()
     {
+        if (_isDisposed)
+        {
+            return;
+        }
+        _isDisposed = true;
+
         await DisposeAsyncCore();
         GC.SuppressFinalize(this);
     }

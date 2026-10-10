@@ -79,6 +79,12 @@ internal abstract class DelegateVisitor : AstVisitor
     }
 
     /// <inheritdoc />
+    public override ValueTask VisitAsync(ExpressionStatementNode node, CancellationToken cancellationToken)
+    {
+        return OnVisitAsync(node, cancellationToken);
+    }
+
+    /// <inheritdoc />
     public override ValueTask VisitAsync(IdentifierExpressionNode node, CancellationToken cancellationToken)
     {
         return OnVisitAsync(node, cancellationToken);
@@ -140,6 +146,12 @@ internal abstract class DelegateVisitor : AstVisitor
 
     /// <inheritdoc />
     public override ValueTask VisitAsync(ProgramNode node, CancellationToken cancellationToken)
+    {
+        return OnVisitAsync(node, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public override ValueTask VisitAsync(ProgramBodyNode node, CancellationToken cancellationToken)
     {
         return OnVisitAsync(node, cancellationToken);
     }

@@ -2,7 +2,7 @@
 
 ## The type detection resolves incorrect column type for my data.
 
-The QueryCat prefetches first 10 rows to understand what columns data has and what type. However, it might be wrong in some cases. For example:
+QueryCat prefetches first 10 rows to understand what columns data has and what type. However, it might be wrong in some cases. For example:
 
 ```csv
 OrderId,Comment
@@ -26,15 +26,15 @@ select OrderId::string, Comment from 'orders.csv';
 
 ## The fatal error occurs on application start
 
-It is possible that plugins are out of date and/or they do not conform the latest backend plugin API. So it is better try:
+It is possible that plugins are out of date and/or they do not conform the latest backend plugin API. So it is better to try:
 
 1. Update QueryCat application to the latest version. You can find it here: https://github.com/krasninja/querycat/releases/.
 2. Update all plugins to the latest version. Command is `qcat plugin update "*"`.
-3. If error still there post new issue with the steps to reproduce and full stack trace here: https://github.com/krasninja/querycat/issues/new.
+3. If the error is still there post new issue with the steps to reproduce and full stack trace here: https://github.com/krasninja/querycat/issues/new.
 
 ## The query performance is poor
 
-The QueryCat is not a true database engine. It doesn't know anything about input sources and there is no information about total rows, indexes, statistics, etc. So query planner is simple and straightforward. You can try the following tips to improve query performance:
+QueryCat is not a true database engine. It doesn't know anything about input sources and there is no information about total rows, indexes, statistics, etc. So query planner is simple and straightforward. You can try the following tips to improve query performance:
 
 1. Reorder join statements. Try to move most slow input sources to the right.
 2. Save slow input sources into files first.
@@ -42,7 +42,7 @@ The QueryCat is not a true database engine. It doesn't know anything about input
 
 ## Does it send any local or personal information?
 
-The QueryCat does not send any local or personal information to the author or any company.
+QueryCat does not send any local or personal information to the author or any company.
 
 ## Why do I need to install "proxy" to run plugins?
 

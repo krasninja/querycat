@@ -1,7 +1,6 @@
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Plugins;
-using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.PluginsManager;
 
@@ -17,6 +16,8 @@ public sealed class DefaultPluginsManager : IPluginsManager
     private IReadOnlyList<PluginInfo>? _remotePluginsCache;
 
     public IEnumerable<string> PluginDirectories => _pluginDirectories;
+
+    private string Platform => _platform ?? Application.GetPlatform();
 
     /// <inheritdoc />
     public IPluginsLoader PluginsLoader => _pluginsLoader;
@@ -70,20 +71,34 @@ public sealed class DefaultPluginsManager : IPluginsManager
             : [];
         var local = GetLocalPlugins();
 
-        return remote.Union(local).OrderBy(p => p.Name);
+        return remote.Concat(local).OrderBy(p => p.Name);
     }
 
     private static readonly string[] _prefixes = [string.Empty, "QueryCat.Plugins.", "qcat-plugins-", "qcat.plugins.", "plugins-", "plugins."];
 
-    private static PluginInfo? TryFindPlugin(string name, string? platform, IReadOnlyCollection<PluginInfo> allPlugins)
+    private static bool IsNameMatch(string name, string targetName)
     {
         foreach (var prefix in _prefixes)
         {
             var newName = prefix + name;
-            var plugin = allPlugins
-                .OrderByDescending(p => p.Version)
-                .FirstOrDefault(p => newName.Equals(p.Name, StringComparison.OrdinalIgnoreCase)
-                                     && (p.Platform == platform || p.Platform == Application.PlatformMulti || string.IsNullOrEmpty(platform)));
+            if (newName.Equals(targetName, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private PluginInfo? FindPlugin(string name, IEnumerable<PluginInfo> plugins)
+    {
+        var architecture = Application.GetArchitecture();
+        var candidates = plugins
+            .Where(p => IsPlatformMatch(p, Platform, architecture))
+            .OrderByDescending(p => p.Version)
+            .ToList();
+        foreach (var prefix in _prefixes)
+        {
+            var plugin = candidates.FirstOrDefault(p => (prefix + name).Equals(p.Name, StringComparison.OrdinalIgnoreCase));
             if (plugin != null)
             {
                 return plugin;
@@ -92,11 +107,35 @@ public sealed class DefaultPluginsManager : IPluginsManager
         return null;
     }
 
+    private static bool IsPlatformMatch(PluginInfo pluginInfo, string? platform, string? architecture)
+    {
+        var platformMatch =
+            pluginInfo.Platform == platform
+            || pluginInfo.Platform == Application.PlatformMulti
+            || string.IsNullOrEmpty(platform);
+        if (!platformMatch)
+        {
+            return false;
+        }
+
+        var archMatch =
+            pluginInfo.Architecture == architecture
+            || pluginInfo.Architecture == Application.ArchitectureMsil
+            || pluginInfo.Architecture == Application.ArchitectureUnknown
+            || string.IsNullOrEmpty(architecture);
+        if (!archMatch)
+        {
+            return false;
+        }
+
+        return platformMatch && archMatch;
+    }
+
     /// <inheritdoc />
     public async Task<int> InstallAsync(string name, bool overwrite = true, CancellationToken cancellationToken = default)
     {
         var plugins = await GetRemotePluginsAsync(cancellationToken).ConfigureAwait(false);
-        var plugin = TryFindPlugin(name, Application.GetPlatform(), plugins);
+        var plugin = FindPlugin(name, plugins);
         if (plugin == null)
         {
             throw new PluginException(string.Format(Resources.Errors.Plugins_CannotFind, name));
@@ -104,7 +143,7 @@ public sealed class DefaultPluginsManager : IPluginsManager
 
         if (!overwrite)
         {
-            var localPlugin = TryFindPlugin(name, Application.GetPlatform(), GetLocalPlugins().ToList());
+            var localPlugin = FindPlugin(name, GetLocalPlugins());
             if (localPlugin != null && localPlugin.Version >= plugin.Version)
             {
                 _logger.LogInformation("Skip install because plugin '{Plugin}' already exists.", localPlugin);
@@ -112,7 +151,6 @@ public sealed class DefaultPluginsManager : IPluginsManager
             }
         }
 
-        // Create X.downloading file, download and then remove.
         var mainPluginDirectory = GetMainPluginDirectory();
         var fullFileName = Path.Combine(mainPluginDirectory, Path.GetFileName(plugin.Uri));
         _logger.LogInformation("Start downloading plugin file {PluginUri}.", plugin.Uri);
@@ -122,9 +160,10 @@ public sealed class DefaultPluginsManager : IPluginsManager
                 cancellationToken)
             .ConfigureAwait(false);
         FilesUtils.MakeUnixExecutable(fullFileName);
-        var exists = File.Exists(fullFileName);
         _logger.LogInformation("Saved plugin file {FullFileName}.", fullFileName);
-        return exists ? 1 : 0;
+
+        CleanupPlugins();
+        return 1;
     }
 
     /// <inheritdoc />
@@ -132,43 +171,101 @@ public sealed class DefaultPluginsManager : IPluginsManager
     {
         if (name == "*")
         {
-            foreach (var localPlugin in GetLocalPlugins())
+            foreach (var localPlugin in GroupByName(GetLocalPlugins()))
             {
-                await UpdateAsyncInternal(localPlugin.Name, cancellationToken)
-                    .ConfigureAwait(false);
+                try
+                {
+                    await UpdateAsyncInternal(localPlugin.Name, cancellationToken)
+                        .ConfigureAwait(false);
+                }
+                catch (PluginException e)
+                {
+                    _logger.LogWarning(e, "Cannot update plugin '{Plugin}'.", localPlugin.Name);
+                }
             }
         }
         else
         {
             await UpdateAsyncInternal(name, cancellationToken).ConfigureAwait(false);
         }
+
+        CleanupPlugins();
     }
 
     private async Task UpdateAsyncInternal(string name, CancellationToken cancellationToken)
     {
-        using var twoPhaseRemove = new TwoPhaseRemove(renameBeforeRemove: true);
-        var pluginsToRemove = GetLocalPlugins(name);
-        twoPhaseRemove.AddRange(pluginsToRemove.Select(p => p.Uri));
-        await InstallAsync(name, cancellationToken: cancellationToken).ConfigureAwait(false);
-        twoPhaseRemove.Remove();
+        await InstallAsync(name, overwrite: false, cancellationToken: cancellationToken)
+            .ConfigureAwait(false);
     }
 
     /// <inheritdoc />
     public Task RemoveAsync(string name, CancellationToken cancellationToken = default)
     {
-        var plugins = GetLocalPlugins();
-        var plugin = TryFindPlugin(name, _platform, plugins.ToList());
-        if (plugin == null)
+        var architecture = Application.GetArchitecture();
+        var plugins = GetLocalPlugins()
+            .Where(p => IsNameMatch(name, p.Name) && IsPlatformMatch(p, _platform, architecture))
+            .ToArray();
+        if (plugins.Length == 0)
         {
             throw new PluginException(string.Format(Resources.Errors.Plugins_CannotFind, name));
         }
-        if (File.Exists(plugin.Uri))
+
+        foreach (var pluginInfo in plugins)
         {
-            _logger.LogInformation("Remove file {Uri}.", plugin.Uri);
-            File.Delete(plugin.Uri);
+            if (File.Exists(pluginInfo.Uri))
+            {
+                _logger.LogInformation("Remove file {Uri}.", pluginInfo.Uri);
+                File.Delete(pluginInfo.Uri);
+            }
         }
 
         return Task.CompletedTask;
+    }
+
+    private void CleanupPlugins()
+    {
+        var mainDirectory = Path.GetFullPath(GetMainPluginDirectory());
+        var pluginFiles = GetPluginFiles()
+            .Where(pf => Path.GetDirectoryName(pf) == mainDirectory)
+            .ToList();
+        var actualPlugins =
+            pluginFiles.Select(
+                pf =>
+                {
+                    var plugin = CreatePluginInfoFromKey(
+                        Path.GetFileName(pf),
+                        Path.GetDirectoryName(pf) + Path.DirectorySeparatorChar,
+                        isInstalled: true);
+                    plugin.Uri = pf;
+                    return plugin;
+                })
+                .ToArray();
+
+        foreach (var pluginInfo in PluginInfo.FilterOnlyLatest(actualPlugins))
+        {
+            pluginFiles.RemoveAll(p => p == pluginInfo.Uri);
+        }
+
+        foreach (var file in pluginFiles)
+        {
+            try
+            {
+                _logger.LogInformation("Remove obsolete plugin file {PluginFile}.", file);
+                File.Delete(file);
+            }
+            catch (Exception e)
+            {
+                _logger.LogWarning(e, "Cannot remove obsolete plugin file {PluginFile}.", file);
+            }
+        }
+    }
+
+    private static IEnumerable<PluginInfo> GroupByName(IEnumerable<PluginInfo> plugins)
+    {
+        return plugins
+            .OrderByDescending(p => p.Version)
+            .GroupBy(p => p.Name)
+            .Select(g => g.First());
     }
 
     private async Task<IReadOnlyList<PluginInfo>> GetRemotePluginsAsync(CancellationToken cancellationToken = default)
@@ -177,7 +274,8 @@ public sealed class DefaultPluginsManager : IPluginsManager
         {
             return _remotePluginsCache;
         }
-        _remotePluginsCache = await _pluginsStorage.ListAsync(cancellationToken);
+        _remotePluginsCache = await _pluginsStorage.ListAsync(cancellationToken)
+            .ConfigureAwait(false);
         return _remotePluginsCache;
     }
 
@@ -188,10 +286,10 @@ public sealed class DefaultPluginsManager : IPluginsManager
                 Path.GetFileName(p),
                 Path.GetDirectoryName(p) + Path.DirectorySeparatorChar,
                 isInstalled: true))
-            .Where(p => name == "*" || p.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+            .Where(p => name == "*" || IsNameMatch(name, p.Name));
     }
 
-    private PluginInfo CreatePluginInfoFromKey(string key, string baseUri, bool isInstalled = false)
+    internal static PluginInfo CreatePluginInfoFromKey(string key, string baseUri, bool isInstalled = false)
     {
         var info = PluginInfo.CreateFromUniversalName(key);
         info.Uri = baseUri + key;

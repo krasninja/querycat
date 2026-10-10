@@ -48,7 +48,7 @@ public static class SdkConvert
             },
             Backend.Core.Types.DataType.Timestamp => new VariantValue
             {
-                Timestamp = (long)(value.AsTimestampUnsafe - DateTime.UnixEpoch).TotalSeconds,
+                Timestamp = (long)(value.AsTimestampUnsafe - DateTime.UnixEpoch).TotalMilliseconds,
             },
             Backend.Core.Types.DataType.Boolean => new VariantValue
             {
@@ -69,7 +69,8 @@ public static class SdkConvert
             Backend.Core.Types.DataType.Map => new VariantValue
             {
                 Map = ((IDictionary<Backend.Core.Types.VariantValue, Backend.Core.Types.VariantValue>)value.AsObjectUnsafe!)
-                    .ToDictionary(k => Convert(k.Key), v => Convert(v.Value)),
+                    .Select(kvp => new MapEntry(Convert(kvp.Key), Convert(kvp.Value)))
+                    .ToList(),
             },
             Backend.Core.Types.DataType.Object or Backend.Core.Types.DataType.Blob => ConvertObject(value),
             _ => throw new ArgumentOutOfRangeException(),
@@ -112,7 +113,7 @@ public static class SdkConvert
         }
         else if (value.AsObjectUnsafe is IRowsInput)
         {
-            type = ObjectType.BLOB;
+            type = ObjectType.ROWS_INPUT;
         }
         else if (value.AsObjectUnsafe is IRowsIterator)
         {
@@ -139,7 +140,7 @@ public static class SdkConvert
         {
             return Backend.Core.Types.VariantValue.Null;
         }
-        if (value.__isset.isNull)
+        if (value.__isset.isNull && value.IsNull)
         {
             return Backend.Core.Types.VariantValue.Null;
         }
@@ -157,7 +158,7 @@ public static class SdkConvert
         }
         if (value.__isset.timestamp)
         {
-            return new Backend.Core.Types.VariantValue(DateTime.UnixEpoch.AddSeconds(value.Timestamp));
+            return new Backend.Core.Types.VariantValue(DateTime.UnixEpoch.AddMilliseconds(value.Timestamp));
         }
         if (value.__isset.boolean)
         {
@@ -169,7 +170,7 @@ public static class SdkConvert
         }
         if (value.__isset.interval)
         {
-            return new Backend.Core.Types.VariantValue(new TimeSpan(0, 0, 0, 0, (int)value.Interval));
+            return new Backend.Core.Types.VariantValue(TimeSpan.FromMilliseconds(value.Interval));
         }
         if (value.__isset.@object && value.Object != null)
         {
@@ -257,18 +258,29 @@ public static class SdkConvert
 
     public static Column Convert(Backend.Core.Data.Column column)
     {
-        return new Column(column.Name, Convert(column.DataType))
+        return new Column(column.Id, column.Name, Convert(column.DataType))
         {
-            Description = column.Description
+            Description = column.Description,
+            Attributes = column.Attributes.Count > 0
+                ? column.Attributes.ToDictionary(a => a.Key, a => Convert(a.Value))
+                : null,
         };
     }
 
     public static Backend.Core.Data.Column Convert(Column column)
     {
-        return new Backend.Core.Data.Column(column.Name, Convert(column.Type))
+        var result = new Backend.Core.Data.Column(column.Name, Convert(column.Type))
         {
             Description = column.Description ?? string.Empty,
         };
+        if (column.Attributes != null)
+        {
+            foreach (var attribute in column.Attributes)
+            {
+                result.SetAttribute(attribute.Key, Convert(attribute.Value));
+            }
+        }
+        return result;
     }
 
     // Source:
@@ -447,7 +459,20 @@ public static class SdkConvert
         };
 
     public static Backend.Core.Execution.ExecutionStatistic Convert(Sdk.Statistic statistic)
-        => new ThriftPluginStatistic();
+    {
+        var stat = new ThriftPluginStatistic
+        {
+            ProcessedCount = statistic.ProcessedCount,
+        };
+        if (statistic.Errors != null)
+        {
+            foreach (var statisticRowError in statistic.Errors)
+            {
+                stat.AddError(SdkConvert.Convert(statisticRowError));
+            }
+        }
+        return stat;
+    }
 
     public static Sdk.Statistic Convert(Backend.Core.Execution.ExecutionStatistic statistic)
     {
@@ -462,23 +487,121 @@ public static class SdkConvert
     public static Sdk.ModelDescription Convert(Backend.Core.Data.IModelDescription model)
         => new(model.Name, model.Description);
 
-    public static Sdk.QuestionResponse Convert(Backend.Core.Execution.QuestionResponse target)
-        => new(target.Answer, target.MessageId);
+    public static Sdk.ChatResponse Convert(Backend.Core.Execution.ChatResponse target)
+    {
+        var messages = target.Messages.Select(Convert).ToList();
+        var sdkResponse = new Sdk.ChatResponse(messages, target.MessageId)
+        {
+            Model = target.Model,
+            StopReason = target.StopReason,
+        };
+        if (target.Metadata != null)
+        {
+            sdkResponse.Metadata = target.Metadata
+                .ToDictionary(kvp => kvp.Key, kvp => Convert(kvp.Value));
+        }
+        return sdkResponse;
+    }
 
-    public static Backend.Core.Execution.QuestionResponse Convert(Sdk.QuestionResponse target)
-        => new(target.Answer, target.MessageId);
+    public static Backend.Core.Execution.ChatResponse Convert(Sdk.ChatResponse target)
+    {
+        var messages = (target.Messages ?? []).Select(Convert).ToArray();
+        var response = new Backend.Core.Execution.ChatResponse(messages, target.MessageId)
+        {
+            Model = target.Model,
+            StopReason = target.StopReason,
+        };
+        if (target.Metadata != null)
+        {
+            response.Metadata = target.Metadata
+                .ToDictionary(kvp => kvp.Key, kvp => Convert(kvp.Value));
+        }
+        return response;
+    }
 
-    public static Backend.Core.Execution.QuestionMessage Convert(Sdk.QuestionMessage target)
-        => new(target.Content, target.Role);
+    public static Backend.Core.Execution.ChatMessage Convert(Sdk.ChatMessage target)
+    {
+        IReadOnlyList<Backend.Core.Execution.ChatToolCall>? toolCalls = null;
+        if (target.ToolCalls != null && target.ToolCalls.Count > 0)
+        {
+            toolCalls = target.ToolCalls.Select(Convert).ToList();
+        }
+        return new Backend.Core.Execution.ChatMessage(
+            target.Content,
+            target.Role,
+            toolCalls: toolCalls,
+            toolCallId: target.ToolCallId);
+    }
 
-    public static Sdk.QuestionMessage Convert(Backend.Core.Execution.QuestionMessage target)
-        => new(target.Content, target.Role);
+    public static Sdk.ChatMessage Convert(Backend.Core.Execution.ChatMessage target)
+    {
+        var sdkMessage = new Sdk.ChatMessage(target.Content, target.Role);
+        if (string.IsNullOrEmpty(target.ToolCallId))
+        {
+            sdkMessage.ToolCallId = target.ToolCallId;
+        }
+        if (target.ToolCalls.Count > 0)
+        {
+            sdkMessage.ToolCalls = target.ToolCalls.Select(Convert).ToList();
+        }
+        return sdkMessage;
+    }
 
-    public static Backend.Core.Execution.QuestionRequest Convert(Sdk.QuestionRequest target)
-        => new((target.Messages ?? []).Select(SdkConvert.Convert).ToArray(), target.Type);
+    public static Backend.Core.Execution.ChatToolCall Convert(Sdk.ChatToolCall target)
+    {
+        return new Backend.Core.Execution.ChatToolCall(target.Id, target.Name, target.Arguments);
+    }
 
-    public static Sdk.QuestionRequest Convert(Backend.Core.Execution.QuestionRequest target)
-        => new(target.Messages.Select(SdkConvert.Convert).ToList(), target.Type);
+    public static Sdk.ChatToolCall Convert(Backend.Core.Execution.ChatToolCall target)
+        => new(target.Id, target.Name, target.Arguments);
+
+    public static Backend.Core.Execution.ChatTool Convert(Sdk.ChatTool target)
+    {
+        return new Backend.Core.Execution.ChatTool(target.Name, target.Description, target.ParametersSchema);
+    }
+
+    public static Sdk.ChatTool Convert(Backend.Core.Execution.ChatTool target)
+        => new(target.Name, target.Description, target.ParametersSchema);
+
+    public static Backend.Core.Execution.ChatRequest Convert(Sdk.ChatRequest target)
+    {
+        var request = new Backend.Core.Execution.ChatRequest(
+            (target.Messages ?? []).Select(SdkConvert.Convert).ToArray(),
+            target.Type)
+        {
+            Model = target.Model,
+        };
+        if (target.Tools != null && target.Tools.Count > 0)
+        {
+            request.Tools = target.Tools.Select(SdkConvert.Convert).ToList();
+        }
+        if (target.Options != null)
+        {
+            request.Options = target.Options
+                .ToDictionary(kvp => kvp.Key, kvp => Convert(kvp.Value));
+        }
+        return request;
+    }
+
+    public static Sdk.ChatRequest Convert(Backend.Core.Execution.ChatRequest target)
+    {
+        var sdkRequest = new Sdk.ChatRequest(
+            target.Messages.Select(SdkConvert.Convert).ToList(),
+            target.Type)
+        {
+            Model = target.Model,
+        };
+        if (target.Tools != null && target.Tools.Count > 0)
+        {
+            sdkRequest.Tools = target.Tools.Select(SdkConvert.Convert).ToList();
+        }
+        if (target.Options != null)
+        {
+            sdkRequest.Options = target.Options
+                .ToDictionary(kvp => kvp.Key, kvp => Convert(kvp.Value));
+        }
+        return sdkRequest;
+    }
 
     public static Sdk.CursorSeekOrigin Convert(System.IO.SeekOrigin target)
         => target switch

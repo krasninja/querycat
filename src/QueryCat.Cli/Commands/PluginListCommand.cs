@@ -4,7 +4,7 @@ using QueryCat.Backend.Core;
 namespace QueryCat.Cli.Commands;
 
 #if ENABLE_PLUGINS
-internal class PluginListCommand : BaseCommand
+internal sealed class PluginListCommand : BaseCommand
 {
     /// <inheritdoc />
     public PluginListCommand() : base("list", Resources.Messages.PluginListCommand_Description)

@@ -27,7 +27,7 @@ public sealed class CombineCompletionSourceTests
             .Create();
 
         // Act.
-        var completionsCount = (await executionThread.GetCompletionsAsync("SELEC").ToListAsync()).Count;
+        var completionsCount = (await executionThread.GetCompletionsAsync("SELEC")).Count;
 
         // Assert.
         Assert.Equal(1, completionsCount);

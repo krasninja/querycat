@@ -47,10 +47,10 @@ public sealed class NginxPluginsStorage : IPluginsStorage, IDisposable
         /// <inheritdoc />
         public override DateTime Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
-            var str = reader.GetString();
+            var str = reader.GetString() ?? throw new JsonException("mtime is null.");
 
             return DateTime.ParseExact(
-                str!,
+                str,
                 "R",
                 CultureInfo.InvariantCulture,
                 DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal
@@ -66,14 +66,14 @@ public sealed class NginxPluginsStorage : IPluginsStorage, IDisposable
 
     public NginxPluginsStorage(Uri uri)
     {
-        _uri = uri;
+        _uri = uri.AbsoluteUri.EndsWith('/') ? uri : new Uri(uri.AbsoluteUri + "/");
     }
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<PluginInfo>> ListAsync(CancellationToken cancellationToken = default)
     {
         var dtos = await _httpClient.GetFromJsonAsync(_uri, SourceGenerationContext.Default.IListNginxObjectDto,
-            cancellationToken: cancellationToken);
+            cancellationToken: cancellationToken).ConfigureAwait(false);
         if (dtos == null)
         {
             return [];
@@ -87,7 +87,7 @@ public sealed class NginxPluginsStorage : IPluginsStorage, IDisposable
             }
             var plugin = PluginInfo.CreateFromUniversalName(dto.Name);
             plugin.Size = dto.Size;
-            plugin.Uri = _uri.AbsoluteUri + dto.Name;
+            plugin.Uri = new Uri(_uri, Uri.EscapeDataString(dto.Name)).AbsoluteUri;
             list.Add(plugin);
         }
         return PluginInfo.FilterOnlyLatest(list).ToList();

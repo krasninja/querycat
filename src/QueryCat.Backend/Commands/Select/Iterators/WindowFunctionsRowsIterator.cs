@@ -10,9 +10,27 @@ namespace QueryCat.Backend.Commands.Select.Iterators;
 
 internal sealed class WindowFunctionsRowsIterator : IRowsIterator
 {
-    private record PartitionInstance(
+    private sealed record PartitionInstance(
         RowsFrame RowsFrame,
-        ICursorRowsIterator RowsIterator);
+        ICursorRowsIterator RowsIterator)
+    {
+        /// <summary>
+        /// Row id within the partition => zero based row position within the ordered partition.
+        /// </summary>
+        public int[] OrderedRowPositions { get; private set; } = [];
+
+        public async ValueTask BuildOrderedRowPositionsAsync(CancellationToken cancellationToken = default)
+        {
+            var positions = new int[RowsIterator.TotalRows];
+            var orderedPosition = 0;
+            await RowsIterator.ResetAsync(cancellationToken);
+            while (await RowsIterator.MoveNextAsync(cancellationToken))
+            {
+                positions[RowsIterator.Position] = orderedPosition++;
+            }
+            OrderedRowPositions = positions;
+        }
+    }
 
     private readonly record struct RowIdData(
         PartitionInstance PartitionInstance,
@@ -146,7 +164,7 @@ internal sealed class WindowFunctionsRowsIterator : IRowsIterator
         public void FillAggregateFunctionArguments(RowIdData rowIdData)
         {
             _windowInfo.RowsFrame = rowIdData.PartitionInstance.RowsFrame;
-            _windowInfo.CurrentRowPosition = rowIdData.RowIdInPartition;
+            _windowInfo.CurrentRowPosition = rowIdData.PartitionInstance.OrderedRowPositions[(int)rowIdData.RowIdInPartition];
             for (var aggregateIndex = 0; aggregateIndex < WindowFunctionInfo.AggregateValues.Length; aggregateIndex++)
             {
                 _thread.Stack.Push(rowIdData.PartitionInstance.RowsIterator.Current[aggregateIndex]);
@@ -223,6 +241,15 @@ internal sealed class WindowFunctionsRowsIterator : IRowsIterator
         {
             await index.RebuildAsync(cancellationToken);
         }
+
+        // Resolve every row position within its ordered partition.
+        foreach (var partition in _partitions)
+        {
+            foreach (var partitionInstance in partition.PartitionRowsIds.Values)
+            {
+                await partitionInstance.BuildOrderedRowPositionsAsync(cancellationToken);
+            }
+        }
     }
 
     private async ValueTask FillWindowColumnsAsync(CancellationToken cancellationToken)
@@ -233,7 +260,7 @@ internal sealed class WindowFunctionsRowsIterator : IRowsIterator
             foreach (var partition in _partitions)
             {
                 var aggregateValue = await ProcessPartitionAsync(iterator, partition, cancellationToken);
-                _rowsFrame.UpdateValue(iterator.Position, partition.OriginalColumnIndex, aggregateValue);
+                _rowsFrame.UpdateValue((int)iterator.Position, partition.OriginalColumnIndex, aggregateValue);
             }
         }
     }
@@ -241,7 +268,7 @@ internal sealed class WindowFunctionsRowsIterator : IRowsIterator
     private async ValueTask<VariantValue> ProcessPartitionAsync(ICursorRowsIterator iterator, PartitionInfo partitionInfo,
         CancellationToken cancellationToken)
     {
-        var rowIdData = partitionInfo.RowIdToPartition[iterator.Position];
+        var rowIdData = partitionInfo.RowIdToPartition[(int)iterator.Position];
 
         var aggregateTarget = partitionInfo.WindowFunctionInfo.AggregateTarget;
         var aggregateState = aggregateTarget.AggregateFunction.GetInitialState(aggregateTarget.ReturnType);

@@ -165,7 +165,8 @@ public partial struct VariantValue
         public override bool CanToString => true;
 
         /// <inheritdoc />
-        public override string ToString(in VariantValue value) => value.AsTimestampUnsafe.ToString(Application.Culture);
+        public override string ToString(in VariantValue value)
+            => value._valueUnion.BooleanValue ? TrueValueString : FalseValueString;
     }
 
     #endregion
@@ -223,7 +224,7 @@ public partial struct VariantValue
 
         #endregion
 
-        #region Numberic
+        #region Numeric
 
         /// <inheritdoc />
         public override bool CanToNumeric => true;
@@ -268,7 +269,7 @@ public partial struct VariantValue
                 || value.Equals("T", StringComparison.OrdinalIgnoreCase))
             {
                 success = true;
-                return new VariantValue(true);
+                return true;
             }
 
             if (value.Equals(FalseValueString, StringComparison.OrdinalIgnoreCase)
@@ -278,11 +279,11 @@ public partial struct VariantValue
                 || value.Equals("F", StringComparison.OrdinalIgnoreCase))
             {
                 success = true;
-                return new VariantValue(false);
+                return false;
             }
 
             success = false;
-            return Null;
+            return null;
         }
 
         #endregion
@@ -338,11 +339,16 @@ public partial struct VariantValue
 
         internal static DateTime? StringToTimestamp(in ReadOnlySpan<char> value, out bool success)
         {
-            success = DateTime.TryParse(value, Application.Culture, DateTimeStyles.None, out var @out);
+            var style = DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal | DateTimeStyles.AllowWhiteSpaces;
+            success = DateTime.TryParse(
+                value,
+                Application.Culture,
+                style,
+                out var @out);
             if (!success)
             {
                 success = DateTime.TryParseExact(value, _dateTimeAdditionalFormats, null,
-                    DateTimeStyles.AllowWhiteSpaces, out @out);
+                    style, out @out);
             }
             return success ? @out : null;
         }
@@ -350,6 +356,9 @@ public partial struct VariantValue
         #endregion
 
         #region Blob
+
+        /// <inheritdoc />
+        public override bool CanToBlob => true;
 
         /// <inheritdoc />
         public override IBlobData ToBlob(in VariantValue value) => StringToBlob(value.AsStringUnsafe, out _);
@@ -425,13 +434,13 @@ public partial struct VariantValue
         public override bool CanToString => true;
 
         /// <inheritdoc />
-        public override string ToString(in VariantValue value) => BlobToString(value.AsBlobUnsafe, out _);
+        public override string ToString(in VariantValue value) => BlobToShortString(value.AsBlobUnsafe);
 
         internal static string BlobToString(IBlobData? value, out bool success)
         {
             success = true;
             value ??= StreamBlobData.Empty;
-            var sr = new StreamReader(value.GetStream());
+            using var sr = new StreamReader(value.GetStream());
             return sr.ReadToEnd();
         }
     }
@@ -473,7 +482,7 @@ public partial struct VariantValue
         public override bool CanToString => true;
 
         /// <inheritdoc />
-        public override string ToString(in VariantValue value) => value.AsObjectUnsafe?.ToString() ?? string.Empty;
+        public override string ToString(in VariantValue value) => ArrayToString(value.AsArrayUnsafe, Application.Culture);
     }
 
     #endregion
@@ -493,7 +502,7 @@ public partial struct VariantValue
         public override bool CanToString => true;
 
         /// <inheritdoc />
-        public override string ToString(in VariantValue value) => value.AsObjectUnsafe?.ToString() ?? string.Empty;
+        public override string ToString(in VariantValue value) => MapToString(value.AsMapUnsafe, Application.Culture);
     }
 
     #endregion
@@ -505,7 +514,7 @@ public partial struct VariantValue
         public static NullDataTypeObject Instance { get; } = new();
 
         /// <inheritdoc />
-        private NullDataTypeObject() : base(DataType.Boolean)
+        private NullDataTypeObject() : base(DataType.Void)
         {
         }
     }

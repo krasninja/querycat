@@ -4,7 +4,7 @@ There are following main components:
 
 ### VariantValue
 
-The `QueryCat.Backend.Core.Types.VariantValue` type is a special type that can contain any kind of data. One of: string, number, object, etc. It is widely used for any value representation within the application. Is also can be null instead of storing any value.
+The `QueryCat.Backend.Core.Types.VariantValue` type is a special type that can contain any kind of data. One of: string, number, object, etc. It is widely used for any value representation within the application. It can also be null instead of storing any value.
 
 ### Column
 
@@ -36,7 +36,7 @@ The `QueryCat.Backend.Core.Data.IRowsInput` is the input rows source. It can be 
 - `CloseAsync`. Close the rows input and release all the resources.
 - `ResetAsync`. Reset current state. Reopen the input.
 
-The QueryCat uses this interface to read various rows sources. It calls the methods to get data. For example, you implement the rows input that reads the following table:
+QueryCat uses this interface to read various rows sources. It calls the methods to get data. For example, you implement the rows input that reads the following table:
 
 ```
 | Id  | Name  |

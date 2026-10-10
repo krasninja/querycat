@@ -21,10 +21,12 @@ internal sealed partial class SelectPlanner
             {
                 continue;
             }
-            windowTarget.WindowSpecificationNode =
-                PipelineWindow_GetPartitionNode(windowTarget, querySpecificationNode.WindowNode);
+            windowTarget.WindowSpecificationNode = PipelineWindow_ResolveWindowSpecification(
+                windowTarget.WindowSpecificationNode, querySpecificationNode.WindowNode);
 
-            var windowFunctionInfo = await PipelineWindow_PrepareWindowFunctionInfoAsync(columnIndex, windowTarget,
+            var columnInfo = context.ColumnsInfoContainer.Columns.First(c => c.RelatedSelectSublistNode == windowTarget);
+            var iteratorColumnIndex = Array.IndexOf(context.CurrentIterator.Columns, columnInfo.Column);
+            var windowFunctionInfo = await PipelineWindow_PrepareWindowFunctionInfoAsync(iteratorColumnIndex, windowTarget,
                 context, cancellationToken);
             windowDataList.Add(windowFunctionInfo);
         }
@@ -39,29 +41,50 @@ internal sealed partial class SelectPlanner
     }
 
     /// <summary>
-    /// Find for partition clause. It can be in case if in SELECT there is just a name reference.
+    /// Resolve the window specification that references the existing window by name. For example,
+    /// "OVER (w ORDER BY id)". The partition clause is taken from the referenced window, and the order clause
+    /// can be defined either by the referenced window or by the current specification.
     /// </summary>
-    private SelectWindowSpecificationNode PipelineWindow_GetPartitionNode(
-        SelectColumnsSublistWindowNode windowTarget,
-        SelectWindowNode? windowNode)
+    /// <param name="windowSpecificationNode">Window specification to resolve.</param>
+    /// <param name="windowNode">WINDOW clause with named windows definitions.</param>
+    /// <param name="visitedWindowNames">Already resolved window names, used to detect circular references.</param>
+    /// <returns>Resolved window specification without window name reference.</returns>
+    private static SelectWindowSpecificationNode PipelineWindow_ResolveWindowSpecification(
+        SelectWindowSpecificationNode windowSpecificationNode,
+        SelectWindowNode? windowNode,
+        HashSet<string>? visitedWindowNames = null)
     {
-        var windowSpecificationNode = windowTarget.WindowSpecificationNode;
-        if (windowNode != null)
+        var existingWindowName = windowSpecificationNode.ExistingWindowName;
+        if (string.IsNullOrEmpty(existingWindowName))
         {
-            var existingWindowName = windowTarget.WindowSpecificationNode.ExistingWindowName;
-            while (!string.IsNullOrEmpty(existingWindowName))
-            {
-                var partitionNode = windowNode.DefinitionListNodes
-                    .Find(n => n.Name.Equals(existingWindowName, StringComparison.OrdinalIgnoreCase));
-                if (partitionNode == null)
-                {
-                    throw new QueryCatException(string.Format(Resources.Errors.CannotFindPartition, existingWindowName));
-                }
-                existingWindowName = partitionNode.WindowSpecificationNode.ExistingWindowName;
-                windowSpecificationNode = partitionNode.WindowSpecificationNode;
-            }
+            return windowSpecificationNode;
         }
-        return windowSpecificationNode;
+        if (windowSpecificationNode.PartitionNode != null)
+        {
+            throw new SemanticException(string.Format(Resources.Errors.CannotOverrideWindowPartition, existingWindowName));
+        }
+
+        visitedWindowNames ??= new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        if (!visitedWindowNames.Add(existingWindowName))
+        {
+            throw new SemanticException(string.Format(Resources.Errors.WindowCircularReference, existingWindowName));
+        }
+        var definitionNode = windowNode?.DefinitionListNodes
+            .Find(n => n.Name.Equals(existingWindowName, StringComparison.OrdinalIgnoreCase));
+        if (definitionNode == null)
+        {
+            throw new SemanticException(string.Format(Resources.Errors.CannotFindPartition, existingWindowName));
+        }
+
+        var baseWindowSpecificationNode = PipelineWindow_ResolveWindowSpecification(
+            definitionNode.WindowSpecificationNode, windowNode, visitedWindowNames);
+        if (windowSpecificationNode.OrderNode != null && baseWindowSpecificationNode.OrderNode != null)
+        {
+            throw new SemanticException(string.Format(Resources.Errors.CannotOverrideWindowOrder, existingWindowName));
+        }
+        return new SelectWindowSpecificationNode(
+            baseWindowSpecificationNode.PartitionNode,
+            windowSpecificationNode.OrderNode ?? baseWindowSpecificationNode.OrderNode);
     }
 
     private async Task<WindowFunctionInfo> PipelineWindow_PrepareWindowFunctionInfoAsync(

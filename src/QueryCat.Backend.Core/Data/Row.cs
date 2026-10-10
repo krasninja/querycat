@@ -35,7 +35,8 @@ public class Row : IRowsSchema, ICloneable, IEnumerable<VariantValue>
             var columnIndex = this.GetColumnIndexByName(columnName);
             if (columnIndex < 0)
             {
-                throw new ArgumentOutOfRangeException(string.Format(Resources.Errors.CannotFindColumn, columnName), nameof(columnIndex));
+                throw new ArgumentOutOfRangeException(string.Format(Resources.Errors.CannotFindColumn, columnName),
+                    nameof(columnName));
             }
             return _values[columnIndex];
         }
@@ -45,7 +46,8 @@ public class Row : IRowsSchema, ICloneable, IEnumerable<VariantValue>
             var columnIndex = this.GetColumnIndexByName(columnName);
             if (columnIndex < 0)
             {
-                throw new ArgumentOutOfRangeException(string.Format(Resources.Errors.CannotFindColumn, columnName), nameof(columnIndex));
+                throw new ArgumentOutOfRangeException(string.Format(Resources.Errors.CannotFindColumn, columnName),
+                    nameof(columnName));
             }
             _values[columnIndex] = value;
         }
@@ -128,7 +130,7 @@ public class Row : IRowsSchema, ICloneable, IEnumerable<VariantValue>
     /// <param name="toRowOffset">Destination start index.</param>
     public virtual void Copy(int fromRowOffset, Row toRow, int toRowOffset)
     {
-        _values[fromRowOffset..].CopyTo(toRow._values.AsSpan(toRowOffset));
+        _values.AsSpan(fromRowOffset).CopyTo(toRow._values.AsSpan(toRowOffset));
     }
 
     private static void ValidateArraysLength(ReadOnlySpan<VariantValue> array1, ReadOnlySpan<VariantValue> array2)

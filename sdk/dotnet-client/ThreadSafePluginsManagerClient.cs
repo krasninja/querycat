@@ -1,19 +1,21 @@
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
 using QueryCat.Plugins.Sdk;
 using CompletionResult = QueryCat.Plugins.Sdk.CompletionResult;
-using QuestionRequest = QueryCat.Plugins.Sdk.QuestionRequest;
-using QuestionResponse = QueryCat.Plugins.Sdk.QuestionResponse;
+using ChatRequest = QueryCat.Plugins.Sdk.ChatRequest;
+using ChatResponse = QueryCat.Plugins.Sdk.ChatResponse;
 
 namespace QueryCat.Plugins.Client;
 
 [SuppressMessage("ReSharper", "InconsistentNaming")]
-internal sealed class ThreadSafePluginsManagerClient : PluginsManager.IAsync
+internal sealed class ThreadSafePluginsManagerClient : PluginsManager.IAsync, IDisposable
 {
     private readonly SemaphoreSlim _semaphore = new(1);
     private readonly PluginsManager.IAsync _client;
+    private volatile bool _isDisposed;
 
     public ThreadSafePluginsManagerClient(PluginsManager.IAsync client)
     {
@@ -205,7 +207,7 @@ internal sealed class ThreadSafePluginsManagerClient : PluginsManager.IAsync
     }
 
     /// <inheritdoc />
-    public async Task<byte[]> Blob_ReadAsync(long token, int object_blob_handle, int offset, int count,
+    public async Task<byte[]> Blob_ReadAsync(long token, int object_blob_handle, long offset, int count,
         CancellationToken cancellationToken = default)
     {
         await _semaphore.WaitAsync(cancellationToken);
@@ -349,7 +351,7 @@ internal sealed class ThreadSafePluginsManagerClient : PluginsManager.IAsync
     }
 
     /// <inheritdoc />
-    public async Task<int> RowsSet_PositionAsync(long token, int object_rows_set_handle, CancellationToken cancellationToken = default)
+    public async Task<long> RowsSet_PositionAsync(long token, int object_rows_set_handle, CancellationToken cancellationToken = default)
     {
         await _semaphore.WaitAsync(cancellationToken);
         try
@@ -363,7 +365,7 @@ internal sealed class ThreadSafePluginsManagerClient : PluginsManager.IAsync
     }
 
     /// <inheritdoc />
-    public async Task<int> RowsSet_TotalRowsAsync(long token, int object_rows_set_handle, CancellationToken cancellationToken = default)
+    public async Task<long> RowsSet_TotalRowsAsync(long token, int object_rows_set_handle, CancellationToken cancellationToken = default)
     {
         await _semaphore.WaitAsync(cancellationToken);
         try
@@ -377,7 +379,7 @@ internal sealed class ThreadSafePluginsManagerClient : PluginsManager.IAsync
     }
 
     /// <inheritdoc />
-    public async Task RowsSet_SeekAsync(long token, int object_rows_set_handle, int offset, CursorSeekOrigin origin,
+    public async Task RowsSet_SeekAsync(long token, int object_rows_set_handle, long offset, CursorSeekOrigin origin,
         CancellationToken cancellationToken = default)
     {
         await _semaphore.WaitAsync(cancellationToken);
@@ -556,7 +558,7 @@ internal sealed class ThreadSafePluginsManagerClient : PluginsManager.IAsync
     }
 
     /// <inheritdoc />
-    public async Task<QuestionResponse> AnswerAgent_AskAsync(long token, int object_answer_agent_handle, QuestionRequest? request,
+    public async Task<ChatResponse> AnswerAgent_AskAsync(long token, int object_answer_agent_handle, ChatRequest? request,
         CancellationToken cancellationToken = default)
     {
         await _semaphore.WaitAsync(cancellationToken);
@@ -685,16 +687,28 @@ internal sealed class ThreadSafePluginsManagerClient : PluginsManager.IAsync
     }
 
     /// <inheritdoc />
-    public async Task RegisterFunctionAsync(long token, List<Function>? functions, CancellationToken cancellationToken = default)
+    public async Task RegisterFunctionsAsync(long token, List<Function>? functions, CancellationToken cancellationToken = default)
     {
         await _semaphore.WaitAsync(cancellationToken);
         try
         {
-            await _client.RegisterFunctionAsync(token, functions, cancellationToken);
+            await _client.RegisterFunctionsAsync(token, functions, cancellationToken);
         }
         finally
         {
             _semaphore.Release();
         }
+    }
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        if (_isDisposed)
+        {
+            return;
+        }
+        _isDisposed = true;
+
+        _semaphore.Dispose();
     }
 }

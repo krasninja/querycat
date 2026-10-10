@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.IO.Compression;
+using System.Runtime.CompilerServices;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
@@ -15,7 +16,6 @@ namespace QueryCat.Backend.Functions;
 
 internal static class IOFunctions
 {
-    private const string ContentTypeHeader = "Content-Type";
     private const int DefaultFileReadBufferSize = 0x1000 * 2; /* 8KB */
 
     private static readonly MimeTypesProvider _mimeTypesProvider = new();
@@ -50,7 +50,7 @@ internal static class IOFunctions
         var blob = thread.Stack[0].AsBlob;
         if (blob == null)
         {
-            return VariantValue.Null;
+            return VariantValue.CreateFromObject(NullRowsInput.Instance);
         }
         var formatter = thread.Stack[1].As<IRowsFormatter>();
         formatter ??= await File_GetFormatterAsync(blob.ContentType, thread, null, cancellationToken);
@@ -71,9 +71,13 @@ internal static class IOFunctions
     public static VariantValue ReadString(IExecutionThread thread)
     {
         var text = thread.Stack[0].AsString;
-        var formatter = (IRowsFormatter)thread.Stack[1].AsObject!;
+        var formatter = thread.Stack[1].AsRequired<IRowsFormatter>();
 
-        var blobStream = new StreamBlobData(() => new MemoryStream(System.Text.Encoding.UTF8.GetBytes(text)));
+        var bytes = System.Text.Encoding.UTF8.GetBytes(text);
+        var blobStream = new StreamBlobData(() =>
+        {
+            return new MemoryStream(bytes, writable: false);
+        }, length: bytes.Length);
         return VariantValue.CreateFromObject(formatter.OpenInput(blobStream));
     }
 
@@ -89,15 +93,18 @@ internal static class IOFunctions
         var path = thread.Stack[0].AsString;
         (path, var funcArgs) = Utils_ParseUri(path);
 
-        var formatter = thread.Stack.FrameLength > 1
-            ? thread.Stack[1].AsObject as IRowsFormatter
-            : await File_GetFormatterAsync(path, thread, funcArgs, cancellationToken);
-        var files = await File_GetFileInputsByPath(path, thread, formatter, funcArgs).ToListAsync(cancellationToken);
-        if (!files.Any())
+        var formatter = thread.Stack[1].As<IRowsFormatter>();
+        if (formatter == null)
+        {
+            formatter = await File_GetFormatterAsync(path, thread, funcArgs, cancellationToken);
+        }
+        var files = await File_GetFileInputsByPath(path, thread, formatter, funcArgs, cancellationToken)
+            .ToListAsync(cancellationToken);
+        if (files.Count == 0)
         {
             throw new QueryCatException(string.Format(Resources.Errors.PathNoFiles, path));
         }
-        var input = files.Count == 1 ? files.First() : new CombineRowsInput(files);
+        var input = files.Count == 1 ? files[0] : new CombineRowsInput(files);
         return VariantValue.CreateFromObject(input);
     }
 
@@ -105,12 +112,12 @@ internal static class IOFunctions
     [FunctionSignature("write_file(path: string, fmt?: object<IRowsFormatter>): object<IRowsOutput>")]
     public static async ValueTask<VariantValue> WriteFileAsync(IExecutionThread thread, CancellationToken cancellationToken)
     {
-        var pathArgument = thread.Stack[0];
-        if (pathArgument.IsNull || string.IsNullOrEmpty(pathArgument.AsString))
+        var path = thread.Stack[0].AsString;
+        if (string.IsNullOrEmpty(path))
         {
             throw new QueryCatException(Resources.Errors.PathNotDefined);
         }
-        var (path, funcArgs) = Utils_ParseUri(pathArgument.AsString);
+        (path, var funcArgs) = Utils_ParseUri(path);
 
         var formatter = thread.Stack[1].AsObject as IRowsFormatter;
         formatter ??= await File_GetFormatterAsync(path, thread, funcArgs, cancellationToken);
@@ -125,7 +132,7 @@ internal static class IOFunctions
                     path,
                     FileMode.Create,
                     FileAccess.Write,
-                    FileShare.ReadWrite);
+                    FileShare.Read);
                 if (_compressFilesExtensions.Contains(Path.GetExtension(path), StringComparer.InvariantCultureIgnoreCase))
                 {
                     file = new GZipStream(file, CompressionMode.Compress, leaveOpen: false);
@@ -133,7 +140,8 @@ internal static class IOFunctions
                 return file;
             },
             File_GetContentType(path),
-            Path.GetFileName(path)
+            Path.GetFileName(path),
+            length: -1
         );
         return VariantValue.CreateFromObject(formatter.OpenOutput(blobFile));
     }
@@ -142,11 +150,12 @@ internal static class IOFunctions
         string path,
         IExecutionThread thread,
         IRowsFormatter? formatter = null,
-        FunctionCallArguments? funcArgs = null)
+        FunctionCallArguments? funcArgs = null,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         foreach (var file in File_GetFilesByPath(path))
         {
-            var fileFormatter = formatter ?? await File_GetFormatterAsync(file, thread, funcArgs);
+            var fileFormatter = formatter ?? await File_GetFormatterAsync(file, thread, funcArgs, cancellationToken);
             var blobFileStream = new StreamBlobData(() =>
                 {
                     Stream fileStream = new FileStream(
@@ -170,12 +179,6 @@ internal static class IOFunctions
 
     private static IEnumerable<string> File_GetFilesByPath(string path)
     {
-        // Try parse file URI scheme.
-        if (Uri.TryCreate(path, UriKind.Absolute, out var uri))
-        {
-            path = uri.LocalPath;
-        }
-
         // The case when we query from a single file.
         if (File.Exists(path))
         {
@@ -184,11 +187,11 @@ internal static class IOFunctions
         }
 
         var dir = Path.GetDirectoryName(path) ?? string.Empty;
-        var options = SearchOption.TopDirectoryOnly;
+        var recursive = false;
         if (path.EndsWith("**") || path.EndsWith("**/") || dir.EndsWith("**"))
         {
             dir = dir.Replace("**", string.Empty);
-            options = SearchOption.AllDirectories;
+            recursive = true;
         }
         var pattern = Path.GetFileName(path);
         if (string.IsNullOrEmpty(dir))
@@ -196,15 +199,22 @@ internal static class IOFunctions
             dir = ".";
         }
         IEnumerable<string> files;
+        var options = new EnumerationOptions
+        {
+            RecurseSubdirectories = recursive,
+            IgnoreInaccessible = true,
+            AttributesToSkip = 0,
+            MatchCasing = MatchCasing.PlatformDefault,
+        };
         try
         {
-            files = Directory.EnumerateFiles(dir, pattern, options);
+            files = Directory.EnumerateFiles(dir, pattern, options).Order(StringComparer.Ordinal).ToList();
         }
         catch (Exception e)
         {
             throw new QueryCatException(string.Format(Resources.Errors.CannotEnumerateFiles, e.Message));
         }
-        foreach (var file in files.OrderBy(f => f))
+        foreach (var file in files)
         {
             yield return file;
         }
@@ -218,11 +228,11 @@ internal static class IOFunctions
 
     private static string File_GetExtension(string path)
     {
-        var extension = Path.GetExtension(path).ToLower();
+        var extension = Path.GetExtension(path).ToLowerInvariant();
         if (_compressFilesExtensions.Contains(extension))
         {
             // Expect to get the "real" extension from a file with a double extension like .tar.gz .
-            extension = Path.GetExtension(path.Substring(0, path.Length - extension.Length)).ToLower();
+            extension = Path.GetExtension(path.Substring(0, path.Length - extension.Length)).ToLowerInvariant();
         }
         return extension;
     }
@@ -257,7 +267,7 @@ internal static class IOFunctions
         [Description("Size of the file, in bytes.")]
         public long? Size { get; init; }
 
-        [Description("Date and time at (UTC) which the file or directory has been created ")]
+        [Description("Date and time at (UTC) at which the file or directory has been created.")]
         public DateTime CreatedAt { get; init; }
 
         [Description("Date and time (UTC) at which the file or directory has been last accessed.")]
@@ -270,27 +280,31 @@ internal static class IOFunctions
     private static IEnumerable<ListDirectoryEntry> ListDirectoryInternal(string path)
     {
         var dirInfo = new DirectoryInfo(path);
+        if (!dirInfo.Exists)
+        {
+            throw new QueryCatException(string.Format(Resources.Errors.PathNotExists, path));
+        }
 
         if (dirInfo.Parent != null)
         {
             yield return new ListDirectoryEntry
             {
                 Type = "d",
-                Name = "../",
-                Path = dirInfo.FullName,
-                CreatedAt = dirInfo.CreationTimeUtc,
-                LastWriteTime = dirInfo.LastWriteTimeUtc,
-                LastAccessedAt = dirInfo.LastAccessTimeUtc,
+                Name = $"..{Path.DirectorySeparatorChar}",
+                Path = dirInfo.Parent.FullName,
+                CreatedAt = dirInfo.Parent.CreationTimeUtc,
+                LastWriteTime = dirInfo.Parent.LastWriteTimeUtc,
+                LastAccessedAt = dirInfo.Parent.LastAccessTimeUtc,
             };
         }
 
-        foreach (var dir in dirInfo.EnumerateDirectories().OrderBy(d => d.Name))
+        foreach (var dir in dirInfo.EnumerateDirectories().OrderBy(d => d.Name, StringComparer.Ordinal))
         {
             yield return new ListDirectoryEntry
             {
                 Type = "d",
-                Name = dir.Name + '/',
-                Path = dir.FullName + '/',
+                Name = dir.Name + Path.DirectorySeparatorChar,
+                Path = dir.FullName + Path.DirectorySeparatorChar,
                 CreatedAt = dir.CreationTimeUtc,
                 LastWriteTime = dir.LastWriteTimeUtc,
                 LastAccessedAt = dir.LastAccessTimeUtc,
@@ -317,8 +331,8 @@ internal static class IOFunctions
     [FunctionSignature("ls_dir(path: string): object<IRowsInput>")]
     public static VariantValue ListDirectory(IExecutionThread thread)
     {
-        var path = thread.Stack.Pop().AsString;
-        path = ResolveHomeDirectory(path);
+        var path = thread.Stack[0].AsString;
+        path = ResolveLocalPath(path);
 
         var items = ListDirectoryInternal(path);
         var input = EnumerableRowsInput<ListDirectoryEntry>.FromSource(items,
@@ -331,6 +345,21 @@ internal static class IOFunctions
                 .AddProperty("last_access_time", f => f.LastAccessedAt)
                 .AddProperty("last_write_time", f => f.LastWriteTime));
         return VariantValue.CreateFromObject(input);
+    }
+
+    internal static string ResolveLocalPath(string path)
+    {
+        var delimiterIndex = path.IndexOf(QueryDelimiter, StringComparison.Ordinal);
+        if (delimiterIndex > -1)
+        {
+            path = path.Substring(0, delimiterIndex);
+        }
+        if (path.StartsWith("file:", StringComparison.OrdinalIgnoreCase)
+            && Uri.TryCreate(path, UriKind.Absolute, out var uri))
+        {
+            path = uri.LocalPath;
+        }
+        return ResolveHomeDirectory(path);
     }
 
     internal static string ResolveHomeDirectory(string dir)
@@ -369,32 +398,47 @@ internal static class IOFunctions
         {
             throw new QueryCatException(Resources.Errors.InvalidUri);
         }
-        var request = new HttpRequestMessage(HttpMethod.Get, uri);
+        using var request = new HttpRequestMessage(HttpMethod.Get, uri);
         var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+        if (!response.IsSuccessStatusCode)
+        {
+            response.Dispose();
+            throw new QueryCatException(string.Format(Resources.Errors.HttpRequestFailed, (int)response.StatusCode, uri));
+        }
 
         // Try to get formatter by HTTP response content type.
-        var contentType = string.Empty;
-        if (response.Headers.TryGetValues(ContentTypeHeader, out var contentTypes))
-        {
-            contentType = contentTypes.Last();
-        }
+        var contentType = response.Content.Headers.ContentType?.MediaType ?? string.Empty;
         // Try to get formatter by extension from URI.
         if (formatter == null)
         {
             var type = contentType;
             if (string.IsNullOrEmpty(type))
             {
-                var absolutePath = (request.RequestUri ?? uri).AbsolutePath;
-                type = Path.GetExtension(absolutePath).ToLower();
+                var absolutePath = (response.RequestMessage?.RequestUri ?? uri).AbsolutePath;
+                type = Path.GetExtension(absolutePath).ToLowerInvariant();
             }
             formatter = await File_GetFormatterAsync(type, thread, null, cancellationToken);
         }
 
+        var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+        var ms = new MemoryStream();
+        await stream.CopyToAsync(ms, cancellationToken);
         var blobStream = new StreamBlobData(
-            () => response.Content.ReadAsStream(cancellationToken),
+            () => new StreamWrapper(ms, leaveOpen: true),
             contentType,
-            Path.GetFileName(uri.LocalPath));
-        return VariantValue.CreateFromObject(formatter.OpenInput(blobStream));
+            Path.GetFileName(uri.LocalPath),
+            length: response.Content.Headers.ContentLength ?? -1);
+
+        IRowsInput? input = null;
+        try
+        {
+            input = formatter.OpenInput(blobStream);
+        }
+        catch (Exception)
+        {
+            response.Dispose();
+        }
+        return VariantValue.CreateFromObject(input);
     }
 
     #endregion
@@ -404,7 +448,7 @@ internal static class IOFunctions
     public const string QueryDelimiter = "??";
 
     /// <summary>
-    /// Split uri string to URI and arguments. For example: /tmp/1.json&amp;&amp;q=123 => /tmp/1.json, q=123.
+    /// Split uri string to URI and arguments. For example: /tmp/1.json??q=123 => /tmp/1.json, q=123.
     /// </summary>
     /// <param name="uri">URI string.</param>
     /// <returns>URI and arguments.</returns>
@@ -414,13 +458,13 @@ internal static class IOFunctions
         if (delimiterIndex == -1)
         {
             return (
-                ResolveHomeDirectory(uri),
+                ResolveLocalPath(uri),
                 new FunctionCallArguments());
         }
         else
         {
             return (
-                ResolveHomeDirectory(uri.Substring(0, delimiterIndex)),
+                ResolveLocalPath(uri),
                 FromQueryString(uri.Substring(delimiterIndex + QueryDelimiter.Length))
             );
         }
@@ -462,14 +506,14 @@ internal static class IOFunctions
         if (type == DataType.String)
         {
             var stringValue = StringUtils.Unquote(str);
-            stringValue = StringUtils.Unquote(stringValue, quoteChar: "'");
+            stringValue = StringUtils.Unquote(stringValue, quoteChar: '\'');
             return new VariantValue(StringUtils.Unescape(stringValue));
         }
         if (VariantValue.TryCreateFromString(str, type, out var value))
         {
             return value;
         }
-        throw new InvalidOperationException(string.Format(Resources.Errors.CannotParseValue, str));
+        throw new QueryCatException(string.Format(Resources.Errors.CannotParseValue, str));
     }
 
     #endregion
@@ -491,7 +535,11 @@ internal static class IOFunctions
             formatter = new TextTableFormatter();
         }
 
-        var blobFile = new StreamBlobData(Stdio.GetConsoleOutput);
+        var blobFile = new StreamBlobData(() =>
+        {
+            var stream = Stdio.GetConsoleOutput();
+            return new StreamWrapper(stream, leaveOpen: true);
+        }, length: -1);
         var output = formatter.OpenOutput(blobFile);
 
         return VariantValue.CreateFromObject(output);
@@ -506,15 +554,20 @@ internal static class IOFunctions
         var formatter = thread.Stack[1].AsObject as IRowsFormatter;
 
         formatter ??= new TextTableFormatter();
+        var skipped = false;
         var blobStream = new StreamBlobData(() =>
         {
             var stream = Stdio.GetConsoleInput();
-            for (var i = 0; i < skipLines; i++)
+            if (!skipped)
             {
-                ReadToEndOfLine(stream);
+                for (var i = 0; i < skipLines; i++)
+                {
+                    ReadToEndOfLine(stream);
+                }
+                skipped = true;
             }
-            return stream;
-        });
+            return new StreamWrapper(stream, leaveOpen: true);
+        }, length: -1);
         var input = formatter.OpenInput(blobStream);
         return VariantValue.CreateFromObject(input);
     }
@@ -526,20 +579,13 @@ internal static class IOFunctions
     /// <returns><c>True</c> if end of line reached, or <c>false</c> if there is end of stream.</returns>
     private static bool ReadToEndOfLine(Stream stream)
     {
-        var isPosix = !System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(
-            System.Runtime.InteropServices.OSPlatform.Windows);
-
-        var prevch = '\0';
-        var arr = new byte[] { 0 };
-        while (stream.Read(arr, 0, 1) > 0)
+        int b;
+        while ((b = stream.ReadByte()) != -1)
         {
-            var ch = (char)arr[0];
-            if ((isPosix && ch == '\n')
-                || (!isPosix && prevch == '\r' && ch == '\n'))
+            if (b == '\n')
             {
                 return true;
             }
-            prevch = ch;
         }
         return false;
     }

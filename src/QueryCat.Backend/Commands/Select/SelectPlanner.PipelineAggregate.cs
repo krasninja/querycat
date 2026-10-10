@@ -130,7 +130,7 @@ internal sealed partial class SelectPlanner
     {
         // If there is no GROUP BY statement but there are aggregates functions in SELECT -
         // just generate "fake" special key.
-        if (groupByNode == null || !groupByNode.GroupByNodes.Any())
+        if (groupByNode == null || groupByNode.GroupByNodes.Count == 0)
         {
             return GroupRowsIterator.NoGroupsKeyFactory;
         }

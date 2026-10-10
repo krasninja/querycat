@@ -1,0 +1,6 @@
+expected: |
+  1,1,10
+  2,2,20
+  3,3,
+query: |
+  select t1.num, s.id, s.intfield from 'Table1.csv' as t1 right join 'Simple1.csv' as s on t1.num = s.id

@@ -1,5 +1,4 @@
 using System.Diagnostics.CodeAnalysis;
-using System.Linq.Expressions;
 using System.Reflection;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
@@ -75,7 +74,7 @@ public abstract class FunctionsFactory
 
         // Try to register class as function.
         var classAttributes = Attribute.GetCustomAttributes(type, typeof(FunctionSignatureAttribute));
-        if (classAttributes.Any())
+        if (classAttributes.Length > 0)
         {
             foreach (var classAttribute in classAttributes)
             {
@@ -83,7 +82,7 @@ public abstract class FunctionsFactory
                 if (firstConstructor != null)
                 {
                     var functionName = GetFunctionName(((FunctionSignatureAttribute)classAttribute).Signature, type);
-                    if (string.IsNullOrEmpty(functionName))
+                    if (functionName.Length < 1)
                     {
                         continue;
                     }
@@ -100,48 +99,41 @@ public abstract class FunctionsFactory
         var methods = type.GetMethods(BindingFlags.Static | BindingFlags.Public);
         foreach (var method in methods)
         {
-            var methodSignature = method.GetCustomAttributes<FunctionSignatureAttribute>().FirstOrDefault();
-            if (methodSignature == null)
+            var methodSignatures = method.GetCustomAttributes<FunctionSignatureAttribute>().ToArray();
+            if (methodSignatures.Length == 0)
             {
                 continue;
             }
 
             var methodParameters = method.GetParameters();
+            Delegate? standardDelegate = null;
             // The standard case: VariantValue FunctionName(IExecutionThread thread).
             if (methodParameters.Length == 1
                 && methodParameters[0].ParameterType == typeof(IExecutionThread)
                 && method.ReturnType == typeof(VariantValue))
             {
-                var args = Expression.Parameter(typeof(IExecutionThread), "input");
-                var func = Expression.Lambda<Func<IExecutionThread, VariantValue>>(Expression.Call(method, args), args)
-                    .Compile();
-                var metadata = FunctionMetadata.CreateFromAttributes(method);
-                list.Add(CreateFromSignature(methodSignature.Signature, func, metadata));
+                standardDelegate = method.CreateDelegate<Func<IExecutionThread, VariantValue>>();
             }
             // The async standard case: ValueTask<VariantValue> FunctionName(IExecutionThread thread, CancellationToken token).
             else if (methodParameters.Length == 2
-                && methodParameters[0].ParameterType == typeof(IExecutionThread)
-                && methodParameters[1].ParameterType == typeof(CancellationToken)
-                && method.ReturnType == typeof(ValueTask<VariantValue>))
+                     && methodParameters[0].ParameterType == typeof(IExecutionThread)
+                     && methodParameters[1].ParameterType == typeof(CancellationToken)
+                     && method.ReturnType == typeof(ValueTask<VariantValue>))
             {
-                var executionThreadParameter = Expression.Parameter(typeof(IExecutionThread), "thread");
-                var cancellationTokenParameter = Expression.Parameter(typeof(CancellationToken), "cancellationToken");
-                var func = Expression.Lambda<Func<IExecutionThread, CancellationToken, ValueTask<VariantValue>>>(
-                        Expression.Call(method, executionThreadParameter, cancellationTokenParameter),
-                        executionThreadParameter,
-                        cancellationTokenParameter)
-                    .Compile();
-                var metadata = FunctionMetadata.CreateFromAttributes(method);
-                list.Add(CreateFromSignature(methodSignature.Signature, func, metadata));
+                standardDelegate = method.CreateDelegate<Func<IExecutionThread, CancellationToken, ValueTask<VariantValue>>>();
             }
+
             // Non-standard case. Construct signature from function definition.
-            else
+            if (standardDelegate == null)
             {
-                var function = CreateFunctionFromMethodInfo(method);
-                if (function != null)
-                {
-                    list.Add(function);
-                }
+                list.AddRange(CreateFunctionsFromMethodInfo(method));
+                continue;
+            }
+
+            var metadata = FunctionMetadata.CreateFromAttributes(method);
+            foreach (var methodSignature in methodSignatures)
+            {
+                list.Add(CreateFromSignature(methodSignature.Signature, standardDelegate, metadata));
             }
         }
 
@@ -149,33 +141,31 @@ public abstract class FunctionsFactory
     }
 
     /// <summary>
-    /// Create function from <see cref="MethodInfo" />.
+    /// Create functions from <see cref="MethodInfo" />.
     /// </summary>
     /// <param name="method">Method.</param>
-    /// <returns>Instance of <see cref="IFunction" />.</returns>
-    protected IFunction? CreateFunctionFromMethodInfo(MethodInfo method)
+    /// <returns>Instances of <see cref="IFunction" />.</returns>
+    protected IEnumerable<IFunction> CreateFunctionsFromMethodInfo(MethodInfo method)
     {
-        var methodSignature = method.GetCustomAttributes<FunctionSignatureAttribute>().FirstOrDefault();
-        if (methodSignature == null)
-        {
-            return null;
-        }
-
-        var functionName = GetFunctionName(methodSignature.Signature, method);
-        var signature = FunctionFormatter.GetSignatureFromParameters(functionName, method.GetParameters(), method.ReturnType);
+        var methodSignatures = method.GetCustomAttributes<FunctionSignatureAttribute>();
         var @delegate = CreateDelegateFromMethod(method);
         var metadata = FunctionMetadata.CreateFromAttributes(method);
-        return CreateFromSignature(signature, @delegate, metadata);
+        foreach (var methodSignature in methodSignatures)
+        {
+            var functionName = GetFunctionName(methodSignature.Signature, method);
+            var signature = FunctionFormatter.GetSignatureFromParameters(functionName, method.GetParameters(), method.ReturnType);
+            yield return CreateFromSignature(signature, @delegate, metadata);
+        }
     }
 
-    private static string GetFunctionName(string signature, MemberInfo memberInfo)
+    private static ReadOnlySpan<char> GetFunctionName(string signature, MemberInfo memberInfo)
     {
         var functionName = GetFunctionName(signature);
         if (functionName.Length < 1)
         {
             functionName = FunctionFormatter.ToSnakeCase(memberInfo.Name);
         }
-        return functionName.ToString();
+        return functionName.Trim();
     }
 
     private static ReadOnlySpan<char> GetFunctionName(string signature)
@@ -185,15 +175,18 @@ public abstract class FunctionsFactory
         {
             return signature;
         }
-        return signature.AsSpan()[..indexOfLeftParen];
+        return signature.AsSpan()[..indexOfLeftParen].Trim();
     }
 
     private static Delegate CreateDelegateFromMethod(MethodBase method)
     {
+        var parameters = method.GetParameters();
+        var resultUnwrapper = CreateResultUnwrapper(method);
+
         async ValueTask<VariantValue> FunctionDelegate(IExecutionThread thread, CancellationToken cancellationToken)
         {
-            var parameters = method.GetParameters();
             var arr = new object?[parameters.Length];
+            var stackIndex = 0;
             for (var i = 0; i < parameters.Length; i++)
             {
                 var parameter = parameters[i];
@@ -206,13 +199,14 @@ public abstract class FunctionsFactory
                 {
                     arr[i] = cancellationToken;
                 }
-                else if (thread.Stack.FrameLength > i)
+                else if (thread.Stack.FrameLength > stackIndex)
                 {
-                    arr[i] = Converter.ConvertValue(thread.Stack[i], parameter.ParameterType);
+                    arr[i] = Converter.ConvertValue(thread.Stack[stackIndex++], parameter.ParameterType);
                 }
                 else if (parameter.HasDefaultValue)
                 {
                     arr[i] = parameter.DefaultValue;
+                    stackIndex++;
                 }
                 else
                 {
@@ -221,20 +215,13 @@ public abstract class FunctionsFactory
                 }
             }
             var result = method is ConstructorInfo constructorInfo
-                ? constructorInfo.Invoke(arr)
-                : method.Invoke(null, arr);
+                ? constructorInfo.Invoke(BindingFlags.DoNotWrapExceptions, binder: null, arr, culture: null)
+                : method.Invoke(null, BindingFlags.DoNotWrapExceptions, binder: null, arr, culture: null);
 
-            // If result is awaitable - try to wait.
-            if (result is Task task)
+            // If result is awaitable - wait and take the actual value.
+            if (resultUnwrapper != null)
             {
-                await task;
-                result = GetResultFromTask(method, task);
-            }
-            else if (result is ValueTask valueTask)
-            {
-                var valueTaskResolved = valueTask.AsTask();
-                await valueTaskResolved;
-                result = GetResultFromTask(method, valueTaskResolved);
+                result = await resultUnwrapper.Invoke(result);
             }
             return VariantValue.CreateFromObject(result);
         }
@@ -242,19 +229,79 @@ public abstract class FunctionsFactory
         return FunctionDelegate;
     }
 
+    /// <summary>
+    /// Create the delegate that awaits the method result if it is <see cref="Task" />, <see cref="Task{TResult}" />,
+    /// <see cref="ValueTask" /> or <see cref="ValueTask{TResult}" /> and returns the awaited value.
+    /// </summary>
+    /// <param name="method">Method.</param>
+    /// <returns>Unwrap delegate or <c>null</c> if the method result is not awaitable.</returns>
     [UnconditionalSuppressMessage("Trimming", "IL2075",
-        Justification = "The 'Result' property always exists on Task<T> and is preserved by the runtime.")]
-    private static object? GetResultFromTask(MethodBase method, object task)
+        Justification = "Task<T>.Result and ValueTask<T>.AsTask are public members of the method return type.")]
+    private static Func<object?, ValueTask<object?>>? CreateResultUnwrapper(MethodBase method)
     {
-        if (method is MethodInfo methodInfo
-            && methodInfo.ReturnType.IsGenericType)
+        // Constructors return the created instance.
+        if (method is not MethodInfo methodInfo)
         {
-            var resultProperty = task.GetType().GetProperty("Result");
-            if (resultProperty != null)
-            {
-                return resultProperty.GetValue(task);
-            }
+            return null;
         }
-        return VariantValue.Null;
+
+        var returnType = methodInfo.ReturnType;
+        if (returnType == typeof(Task) || returnType == typeof(ValueTask))
+        {
+            return UnwrapVoidAsync;
+        }
+        // Fast path for the most common case, no reflection needed.
+        if (returnType == typeof(ValueTask<VariantValue>))
+        {
+            return static async result => result is ValueTask<VariantValue> valueTask ? await valueTask : null;
+        }
+        if (!returnType.IsGenericType)
+        {
+            return null;
+        }
+
+        var genericTypeDefinition = returnType.GetGenericTypeDefinition();
+        if (genericTypeDefinition == typeof(Task<>))
+        {
+            var resultProperty = returnType.GetProperty(nameof(Task<>.Result))!;
+            return async result =>
+            {
+                if (result is not Task task)
+                {
+                    return null;
+                }
+                await task;
+                return resultProperty.GetValue(task);
+            };
+        }
+        if (genericTypeDefinition == typeof(ValueTask<>))
+        {
+            var asTaskMethod = returnType.GetMethod(nameof(ValueTask<>.AsTask), Type.EmptyTypes)!;
+            var resultProperty = asTaskMethod.ReturnType.GetProperty(nameof(Task<>.Result))!;
+            return async result =>
+            {
+                if (result == null)
+                {
+                    return null;
+                }
+                var task = (Task)asTaskMethod.Invoke(result, BindingFlags.DoNotWrapExceptions, binder: null, null, culture: null)!;
+                await task;
+                return resultProperty.GetValue(task);
+            };
+        }
+        return null;
+
+        static async ValueTask<object?> UnwrapVoidAsync(object? result)
+        {
+            if (result is Task task)
+            {
+                await task;
+            }
+            else if (result is ValueTask valueTask)
+            {
+                await valueTask;
+            }
+            return null;
+        }
     }
 }

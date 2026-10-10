@@ -38,7 +38,7 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
 
     private readonly List<Action<IFunctionsManager>> _registrations = new();
 
-    private Func<IExecutionThread, PluginsLoader> _pluginsLoaderFactory = _ => new NullPluginsLoader([]);
+    private Func<IExecutionThread, PluginsLoader> _pluginsLoaderFactory = _ => NullPluginsLoader.Instance;
 
     private Func<PluginsLoader, IPluginsManager> _pluginsManagerFactory = pluginLoader => new NullPluginsManager(pluginLoader);
 

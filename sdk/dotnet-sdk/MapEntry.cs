@@ -32,21 +32,21 @@ using Thrift.Processor;
 namespace QueryCat.Plugins.Sdk
 {
 
-  public partial class QuestionMessage : TBase
+  public partial class MapEntry : TBase
   {
 
-    public string Content { get; set; } = string.Empty;
+    public global::QueryCat.Plugins.Sdk.VariantValue? Key { get; set; }
 
-    public string Role { get; set; } = string.Empty;
+    public global::QueryCat.Plugins.Sdk.VariantValue? Value { get; set; }
 
-    public QuestionMessage()
+    public MapEntry()
     {
     }
 
-    public QuestionMessage(string @content, string @role) : this()
+    public MapEntry(global::QueryCat.Plugins.Sdk.VariantValue? @key, global::QueryCat.Plugins.Sdk.VariantValue? @value) : this()
     {
-      this.Content = @content;
-      this.Role = @role;
+      this.Key = @key;
+      this.Value = @value;
     }
 
     public async global::System.Threading.Tasks.Task ReadAsync(TProtocol iprot, CancellationToken cancellationToken)
@@ -54,8 +54,8 @@ namespace QueryCat.Plugins.Sdk
       iprot.IncrementRecursionDepth();
       try
       {
-        bool isset_content = false;
-        bool isset_role = false;
+        bool isset_key = false;
+        bool isset_value = false;
         TField field;
         await iprot.ReadStructBeginAsync(cancellationToken);
         while (true)
@@ -69,10 +69,11 @@ namespace QueryCat.Plugins.Sdk
           switch (field.ID)
           {
             case 1:
-              if (field.Type == TType.String)
+              if (field.Type == TType.Struct)
               {
-                Content = await iprot.ReadStringAsync(cancellationToken);
-                isset_content = true;
+                Key = new global::QueryCat.Plugins.Sdk.VariantValue();
+                await Key.ReadAsync(iprot, cancellationToken);
+                isset_key = true;
               }
               else
               {
@@ -80,10 +81,11 @@ namespace QueryCat.Plugins.Sdk
               }
               break;
             case 2:
-              if (field.Type == TType.String)
+              if (field.Type == TType.Struct)
               {
-                Role = await iprot.ReadStringAsync(cancellationToken);
-                isset_role = true;
+                Value = new global::QueryCat.Plugins.Sdk.VariantValue();
+                await Value.ReadAsync(iprot, cancellationToken);
+                isset_value = true;
               }
               else
               {
@@ -99,11 +101,11 @@ namespace QueryCat.Plugins.Sdk
         }
 
         await iprot.ReadStructEndAsync(cancellationToken);
-        if (!isset_content)
+        if (!isset_key)
         {
           throw new TProtocolException(TProtocolException.INVALID_DATA);
         }
-        if (!isset_role)
+        if (!isset_value)
         {
           throw new TProtocolException(TProtocolException.INVALID_DATA);
         }
@@ -119,26 +121,26 @@ namespace QueryCat.Plugins.Sdk
       oprot.IncrementRecursionDepth();
       try
       {
-        var tmp94 = new TStruct("QuestionMessage");
-        await oprot.WriteStructBeginAsync(tmp94, cancellationToken);
+        var tmp8 = new TStruct("MapEntry");
+        await oprot.WriteStructBeginAsync(tmp8, cancellationToken);
         #pragma warning disable IDE0017  // simplified init
-        var tmp95 = new TField();
-        if((Content != null))
+        var tmp9 = new TField();
+        if((Key != null))
         {
-          tmp95.Name = "content";
-          tmp95.Type = TType.String;
-          tmp95.ID = 1;
-          await oprot.WriteFieldBeginAsync(tmp95, cancellationToken);
-          await oprot.WriteStringAsync(Content, cancellationToken);
+          tmp9.Name = "key";
+          tmp9.Type = TType.Struct;
+          tmp9.ID = 1;
+          await oprot.WriteFieldBeginAsync(tmp9, cancellationToken);
+          await Key.WriteAsync(oprot, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
-        if((Role != null))
+        if((Value != null))
         {
-          tmp95.Name = "role";
-          tmp95.Type = TType.String;
-          tmp95.ID = 2;
-          await oprot.WriteFieldBeginAsync(tmp95, cancellationToken);
-          await oprot.WriteStringAsync(Role, cancellationToken);
+          tmp9.Name = "value";
+          tmp9.Type = TType.Struct;
+          tmp9.ID = 2;
+          await oprot.WriteFieldBeginAsync(tmp9, cancellationToken);
+          await Value.WriteAsync(oprot, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
         #pragma warning restore IDE0017  // simplified init
@@ -153,22 +155,22 @@ namespace QueryCat.Plugins.Sdk
 
     public override bool Equals(object? that)
     {
-      if (that is not QuestionMessage other) return false;
+      if (that is not MapEntry other) return false;
       if (ReferenceEquals(this, other)) return true;
-      return global::System.Object.Equals(Content, other.Content)
-        && global::System.Object.Equals(Role, other.Role);
+      return global::System.Object.Equals(Key, other.Key)
+        && global::System.Object.Equals(Value, other.Value);
     }
 
     public override int GetHashCode() {
       int hashcode = 157;
       unchecked {
-        if((Content != null))
+        if((Key != null))
         {
-          hashcode = (hashcode * 397) + Content.GetHashCode();
+          hashcode = (hashcode * 397) + Key.GetHashCode();
         }
-        if((Role != null))
+        if((Value != null))
         {
-          hashcode = (hashcode * 397) + Role.GetHashCode();
+          hashcode = (hashcode * 397) + Value.GetHashCode();
         }
       }
       return hashcode;
@@ -176,19 +178,19 @@ namespace QueryCat.Plugins.Sdk
 
     public override string ToString()
     {
-      var tmp96 = new StringBuilder("QuestionMessage(");
-      if((Content != null))
+      var tmp10 = new StringBuilder("MapEntry(");
+      if((Key != null))
       {
-        tmp96.Append(", Content: ");
-        Content.ToString(tmp96);
+        tmp10.Append(", Key: ");
+        Key.ToString(tmp10);
       }
-      if((Role != null))
+      if((Value != null))
       {
-        tmp96.Append(", Role: ");
-        Role.ToString(tmp96);
+        tmp10.Append(", Value: ");
+        Value.ToString(tmp10);
       }
-      tmp96.Append(')');
-      return tmp96.ToString();
+      tmp10.Append(')');
+      return tmp10.ToString();
     }
   }
 

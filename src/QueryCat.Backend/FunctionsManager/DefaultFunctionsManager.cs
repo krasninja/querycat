@@ -51,25 +51,15 @@ public sealed partial class DefaultFunctionsManager : IFunctionsManager
 
     private static void RegisterFormatters(string callFunctionName, string[] formatters)
     {
-        var extension = string.Empty;
-        var mimeType = string.Empty;
+        var mimeType = formatters.FirstOrDefault(f => !f.StartsWith('.') && f.Contains('/'));
         foreach (var formatterId in formatters)
         {
             Formatters.FormattersInfo.RegisterFormatter(formatterId,
                 (fm, et, args) => fm.CallFunctionAsync(callFunctionName, et, args));
 
-            if (formatterId.StartsWith('.') && formatterId.Length < 10)
+            if (mimeType != null && formatterId.StartsWith('.') && formatterId.Length < 10)
             {
-                extension = formatterId;
-            }
-            else if (!formatterId.StartsWith('.') && formatterId.Contains('/'))
-            {
-                mimeType = formatterId;
-            }
-
-            if (!string.IsNullOrEmpty(extension) && !string.IsNullOrEmpty(mimeType))
-            {
-                IOFunctions.MimeTypesProvider.SetMimeAndExtension(extension, mimeType);
+                IOFunctions.MimeTypesProvider.AddOrUpdate(formatterId, mimeType);
             }
         }
     }
@@ -94,7 +84,10 @@ public sealed partial class DefaultFunctionsManager : IFunctionsManager
                 && !string.IsNullOrEmpty(functionName))
             {
                 var functions = FindByName(functionName);
-                return functions.Length > 0 ? functions[0] : null;
+                if (functions.Length > 0)
+                {
+                    return functions[0];
+                }
             }
         }
 
@@ -158,7 +151,7 @@ public sealed partial class DefaultFunctionsManager : IFunctionsManager
     {
         var positionalIndex = 0;
 
-        var frame = executionThread.Stack.CreateFrame();
+        using var frame = executionThread.Stack.CreateFrame();
         foreach (var argument in function.Arguments)
         {
             if (callArguments.Positional.Count >= positionalIndex + 1)
@@ -178,7 +171,6 @@ public sealed partial class DefaultFunctionsManager : IFunctionsManager
         }
 
         var result = await FunctionCaller.CallAsync(function.Delegate, executionThread, cancellationToken);
-        frame.Dispose();
         return result;
     }
 

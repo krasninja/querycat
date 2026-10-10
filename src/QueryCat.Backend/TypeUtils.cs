@@ -7,6 +7,11 @@ namespace QueryCat.Backend;
 /// </summary>
 internal static class TypeUtils
 {
+    /// <summary>
+    /// Gets the underlying element type for collections and arrays.
+    /// </summary>
+    /// <param name="obj">The object to analyze.</param>
+    /// <returns>The element type, or the object's type if not a collection.</returns>
     internal static Type GetUnderlyingType(object obj) => GetUnderlyingType(obj.GetType());
 
     /// <summary>
@@ -18,18 +23,20 @@ internal static class TypeUtils
     {
         if (type.IsArray)
         {
-            return type.GetElementType()!;
+            return type.GetElementType() ?? type;
         }
 
         if (type.IsGenericType)
         {
-            if (typeof(IDictionary).IsAssignableFrom(type))
+            var genericArgs = type.GetGenericArguments();
+
+            if (typeof(IDictionary).IsAssignableFrom(type) && genericArgs.Length >= 2)
             {
-                return type.GetGenericArguments()[1];
+                return genericArgs[1]; // Value type.
             }
-            if (typeof(IEnumerable).IsAssignableFrom(type))
+            if (typeof(IEnumerable).IsAssignableFrom(type) && genericArgs.Length >= 1)
             {
-                return type.GetGenericArguments()[0];
+                return genericArgs[0];
             }
         }
 

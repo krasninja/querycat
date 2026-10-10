@@ -16,20 +16,28 @@ namespace QueryCat.Backend.Functions;
 internal static class StringFunctions
 {
     [SafeFunction]
-    [Description("Convert a string to lower case.")]
+    [Description("Converts a string to lower case.")]
     [FunctionSignature("lower(target: string): string")]
     public static VariantValue Lower(IExecutionThread thread)
     {
         var value = thread.Stack.Pop();
+        if (value.IsNull)
+        {
+            return VariantValue.Null;
+        }
         return new VariantValue(value.AsString.ToLower(Application.Culture));
     }
 
     [SafeFunction]
-    [Description("Convert a string to upper case.")]
+    [Description("Converts a string to upper case.")]
     [FunctionSignature("upper(target: string): string")]
     public static VariantValue Upper(IExecutionThread thread)
     {
         var value = thread.Stack.Pop();
+        if (value.IsNull)
+        {
+            return VariantValue.Null;
+        }
         return new VariantValue(value.AsString.ToUpper(Application.Culture));
     }
 
@@ -38,9 +46,17 @@ internal static class StringFunctions
     [FunctionSignature("ltrim(target: string, characters: string = ' '): string")]
     public static VariantValue LTrim(IExecutionThread thread)
     {
+        if (thread.Stack[0].IsNull)
+        {
+            return VariantValue.Null;
+        }
         var value = thread.Stack[0].AsString;
         var trimCharacters = thread.Stack[1].AsString;
-        return new VariantValue(value.TrimStart(trimCharacters.ToArray()));
+        if (string.IsNullOrEmpty(trimCharacters))
+        {
+            return new VariantValue(value);
+        }
+        return new VariantValue(value.TrimStart(trimCharacters));
     }
 
     [SafeFunction]
@@ -48,19 +64,35 @@ internal static class StringFunctions
     [FunctionSignature("rtrim(target: string, characters: string = ' '): string")]
     public static VariantValue RTrim(IExecutionThread thread)
     {
+        if (thread.Stack[0].IsNull)
+        {
+            return VariantValue.Null;
+        }
         var value = thread.Stack[0].AsString;
         var trimCharacters = thread.Stack[1].AsString;
-        return new VariantValue(value.TrimEnd(trimCharacters.ToArray()));
+        if (string.IsNullOrEmpty(trimCharacters))
+        {
+            return new VariantValue(value);
+        }
+        return new VariantValue(value.TrimEnd(trimCharacters));
     }
 
     [SafeFunction]
-    [Description("Remove the longest string consisting only of characters in characters from the start and end of string.")]
+    [Description("Removes the longest string consisting only of characters in characters from the start and end of string.")]
     [FunctionSignature("btrim(target: string, characters: string = ' '): string")]
     public static VariantValue BTrim(IExecutionThread thread)
     {
+        if (thread.Stack[0].IsNull)
+        {
+            return VariantValue.Null;
+        }
         var value = thread.Stack[0].AsString;
         var trimCharacters = thread.Stack[1].AsString;
-        return new VariantValue(value.Trim(trimCharacters.ToArray()));
+        if (string.IsNullOrEmpty(trimCharacters))
+        {
+            return new VariantValue(value);
+        }
+        return new VariantValue(value.Trim(trimCharacters));
     }
 
     [SafeFunction]
@@ -78,6 +110,14 @@ internal static class StringFunctions
         var value = thread.Stack[0].AsString;
         var start = (int)startValue.Value - 1;
         var count = !countValue.IsNull && countValue.AsInteger.HasValue ? (int)countValue.AsInteger.Value : value.Length - start;
+
+        var end = start + count;
+        start = Math.Max(start, 0);
+        count = end - start;
+        if (count < 1)
+        {
+            return new VariantValue(string.Empty);
+        }
         return new VariantValue(StringUtils.SafeSubstring(value, start, count));
     }
 
@@ -93,7 +133,7 @@ internal static class StringFunctions
     }
 
     [SafeFunction]
-    [Description("Convert value to string according to the given format.")]
+    [Description("Converts value to string according to the given format.")]
     [FunctionSignature("to_char(args: any, fmt?: string): string")]
     public static VariantValue ToChar(IExecutionThread thread)
     {
@@ -109,20 +149,32 @@ internal static class StringFunctions
     [FunctionSignature("\"position\"(substring: string, target: string): integer")]
     public static VariantValue Position(IExecutionThread thread)
     {
+        if (thread.Stack[0].IsNull)
+        {
+            return VariantValue.Null;
+        }
         var substring = thread.Stack[0].AsString;
         var target = thread.Stack[1].AsString;
         return new VariantValue(target.IndexOf(substring, StringComparison.Ordinal) + 1);
     }
 
     [SafeFunction]
-    [Description("Replaces all occurrences in string of substring from with substring to.")]
+    [Description("Replaces all occurrences in string of substring old with substring new.")]
     [FunctionSignature("replace(target: string, old: string, new: string): string")]
     public static VariantValue Replace(IExecutionThread thread)
     {
+        if (thread.Stack[0].IsNull)
+        {
+            return VariantValue.Null;
+        }
         var target = thread.Stack[0].AsString;
-        var from = thread.Stack[1].AsString;
-        var to = thread.Stack[2].AsString;
-        return new VariantValue(target.Replace(from, to));
+        var old = thread.Stack[1].AsString;
+        var @new = thread.Stack[2].AsString;
+        if (string.IsNullOrEmpty(old))
+        {
+            return new VariantValue(target);
+        }
+        return new VariantValue(target.Replace(old, @new));
     }
 
     [SafeFunction]
@@ -130,6 +182,10 @@ internal static class StringFunctions
     [FunctionSignature("reverse(target: string): string")]
     public static VariantValue Reverse(IExecutionThread thread)
     {
+        if (thread.Stack[0].IsNull)
+        {
+            return VariantValue.Null;
+        }
         var target = thread.Stack.Pop().AsString;
         var charArray = target.ToCharArray();
         Array.Reverse(charArray);
@@ -152,7 +208,7 @@ internal static class StringFunctions
     {
         var target = thread.Stack[0].AsString;
         var prefix = thread.Stack[1].AsString;
-        return new VariantValue(target.StartsWith(prefix));
+        return new VariantValue(target.StartsWith(prefix, StringComparison.Ordinal));
     }
 
     [SafeFunction]
@@ -177,9 +233,17 @@ internal static class StringFunctions
         n--;
         if (n < 0 || n >= split.Length)
         {
-            return VariantValue.FalseValue;
+            return new VariantValue(string.Empty);
         }
         return new VariantValue(split[n.Value]);
+    }
+
+    private sealed class VariantValueContainer(VariantValue value)
+    {
+        public VariantValue Value { get; } = value;
+
+        /// <inheritdoc />
+        public override string ToString() => Value;
     }
 
     [SafeFunction]
@@ -187,14 +251,14 @@ internal static class StringFunctions
     [FunctionSignature("string_to_table(target: string, delimiter?: string, null_string?: string := null): object<IRowsIterator>")]
     public static VariantValue StringToTable(IExecutionThread thread)
     {
-        IEnumerable<string> GetSplitItems(string target, string? delimiter, string? nullString)
+        static IEnumerable<VariantValue> GetSplitItems(string target, string? delimiter, string? nullString)
         {
             // If delimiter is null - return every character.
             if (delimiter == null)
             {
                 foreach (var chr in target)
                 {
-                    yield return chr.ToString();
+                    yield return new VariantValue(chr);
                 }
                 yield break;
             }
@@ -221,11 +285,15 @@ internal static class StringFunctions
 
         var target = thread.Stack[0].AsString;
         string? delimiter = !thread.Stack[1].IsNull ? thread.Stack[1] : null;
-        var nullString = thread.Stack[2].AsString;
+        string? nullString = thread.Stack[2].IsNull ? null : thread.Stack[2].AsString;
 
-        var result = GetSplitItems(target, delimiter, nullString).ToList();
-        var input = EnumerableRowsInput<string>.FromSource(result,
-            builder => builder.AddProperty(Column.ValueColumnTitle, p => p, "String part."));
+        var result = GetSplitItems(target, delimiter, nullString)
+            .Select(v => new VariantValueContainer(v))
+            .ToArray();
+        var input = EnumerableRowsInput<VariantValueContainer>.FromSource(
+            result,
+            builder => builder.AddProperty(Column.ValueColumnTitle, DataType.String, p => p.Value, "String part.")
+        );
         return VariantValue.CreateFromObject(input);
     }
 
@@ -265,7 +333,7 @@ internal static class StringFunctions
 
     [SafeFunction]
     [Description("Returns the number of times the regular expression pattern matches in the string.")]
-    [FunctionSignature("regexp_count(target: string, pattern: string, start?: integer = 1, flags?: string := null): string")]
+    [FunctionSignature("regexp_count(target: string, pattern: string, start?: integer = 1, flags?: string := null): integer")]
     public static VariantValue RegexpCount(IExecutionThread thread)
     {
         var startValue = thread.Stack[2].AsInteger;
@@ -285,7 +353,7 @@ internal static class StringFunctions
     }
 
     [SafeFunction]
-    [Description("Provides substitution of new text for substrings that match regular expression patterns.")]
+    [Description("Replaces all substrings that match the regular expression pattern with the replacement.")]
     [FunctionSignature("regexp_replace(target: string, pattern: string, replacement: string, start?: integer = 1, flags?: string := null): string")]
     public static VariantValue RegexpReplace(IExecutionThread thread)
     {
@@ -298,11 +366,12 @@ internal static class StringFunctions
         var target = thread.Stack[0].AsString;
         var pattern = thread.Stack[1].AsString;
         var replacement = thread.Stack[2].AsString;
-        var start = (int)startValue.Value - 1;
         var options = FlagsToRegexOptions(thread.Stack[4].AsString);
 
-        target = StringUtils.SafeSubstring(target, start);
-        var result = Regex.Replace(target, pattern, replacement, options);
+        // Convert 1-based start to 0-based and clamp to the string bounds.
+        var start = (int)Math.Clamp(startValue.Value - 1, 0, target.Length);
+
+        var result = new Regex(pattern, options).Replace(target, replacement, count: -1, startat: start);
         return new VariantValue(result);
     }
 
@@ -315,7 +384,8 @@ internal static class StringFunctions
         var pattern = thread.Stack[1].AsString;
         var flags = thread.Stack[2].AsString;
 
-        var result = Regex.Split(target, pattern, FlagsToRegexOptions(flags));
+        var regexFlags = FlagsToRegexOptions(flags) | RegexOptions.ExplicitCapture;
+        var result = Regex.Split(target, pattern, regexFlags);
         var input = EnumerableRowsInput<string>.FromSource(
             result,
             builder => builder.AddProperty(Column.ValueColumnTitle, p => p, "String part."));
@@ -335,8 +405,19 @@ internal static class StringFunctions
         }
 
         await using var stream = target.GetStream();
-        var buffer = new byte[target.Length];
-        await stream.ReadExactlyAsync(buffer, cancellationToken);
+        byte[] buffer;
+        if (stream.CanSeek)
+        {
+            buffer = new byte[stream.Length];
+            await stream.ReadExactlyAsync(buffer, cancellationToken);
+        }
+        else
+        {
+            using var ms = new MemoryStream();
+            await stream.CopyToAsync(ms, cancellationToken);
+            buffer = ms.ToArray();
+        }
+
         var result = Convert.ToBase64String(buffer);
         return new VariantValue(result);
     }
@@ -361,7 +442,7 @@ internal static class StringFunctions
             switch (flag)
             {
                 case 'i':
-                    options |= RegexOptions.IgnoreCase;
+                    options |= RegexOptions.IgnoreCase | RegexOptions.CultureInvariant;
                     break;
                 case 'm':
                 case 'n':
@@ -369,6 +450,12 @@ internal static class StringFunctions
                     break;
                 case 's':
                     options |= RegexOptions.Singleline;
+                    break;
+                case 'x':
+                    options |= RegexOptions.IgnorePatternWhitespace;
+                    break;
+                case 'c':
+                    options &= ~RegexOptions.IgnoreCase;
                     break;
             }
         }

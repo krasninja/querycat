@@ -15,7 +15,6 @@ internal sealed class ContinueStatementNode : StatementNode, ICommandNode
     /// <inheritdoc />
     public ContinueStatementNode(ContinueStatementNode node) : base(node)
     {
-        node.CopyTo(this);
     }
 
     /// <inheritdoc />

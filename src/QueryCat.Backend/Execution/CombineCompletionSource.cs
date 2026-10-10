@@ -74,9 +74,9 @@ public sealed class CombineCompletionSource : ICompletionSource
         }
     }
 
-    private bool IsNotEmpty(CompletionResult completionResult) => !string.IsNullOrEmpty(completionResult.Completion.Label);
+    private static bool IsNotEmpty(CompletionResult completionResult) => !string.IsNullOrEmpty(completionResult.Completion.Label);
 
-    private bool HasDuplicates(CompletionResult completionResult, IEnumerable<CompletionResult> currentItems)
+    private static bool HasDuplicates(CompletionResult completionResult, IEnumerable<CompletionResult> currentItems)
     {
         return currentItems.Any(
             i => completionResult.Completion.Kind == i.Completion.Kind

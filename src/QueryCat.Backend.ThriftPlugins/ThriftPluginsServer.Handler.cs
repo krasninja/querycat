@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.Logging;
 using QueryCat.Plugins.Client;
@@ -9,8 +10,8 @@ using CompletionResult = QueryCat.Plugins.Sdk.CompletionResult;
 using FunctionCallArguments = QueryCat.Plugins.Sdk.FunctionCallArguments;
 using FunctionCallArgumentsTypes = QueryCat.Plugins.Sdk.FunctionCallArgumentsTypes;
 using LogLevel = QueryCat.Plugins.Sdk.LogLevel;
-using QuestionRequest = QueryCat.Plugins.Sdk.QuestionRequest;
-using QuestionResponse = QueryCat.Plugins.Sdk.QuestionResponse;
+using ChatRequest = QueryCat.Plugins.Sdk.ChatRequest;
+using ChatResponse = QueryCat.Plugins.Sdk.ChatResponse;
 using VariantValue = QueryCat.Plugins.Sdk.VariantValue;
 
 namespace QueryCat.Backend.ThriftPlugins;
@@ -21,8 +22,8 @@ public partial class ThriftPluginsServer
     private sealed class Handler : QueryCatIOHandler, PluginsManager.IAsync
     {
         private readonly ThriftPluginsServer _thriftPluginsServer;
-        private readonly Dictionary<int, IExecutionScope> _scopeIdToScope = new();
-        private readonly Dictionary<IExecutionScope, int> _scopeToScopeId = new();
+        private readonly ConcurrentDictionary<int, IExecutionScope> _scopeIdToScope = new();
+        private readonly ConcurrentDictionary<IExecutionScope, int> _scopeToScopeId = new();
         private int _executionScopeId;
 
         public Handler(ThriftPluginsServer thriftPluginsServer, ObjectsStorage objectsStorage)
@@ -59,7 +60,7 @@ public partial class ThriftPluginsServer
             {
                 if (_thriftPluginsServer._logger.IsEnabled(Microsoft.Extensions.Logging.LogLevel.Debug))
                 {
-                    _thriftPluginsServer._logger.LogDebug("Available tokens:\n" + _thriftPluginsServer.DumpRegistrationTokens());
+                    _thriftPluginsServer._logger.LogDebug("Available tokens:\n{Tokens}", _thriftPluginsServer.DumpRegistrationTokens());
                 }
                 throw new QueryCatPluginException(ErrorType.INVALID_REGISTRATION_TOKEN, Resources.Errors.InvalidToken);
             }
@@ -71,7 +72,7 @@ public partial class ThriftPluginsServer
             {
                 context.PluginName = plugin_data.Name;
             }
-            if (string.IsNullOrEmpty(context.PluginName))
+            else
             {
                 context.PluginName = _thriftPluginsServer.GetPluginNameByRegistrationToken(registration_token);
             }
@@ -79,7 +80,7 @@ public partial class ThriftPluginsServer
             {
                 foreach (var function in plugin_data.Functions)
                 {
-                    context.Functions.Add(
+                    context.AddFunction(
                         new PluginContextFunction(
                             function.Signature,
                             function.Description,
@@ -191,13 +192,8 @@ public partial class ThriftPluginsServer
 
         private int AddScope(IExecutionScope scope)
         {
-            if (_scopeToScopeId.TryGetValue(scope, out var scopeId))
-            {
-                return scopeId;
-            }
-            scopeId = Interlocked.Increment(ref _executionScopeId);
+            var scopeId = _scopeToScopeId.GetOrAdd(scope, _ => Interlocked.Increment(ref _executionScopeId));
             _scopeIdToScope[scopeId] = scope;
-            _scopeToScopeId[scope] = scopeId;
             return scopeId;
         }
 
@@ -205,7 +201,7 @@ public partial class ThriftPluginsServer
         {
             if (_scopeToScopeId.Remove(scope, out var scopeId))
             {
-                _scopeIdToScope.Remove(scopeId);
+                _scopeIdToScope.Remove(scopeId, out _);
                 return scopeId;
             }
             return ThriftPluginExecutionScope.NoScopeId;
@@ -255,8 +251,7 @@ public partial class ThriftPluginsServer
         public async Task<List<CompletionResult>> GetCompletionsAsync(long token, string text, int position, CancellationToken cancellationToken = default)
         {
             await BeforeCallAsync(token, nameof(GetCompletionsAsync), cancellationToken);
-            var completions = await _thriftPluginsServer._executionThread.GetCompletionsAsync(text, position, null, cancellationToken)
-                .ToListAsync(cancellationToken);
+            var completions = await _thriftPluginsServer._executionThread.GetCompletionsAsync(text, position, null, cancellationToken);
             return completions.Select(SdkConvert.Convert).ToList();
         }
 
@@ -272,11 +267,15 @@ public partial class ThriftPluginsServer
             message = $"[{context.PluginName}] {message}";
             if (arguments != null && arguments.Count > 0)
             {
-                _thriftPluginsServer._logger.Log(logLevel, message, args: arguments.Cast<object>().ToArray());
+                _thriftPluginsServer._logger.Log(logLevel, "[{PluginName}] {Message} {Args}",
+                    context.PluginName,
+                    message,
+                    string.Join(", ", arguments.Cast<object>())
+                );
             }
             else
             {
-                _thriftPluginsServer._logger.Log(logLevel, message);
+                _thriftPluginsServer._logger.Log(logLevel, "[{PluginName}] {Message}", context.PluginName, message);
             }
         }
 
@@ -329,9 +328,9 @@ public partial class ThriftPluginsServer
             };
 
         /// <inheritdoc />
-        public async Task RegisterFunctionAsync(long token, List<Function>? functions, CancellationToken cancellationToken = default)
+        public async Task RegisterFunctionsAsync(long token, List<Function>? functions, CancellationToken cancellationToken = default)
         {
-            await BeforeCallAsync(token, nameof(RegisterFunctionAsync), cancellationToken);
+            await BeforeCallAsync(token, nameof(RegisterFunctionsAsync), cancellationToken);
             var context = _thriftPluginsServer.GetPluginContextByToken(token);
             if (functions == null)
             {
@@ -339,7 +338,7 @@ public partial class ThriftPluginsServer
             }
             foreach (var function in functions)
             {
-                context.Functions.Add(
+                context.AddFunction(
                     new PluginContextFunction(
                         function.Signature,
                         function.Description,
@@ -358,9 +357,11 @@ public partial class ThriftPluginsServer
             return base.BeforeCallAsync(token, methodName, cancellationToken);
         }
 
+        private static readonly Microsoft.Extensions.Logging.LogLevel[] _logLevels = Enum.GetValues<Microsoft.Extensions.Logging.LogLevel>();
+
         private Microsoft.Extensions.Logging.LogLevel GetCurrentLogLevel()
         {
-            foreach (var logLevel in Enum.GetValues<Microsoft.Extensions.Logging.LogLevel>())
+            foreach (var logLevel in _logLevels)
             {
                 if (_thriftPluginsServer._logger.IsEnabled(logLevel))
                 {
@@ -569,7 +570,7 @@ public partial class ThriftPluginsServer
         }
 
         /// <inheritdoc />
-        public async Task<byte[]> Blob_ReadAsync(long token, int object_blob_handle, int offset, int count,
+        public async Task<byte[]> Blob_ReadAsync(long token, int object_blob_handle, long offset, int count,
             CancellationToken cancellationToken = default)
         {
             try
@@ -631,7 +632,7 @@ public partial class ThriftPluginsServer
         {
             try
             {
-                return await _handler.Blob_GetContentTypeAsync(token, object_blob_handle, cancellationToken);
+                return await _handler.Blob_GetNameAsync(token, object_blob_handle, cancellationToken);
             }
             catch (Exception ex)
             {
@@ -713,7 +714,7 @@ public partial class ThriftPluginsServer
         }
 
         /// <inheritdoc />
-        public async Task<int> RowsSet_PositionAsync(long token, int object_rows_set_handle, CancellationToken cancellationToken = default)
+        public async Task<long> RowsSet_PositionAsync(long token, int object_rows_set_handle, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -727,7 +728,7 @@ public partial class ThriftPluginsServer
         }
 
         /// <inheritdoc />
-        public async Task<int> RowsSet_TotalRowsAsync(long token, int object_rows_set_handle, CancellationToken cancellationToken = default)
+        public async Task<long> RowsSet_TotalRowsAsync(long token, int object_rows_set_handle, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -741,7 +742,7 @@ public partial class ThriftPluginsServer
         }
 
         /// <inheritdoc />
-        public async Task RowsSet_SeekAsync(long token, int object_rows_set_handle, int offset, CursorSeekOrigin origin,
+        public async Task RowsSet_SeekAsync(long token, int object_rows_set_handle, long offset, CursorSeekOrigin origin,
             CancellationToken cancellationToken = default)
         {
             try
@@ -917,7 +918,7 @@ public partial class ThriftPluginsServer
         }
 
         /// <inheritdoc />
-        public async Task<QuestionResponse> AnswerAgent_AskAsync(long token, int object_answer_agent_handle, QuestionRequest? request,
+        public async Task<ChatResponse> AnswerAgent_AskAsync(long token, int object_answer_agent_handle, ChatRequest? request,
             CancellationToken cancellationToken = default)
         {
             try
@@ -1045,11 +1046,11 @@ public partial class ThriftPluginsServer
         }
 
         /// <inheritdoc />
-        public async Task RegisterFunctionAsync(long token, List<Function>? functions, CancellationToken cancellationToken = default)
+        public async Task RegisterFunctionsAsync(long token, List<Function>? functions, CancellationToken cancellationToken = default)
         {
             try
             {
-                await _handler.RegisterFunctionAsync(token, functions, cancellationToken);
+                await _handler.RegisterFunctionsAsync(token, functions, cancellationToken);
             }
             catch (Exception ex)
             {

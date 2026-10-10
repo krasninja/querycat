@@ -5,15 +5,21 @@ namespace QueryCat.Backend.Parser;
 /// <summary>
 /// The exception occurs on semantic error.
 /// </summary>
-[Serializable]
-#pragma warning disable CA2229
 public class SyntaxException : QueryCatException
-#pragma warning restore CA2229
 {
+    /// <summary>
+    /// Query text.
+    /// </summary>
     public string Query { get; }
 
+    /// <summary>
+    /// Line with syntax error.
+    /// </summary>
     public int Line { get; }
 
+    /// <summary>
+    /// Cursor position with syntax error.
+    /// </summary>
     public int Position { get; }
 
     /// <summary>

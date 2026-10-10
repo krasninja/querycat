@@ -23,6 +23,10 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QueryCat.Tests.QueryRunner", "src\QueryCat.Tests.QueryRunner\QueryCat.Tests.QueryRunner.csproj", "{EDB1F59A-C8D8-433F-8541-0168D4A118C8}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Plugin", "Plugin", "{3A91C0A2-3489-4CC5-981B-9337510B3898}"
+	ProjectSection(SolutionItems) = preProject
+		sdk\openapi.yaml = sdk\openapi.yaml
+		sdk\QueryCat.thrift = sdk\QueryCat.thrift
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QueryCat.Plugins.Sdk", "sdk\dotnet-sdk\QueryCat.Plugins.Sdk.csproj", "{F9F52BBF-8435-4D70-B691-A6FEFB38E21B}"
 EndProject

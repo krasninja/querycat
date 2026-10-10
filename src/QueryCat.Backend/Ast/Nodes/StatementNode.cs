@@ -22,11 +22,15 @@ internal abstract class StatementNode : AstNode
 
     public StatementNode(StatementNode node) : this((IAstNode)node.RootNode.Clone())
     {
-        if (node.NextNode != null)
-        {
-            NextNode = (StatementNode)node.NextNode.Clone();
-        }
         node.CopyTo(this);
+    }
+
+    internal static void FixNextNodeLink(IReadOnlyList<StatementNode> statements)
+    {
+        for (var i = 0; i < statements.Count; i++)
+        {
+            statements[i].NextNode = i + 1 < statements.Count ? statements[i + 1] : null;
+        }
     }
 
     /// <inheritdoc />

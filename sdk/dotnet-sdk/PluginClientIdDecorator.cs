@@ -25,8 +25,8 @@ public sealed class PluginClientIdDecorator : Plugin.IAsync
     }
 
     /// <inheritdoc />
-    public Task ShutdownAsync(CancellationToken cancellationToken = default)
-        => _client.ShutdownAsync(cancellationToken);
+    public Task ShutdownAsync(long token, CancellationToken cancellationToken = default)
+        => _client.ShutdownAsync(token, cancellationToken);
 
     /// <inheritdoc />
     public Task<List<Column>> RowsSet_GetColumnsAsync(long token, int object_rows_set_handle, CancellationToken cancellationToken = default)
@@ -45,15 +45,15 @@ public sealed class PluginClientIdDecorator : Plugin.IAsync
         => _client.RowsSet_ResetAsync(token, object_rows_set_handle, cancellationToken);
 
     /// <inheritdoc />
-    public Task<int> RowsSet_PositionAsync(long token, int object_rows_set_handle, CancellationToken cancellationToken = default)
+    public Task<long> RowsSet_PositionAsync(long token, int object_rows_set_handle, CancellationToken cancellationToken = default)
         => _client.RowsSet_PositionAsync(token, object_rows_set_handle, cancellationToken);
 
     /// <inheritdoc />
-    public Task<int> RowsSet_TotalRowsAsync(long token, int object_rows_set_handle, CancellationToken cancellationToken = default)
+    public Task<long> RowsSet_TotalRowsAsync(long token, int object_rows_set_handle, CancellationToken cancellationToken = default)
         => _client.RowsSet_TotalRowsAsync(token, object_rows_set_handle, cancellationToken);
 
     /// <inheritdoc />
-    public Task RowsSet_SeekAsync(long token, int object_rows_set_handle, int offset, CursorSeekOrigin origin,
+    public Task RowsSet_SeekAsync(long token, int object_rows_set_handle, long offset, CursorSeekOrigin origin,
         CancellationToken cancellationToken = default)
         => _client.RowsSet_SeekAsync(token, object_rows_set_handle, offset, origin, cancellationToken);
 
@@ -121,7 +121,7 @@ public sealed class PluginClientIdDecorator : Plugin.IAsync
         => _client.CallFunctionAsync(token, function_name, call_args, object_handle, cancellationToken);
 
     /// <inheritdoc />
-    public Task<byte[]> Blob_ReadAsync(long token, int object_blob_handle, int offset, int count, CancellationToken cancellationToken = default)
+    public Task<byte[]> Blob_ReadAsync(long token, int object_blob_handle, long offset, int count, CancellationToken cancellationToken = default)
         => _client.Blob_ReadAsync(token, object_blob_handle, offset, count, cancellationToken);
 
     /// <inheritdoc />
@@ -141,11 +141,11 @@ public sealed class PluginClientIdDecorator : Plugin.IAsync
         => _client.Blob_GetNameAsync(token, object_blob_handle, cancellationToken);
 
     /// <inheritdoc />
-    public Task<string> ServeAsync(CancellationToken cancellationToken = default)
-        => _client.ServeAsync(cancellationToken);
+    public Task<string> ServeAsync(long token, CancellationToken cancellationToken = default)
+        => _client.ServeAsync(token, cancellationToken);
 
     /// <inheritdoc />
-    public Task<QuestionResponse> AnswerAgent_AskAsync(long token, int object_answer_agent_handle, QuestionRequest? request,
+    public Task<ChatResponse> AnswerAgent_AskAsync(long token, int object_answer_agent_handle, ChatRequest? request,
         CancellationToken cancellationToken = default)
         => _client.AnswerAgent_AskAsync(token, object_answer_agent_handle, request, cancellationToken);
 

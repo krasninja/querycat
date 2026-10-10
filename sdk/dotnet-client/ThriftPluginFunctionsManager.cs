@@ -46,9 +46,8 @@ public sealed class ThriftPluginFunctionsManager : IFunctionsManager
         async Task<VariantValue> ExecuteDelegate(IExecutionThread t, CancellationToken ct)
         {
             var args = new FunctionCallArguments();
-            while (t.Stack.FrameLength > 0)
+            foreach (var arg in t.Stack)
             {
-                var arg = t.Stack.Pop();
                 args.Add(SdkConvert.Convert(arg));
             }
 
@@ -86,12 +85,16 @@ public sealed class ThriftPluginFunctionsManager : IFunctionsManager
         {
             AsyncUtils.RunSync(async ct =>
             {
-                await _client.ThriftClient.RegisterFunctionAsync(
+                await _client.ThriftClient.RegisterFunctionsAsync(
                     _client.Token,
                     [new Function(
                         FunctionFormatter.GetSignature(function),
                         function.Description,
-                        function.IsAggregate)],
+                        function.IsAggregate)
+                    {
+                        FormatterIds = function.Formatters.ToList(),
+                        IsSafe = function.IsSafe,
+                    }],
                     ct);
             });
         }

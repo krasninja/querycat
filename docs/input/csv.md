@@ -1,6 +1,6 @@
 # CSV
 
-The CSV input format parses comma-separated values text files. In a CSV text file, each line consists of one record, and fields in a record are separated by commas. Depending on the application, the first line in a CSV file might be a "header", containing the labels of the record fields. The QueryCat can analyze the first rows to understand whether a file has header or not. Here is the sample CSV file with header:
+The CSV input format parses comma-separated values text files. In a CSV text file, each line consists of one record, and fields in a record are separated by commas. Depending on the application, the first line in a CSV file might be a "header", containing the labels of the record fields. QueryCat can analyze the first rows to understand whether a file has header or not. Here is the sample CSV file with header:
 
 ```raw
 date,name,action

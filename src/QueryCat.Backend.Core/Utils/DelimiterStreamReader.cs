@@ -1,4 +1,4 @@
-using System.Buffers;
+﻿using System.Buffers;
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.CompilerServices;
@@ -22,7 +22,7 @@ public class DelimiterStreamReader
      *     csv.GetField(1); // Read column #1 as string.
      * }
      */
-    private const int DefaultBufferSize = 0x5000; // ~20 KB
+    private const int DefaultBufferSize = 0x10000; // ~65 KB
 
     private const int StateRoute = 0;
     private const int StateReadField = 1;
@@ -31,9 +31,23 @@ public class DelimiterStreamReader
     private const int StateAdvanceNewLine1 = 11;
     private const int StateAdvanceNewLine2 = 12;
 
+    private const int MaximumStringBuilderRetainedCapacity = 4 * 1024;
+
     private static readonly char[] _autoDetectDelimiters = [',', '\t', ';', '|'];
     private static readonly char[] _endOfLineCharacters = ['\n', '\r'];
     private static readonly SearchValues<char> _endOfLineCharactersSearch = SearchValues.Create(_endOfLineCharacters);
+
+    private static readonly SimpleObjectPool<StringBuilder> _stringBuilderPool = new(
+        () => new StringBuilder(capacity: 100),
+        sb =>
+        {
+            if (sb.Capacity > MaximumStringBuilderRetainedCapacity)
+            {
+                return false;
+            }
+            sb.Clear();
+            return true;
+        });
 
     public delegate void OnDelimiterDelegate(char ch, long position, out bool countField, out bool endLine);
 
@@ -48,9 +62,9 @@ public class DelimiterStreamReader
     public bool AsyncRead { get; set; } = OperatingSystem.IsBrowser();
 
     /// <summary>
-    /// Current line index.
+    /// Current record index.
     /// </summary>
-    public long LineIndex { get; private set; } = -1;
+    public long RecordIndex { get; private set; } = -1;
 
     /// <summary>
     /// Quotes escape mode.
@@ -145,11 +159,13 @@ public class DelimiterStreamReader
     {
         public DynamicBuffer<char>.DynamicBufferPosition Start { get; set; }
 
-        public int Length { get; set; } = -1;
+        public long Length { get; set; } = -1;
 
-        public ulong QuotesCount { get; set; }
+        public int QuotesCount { get; set; }
 
         public char QuoteCharacter { get; set; }
+
+        public long EndQuotePosition { get; set; }
 
         public bool HasQuotes
         {
@@ -162,7 +178,7 @@ public class DelimiterStreamReader
         public bool IsEmpty
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => (uint)Length == 0;
+            get => (ulong)Length == 0;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -170,6 +186,7 @@ public class DelimiterStreamReader
         {
             Length = 0;
             QuotesCount = 0;
+            EndQuotePosition = 0;
         }
     }
 
@@ -177,12 +194,31 @@ public class DelimiterStreamReader
     private readonly StreamReader _streamReader;
     private readonly ReaderOptions _options;
     private char[] _stopCharacters = [];
+    private int _parseState = StateReadField;
+    private bool _noData;
+
+    // Options snapshot.
     private SearchValues<char> _stopCharactersSearch = SearchValues.Create(ReadOnlySpan<char>.Empty);
     private SearchValues<char> _delimitersSearch = SearchValues.Create(ReadOnlySpan<char>.Empty);
     private SearchValues<char> _delimitersEndOfLineSearch = SearchValues.Create(ReadOnlySpan<char>.Empty);
     private SearchValues<char> _quoteCharactersSearch = SearchValues.Create(ReadOnlySpan<char>.Empty);
-    private int _parseState = 1;
-    private bool _noData;
+    private bool _skipRepeatedDelimiters;
+    private bool _skipEmptyLines;
+    private bool _includeDelimiter;
+    private bool _enableQuotesModeOnFieldStart;
+    private bool _completeOnEndOfLine;
+    private bool _needDetectDelimiter;
+    private QuotesMode _quotesEscapeStyle;
+
+    // State support.
+    private char _stChar = '\0';
+    private FieldInfo? _stCurrentField = null;
+    private long _stFieldStartOffset = 0L;
+    private DynamicBuffer<char>.DynamicBufferPosition _stFieldStartPosition = DynamicBuffer<char>.DynamicBufferPosition.Null;
+    private char _stQuoteChar = '\0';
+    private int _stQuotesCount = 0;
+    private long _stEndQuotePosition = 0L;
+    private bool _stCompleteLine = false;
 
     // Stores positions of delimiters for columns.
     private FieldInfo[] _fieldInfos;
@@ -213,10 +249,20 @@ public class DelimiterStreamReader
         {
             _fieldInfos[i] = new FieldInfo();
         }
-        InitStopCharacters();
+        InitOptions();
     }
 
-    private void InitStopCharacters()
+    /// <summary>
+    /// Constructor.
+    /// </summary>
+    /// <param name="stream">Stream.</param>
+    /// <param name="options">Reader options.</param>
+    public DelimiterStreamReader(Stream stream, ReaderOptions? options = null)
+        : this(new StreamReader(stream, bufferSize: DefaultBufferSize), options)
+    {
+    }
+
+    private void InitOptions()
     {
         var endOfLineCharacters = _options.CompleteOnEndOfLine ? _endOfLineCharacters : [];
         _stopCharacters = _options.Delimiters
@@ -233,6 +279,14 @@ public class DelimiterStreamReader
             .ToArray()
         );
         _quoteCharactersSearch = SearchValues.Create(_options.QuoteChars);
+
+        _skipRepeatedDelimiters = _options.SkipRepeatedDelimiters;
+        _skipEmptyLines = _options.SkipEmptyLines;
+        _includeDelimiter = _options.IncludeDelimiter;
+        _enableQuotesModeOnFieldStart = _options.EnableQuotesModeOnFieldStart;
+        _completeOnEndOfLine = _options.CompleteOnEndOfLine;
+        _quotesEscapeStyle = _options.QuotesEscapeStyle;
+        _needDetectDelimiter = _options.Delimiters.Length == 0 && _options.DetectDelimiter;
     }
 
     /// <summary>
@@ -247,7 +301,7 @@ public class DelimiterStreamReader
     /// <returns><c>True</c> if the next data is available, <c>false</c> otherwise.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ValueTask<bool> ReadLineAsync(CancellationToken cancellationToken = default)
-        => ReadFields(lineMode: true, cancellationToken: cancellationToken);
+        => ReadFieldsAsync(lineMode: true, cancellationToken: cancellationToken);
 
     /// <summary>
     /// Read the line.
@@ -255,14 +309,16 @@ public class DelimiterStreamReader
     /// <returns><c>True</c> if the next data is available, <c>false</c> otherwise.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ValueTask<bool> ReadAsync(CancellationToken cancellationToken = default)
-        => ReadFields(lineMode: false, cancellationToken: cancellationToken);
+        => ReadFieldsAsync(lineMode: false, cancellationToken: cancellationToken);
 
-    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    private async ValueTask<bool> ReadFields(bool lineMode = false, CancellationToken cancellationToken = default)
+    private async ValueTask<bool> ReadFieldsAsync(bool lineMode = false, CancellationToken cancellationToken = default)
     {
         _dynamicBuffer.Advance(_currentDelimiterPosition);
         _currentDelimiterPosition = 0;
-        LineIndex++;
+        _fieldInfoLastIndex = 0;
+        _stCurrentField = null;
+        _stCompleteLine = false;
+        RecordIndex++;
 
         if (_dynamicBuffer.IsEmpty || _noData)
         {
@@ -274,53 +330,15 @@ public class DelimiterStreamReader
             }
             _noData = false;
         }
-        if (_options.Delimiters.Length == 0)
+        if (_needDetectDelimiter)
         {
             await FindDelimiterAsync(cancellationToken)
                 .ConfigureAwait(false);
         }
 
-        _fieldInfoLastIndex = 0;
         _bufferReader.Reset();
 
-        var ch = '\0';
-        var currentField = _fieldInfos[0];
-        var fieldStartOffset = 0L;
-        var fieldStartPosition = DynamicBuffer<char>.DynamicBufferPosition.Null;
-        var quoteChar = '\0';
-        var quotesCount = 0UL;
-        var completeLine = false;
-
-        void AddField()
-        {
-            var addField = true;
-            if (OnDelimiter != null && _delimitersSearch.Contains(ch))
-            {
-                OnDelimiter.Invoke(ch, _bufferReader.Consumed, out addField, out completeLine);
-            }
-            if (addField)
-            {
-                currentField = MoveToNextFieldInfo();
-                if (!_options.IncludeDelimiter)
-                {
-                    currentField.Start = fieldStartPosition;
-                    currentField.Length = (int)(_bufferReader.Consumed - fieldStartOffset);
-                }
-                else
-                {
-                    currentField.Start = _dynamicBuffer.GetPosition(-1, fieldStartPosition);
-                    currentField.Length = (int)(_bufferReader.Consumed - fieldStartOffset) + 1;
-                }
-                currentField.QuoteCharacter = quoteChar;
-                currentField.QuotesCount = quotesCount;
-                quotesCount = 0;
-                quoteChar = '\0';
-#if DEBUG
-                var value = _dynamicBuffer.Slice(currentField.Start, currentField.Length);
-                Trace("found field: " + value.ToString());
-#endif
-            }
-        }
+        var stopCharactersSearch = lineMode ? _endOfLineCharactersSearch : _stopCharactersSearch;
 
         Trace("start line");
         while (true)
@@ -332,18 +350,18 @@ public class DelimiterStreamReader
                 // StateReadField
                 if (_parseState == StateReadField)
                 {
-                    if (_options.SkipRepeatedDelimiters)
+                    if (_skipRepeatedDelimiters)
                     {
                         _bufferReader.AdvancePastAny(_delimitersSearch);
                     }
-                    if (_options.SkipEmptyLines && _fieldInfoLastIndex < 1)
+                    if (_skipEmptyLines && _fieldInfoLastIndex < 1)
                     {
-                        _bufferReader.AdvancePastAny(_endOfLineCharactersSearch);
+                        _bufferReader.AdvancePastAny(_endOfLineCharacters);
                     }
-                    fieldStartOffset = _bufferReader.Consumed;
-                    fieldStartPosition = _bufferReader.Position;
+                    _stFieldStartOffset = _bufferReader.Consumed;
+                    _stFieldStartPosition = _bufferReader.Position;
                     // Advance to any stop character (delimiter, quote, end of line).
-                    if (_bufferReader.TryAdvanceToAny(_stopCharactersSearch, advancePastDelimiter: false))
+                    if (_bufferReader.TryAdvanceToAny(stopCharactersSearch, advancePastDelimiter: false))
                     {
                         _parseState = StateRoute;
                         Trace("state change");
@@ -358,20 +376,20 @@ public class DelimiterStreamReader
                 // StateRoute
                 if (_parseState == StateRoute)
                 {
-                    ch = _bufferReader.Current;
-                    if (!lineMode && _delimitersSearch.Contains(ch))
+                    _stChar = _bufferReader.Current;
+                    if (!lineMode && _delimitersSearch.Contains(_stChar))
                     {
-                        AddField();
+                        ReadFieldsAsync_AddField(true);
                         _parseState = StateAdvanceDelimiter;
                         Trace("state change");
                     }
-                    else if (_quoteCharactersSearch.Contains(ch))
+                    else if (_quoteCharactersSearch.Contains(_stChar))
                     {
                         // Case: line has quote inside, but starts without it
                         // > A "B"
-                        if (_options.EnableQuotesModeOnFieldStart
-                            && fieldStartPosition != _bufferReader.Position
-                            && !HasOnlyWhitespaces(fieldStartPosition))
+                        if (_enableQuotesModeOnFieldStart
+                            && _stFieldStartOffset != _bufferReader.Consumed
+                            && !HasOnlyWhitespaces(_stFieldStartPosition, _bufferReader.Consumed - _stFieldStartOffset))
                         {
                             // Try to find next delimiter or end of line.
                             if (_bufferReader.TryAdvanceToAny(_delimitersEndOfLineSearch, advancePastDelimiter: false))
@@ -380,22 +398,23 @@ public class DelimiterStreamReader
                                 continue;
                             }
                             _parseState = StateReadField;
+                            _bufferReader.Seek(_stFieldStartPosition);
                             Trace("no data break");
                             break;
                         }
                         _parseState = StateReadQuoteField;
                         Trace("state change");
                     }
-                    else if (_endOfLineCharactersSearch.Contains(ch) || _noData)
+                    else if (_stChar == '\n' || _stChar == '\r' || _noData)
                     {
                         _currentDelimiterPosition = _bufferReader.Consumed;
                         _parseState = StateAdvanceNewLine1;
                         Trace("state change");
-                        AddField();
+                        ReadFieldsAsync_AddField(false);
                         return true;
                     }
 
-                    if (completeLine)
+                    if (_stCompleteLine)
                     {
                         _currentDelimiterPosition = _bufferReader.Consumed;
                         if (_bufferReader.Advance(1) < 1)
@@ -423,12 +442,12 @@ public class DelimiterStreamReader
                 // StateReadQuoteField
                 if (_parseState == StateReadQuoteField)
                 {
-                    fieldStartOffset = _bufferReader.Consumed;
-                    fieldStartPosition = _bufferReader.Position;
-                    quoteChar = ch;
-                    if (!ReadQuoteField(quoteChar, out quotesCount))
+                    _stFieldStartOffset = _bufferReader.Consumed;
+                    _stFieldStartPosition = _bufferReader.Position;
+                    _stQuoteChar = _stChar;
+                    if (!ReadQuoteField())
                     {
-                        _bufferReader.Seek(fieldStartPosition);
+                        _bufferReader.Seek(_stFieldStartPosition);
                         Trace("no data break");
                         break;
                     }
@@ -445,7 +464,8 @@ public class DelimiterStreamReader
                         Trace("no data break");
                         break;
                     }
-                    _parseState = _endOfLineCharactersSearch.Contains(_bufferReader.Current)
+                    var current = _bufferReader.Current;
+                    _parseState = current == '\n' || current == '\r'
                         ? StateAdvanceNewLine2
                         : StateReadField;
                     Trace("state change");
@@ -474,18 +494,54 @@ public class DelimiterStreamReader
                 {
                     _bufferReader.AdvanceToEnd();
                     // With completeLine=true we've already added the field.
-                    if (!completeLine)
+                    if (!_stCompleteLine)
                     {
-                        AddField();
+                        _stChar = '\0';
+                        ReadFieldsAsync_AddField(false);
                     }
-                    ++currentField.Length; // Include last character.
                     _parseState = StateAdvanceNewLine1;
                     Trace("state change");
 
                     _currentDelimiterPosition = _bufferReader.Consumed;
+                    if (_stCurrentField != null && _stCurrentField.QuotesCount % 2 == 1)
+                    {
+                        _stCurrentField.EndQuotePosition = _bufferReader.Consumed;
+                    }
                 }
                 return !NoFields();
             }
+        }
+    }
+
+    private void ReadFieldsAsync_AddField(bool isStCharDelimiter)
+    {
+        var addField = true;
+        if (OnDelimiter != null && isStCharDelimiter)
+        {
+            OnDelimiter.Invoke(_stChar, _bufferReader.Consumed, out addField, out _stCompleteLine);
+        }
+        if (addField)
+        {
+            _stCurrentField = MoveToNextFieldInfo();
+            _stCurrentField.Start = _stFieldStartPosition;
+            _stCurrentField.Length = _bufferReader.Consumed - _stFieldStartOffset;
+            if (_includeDelimiter && isStCharDelimiter)
+            {
+                _stCurrentField.Length++;
+            }
+            _stCurrentField.QuoteCharacter = _stQuoteChar;
+            _stCurrentField.QuotesCount = _stQuotesCount;
+            _stCurrentField.EndQuotePosition = _stEndQuotePosition;
+            _stQuotesCount = 0;
+            _stQuoteChar = '\0';
+            _stEndQuotePosition = 0;
+#if DEBUG
+            if (_stCurrentField.Length > -1)
+            {
+                var value = _dynamicBuffer.Slice(_stCurrentField.Start, _stCurrentField.Length);
+                Trace("found field: " + value.ToString());
+            }
+#endif
         }
     }
 
@@ -496,21 +552,25 @@ public class DelimiterStreamReader
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private bool HasOnlyWhitespaces(DynamicBuffer<char>.DynamicBufferPosition startPosition)
+    private bool HasOnlyWhitespaces(DynamicBuffer<char>.DynamicBufferPosition startPosition, long length)
     {
-        for (var pos = startPosition; pos != _bufferReader.Position; pos = _dynamicBuffer.GetPosition(1, pos))
+        var end = _dynamicBuffer.GetPosition(length, startPosition);
+        var onlyWhiteSpaces = true;
+        foreach (var chunk in _dynamicBuffer.GetChunks(startPosition, end))
         {
-            if (!char.IsWhiteSpace(pos.Value))
+            onlyWhiteSpaces = chunk.Span.IsWhiteSpace();
+            if (!onlyWhiteSpaces)
             {
-                return false;
+                break;
             }
         }
-        return true;
+        return onlyWhiteSpaces;
     }
 
-    private bool ReadQuoteField(char quoteChar, out ulong quotesCount)
+    private bool ReadQuoteField()
     {
-        quotesCount = 1;
+        _stQuotesCount = 1;
+        _stEndQuotePosition = 0;
 
         // We are on the quote, pass it.
         if (_bufferReader.Advance(1) < 1)
@@ -520,17 +580,18 @@ public class DelimiterStreamReader
         var inQuotes = true;
 
         while (inQuotes
-                   ? _bufferReader.TryAdvanceTo(quoteChar, advancePastDelimiter: false)
+                   ? _bufferReader.TryAdvanceTo(_stQuoteChar, advancePastDelimiter: false)
                    : _bufferReader.TryAdvanceToAny(_stopCharactersSearch, advancePastDelimiter: false))
         {
             var ch = _bufferReader.Current;
-            if (ch == quoteChar)
+            if (ch == _stQuoteChar)
             {
-                if (_options.QuotesEscapeStyle == QuotesMode.DoubleQuotes
-                    || (_options.QuotesEscapeStyle == QuotesMode.Backslash && _bufferReader.Past != '\\'))
+                if (_quotesEscapeStyle == QuotesMode.DoubleQuotes
+                    || (_quotesEscapeStyle == QuotesMode.Backslash && _bufferReader.Past != '\\'))
                 {
                     inQuotes = !inQuotes;
-                    quotesCount++;
+                    _stEndQuotePosition = _bufferReader.Consumed;
+                    _stQuotesCount++;
                 }
                 if (_bufferReader.Advance(1) < 1)
                 {
@@ -538,16 +599,19 @@ public class DelimiterStreamReader
                     return false;
                 }
             }
-            else if (!inQuotes && (_delimitersSearch.Contains(ch) || _endOfLineCharacters.Contains(ch)))
+            else if (!inQuotes && (_delimitersSearch.Contains(ch) || ch == '\n' || ch == '\r'))
             {
                 return true;
             }
         }
 
+        if (_stEndQuotePosition < 1)
+        {
+            _stEndQuotePosition = _bufferReader.Consumed;
+        }
         return _noData;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private async ValueTask<int> ReadNextBufferDataAsync(CancellationToken cancellationToken = default)
     {
         var buffer = _dynamicBuffer.Allocate();
@@ -562,10 +626,14 @@ public class DelimiterStreamReader
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private FieldInfo MoveToNextFieldInfo()
     {
-        if ((uint)_fieldInfoLastIndex >= (uint)_fieldInfos.LongLength)
+        if ((uint)_fieldInfoLastIndex >= (uint)_fieldInfos.Length)
         {
-            Array.Resize(ref _fieldInfos, _fieldInfoLastIndex + 1);
-            _fieldInfos[^1] = new FieldInfo();
+            var oldLength = _fieldInfos.Length;
+            Array.Resize(ref _fieldInfos, oldLength * 2);
+            for (var i = oldLength; i < _fieldInfos.Length; i++)
+            {
+                _fieldInfos[i] = new FieldInfo();
+            }
         }
 
         var field = _fieldInfos[_fieldInfoLastIndex++];
@@ -580,7 +648,7 @@ public class DelimiterStreamReader
     /// <returns><c>True</c> if there are more records to read, <c>false</c> otherwise.</returns>
     public ReadOnlySpan<char> GetField(int columnIndex)
     {
-        if (columnIndex + 1 > _fieldInfoLastIndex)
+        if ((uint)columnIndex >= (uint)_fieldInfoLastIndex)
         {
             return ReadOnlySpan<char>.Empty;
         }
@@ -588,18 +656,18 @@ public class DelimiterStreamReader
         var fieldInfo = _fieldInfos[columnIndex];
         if (fieldInfo.HasQuotes)
         {
+            var endPosition = _dynamicBuffer.GetPosition(fieldInfo.EndQuotePosition);
             if (fieldInfo.HasInnerQuotes)
             {
                 return Unquote(
-                    _dynamicBuffer.GetSequence(fieldInfo.Start, fieldInfo.Length),
-                    fieldInfo.QuoteCharacter
-                );
+                    _dynamicBuffer.GetSequence(_dynamicBuffer.GetPosition(1, fieldInfo.Start), endPosition),
+                    fieldInfo.QuoteCharacter);
             }
             else
             {
                 return _dynamicBuffer.Slice(
                     _dynamicBuffer.GetPosition(1, fieldInfo.Start),
-                    fieldInfo.Length - 2
+                    endPosition
                 );
             }
         }
@@ -613,7 +681,7 @@ public class DelimiterStreamReader
     /// <returns>Returns <c>true</c> if empty, <c>false</c> otherwise.</returns>
     public bool IsEmpty(int columnIndex)
     {
-        if (columnIndex + 1 > _fieldInfoLastIndex)
+        if ((uint)columnIndex >= (uint)_fieldInfoLastIndex)
         {
             return true;
         }
@@ -666,7 +734,33 @@ public class DelimiterStreamReader
     /// </summary>
     /// <param name="columnIndex">Column index.</param>
     /// <returns>The value.</returns>
-    public string GetString(int columnIndex) => GetField(columnIndex).ToString();
+    public string GetString(int columnIndex)
+    {
+        if ((uint)columnIndex >= (uint)_fieldInfoLastIndex)
+        {
+            return string.Empty;
+        }
+
+        var fieldInfo = _fieldInfos[columnIndex];
+        if (fieldInfo.HasQuotes)
+        {
+            var endPosition = _dynamicBuffer.GetPosition(fieldInfo.EndQuotePosition);
+            if (fieldInfo.HasInnerQuotes)
+            {
+                return Unquote(
+                    _dynamicBuffer.GetSequence(_dynamicBuffer.GetPosition(1, fieldInfo.Start), endPosition),
+                    fieldInfo.QuoteCharacter);
+            }
+            else
+            {
+                return _dynamicBuffer.Slice(
+                    _dynamicBuffer.GetPosition(1, fieldInfo.Start),
+                    endPosition
+                ).ToString();
+            }
+        }
+        return _dynamicBuffer.Slice(fieldInfo.Start, fieldInfo.Length).ToString();
+    }
 
     #endregion
 
@@ -688,6 +782,7 @@ public class DelimiterStreamReader
     private async ValueTask FindDelimiterAsync(CancellationToken cancellationToken)
     {
         int readBytes;
+        bool hasLine;
         SequenceReader<char> sequenceReader;
         ReadOnlySpan<char> line;
         do
@@ -697,26 +792,30 @@ public class DelimiterStreamReader
             var currentSequence = _dynamicBuffer.GetSequence();
             sequenceReader = new SequenceReader<char>(currentSequence);
         }
-        while (!sequenceReader.TryReadToAny(out line, _endOfLineCharacters)
+        while (!(hasLine = sequenceReader.TryReadToAny(out line, _endOfLineCharacters))
                && readBytes > 0);
 
-        if (_options.DetectDelimiter)
+        // The single (or last) line may have no end of line characters - analyze what we have.
+        if (!hasLine)
         {
-            if (TryDetectDelimiter(line, out var delimiter))
-            {
-                _options.Delimiters = [delimiter];
-            }
-            else if (_options.PreferredDelimiter.HasValue)
-            {
-                _options.Delimiters = [_options.PreferredDelimiter.Value];
-            }
-            else
-            {
-                throw new InvalidOperationException("Cannot determine delimiter. Please try to specify explicitly.");
-            }
+            var remaining = sequenceReader.UnreadSequence;
+            line = remaining.IsSingleSegment ? remaining.FirstSpan : remaining.ToArray();
         }
 
-        InitStopCharacters();
+        if (TryDetectDelimiter(line, out var delimiter))
+        {
+            _options.Delimiters = [delimiter];
+        }
+        else if (_options.PreferredDelimiter.HasValue)
+        {
+            _options.Delimiters = [_options.PreferredDelimiter.Value];
+        }
+        else
+        {
+            throw new InvalidOperationException("Cannot determine delimiter. Please try to specify explicitly.");
+        }
+
+        InitOptions();
     }
 
     /// <summary>
@@ -727,7 +826,12 @@ public class DelimiterStreamReader
     /// <returns><c>True</c> if found the best delimiter, <c>false</c> otherwise.</returns>
     public static bool TryDetectDelimiter(ReadOnlySpan<char> line, out char delimiter)
     {
-        var autoDetectDelimitersCount = new int[_autoDetectDelimiters.Length];
+        if (_autoDetectDelimiters.Length < 1)
+        {
+            delimiter = '\0';
+            return false;
+        }
+        Span<int> autoDetectDelimitersCount = stackalloc int[_autoDetectDelimiters.Length];
         foreach (var ch in line)
         {
             var delimiterIndex = Array.IndexOf(_autoDetectDelimiters, ch);
@@ -737,8 +841,15 @@ public class DelimiterStreamReader
             }
         }
 
-        var bestDelimiterCount = autoDetectDelimitersCount.Max();
-        var bestDelimiterIndex = Array.IndexOf(autoDetectDelimitersCount, autoDetectDelimitersCount.Max());
+        var bestDelimiterCount = autoDetectDelimitersCount[0];
+        for (var i = 1; i < autoDetectDelimitersCount.Length; i++)
+        {
+            if (autoDetectDelimitersCount[i] > bestDelimiterCount)
+            {
+                bestDelimiterCount = autoDetectDelimitersCount[i];
+            }
+        }
+        var bestDelimiterIndex = autoDetectDelimitersCount.IndexOf(bestDelimiterCount);
         if (bestDelimiterIndex < 0 || bestDelimiterCount == 0)
         {
             delimiter = ' ';
@@ -754,68 +865,109 @@ public class DelimiterStreamReader
     /// </summary>
     public void Reset()
     {
-        LineIndex = -1;
+        RecordIndex = -1;
         _fieldInfoLastIndex = 0;
         _currentDelimiterPosition = 0;
+        _stQuotesCount = 0;
+        _stQuoteChar = '\0';
+        _stEndQuotePosition = 0;
+        _stCurrentField = null;
+        _stCompleteLine = false;
+        _stFieldStartPosition = DynamicBuffer<char>.DynamicBufferPosition.Null;
         _dynamicBuffer.Clear();
         _bufferReader.Reset();
-        _streamReader.BaseStream.Seek(0, SeekOrigin.Begin);
+        if (_streamReader.BaseStream.CanSeek)
+        {
+            _streamReader.BaseStream.Seek(0, SeekOrigin.Begin);
+        }
+        _streamReader.DiscardBufferedData();
         _parseState = StateReadField;
         _noData = false;
     }
 
     #region Escape
 
-    internal ReadOnlySpan<char> Unquote(ReadOnlySequence<char> target, char quoteChar = '"')
+    internal string Unquote(ReadOnlySequence<char> target, char quoteChar = '"')
     {
-        if (_options.QuotesEscapeStyle == QuotesMode.DoubleQuotes)
+        if (_quotesEscapeStyle == QuotesMode.DoubleQuotes)
         {
             return UnquoteDoubleQuotes(target, quoteChar);
         }
-        if (_options.QuotesEscapeStyle == QuotesMode.Backslash)
+        if (_quotesEscapeStyle == QuotesMode.Backslash)
         {
             return UnquoteBackslash(target);
         }
         return target.ToString();
     }
 
-    public static ReadOnlySpan<char> UnquoteDoubleQuotes(ReadOnlySequence<char> target, char quoteChar = '"')
+    public static string UnquoteDoubleQuotes(ReadOnlySequence<char> target, char quoteChar = '"')
     {
+        if (target.IsEmpty)
+        {
+            return string.Empty;
+        }
+        if (target.Length < 2)
+        {
+            return target.ToString();
+        }
+
         var endIndex = target.Length;
         var sequenceReader = target.First.Span[0] == quoteChar
-            ? new SequenceReader<char>(target.Slice(1, --endIndex - 1))
+            ? new SequenceReader<char>(target.Slice(1, endIndex - 2))
             : new SequenceReader<char>(target);
 
-        var buffer = new StringBuilder(capacity: (int)endIndex + 1);
-        while (sequenceReader.TryReadTo(out ReadOnlySpan<char> span, quoteChar))
+        var buffer = _stringBuilderPool.Get();
+        try
         {
-            buffer.Append(span);
-            buffer.Append(quoteChar);
-            if (sequenceReader.TryPeek(out var ch) && ch == quoteChar)
+            while (sequenceReader.TryReadTo(out ReadOnlySpan<char> span, quoteChar))
             {
-                sequenceReader.Advance(1);
+                buffer.Append(span);
+                buffer.Append(quoteChar);
+                if (sequenceReader.TryPeek(out var ch) && ch == quoteChar)
+                {
+                    sequenceReader.Advance(1);
+                }
             }
+            buffer.Append(sequenceReader.UnreadSequence);
+            return buffer.ToString();
         }
-        buffer.Append(sequenceReader.UnreadSequence);
-        return GetSpanFromStringBuilder(buffer);
+        finally
+        {
+            _stringBuilderPool.Return(buffer);
+        }
     }
 
-    public static ReadOnlySpan<char> UnquoteBackslash(ReadOnlySequence<char> target, char quoteChar = '"')
+    public static string UnquoteBackslash(ReadOnlySequence<char> target, char quoteChar = '"')
     {
+        if (target.IsEmpty)
+        {
+            return string.Empty;
+        }
+        if (target.Length < 2)
+        {
+            return target.ToString();
+        }
         var endIndex = target.Length;
         var sequenceReader = target.First.Span[0] == quoteChar
             ? new SequenceReader<char>(target.Slice(1, --endIndex - 1))
             : new SequenceReader<char>(target);
 
-        var buffer = new StringBuilder((int)endIndex + 1);
-        while (sequenceReader.TryReadTo(out ReadOnlySpan<char> span, '\\'))
+        var buffer = _stringBuilderPool.Get();
+        try
         {
-            buffer.Append(span);
-            AppendEscapeCharacter(ref sequenceReader, buffer);
+            while (sequenceReader.TryReadTo(out ReadOnlySpan<char> span, '\\'))
+            {
+                buffer.Append(span);
+                AppendEscapeCharacter(ref sequenceReader, buffer);
+            }
+            var unreadSequence = sequenceReader.UnreadSequence;
+            buffer.Append(unreadSequence);
+            return buffer.ToString();
         }
-        var unreadSequence = sequenceReader.UnreadSequence;
-        buffer.Append(unreadSequence);
-        return GetSpanFromStringBuilder(buffer);
+        finally
+        {
+            _stringBuilderPool.Return(buffer);
+        }
     }
 
     private static readonly SearchValues<char> _escapeRepeatChars = SearchValues.Create("\"'\\\n\r\t\v\0");
@@ -831,24 +983,6 @@ public class DelimiterStreamReader
             }
             reader.Advance(1);
         }
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    private static ReadOnlySpan<char> GetSpanFromStringBuilder(StringBuilder sb)
-    {
-        var chunksEnumerator = sb.GetChunks().GetEnumerator();
-        var hasFirstChunk = chunksEnumerator.MoveNext();
-        if (!hasFirstChunk)
-        {
-            return ReadOnlySpan<char>.Empty;
-        }
-        var span = chunksEnumerator.Current.Span;
-        var hasSecondChunk = chunksEnumerator.MoveNext();
-        if (!hasSecondChunk)
-        {
-            return span;
-        }
-        return sb.ToString();
     }
 
     #endregion

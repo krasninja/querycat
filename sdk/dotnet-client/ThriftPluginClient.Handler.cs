@@ -10,8 +10,8 @@ using Column = QueryCat.Plugins.Sdk.Column;
 using CursorSeekOrigin = QueryCat.Plugins.Sdk.CursorSeekOrigin;
 using KeyColumn = QueryCat.Plugins.Sdk.KeyColumn;
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
-using QuestionRequest = QueryCat.Plugins.Sdk.QuestionRequest;
-using QuestionResponse = QueryCat.Plugins.Sdk.QuestionResponse;
+using ChatRequest = QueryCat.Plugins.Sdk.ChatRequest;
+using ChatResponse = QueryCat.Plugins.Sdk.ChatResponse;
 using VariantValue = QueryCat.Plugins.Sdk.VariantValue;
 
 namespace QueryCat.Plugins.Client;
@@ -30,19 +30,29 @@ public partial class ThriftPluginClient
         }
 
         /// <inheritdoc />
-        public async Task ShutdownAsync(CancellationToken cancellationToken = default)
+        public async Task ShutdownAsync(long token, CancellationToken cancellationToken = default)
         {
-            await BeforeCallAsync(0, nameof(ShutdownAsync), cancellationToken);
+            await BeforeCallAsync(token, nameof(ShutdownAsync), cancellationToken);
             _thriftPluginClient._objectsStorage.Clean();
             _thriftPluginClient.SignalExit();
         }
 
         /// <inheritdoc />
-        public async Task<string> ServeAsync(CancellationToken cancellationToken = default)
+        public async Task<string> ServeAsync(long token, CancellationToken cancellationToken = default)
         {
-            await BeforeCallAsync(0, nameof(ServeAsync), cancellationToken);
+            await BeforeCallAsync(token, nameof(ServeAsync), cancellationToken);
             var uri = _thriftPluginClient.StartNewServer();
             return uri.ToString();
+        }
+
+        /// <inheritdoc />
+        protected override Task BeforeCallAsync(long token, string methodName, CancellationToken cancellationToken = default)
+        {
+            if (token != _thriftPluginClient.Token)
+            {
+                throw new AuthorizationException(string.Format(Resources.Errors.InvalidToken, token));
+            }
+            return base.BeforeCallAsync(token, methodName, cancellationToken);
         }
     }
 
@@ -80,12 +90,12 @@ public partial class ThriftPluginClient
         }
 
         /// <inheritdoc />
-        public async Task ShutdownAsync(CancellationToken cancellationToken = default)
+        public async Task ShutdownAsync(long token, CancellationToken cancellationToken = default)
         {
             LogCallMethod(nameof(ShutdownAsync));
             try
             {
-                await _handler.ShutdownAsync(cancellationToken);
+                await _handler.ShutdownAsync(token, cancellationToken);
             }
             catch (Exception ex)
             {
@@ -155,7 +165,7 @@ public partial class ThriftPluginClient
         }
 
         /// <inheritdoc />
-        public async Task<int> RowsSet_PositionAsync(long token, int object_rows_set_handle, CancellationToken cancellationToken = default)
+        public async Task<long> RowsSet_PositionAsync(long token, int object_rows_set_handle, CancellationToken cancellationToken = default)
         {
             LogCallMethod(nameof(RowsSet_PositionAsync));
             try
@@ -170,7 +180,7 @@ public partial class ThriftPluginClient
         }
 
         /// <inheritdoc />
-        public async Task<int> RowsSet_TotalRowsAsync(long token, int object_rows_set_handle, CancellationToken cancellationToken = default)
+        public async Task<long> RowsSet_TotalRowsAsync(long token, int object_rows_set_handle, CancellationToken cancellationToken = default)
         {
             LogCallMethod(nameof(RowsSet_TotalRowsAsync));
             try
@@ -185,7 +195,7 @@ public partial class ThriftPluginClient
         }
 
         /// <inheritdoc />
-        public async Task RowsSet_SeekAsync(long token, int object_rows_set_handle, int offset, CursorSeekOrigin origin,
+        public async Task RowsSet_SeekAsync(long token, int object_rows_set_handle, long offset, CursorSeekOrigin origin,
             CancellationToken cancellationToken = default)
         {
             LogCallMethod(nameof(RowsSet_SeekAsync));
@@ -342,7 +352,7 @@ public partial class ThriftPluginClient
         /// <inheritdoc />
         public async Task<ModelDescription> RowsSet_GetDescriptionAsync(long token, int object_handle, CancellationToken cancellationToken = default)
         {
-            LogCallMethod(nameof(RowsFormatter_OpenInputAsync));
+            LogCallMethod(nameof(RowsSet_GetDescriptionAsync));
             try
             {
                 return await _handler.RowsSet_GetDescriptionAsync(token, object_handle, cancellationToken);
@@ -387,7 +397,7 @@ public partial class ThriftPluginClient
         }
 
         /// <inheritdoc />
-        public async Task<byte[]> Blob_ReadAsync(long token, int object_blob_handle, int offset, int count, CancellationToken cancellationToken = default)
+        public async Task<byte[]> Blob_ReadAsync(long token, int object_blob_handle, long offset, int count, CancellationToken cancellationToken = default)
         {
             LogCallMethod(nameof(Blob_ReadAsync));
             try
@@ -462,12 +472,12 @@ public partial class ThriftPluginClient
         }
 
         /// <inheritdoc />
-        public async Task<string> ServeAsync(CancellationToken cancellationToken = default)
+        public async Task<string> ServeAsync(long token, CancellationToken cancellationToken = default)
         {
             LogCallMethod(nameof(ServeAsync));
             try
             {
-                return await _handler.ServeAsync(cancellationToken);
+                return await _handler.ServeAsync(token, cancellationToken);
             }
             catch (Exception ex)
             {
@@ -477,7 +487,7 @@ public partial class ThriftPluginClient
         }
 
         /// <inheritdoc />
-        public async Task<QuestionResponse> AnswerAgent_AskAsync(long token, int object_answer_agent_handle, QuestionRequest? request,
+        public async Task<ChatResponse> AnswerAgent_AskAsync(long token, int object_answer_agent_handle, ChatRequest? request,
             CancellationToken cancellationToken = default)
         {
             LogCallMethod(nameof(AnswerAgent_AskAsync));

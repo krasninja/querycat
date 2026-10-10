@@ -1,5 +1,4 @@
-﻿using QueryCat.Backend.Core;
-using QueryCat.Backend.Core.Execution;
+﻿using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Backend.Execution;
@@ -23,18 +22,37 @@ public class ObjectPropertiesCompletionSource : BaseObjectPropertiesCompletionSo
         var termTokens = context.TriggerTokens.GetRange(separatorTokenIndex + 1);
         var (objectSelectExpression, _) = GetObjectExpressionAndTerm(termTokens);
 
-        try
+        var value = await RunAsync(context.ExecutionThread, objectSelectExpression, cancellationToken: cancellationToken);
+        if (!value.IsNull && value.Type == DataType.Object)
         {
-            var value = await context.ExecutionThread.RunAsync(objectSelectExpression, cancellationToken: cancellationToken);
-            if (!value.IsNull && value.Type == DataType.Object)
-            {
-                return value.AsObjectUnsafe;
-            }
-        }
-        catch (QueryCatException)
-        {
+            return value.AsObjectUnsafe;
         }
 
         return null;
+    }
+
+    protected static async ValueTask<VariantValue> RunAsync(
+        IExecutionThread executionThread,
+        string expression,
+        CancellationToken cancellationToken)
+    {
+        VariantValue value = VariantValue.Null;
+        try
+        {
+            if (executionThread is DefaultExecutionThread defaultExecutionThread)
+            {
+                value = await defaultExecutionThread.EvaluateForCompletionAsync(expression,
+                    cancellationToken: cancellationToken);
+            }
+            else
+            {
+                value = await executionThread.RunAsync(expression, cancellationToken: cancellationToken);
+            }
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException || !cancellationToken.IsCancellationRequested)
+        {
+        }
+
+        return value;
     }
 }

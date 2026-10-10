@@ -17,9 +17,9 @@ Read the following sections for better internals understanding:
 
 By default the QueryCat CLI searches the plugins files within following directories:
 
-1. The current OS application directory. On Linux systems it looks like this: `/home/ivan/.local/share/qcat/plugins`. On Windows systems it is like TODO.
+1. The current OS application directory. On Linux systems it looks like this: `/home/user/.local/share/qcat/plugins`. On Windows systems it is like `C:\Users\user\AppData\Local\qcat\plugins\`.
 2. The directory of the `qcat` executable.
 3. The directory `plugins` within the `qcat` executable.
 4. The directories specified by `--plugin-dirs` command line argument.
 
-Once observed the QueryCat tries to register it observing all functions within it.
+Once discovered, QueryCat registers all functions found within the plugin.

@@ -87,7 +87,7 @@ public class IndentedStringBuilder
     {
         AppendIndent();
         _stringBuilder.Append(stringBuilder._stringBuilder);
-        if (stringBuilder._stringBuilder[^1] == '\n')
+        if (stringBuilder._stringBuilder.Length > 0 && stringBuilder._stringBuilder[^1] == '\n')
         {
             _isEmpty = true;
         }
@@ -128,6 +128,7 @@ public class IndentedStringBuilder
 
     public IndentedStringBuilder Append(int value)
     {
+        AppendIndent();
         _stringBuilder.Append(value);
         return this;
     }
@@ -195,7 +196,7 @@ public class IndentedStringBuilder
     /// </summary>
     public IndentedStringBuilder IncreaseIndent()
     {
-        _indent++;
+        _indent += _indentSize;
         return this;
     }
 

@@ -120,7 +120,7 @@ internal abstract class BaseQueryCommand : BaseCommand
     internal static Task AddVariablesAsync(IExecutionThread executionThread, string[]? variables = null,
         CancellationToken cancellationToken = default)
     {
-        if (variables == null || !variables.Any())
+        if (variables == null || variables.Length == 0)
         {
             return Task.CompletedTask;
         }
@@ -133,7 +133,7 @@ internal abstract class BaseQueryCommand : BaseCommand
                 throw new QueryCatException(string.Format(Resources.Errors.InvalidVariableFormat, variable));
             }
             var name = arr[0];
-            var stringValue = StringUtils.Unquote(arr[1], quoteChar: "\'");
+            var stringValue = StringUtils.Unquote(arr[1], quoteChar: '\'');
             var targetType = arr[1].Length == stringValue.Length
                 ? DataTypeUtils.DetermineTypeByValue(stringValue)
                 : DataType.String;
@@ -150,7 +150,7 @@ internal abstract class BaseQueryCommand : BaseCommand
     internal static async Task AddInputsAsync(IExecutionThread executionThread, string[]? inputs = null,
         CancellationToken cancellationToken = default)
     {
-        if (inputs == null || !inputs.Any())
+        if (inputs == null || inputs.Length == 0)
         {
             return;
         }

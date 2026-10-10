@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Security.Cryptography;
 using System.Text;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -32,12 +33,13 @@ public sealed partial class ThriftPluginsServer : IDisposable
     private readonly IExecutionThread _executionThread;
     private readonly CancellationTokenSource _serverCts = new();
     private readonly ConcurrentDictionary<string, RegistrationTokenData> _registrationTokens = new();
-    private readonly ConcurrentDictionary<long, SemaphoreSlim> _pluginsReady = new();
-    private readonly List<ThriftPluginContext> _plugins = new();
-    private readonly Dictionary<long, ThriftPluginContext> _tokenPluginContextMap = new();
+    private readonly ConcurrentDictionary<long, TaskCompletionSource> _pluginsReady = new();
+    private readonly ConcurrentBag<ThriftPluginContext> _plugins = new();
+    private readonly ConcurrentDictionary<long, ThriftPluginContext> _tokenPluginContextMap = new();
     private readonly ServerThread _mainServerThread;
     private readonly int _maxConnectionsToClient;
     private readonly ObjectsStorage _objectsStorage = new();
+    private bool _isDisposed;
 
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(ThriftPluginsServer));
 
@@ -101,7 +103,7 @@ public sealed partial class ThriftPluginsServer : IDisposable
         var processor = new TMultiplexedProcessor();
         var handler = new HandlerWithExceptionIntercept(new Handler(this, _objectsStorage));
         var asyncProcessor = new Plugins.Sdk.PluginsManager.AsyncProcessor(handler);
-        processor.RegisterProcessor(QueryCat.Plugins.Client.ThriftPluginClient.PluginsManagerServiceName, asyncProcessor);
+        processor.RegisterProcessor(ThriftPluginClient.PluginsManagerServiceName, asyncProcessor);
         return new TThreadPoolAsyncServer(
             new TSingletonProcessorFactory(processor),
             transport,
@@ -127,8 +129,10 @@ public sealed partial class ThriftPluginsServer : IDisposable
 
     private void RegisterPluginContext(ThriftPluginContext context, string registrationToken, long token)
     {
+        context.Token = token;
         _plugins.Add(context);
         _tokenPluginContextMap[token] = context;
+        _pluginsReady[token] = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         if (_registrationTokens.TryGetValue(registrationToken, out var registrationTokenData))
         {
             registrationTokenData.Token = token;
@@ -158,10 +162,15 @@ public sealed partial class ThriftPluginsServer : IDisposable
     }
 
     /// <summary>
-    /// Generate new authorization token.
+    /// Generate new authorization token using a cryptographically secure random number generator.
     /// </summary>
     /// <returns>New token.</returns>
-    public long GenerateToken() => Random.Shared.NextInt64();
+    public long GenerateToken()
+    {
+        Span<byte> bytes = stackalloc byte[8];
+        RandomNumberGenerator.Fill(bytes);
+        return BitConverter.ToInt64(bytes);
+    }
 
     #endregion
 
@@ -179,7 +188,7 @@ public sealed partial class ThriftPluginsServer : IDisposable
         var sb = new StringBuilder();
         foreach (var registrationToken in _registrationTokens)
         {
-            sb.AppendFormat($"{registrationToken.Key}: {registrationToken.Value}");
+            sb.AppendLine($"{registrationToken.Key}: {registrationToken.Value}");
         }
         return sb.ToString();
     }
@@ -230,25 +239,25 @@ public sealed partial class ThriftPluginsServer : IDisposable
         {
             throw new PluginException(string.Format(Resources.Errors.TokenRegistrationTimeout, registrationToken));
         }
-        _registrationTokens.Remove(registrationToken, out _);
+        _registrationTokens.TryRemove(registrationToken, out _);
         registrationTokenData.Semaphore.Dispose();
 
         // Then wait for plugin ready signal.
-        var pluginReadySemaphore = new SemaphoreSlim(0, 1);
-        _pluginsReady[registrationTokenData.Token] = pluginReadySemaphore;
-        if (!pluginReadySemaphore.Wait(timeout, cancellationToken))
+        if (!_pluginsReady.TryGetValue(registrationTokenData.Token, out var readySource)
+            || !readySource.Task.Wait(timeout, cancellationToken))
         {
             throw new PluginException(string.Format(Resources.Errors.PluginReadyTimeout, registrationTokenData.Token));
         }
+        _pluginsReady.TryRemove(registrationTokenData.Token, out _);
     }
 
     internal void SetPluginReady(long token)
     {
-        if (!_pluginsReady.TryGetValue(token, out var semaphoreSlim))
+        if (!_pluginsReady.TryGetValue(token, out var readySource))
         {
             throw new AuthorizationException(string.Format(Resources.Errors.InvalidToken, token));
         }
-        semaphoreSlim.Release();
+        readySource.TrySetResult();
     }
 
     #endregion
@@ -288,6 +297,8 @@ public sealed partial class ThriftPluginsServer : IDisposable
                 cts.Token,
                 TaskCreationOptions.LongRunning,
                 TaskScheduler.Current);
+            ServerListenThread.ContinueWith(t => _logger.LogError(t.Exception, "Plugins server loop failed."),
+                TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously);
             _logger.LogDebug("Started server on '{Uri}'.", Endpoint);
         }
 
@@ -319,10 +330,31 @@ public sealed partial class ThriftPluginsServer : IDisposable
     /// <inheritdoc />
     public void Dispose()
     {
+        if (_isDisposed)
+        {
+            return;
+        }
+        _isDisposed = true;
+
         Stop();
+        try
+        {
+            _serverCts.Cancel();
+        }
+        catch (AggregateException e)
+        {
+            _logger.LogWarning(e, "Errors during server cancellation.");
+        }
         _objectsStorage.Clean();
         _serverCts.Dispose();
-        foreach (var pluginContext in _plugins)
+
+        _tokenPluginContextMap.Clear();
+        _pluginsReady.Clear();
+        foreach (var registrationToken in _registrationTokens.Keys)
+        {
+            RemoveRegistrationToken(registrationToken);
+        }
+        while (_plugins.TryTake(out var pluginContext))
         {
             pluginContext.Dispose();
         }

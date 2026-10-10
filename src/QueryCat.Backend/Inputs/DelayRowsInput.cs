@@ -8,17 +8,18 @@ using QueryCat.Backend.Core.Types;
 namespace QueryCat.Backend.Inputs;
 
 /// <summary>
-/// Adds a delay before reading a next record.
+/// Adds a delay after reading a record.
 /// </summary>
 internal sealed class DelayRowsInput : IRowsInput, IRowsIteratorParent
 {
     [SafeFunction]
     [Description("Implements delay before reading the next record.")]
-    [FunctionSignature("delay_input(input: object<IRowsInput>, delay_secs: integer := 5): object<IRowsInput>")]
+    [FunctionSignature("delay_input(input: object<IRowsInput>, delay_secs: float := 5): object<IRowsInput>")]
     public static VariantValue DelayInput(IExecutionThread thread)
     {
         var input = thread.Stack[0].AsRequired<IRowsInput>();
-        var delaySeconds = (int)(thread.Stack[1].AsInteger ?? 5);
+        var delaySeconds = thread.Stack[1].AsFloat ?? 5;
+        delaySeconds = Math.Clamp(delaySeconds, 0, double.MaxValue);
         return VariantValue.CreateFromObject(new DelayRowsInput(input, TimeSpan.FromSeconds(delaySeconds)));
     }
 
@@ -50,8 +51,12 @@ internal sealed class DelayRowsInput : IRowsInput, IRowsIteratorParent
     /// <inheritdoc />
     public async ValueTask<bool> ReadNextAsync(CancellationToken cancellationToken = default)
     {
-        await Task.Delay(_delay, cancellationToken);
-        return await _rowsInput.ReadNextAsync(cancellationToken);
+        var result = await _rowsInput.ReadNextAsync(cancellationToken);
+        if (result)
+        {
+            await Task.Delay(_delay, cancellationToken);
+        }
+        return result;
     }
 
     /// <inheritdoc />

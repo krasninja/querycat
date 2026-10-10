@@ -58,7 +58,14 @@ internal sealed class ApplicationRoot : IDisposable, IAsyncDisposable
             return;
         }
 
-        (PluginsManager as IDisposable)?.Dispose();
+        if (PluginsManager is IAsyncDisposable asyncDisposable)
+        {
+            await asyncDisposable.DisposeAsync();
+        }
+        else
+        {
+            (PluginsManager as IDisposable)?.Dispose();
+        }
         await Thread.DisposeAsync();
         _isDisposed = true;
     }

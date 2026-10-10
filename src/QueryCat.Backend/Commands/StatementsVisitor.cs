@@ -82,7 +82,6 @@ internal sealed class StatementsVisitor : CreateDelegateVisitor
     /// <inheritdoc />
     public override async ValueTask VisitAsync(ExpressionStatementNode node, CancellationToken cancellationToken)
     {
-        await ResolveTypesVisitor.RunAsync(node, cancellationToken);
         var handler = await new CreateDelegateVisitor(_executionThread, ResolveTypesVisitor)
             .RunAndReturnAsync(node.ExpressionNode, cancellationToken);
         NodeIdFuncMap.Add(node.Id, handler);

@@ -50,7 +50,7 @@ public readonly record struct ParserToken(string Text, string Type, int StartInd
     /// </summary>
     public int EndIndex => StartIndex + Text.Length;
 
-    private static readonly ISet<string> _separatorTokens = new HashSet<string>
+    private static readonly FrozenSet<string> _separatorTokens = new HashSet<string>
     {
         TokenKindSpaces,
         TokenKindSemicolon,

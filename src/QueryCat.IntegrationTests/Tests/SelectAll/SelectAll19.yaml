@@ -1,0 +1,5 @@
+expected: |
+  tt0120201
+query: |
+  -- Test LL prediction mode.
+  select imdb_id, title except title from 'Movies' || 'Titles.csv' format csv() where title = 'Starship Troopers';

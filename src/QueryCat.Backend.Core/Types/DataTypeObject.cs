@@ -117,17 +117,17 @@ internal abstract class DataTypeObject
             result = new VariantValue(ToBoolean(value));
             return !result.IsNull;
         }
-        if (targetType == DataType.Timestamp)
+        if (targetType == DataType.Timestamp && CanToTimestamp)
         {
             result = new VariantValue(ToTimestamp(value));
             return !result.IsNull;
         }
-        if (targetType == DataType.Interval)
+        if (targetType == DataType.Interval && CanToInterval)
         {
             result = new VariantValue(ToInterval(value));
             return !result.IsNull;
         }
-        if (targetType == DataType.Blob)
+        if (targetType == DataType.Blob && CanToBlob)
         {
             result = new VariantValue(ToBlob(value));
             return !result.IsNull;

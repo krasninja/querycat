@@ -17,6 +17,8 @@ internal sealed class ListRowsIterator : IRowsIterator
 
     public ListRowsIterator(IReadOnlyList<VariantValue> values, DataType? dataType = null)
     {
+        ArgumentNullException.ThrowIfNull(values);
+
         _values = values;
 
         // Determine type.
@@ -33,7 +35,7 @@ internal sealed class ListRowsIterator : IRowsIterator
             }
         }
 
-        // Determine type.
+        // Create columns.
         Columns =
         [
             new Column(Column.ValueColumnTitle, dataType.Value),

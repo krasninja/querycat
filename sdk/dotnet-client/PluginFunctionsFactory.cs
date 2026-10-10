@@ -11,8 +11,7 @@ public sealed class PluginFunctionsFactory : FunctionsFactory
     {
         if (!FunctionCaller.IsValidFunctionDelegate(functionDelegate))
         {
-            var function = CreateFunctionFromMethodInfo(functionDelegate.Method);
-            return function != null ? [function] : [];
+            return CreateFunctionsFromMethodInfo(functionDelegate.Method);
         }
         else
         {

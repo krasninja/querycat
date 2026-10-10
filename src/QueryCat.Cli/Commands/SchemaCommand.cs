@@ -6,7 +6,7 @@ using QueryCat.Backend.Functions;
 
 namespace QueryCat.Cli.Commands;
 
-internal class SchemaCommand : BaseQueryCommand
+internal sealed class SchemaCommand : BaseQueryCommand
 {
     /// <inheritdoc />
     public SchemaCommand() : base("schema", Resources.Messages.SchemaCommand_Description)
@@ -37,8 +37,9 @@ internal class SchemaCommand : BaseQueryCommand
                 {
                     AsyncUtils.RunSync(async ct =>
                     {
-                        var schema = await FunctionCaller.CallWithArgumentsAsync(InfoFunctions.Schema, thread, [rowsSchema], ct);
-                        await WriteAsync(thread, schema, rowsOutput, ct);
+                        var schema = await FunctionCaller.CallWithArgumentsAsync(InfoFunctions.Schema, thread, [rowsSchema], ct)
+                            .ConfigureAwait(false);
+                        await WriteAsync(thread, schema, rowsOutput, ct).ConfigureAwait(false);
                     });
                     args.ContinueExecution = false;
                 }

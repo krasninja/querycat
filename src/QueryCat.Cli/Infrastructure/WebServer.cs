@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Web;
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
@@ -34,13 +35,13 @@ internal sealed partial class WebServer
 
     public string AllowOrigin { get; set; } = string.Empty;
 
-    private readonly IDictionary<string, Func<HttpListenerRequest, HttpListenerResponse, CancellationToken, Task>> _actions;
+    private readonly FrozenDictionary<string, Func<HttpListenerRequest, HttpListenerResponse, CancellationToken, Task>> _actions;
 
     private readonly IExecutionThread _executionThread;
     private readonly string? _password;
     private readonly string? _filesRoot;
     private readonly HashSet<IPAddress> _allowedAddresses;
-    private readonly MimeTypesProvider _mimeTypesProvider = new();
+    private readonly MimeTypesProvider _mimeTypesProvider = Backend.Functions.IOFunctions.MimeTypesProvider;
     private int? _allowedAddressesSlots;
     private readonly Lock _lockObj = new();
     private readonly int _acceptConnections;
@@ -57,7 +58,7 @@ internal sealed partial class WebServer
             ["/index.html"] = HandleIndexActionAsync,
             ["/index.js"] = HandleIndexJsActionAsync,
             ["/api/info"] = Info_HandleInfoApiActionAsync,
-            ["/api/query"] = HandleQueryApiAction,
+            ["/api/query"] = HandleQueryApiActionAsync,
             ["/api/schema"] = HandleSchemaApiActionAsync,
             ["/api/files"] = Files_HandleFilesApiActionAsync,
         }.ToFrozenDictionary();
@@ -68,7 +69,7 @@ internal sealed partial class WebServer
         _allowedAddresses = new HashSet<IPAddress>(options.AllowedAddresses);
         _allowedAddressesSlots = options.AllowedAddressesSlots;
         _acceptConnections = Environment.ProcessorCount;
-        Uri = options.Urls ?? DefaultEndpointUri;
+        Uri = options.Url ?? DefaultEndpointUri;
     }
 
     /// <summary>
@@ -112,9 +113,18 @@ internal sealed partial class WebServer
     private async Task HandleRequestAsync(HttpListenerContext context, CancellationToken cancellationToken)
     {
         var response = context.Response;
-        response.Headers["User-Agent"] = Application.GetProductFullName();
-        response.Headers["Accept-Ranges"] = "bytes";
+        response.Headers["Server"] = Application.GetProductFullName();
         response.StatusCode = (int)HttpStatusCode.OK;
+
+        // Large request protection.
+        if (context.Request.ContentLength64 > 1024 * 1024)
+        {
+            _logger.LogWarning("[{Address}]: request content length is too large: {Length} bytes.",
+                context.Request.RemoteEndPoint.Address, context.Request.ContentLength64);
+            response.StatusCode = (int)HttpStatusCode.RequestEntityTooLarge;
+            response.Close();
+            return;
+        }
 
         // CORS.
         if (!string.IsNullOrEmpty(AllowOrigin))
@@ -132,27 +142,24 @@ internal sealed partial class WebServer
         }
 
         // Validate IP.
-        if ((_allowedAddresses.Any() || _allowedAddressesSlots.HasValue)
-            && !_allowedAddresses.Contains(context.Request.RemoteEndPoint.Address))
+        lock (_lockObj)
         {
-            if (_allowedAddressesSlots > 0)
+            if ((_allowedAddresses.Count > 0 || _allowedAddressesSlots.HasValue)
+                && !_allowedAddresses.Contains(context.Request.RemoteEndPoint.Address))
             {
-                lock (_lockObj)
+                if (_allowedAddressesSlots > 0)
                 {
-                    if (_allowedAddressesSlots > 0)
-                    {
-                        _allowedAddresses.Add(context.Request.RemoteEndPoint.Address);
-                        _allowedAddressesSlots--;
-                        _logger.LogInformation("[{Address}]: added to authorized list.", context.Request.RemoteEndPoint.Address);
-                    }
+                    _allowedAddresses.Add(context.Request.RemoteEndPoint.Address);
+                    _allowedAddressesSlots--;
+                    _logger.LogInformation("[{Address}]: added to authorized list.", context.Request.RemoteEndPoint.Address);
                 }
-            }
-            else
-            {
-                _logger.LogInformation("[{Address}]: unauthorized access.", context.Request.RemoteEndPoint.Address);
-                response.StatusCode = (int)HttpStatusCode.Unauthorized;
-                response.Close();
-                return;
+                else
+                {
+                    _logger.LogInformation("[{Address}]: unauthorized access.", context.Request.RemoteEndPoint.Address);
+                    response.StatusCode = (int)HttpStatusCode.Unauthorized;
+                    response.Close();
+                    return;
+                }
             }
         }
 
@@ -179,7 +186,7 @@ internal sealed partial class WebServer
             catch (QueryCatException e)
             {
                 _logger.LogWarning(e, "Invalid input: {Error}", e.Message);
-                response.ContentType = MimeTypesProvider.ContentTypeJson;
+                response.ContentType = System.Net.Mime.MediaTypeNames.Application.Json;
                 response.StatusCode = (int)HttpStatusCode.BadRequest;
                 await using var jsonWriter = new Utf8JsonWriter(response.OutputStream);
                 WriteJsonMessage(jsonWriter, e.Message);
@@ -215,7 +222,7 @@ internal sealed partial class WebServer
         return WriteResourceToStream(@"QueryCat.Cli.Infrastructure.WebServerPage.js", response, cancellationToken);
     }
 
-    private async Task HandleQueryApiAction(HttpListenerRequest request, HttpListenerResponse response, CancellationToken cancellationToken)
+    private async Task HandleQueryApiActionAsync(HttpListenerRequest request, HttpListenerResponse response, CancellationToken cancellationToken)
     {
         if (request.HttpMethod != HttpMethod.Post.Method && request.HttpMethod != HttpMethod.Get.Method)
         {
@@ -281,8 +288,12 @@ internal sealed partial class WebServer
         {
             response.ContentType = blobData.ContentType;
             await using var blobStream = blobData.GetStream();
+            if (blobStream.CanSeek)
+            {
+                response.ContentLength64 = blobStream.Length;
+            }
             await blobStream.CopyToAsync(response.OutputStream, cancellationToken);
-            await blobStream.FlushAsync(cancellationToken);
+            await response.OutputStream.FlushAsync(cancellationToken);
         }
         else
         {
@@ -293,21 +304,21 @@ internal sealed partial class WebServer
             }
 
             var iterator = RowsIteratorConverter.Convert(value);
-            if (acceptedType == MimeTypesProvider.ContentTypeHtml)
+            if (acceptedType == System.Net.Mime.MediaTypeNames.Text.Html)
             {
-                response.ContentType = MimeTypesProvider.ContentTypeHtml;
+                response.ContentType = System.Net.Mime.MediaTypeNames.Text.Html;
                 await using var streamWriter = new StreamWriter(response.OutputStream);
                 await WriteHtmlAsync(iterator, streamWriter, cancellationToken);
             }
-            else if (acceptedType == MimeTypesProvider.ContentTypeJson)
+            else if (acceptedType == System.Net.Mime.MediaTypeNames.Application.Json)
             {
-                response.ContentType = MimeTypesProvider.ContentTypeJson;
+                response.ContentType = System.Net.Mime.MediaTypeNames.Application.Json;
                 await using var jsonWriter = new Utf8JsonWriter(response.OutputStream);
                 await WriteJsonAsync(iterator, jsonWriter, cancellationToken);
             }
             else
             {
-                response.ContentType = MimeTypesProvider.ContentTypeTextPlain;
+                response.ContentType = System.Net.Mime.MediaTypeNames.Text.Plain;
                 await WriteTextAsync(iterator, response.OutputStream, cancellationToken);
             }
         }
@@ -348,12 +359,13 @@ internal sealed partial class WebServer
         {
             using var sr = new StreamReader(request.InputStream);
             var text = sr.ReadToEnd();
-            if (request.ContentType == MimeTypesProvider.ContentTypeTextPlain
-                || request.ContentType == MimeTypesProvider.ContentTypeForm)
+            var content = request.ContentType ?? string.Empty;
+            if (content.StartsWith(System.Net.Mime.MediaTypeNames.Text.Plain, StringComparison.InvariantCultureIgnoreCase)
+                || content.StartsWith(System.Net.Mime.MediaTypeNames.Application.FormUrlEncoded, StringComparison.InvariantCultureIgnoreCase))
             {
                 return new WebServerQueryData(text);
             }
-            else if (request.ContentType == MimeTypesProvider.ContentTypeJson)
+            else if (content.StartsWith(System.Net.Mime.MediaTypeNames.Application.Json, StringComparison.InvariantCultureIgnoreCase))
             {
                 try
                 {
@@ -366,8 +378,8 @@ internal sealed partial class WebServer
                         string.Format(Resources.Errors.InvalidInputData, e.Message), e);
                 }
             }
-            else if (!string.IsNullOrEmpty(request.ContentType)
-                && request.ContentType.StartsWith(MimeTypesProvider.ContentTypeMultipartFormData))
+            else if (!string.IsNullOrEmpty(content)
+                && content.StartsWith(System.Net.Mime.MediaTypeNames.Multipart.FormData))
             {
                 foreach (var pair in ParseMultipartData(text))
                 {
@@ -456,7 +468,7 @@ internal sealed partial class WebServer
             {
                 continue;
             }
-            await streamWriter.WriteLineAsync($"<TH>{column.Name}</TH>");
+            await streamWriter.WriteLineAsync($"<TH>{HttpUtility.HtmlEncode(column.Name)}</TH>");
         }
         await streamWriter.WriteLineAsync("</TR>");
 
@@ -469,7 +481,7 @@ internal sealed partial class WebServer
                 {
                     continue;
                 }
-                await streamWriter.WriteLineAsync($"<TD>{iterator.Current[i]}</TD>");
+                await streamWriter.WriteLineAsync($"<TD>{HttpUtility.HtmlEncode(iterator.Current[i].ToString(CultureInfo.InvariantCulture))}</TD>");
             }
             await streamWriter.WriteLineAsync("</TR>");
         }
@@ -480,7 +492,7 @@ internal sealed partial class WebServer
     private async Task WriteTextAsync(IRowsIterator iterator, Stream stream, CancellationToken cancellationToken)
     {
         var formatter = new TextTableFormatter();
-        var blobStream = new StreamBlobData(() => stream);
+        var blobStream = new StreamBlobData(() => new StreamWrapper(stream, leaveOpen: true));
         var output = formatter.OpenOutput(blobStream);
         await output.WriteAsync(iterator, adjustColumnsLengths: true, _executionThread.ConfigStorage,
             cancellationToken: cancellationToken);
@@ -589,6 +601,9 @@ internal sealed partial class WebServer
 
         // Format: "{Namespace}.{Folder}.{filename}.{Extension}"
         await using Stream? stream = assembly.GetManifestResourceStream(uri);
-        await stream?.CopyToAsync(response.OutputStream, cancellationToken)!;
+        if (stream != null)
+        {
+            await stream.CopyToAsync(response.OutputStream, cancellationToken)!;
+        }
     }
 }

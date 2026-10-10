@@ -108,6 +108,7 @@ internal sealed partial class SelectPlanner
         QueryContext_ValidateKeyColumnsValues(context);
 
         // ORDER BY.
+        Pipeline_OrderConvertColumnNumbers(context.CurrentIterator, node.OrderByNode);
         Pipeline_AddRowIdColumn(context, node.ColumnsListNode);
         await Pipeline_ApplyOrderByAsync(context, node.OrderByNode, cancellationToken);
 
@@ -143,6 +144,7 @@ internal sealed partial class SelectPlanner
         context.SetIterator(combineRowsIterator);
 
         // Process.
+        Pipeline_OrderConvertColumnNumbers(context.CurrentIterator, node.OrderByNode);
         await Pipeline_ApplyOrderByAsync(context, node.OrderByNode, cancellationToken);
         await Pipeline_ApplyOffsetFetchAsync(context, node.OffsetNode, node.FetchNode, cancellationToken);
         var resultIterator = context.CurrentIterator;

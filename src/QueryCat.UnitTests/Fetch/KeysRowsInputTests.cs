@@ -113,7 +113,7 @@ public sealed class KeysRowsInputTests : IDisposable
     public void GetKeyColumnValue_RequiredColumn_ShouldThrowException()
     {
         // Assert.
-        Assert.Throws<QueryMissedCondition>(() => _input.GetKeyColumnValue("col5", VariantValue.Operation.Equals));
+        Assert.Throws<QueryMissedConditionException>(() => _input.GetKeyColumnValue("col5", VariantValue.Operation.Equals));
     }
 
     [Fact]
@@ -124,6 +124,13 @@ public sealed class KeysRowsInputTests : IDisposable
         {
             _input.SetKeyColumnValue(1, new VariantValue("text"), VariantValue.Operation.Equals);
         });
+    }
+
+    [Fact]
+    public void GetKeyColumnValue_RequiredColumnWithoutOperation_ShouldThrowException()
+    {
+        // Assert.
+        Assert.Throws<QueryMissedConditionException>(() => _input.GetKeyColumnValue("col5"));
     }
 
     /// <inheritdoc />

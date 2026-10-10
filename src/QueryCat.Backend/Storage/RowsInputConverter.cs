@@ -11,7 +11,9 @@ namespace QueryCat.Backend.Storage;
 /// </summary>
 internal static class RowsInputConverter
 {
-    private static int NextInputIndex { get; set; }
+    private static int _nextInputIndex;
+
+    private static int NextInputIndex => _nextInputIndex;
 
     public static KeyValuePair<string, IRowsInput?> Convert(VariantValue source)
     {
@@ -55,11 +57,11 @@ internal static class RowsInputConverter
 
         var split = StringUtils.GetFieldsFromLine(source, delimiter: '=');
         var name = split.Length == 2 ? split[0] : GetNextInputName();
-        var command = string.Join(' ', Application.CommandOpen, StringUtils.Quote(split[^1], quote: "'", force: true));
+        var command = string.Join(' ', Application.CommandOpen, StringUtils.Quote(split[^1], quoteChar: '\'', force: true));
         var rowsInputValue = await thread.RunAsync(command, cancellationToken: cancellationToken);
         var rowsInput = ConvertToInput(rowsInputValue);
         return new KeyValuePair<string, IRowsInput?>(name, rowsInput);
     }
 
-    private static string GetNextInputName() => "input" + NextInputIndex++;
+    private static string GetNextInputName() => "input" + Interlocked.Increment(ref _nextInputIndex);
 }

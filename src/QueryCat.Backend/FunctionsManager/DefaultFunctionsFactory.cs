@@ -66,7 +66,7 @@ public sealed class DefaultFunctionsFactory : FunctionsFactory
         public FunctionSignatureArgument[] Arguments => GetArguments();
 
         /// <inheritdoc />
-        public bool IsSafe => Delegate.Method.GetCustomAttribute<SafeFunctionAttribute>() != null;
+        public bool IsSafe => Delegate.Method.IsDefined(typeof(SafeFunctionAttribute));
 
         /// <inheritdoc />
         public string[] Formatters
@@ -140,7 +140,7 @@ public sealed class DefaultFunctionsFactory : FunctionsFactory
         public string ReturnObjectName => GetSignature().ReturnTypeNode.TypeName;
 
         /// <inheritdoc />
-        public bool IsAggregate => false;
+        public bool IsAggregate { get; internal set; }
 
         private FunctionSignatureArgument[]? _arguments;
 
@@ -190,7 +190,7 @@ public sealed class DefaultFunctionsFactory : FunctionsFactory
         private readonly IAstBuilder _astBuilder;
 
         /// <inheritdoc />
-        public Delegate Delegate => DelegateMethod;
+        public Delegate Delegate { get; }
 
         /// <inheritdoc />
         public string Name
@@ -235,15 +235,16 @@ public sealed class DefaultFunctionsFactory : FunctionsFactory
         /// <inheritdoc />
         public string[] Formatters => [];
 
-        private VariantValue DelegateMethod(IExecutionThread executionThread)
-        {
-            return VariantValue.CreateFromObject(TAggregate.CreateInstance());
-        }
-
         public LazyAggregateFunction(string signature, IAstBuilder astBuilder)
         {
             _signature = signature;
             _astBuilder = astBuilder;
+            Delegate = new Func<IExecutionThread, VariantValue>(DelegateMethod);
+        }
+
+        private VariantValue DelegateMethod(IExecutionThread executionThread)
+        {
+            return VariantValue.CreateFromObject(TAggregate.CreateInstance());
         }
 
         private FunctionSignatureNode GetSignature()
@@ -326,8 +327,7 @@ public sealed class DefaultFunctionsFactory : FunctionsFactory
         }
         else
         {
-            var function = CreateFunctionFromMethodInfo(functionDelegate.Method);
-            if (function != null)
+            foreach (var function in CreateFunctionsFromMethodInfo(functionDelegate.Method))
             {
                 yield return function;
             }
@@ -346,6 +346,7 @@ public sealed class DefaultFunctionsFactory : FunctionsFactory
             function.Description = functionMetadata.Description;
             function.IsSafe = functionMetadata.IsSafe;
             function.Formatters = functionMetadata.Formatters;
+            function.IsAggregate = functionMetadata.IsAggregate;
         }
         return function;
     }

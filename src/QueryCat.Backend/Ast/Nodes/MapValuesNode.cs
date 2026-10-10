@@ -23,7 +23,10 @@ internal sealed class MapValuesNode : ExpressionNode
         Type = DataType.Map;
         foreach (var keyValue in valuesNode.Map)
         {
-            Map.Add(keyValue.Key, keyValue.Value);
+            Map.Add(
+                keyValue.Key,
+                (ExpressionNode)keyValue.Value.Clone()
+            );
         }
         valuesNode.CopyTo(this);
     }

@@ -8,17 +8,18 @@ using QueryCat.Backend.Core.Types;
 namespace QueryCat.Backend.Inputs;
 
 /// <summary>
-/// Adds delay before writing the values.
+/// Adds a delay after writing the values.
 /// </summary>
 internal sealed class DelayRowsOutput : IRowsOutput
 {
     [SafeFunction]
     [Description("Implements delay before writing values.")]
-    [FunctionSignature("delay_output(output: object<IRowsOutput>, delay_secs: integer := 5): object<IRowsOutput>")]
+    [FunctionSignature("delay_output(output: object<IRowsOutput>, delay_secs: float := 5): object<IRowsOutput>")]
     public static VariantValue DelayOutput(IExecutionThread thread)
     {
         var output = thread.Stack[0].AsRequired<IRowsOutput>();
-        var delaySeconds = (int)(thread.Stack[1].AsInteger ?? 5);
+        var delaySeconds = thread.Stack[1].AsFloat ?? 5;
+        delaySeconds = Math.Clamp(delaySeconds, 0, double.MaxValue);
         return VariantValue.CreateFromObject(new DelayRowsOutput(output, TimeSpan.FromSeconds(delaySeconds)));
     }
 
@@ -53,7 +54,8 @@ internal sealed class DelayRowsOutput : IRowsOutput
     /// <inheritdoc />
     public async ValueTask<ErrorCode> WriteValuesAsync(VariantValue[] values, CancellationToken cancellationToken = default)
     {
+        var errorCode = await _rowsOutput.WriteValuesAsync(values, cancellationToken);
         await Task.Delay(_delay, cancellationToken);
-        return await _rowsOutput.WriteValuesAsync(values, cancellationToken);
+        return errorCode;
     }
 }

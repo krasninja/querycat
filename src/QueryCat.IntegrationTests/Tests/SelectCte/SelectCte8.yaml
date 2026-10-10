@@ -1,0 +1,4 @@
+expected: |
+  1
+query: |
+  with recursive t(n) as (select 1 union select n from t) select * from t;

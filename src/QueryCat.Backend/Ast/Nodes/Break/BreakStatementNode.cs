@@ -15,7 +15,6 @@ internal sealed class BreakStatementNode : StatementNode, ICommandNode
     /// <inheritdoc />
     public BreakStatementNode(BreakStatementNode node) : base(node)
     {
-        node.CopyTo(this);
     }
 
     /// <inheritdoc />

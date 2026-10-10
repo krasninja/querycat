@@ -4,7 +4,7 @@ using QueryCat.Cli.Commands.Options;
 namespace QueryCat.Cli.Commands;
 
 #if ENABLE_PLUGINS
-internal class PluginInstallCommand : BaseCommand
+internal sealed class PluginInstallCommand : BaseCommand
 {
     /// <inheritdoc />
     public PluginInstallCommand() : base("install", Resources.Messages.PluginInstallCommand_Description)

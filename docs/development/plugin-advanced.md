@@ -70,13 +70,13 @@ public class SamplePluginRowsIterator : IRowsIterator
 }
 ```
 
-## Plugin Based On FetchRowsInput
+## Plugin Based On EnumerableRowsInput
 
 Another way to define plugin. It is high-level wrapper for rows input. The main purpose is to provide convenience wrapper for inputs that do external calls (API clients, etc).
 
 ```csharp
 /// <summary>
-/// Example simple rows input plugin based on <see cref="FetchRowsInput{TClass}" />.
+/// Example simple rows input plugin based on <see cref="EnumerableRowsInput{TClass}" />.
 /// </summary>
 public class SamplePluginInput : EnumerableRowsInput<TestClass>
 {

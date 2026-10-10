@@ -132,14 +132,11 @@ public sealed class ThriftPluginExecutionThread : IExecutionThread
     }
 
     /// <inheritdoc />
-    public async IAsyncEnumerable<CompletionResult> GetCompletionsAsync(string query, int position = -1, object? tag = null,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyCollection<CompletionResult>> GetCompletionsAsync(string query, int position = -1, object? tag = null,
+        CancellationToken cancellationToken = default)
     {
         var completions = await _client.ThriftClient.GetCompletionsAsync(_client.Token, query, position, cancellationToken);
-        foreach (var completionResult in completions)
-        {
-            yield return SdkConvert.Convert(completionResult);
-        }
+        return completions.Select(SdkConvert.Convert).ToList();
     }
 
     /// <inheritdoc />

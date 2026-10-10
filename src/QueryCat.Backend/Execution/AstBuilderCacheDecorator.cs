@@ -29,6 +29,9 @@ internal sealed class AstBuilderCacheDecorator : IAstBuilder
         IDictionary<string, IAstNode>? cache = null,
         int maxQueryLengthForCache = DefaultMaxQueryLengthForCache)
     {
+        ArgumentNullException.ThrowIfNull(astBuilder);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maxQueryLengthForCache);
+
         _astBuilder = astBuilder;
         _astCache = cache ?? new Dictionary<string, IAstNode>();
         _maxQueryLengthForCache = maxQueryLengthForCache;
@@ -49,7 +52,7 @@ internal sealed class AstBuilderCacheDecorator : IAstBuilder
         }
 
         resultNode = _astBuilder.BuildProgramFromString(program);
-        _astCache[program] = resultNode;
+        _astCache[program] = (IAstNode)resultNode.Clone();
         return (ProgramNode)resultNode;
     }
 
@@ -58,5 +61,5 @@ internal sealed class AstBuilderCacheDecorator : IAstBuilder
         => _astBuilder.BuildFunctionSignatureFromString(function);
 
     /// <inheritdoc />
-    public IAstBuilder.Token[] GetTokens(string text) => _astBuilder.GetTokens(text);
+    public IReadOnlyList<IAstBuilder.Token> GetTokens(string text) => _astBuilder.GetTokens(text);
 }

@@ -17,7 +17,6 @@ internal sealed class ArrayValuesNode : ListValuesNode
     public ArrayValuesNode(ArrayValuesNode node) : base(node)
     {
         Type = DataType.Array;
-        node.CopyTo(this);
     }
 
     /// <inheritdoc />

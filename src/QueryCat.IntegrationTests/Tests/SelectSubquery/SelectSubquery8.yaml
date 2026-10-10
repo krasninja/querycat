@@ -1,0 +1,4 @@
+expected: |
+  abc1
+query: |
+  select (case when 1=1 then 'abc' when 1=2 then 5 end) + 1 as v;

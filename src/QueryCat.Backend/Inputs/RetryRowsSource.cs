@@ -27,68 +27,75 @@ internal class RetryRowsSource : IRowsSource
     }
 
     /// <inheritdoc />
-    public Task OpenAsync(CancellationToken cancellationToken = default) => _source.OpenAsync(cancellationToken);
+    public async Task OpenAsync(CancellationToken cancellationToken = default)
+    {
+        await RetryCoreAsync(
+            async ct =>
+            {
+                await _source.OpenAsync(ct).ConfigureAwait(false);
+                return true;
+            },
+            cancellationToken).ConfigureAwait(false);
+    }
 
     /// <inheritdoc />
-    public Task CloseAsync(CancellationToken cancellationToken = default) => _source.CloseAsync(cancellationToken);
+    public async Task CloseAsync(CancellationToken cancellationToken = default)
+    {
+        await RetryCoreAsync(
+            async ct =>
+            {
+                await _source.CloseAsync(ct).ConfigureAwait(false);
+                return true;
+            },
+            cancellationToken).ConfigureAwait(false);
+    }
 
     /// <inheritdoc />
-    public Task ResetAsync(CancellationToken cancellationToken = default) => _source.ResetAsync(cancellationToken);
+    public async Task ResetAsync(CancellationToken cancellationToken = default)
+    {
+        await RetryCoreAsync(
+            async ct =>
+            {
+                await _source.ResetAsync(ct).ConfigureAwait(false);
+                return true;
+            },
+            cancellationToken).ConfigureAwait(false);
+    }
 
     protected ValueTask<TResult> RetryWrapperAsync<TResult>(
         Func<CancellationToken, ValueTask<TResult>> func,
         CancellationToken cancellationToken)
-        => RetryWrapperAsync(
-            (_, _, _, ct) => func.Invoke(ct),
-            1,
-            1,
-            1,
-            cancellationToken);
+        => RetryCoreAsync(func, cancellationToken);
 
     protected ValueTask<TResult> RetryWrapperAsync<T1, TResult>(
         Func<T1, CancellationToken, ValueTask<TResult>> func,
         T1 arg1,
         CancellationToken cancellationToken)
-        => RetryWrapperAsync(
-            (a1, _, _, ct) => func.Invoke(a1, ct),
-            arg1,
-            1,
-            1,
-            cancellationToken);
+        => RetryCoreAsync(ct => func.Invoke(arg1, ct), cancellationToken);
 
-    protected ValueTask<TResult> RetryWrapperAsync<T1, T2, TResult>(
-        Func<T1, T2, CancellationToken, ValueTask<TResult>> func,
-        T1 arg1,
-        T2 arg2,
-        CancellationToken cancellationToken)
-        => RetryWrapperAsync(
-            (a1, a2, _, ct) => func.Invoke(a1, a2, ct),
-            arg1,
-            arg2,
-            1,
-            cancellationToken);
-
-    protected async ValueTask<TResult> RetryWrapperAsync<T1, T2, T3, TResult>(
-        Func<T1, T2, T3, CancellationToken, ValueTask<TResult>> func,
-        T1 arg1,
-        T2 arg2,
-        T3 arg3,
+    private async ValueTask<TResult> RetryCoreAsync<TResult>(
+        Func<CancellationToken, ValueTask<TResult>> func,
         CancellationToken cancellationToken)
     {
         for (var i = 0; i < _maxAttempts; i++)
         {
             try
             {
-                return await func.Invoke(arg1, arg2, arg3, cancellationToken);
+                cancellationToken.ThrowIfCancellationRequested();
+                return await func.Invoke(cancellationToken).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
             }
             catch (Exception e)
             {
-                _logger.LogDebug(e, "Failed to read rows. Attempt {AttemptNumber}.", i + 1);
-                await Task.Delay(_retryInterval, cancellationToken);
+                _logger.LogDebug(e, "Operation failed. Attempt {AttemptNumber} of {MaxAttempts}.", i + 1, _maxAttempts);
                 if (i == _maxAttempts - 1)
                 {
                     throw;
                 }
+                await Task.Delay(_retryInterval, cancellationToken).ConfigureAwait(false);
             }
         }
 

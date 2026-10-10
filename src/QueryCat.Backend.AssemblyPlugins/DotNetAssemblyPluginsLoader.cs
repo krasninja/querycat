@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Reflection;
 using System.Text;
 using Microsoft.Extensions.Logging;
@@ -33,13 +34,14 @@ public class DotNetAssemblyPluginsLoader : PluginsLoader, IDisposable
         }
     }
 
-    private readonly Dictionary<string, AssemblyContext> _rawAssembliesCache = new(); // Not loaded yet assemblies.
-    private readonly Dictionary<string, Assembly> _loadedFromCacheAssemblies = new(); // Assemblies loaded from cache.
+    private readonly ConcurrentDictionary<string, AssemblyContext> _rawAssembliesCache = new(); // Not loaded yet assemblies.
+    private readonly ConcurrentDictionary<string, Assembly> _loadedFromCacheAssemblies = new(); // Assemblies loaded from cache.
     private readonly IFunctionsManager _functionsManager;
     private readonly IExecutionThread _executionThread;
-    private readonly Dictionary<string, Assembly> _loadedAssemblies = new(); // All loaded plugin DLLs.
+    private readonly ConcurrentDictionary<string, Assembly> _loadedAssemblies = new(); // All loaded plugin DLLs.
     private readonly HashSet<string> _domainLoadedAssemblies;
     private readonly Queue<MethodBase> _loadMethodsQueue = new();
+    private bool _isDisposed;
 
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(DotNetAssemblyPluginsLoader));
 
@@ -66,7 +68,7 @@ public class DotNetAssemblyPluginsLoader : PluginsLoader, IDisposable
     /// <summary>
     /// Loaded plugins assemblies.
     /// </summary>
-    public IEnumerable<Assembly> LoadedAssemblies => _loadedAssemblies.Values;
+    public ICollection<Assembly> LoadedAssemblies => _loadedAssemblies.Values;
 
     public DotNetAssemblyPluginsLoader(
         IFunctionsManager functionsManager,
@@ -105,10 +107,21 @@ public class DotNetAssemblyPluginsLoader : PluginsLoader, IDisposable
         }
         if (_rawAssembliesCache.TryGetValue(assemblyName.Name, out var context))
         {
-            assembly = new PluginAssemblyLoadContext(context.PluginLoadStrategy, context.PluginName)
-                .LoadFromStream(context.Stream);
-            _rawAssembliesCache.Remove(assemblyName.Name);
-            context.Dispose();
+            try
+            {
+                assembly = new PluginAssemblyLoadContext(context.PluginLoadStrategy, context.PluginName)
+                    .LoadFromStream(context.Stream);
+            }
+            catch (Exception e)
+            {
+                _logger.LogWarning(e, "Error while loading assembly '{Assembly}'.", assemblyName.Name);
+                return null;
+            }
+            finally
+            {
+                _rawAssembliesCache.Remove(assemblyName.Name, out _);
+                context.Dispose();
+            }
             _loadedFromCacheAssemblies[assemblyName.Name] = assembly;
             _logger.LogDebug("Resolved with raw assemblies cache.");
             return assembly;
@@ -122,14 +135,22 @@ public class DotNetAssemblyPluginsLoader : PluginsLoader, IDisposable
         if (_logger.IsEnabled(LogLevel.Debug))
         {
             _logger.LogDebug("Cannot find assembly '{Assembly}', skipped.", args.Name);
-            _logger.LogDebug(DumpAssemblies());
+            _logger.LogDebug("{AssembliesDump}", DumpAssemblies());
         }
         return null;
     }
 
+    /// <summary>
+    /// Dump the assemblies cache state for debugging.
+    /// </summary>
+    /// <returns>Cache state as text.</returns>
     public string DumpAssemblies()
     {
         var sb = new StringBuilder();
+        foreach (var assembly in _loadedAssemblies)
+        {
+            sb.AppendLine($"Plugin: {assembly.Key}");
+        }
         foreach (var assembly in _loadedFromCacheAssemblies)
         {
             sb.AppendLine($"Cache: {assembly.Key}");
@@ -144,8 +165,7 @@ public class DotNetAssemblyPluginsLoader : PluginsLoader, IDisposable
     /// <inheritdoc />
     public override async Task<int> LoadAsync(PluginsLoadingOptions options, CancellationToken cancellationToken = default)
     {
-        var loadedCount = 0;
-
+        var currentLoadedAssemblies = new HashSet<Assembly>();
         foreach (var pluginFile in GetPluginFiles(options))
         {
             if (_loadedAssemblies.ContainsKey(GetPluginNameFromFile(pluginFile)))
@@ -157,15 +177,24 @@ public class DotNetAssemblyPluginsLoader : PluginsLoader, IDisposable
             var strategies = GetLoadStrategies(pluginFile);
             foreach (var strategy in strategies)
             {
-                var assembly = await LoadWithStrategyAsync(strategy, Path.GetFileName(pluginFile), cancellationToken);
+                Assembly? assembly = null;
+                try
+                {
+                    assembly = await LoadWithStrategyAsync(strategy, Path.GetFileName(pluginFile), cancellationToken);
+                }
+                catch (Exception e) when (e is BadImageFormatException or IOException or FileLoadException
+                                              or InvalidDataException or UnauthorizedAccessException)
+                {
+                    _logger.LogWarning(e, "Error while loading assembly '{AssemblyFile}'.", pluginFile);
+                }
                 if (assembly != null)
                 {
                     var assemblyName = assembly.GetName().Name;
                     if (!string.IsNullOrEmpty(assemblyName))
                     {
                         _loadedAssemblies[assemblyName] = assembly;
+                        currentLoadedAssemblies.Add(assembly);
                         _logger.LogDebug("Loaded plugin target '{PluginFile}' with strategy {Strategy}.", pluginFile, strategy.GetType().Name);
-                        loadedCount++;
                         break;
                     }
                     else
@@ -176,50 +205,42 @@ public class DotNetAssemblyPluginsLoader : PluginsLoader, IDisposable
             }
         }
 
-        await RegisterFunctionsAsync(cancellationToken);
+        await RegisterFunctionsAsync(currentLoadedAssemblies, cancellationToken);
         if (!options.SkipLoadingCallbackCall)
         {
             await CallOnLoadAsync(cancellationToken);
         }
-        return loadedCount;
+        return currentLoadedAssemblies.Count;
     }
 
     public async Task CallOnLoadAsync(CancellationToken cancellationToken = default)
     {
         while (_loadMethodsQueue.TryDequeue(out var loadMethod))
         {
-            var taskObject = loadMethod.Invoke(null, [_executionThread, cancellationToken]) as Task;
-            if (taskObject != null)
+            try
             {
-                await taskObject;
+                var result = loadMethod.Invoke(null, [_executionThread, cancellationToken]);
+                if (result is Task task)
+                {
+                    await task;
+                }
+                else if (result is ValueTask valueTask)
+                {
+                    await valueTask;
+                }
+            }
+            catch (Exception e)
+            {
+                var error = e is TargetInvocationException { InnerException: { } inner } ? inner : e;
+                _logger.LogError(error, "Failed to call '{Method}' of '{Type}'.",
+                    loadMethod.Name, loadMethod.DeclaringType?.FullName);
             }
         }
     }
 
     private static string GetPluginNameFromFile(string fileName)
     {
-        fileName = Path.GetFileNameWithoutExtension(fileName);
-        // Example: Dashik.Widgets.Cpu.0.1.0
-        var dotIndex = LastNIndexOn(fileName, '.', 3);
-        if (dotIndex > -1)
-        {
-            fileName = fileName.Substring(0, dotIndex);
-        }
-        return fileName;
-    }
-
-    private static int LastNIndexOn(string target, char ch, int n)
-    {
-        var index = target.Length;
-        for (var i = 0; i < n; i++)
-        {
-            index = target.LastIndexOf(ch, index - 1);
-            if (index == -1)
-            {
-                return -1;
-            }
-        }
-        return index;
+        return PluginInfo.CreateFromUniversalName(fileName).Name;
     }
 
     private async Task<Assembly?> LoadWithStrategyAsync(
@@ -232,7 +253,7 @@ public class DotNetAssemblyPluginsLoader : PluginsLoader, IDisposable
 
         // Get DLL files.
         var dllFiles = (await strategy.GetAllFilesAsync(cancellationToken))
-            .Where(f => f.StartsWith(monikerRoot)
+            .Where(f => f.StartsWith(monikerRoot, StringComparison.Ordinal)
                         && Path.GetExtension(f).Equals(DllExtension, StringComparison.InvariantCultureIgnoreCase))
             .ToArray();
 
@@ -282,23 +303,37 @@ public class DotNetAssemblyPluginsLoader : PluginsLoader, IDisposable
             }
 
             await using var libraryFileStream = await strategy.GetFileAsync(libraryFile, cancellationToken);
-            var stream = await CloneStreamAsync(libraryFileStream, cancellationToken);
-            if (stream == Stream.Null)
+            if (libraryFileStream == Stream.Null)
             {
                 continue;
             }
+            var stream = await CloneStreamAsync(libraryFileStream, cancellationToken);
             _logger.LogTrace("Cached '{Assembly}'.", fileName);
             _rawAssembliesCache[fileName] = new AssemblyContext(stream, strategy, pluginDllFileName);
         }
 
         // Load plugin library.
         await using var pluginFileStream = await strategy.GetFileAsync(pluginDll, cancellationToken);
+        if (pluginFileStream == Stream.Null)
+        {
+            return null;
+        }
         var pluginStream = await CloneStreamAsync(pluginFileStream, cancellationToken);
         if (pluginStream == Stream.Null)
         {
             return null;
         }
-        return new PluginAssemblyLoadContext(strategy, pluginDllFileName).LoadFromStream(pluginStream);
+
+        try
+        {
+            return new PluginAssemblyLoadContext(strategy, pluginDllFileName).LoadFromStream(pluginStream);
+        }
+        catch (Exception e) when (e is BadImageFormatException or IOException
+                                      or FileLoadException or InvalidDataException or UnauthorizedAccessException)
+        {
+            _logger.LogWarning(e, "Failed to load assembly '{AssemblyFile}'.", pluginDllFileName);
+            return null;
+        }
     }
 
     /// <summary>
@@ -369,17 +404,24 @@ public class DotNetAssemblyPluginsLoader : PluginsLoader, IDisposable
         return true;
     }
 
-    private async Task RegisterFunctionsAsync(CancellationToken cancellationToken)
+    private async Task RegisterFunctionsAsync(ISet<Assembly> assemblies, CancellationToken cancellationToken)
     {
         foreach (var pluginAssembly in _loadedAssemblies)
         {
+            if (!assemblies.Contains(pluginAssembly.Value))
+            {
+                continue;
+            }
+
             try
             {
                 await RegisterFromAssemblyAsync(pluginAssembly.Value, cancellationToken);
             }
             catch (Exception e)
             {
-                _logger.LogError(e, "Failed to register '{Assembly}': {Error}.", pluginAssembly.Key, e.Message);
+                var error = e is TargetInvocationException { InnerException: { } inner } ? inner : e;
+                _logger.LogError(error, "Failed to register '{Assembly}': {Error}.",
+                    pluginAssembly.Value.GetName().Name, error.Message);
             }
         }
     }
@@ -392,7 +434,10 @@ public class DotNetAssemblyPluginsLoader : PluginsLoader, IDisposable
         if (registerType != null)
         {
             // static void RegisterFunctions(IFunctionsManager functionsManager).
-            var registerMethod = registerType.GetMethod(RegistrationMethodName);
+            var registerMethod = registerType.GetMethod(
+                RegistrationMethodName,
+                BindingFlags.Public | BindingFlags.Static,
+                [typeof(IFunctionsManager)]);
             if (registerMethod != null)
             {
                 _logger.LogDebug("Register using '{ClassName}' class.", RegistrationClassName);
@@ -400,7 +445,10 @@ public class DotNetAssemblyPluginsLoader : PluginsLoader, IDisposable
             }
 
             // static Task OnLoadAsync(IExecutionThread executionThread, CancellationToken cancellationToken).
-            var loadMethod = registerType.GetMethod(OnLoadMethodName);
+            var loadMethod = registerType.GetMethod(
+                OnLoadMethodName,
+                BindingFlags.Public | BindingFlags.Static,
+                [typeof(IExecutionThread), typeof(CancellationToken)]);
             if (loadMethod != null)
             {
                 _loadMethodsQueue.Enqueue(loadMethod);
@@ -410,7 +458,7 @@ public class DotNetAssemblyPluginsLoader : PluginsLoader, IDisposable
         {
             // Get all types via reflection and try to register. Slow path.
             _logger.LogDebug("Register using types search method.");
-            foreach (var type in assembly.GetTypes())
+            foreach (var type in GetAssemblyTypes(assembly))
             {
                 var functions = _functionsManager.Factory.CreateFromType(type);
                 _functionsManager.RegisterFunctions(functions);
@@ -418,6 +466,18 @@ public class DotNetAssemblyPluginsLoader : PluginsLoader, IDisposable
         }
 
         await OnPluginLoadedAsync(assembly, registerType, cancellationToken);
+    }
+
+    private static IEnumerable<Type> GetAssemblyTypes(Assembly assembly)
+    {
+        try
+        {
+            return assembly.GetTypes();
+        }
+        catch (ReflectionTypeLoadException e)
+        {
+            return e.Types.OfType<Type>();
+        }
     }
 
     /// <summary>
@@ -457,12 +517,20 @@ public class DotNetAssemblyPluginsLoader : PluginsLoader, IDisposable
 
     protected virtual void Dispose(bool disposing)
     {
+        if (_isDisposed)
+        {
+            return;
+        }
+        _isDisposed = true;
+
         if (disposing)
         {
+            AppDomain.CurrentDomain.AssemblyResolve -= CurrentDomainOnAssemblyResolve;
             foreach (var value in _rawAssembliesCache.Values)
             {
                 value.Dispose();
             }
+            _rawAssembliesCache.Clear();
         }
     }
 

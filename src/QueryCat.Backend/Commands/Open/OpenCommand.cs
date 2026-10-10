@@ -7,6 +7,9 @@ using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Backend.Commands.Open;
 
+/// <summary>
+/// Handles the OPEN statement — evaluates the source expression and returns an opened IRowsInput.
+/// </summary>
 internal sealed class OpenCommand : ICommand
 {
     /// <inheritdoc />
@@ -19,15 +22,16 @@ internal sealed class OpenCommand : ICommand
 
         async ValueTask<VariantValue> Func(IExecutionThread thread, CancellationToken ct)
         {
-            var delegateVisitor = new CreateDelegateVisitor(executionThread);
+            var localThread = (IExecutionThread<ExecutionOptions>)thread;
+            var delegateVisitor = new CreateDelegateVisitor(localThread);
             var rowsInputFactory = new RowsInputFactory(
                 new SelectCommandContext(new SelectOpenNode(openNode))
             );
             var sourceDelegate = await delegateVisitor.RunAndReturnAsync(openNode.Expression, ct);
-            var source = await sourceDelegate.InvokeAsync(executionThread, ct);
+            var source = await sourceDelegate.InvokeAsync(thread, ct);
             var context = await rowsInputFactory.CreateRowsInputAsync(
                 source,
-                executionThread,
+                localThread,
                 resolveStringAsSource: true,
                 cancellationToken: ct);
             if (context == null)

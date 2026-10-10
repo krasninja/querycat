@@ -8,7 +8,7 @@ using QueryCat.Backend.Relational;
 namespace QueryCat.UnitTests.Relational;
 
 /// <summary>
-/// Tests for <see cref="DistinctRowsIteratorIterator" />.
+/// Tests for <see cref="DistinctRowsIterator" />.
 /// </summary>
 public class DistinctRowsIteratorTests
 {
@@ -25,7 +25,7 @@ public class DistinctRowsIteratorTests
         table.AddRow(30, "Marina M");
 
         // Act.
-        var resultRowsSet = await new DistinctRowsIteratorIterator(NullExecutionThread.Instance, table.GetIterator())
+        var resultRowsSet = await new DistinctRowsIterator(NullExecutionThread.Instance, table.GetIterator())
             .ToFrameAsync();
 
         // Assert.

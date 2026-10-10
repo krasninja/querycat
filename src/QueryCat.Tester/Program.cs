@@ -91,7 +91,7 @@ public class Program
 
         AddVariables(executionThread, variables);
 
-        if (files.Any())
+        if (files.Length > 0)
         {
             foreach (var file in files)
             {
@@ -126,7 +126,7 @@ public class Program
 
     public static void AddVariables(IExecutionThread executionThread, string[]? variables = null)
     {
-        if (variables == null || !variables.Any())
+        if (variables == null || variables.Length == 0)
         {
             return;
         }

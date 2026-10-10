@@ -1,4 +1,4 @@
-using System.Globalization;
+using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
 
@@ -26,6 +26,9 @@ public class AdjustColumnsLengthsIterator : IRowsIterator, IRowsIteratorParent
 
     public AdjustColumnsLengthsIterator(IRowsIterator rowsIterator, int maxRowsToAnalyze = MaxRowsToAnalyze)
     {
+        ArgumentNullException.ThrowIfNull(rowsIterator);
+        ArgumentOutOfRangeException.ThrowIfLessThan(maxRowsToAnalyze, 1);
+
         _rowsIterator = rowsIterator;
         _maxRowsToAnalyze = maxRowsToAnalyze;
         _cacheRowsIterator = new CacheRowsIterator(rowsIterator);
@@ -58,6 +61,7 @@ public class AdjustColumnsLengthsIterator : IRowsIterator, IRowsIteratorParent
     {
         await _cacheRowsIterator.ResetAsync(cancellationToken);
         _isInitialized = false;
+        _cacheMode = false;
     }
 
     /// <inheritdoc />
@@ -75,11 +79,12 @@ public class AdjustColumnsLengthsIterator : IRowsIterator, IRowsIteratorParent
             for (var i = 0; i < Columns.Length; i++)
             {
                 var internalType = _cacheRowsIterator.Current[i].Type;
-                if (internalType == DataType.Void || internalType == DataType.Object)
+                if (internalType == DataType.Void || internalType == DataType.Object || internalType == DataType.Array
+                    || internalType == DataType.Null || internalType == DataType.Dynamic)
                 {
                     continue;
                 }
-                var value = _cacheRowsIterator.Current[i].ToString(CultureInfo.InvariantCulture);
+                var value = _cacheRowsIterator.Current[i].ToString(Application.Culture);
                 if (value.Length > Columns[i].Length)
                 {
                     Columns[i].Length = value.Length;
@@ -107,6 +112,7 @@ public class AdjustColumnsLengthsIterator : IRowsIterator, IRowsIteratorParent
     /// <inheritdoc />
     public IEnumerable<IRowsSchema> GetChildren()
     {
+        yield return _rowsIterator;
         yield return _cacheRowsIterator;
     }
 }

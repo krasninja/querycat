@@ -19,6 +19,8 @@ internal sealed class LimitRowsIterator : IRowsIterator, IRowsIteratorParent
 
     public LimitRowsIterator(IRowsIterator rowsIterator, long limit)
     {
+        ArgumentOutOfRangeException.ThrowIfNegative(limit, nameof(limit));
+
         _rowsIterator = rowsIterator;
         _limit = limit;
     }
@@ -30,8 +32,12 @@ internal sealed class LimitRowsIterator : IRowsIterator, IRowsIteratorParent
         {
             return false;
         }
-        _count++;
-        return await _rowsIterator.MoveNextAsync(cancellationToken);
+        if (await _rowsIterator.MoveNextAsync(cancellationToken))
+        {
+            _count++;
+            return true;
+        }
+        return false;
     }
 
     /// <inheritdoc />
@@ -44,7 +50,7 @@ internal sealed class LimitRowsIterator : IRowsIterator, IRowsIteratorParent
     /// <inheritdoc />
     public void Explain(IndentedStringBuilder stringBuilder)
     {
-        stringBuilder.AppendRowsIteratorsWithIndent($"Limit (row={_limit})", _rowsIterator);
+        stringBuilder.AppendRowsIteratorsWithIndent($"Limit (rows={_limit})", _rowsIterator);
     }
 
     /// <inheritdoc />

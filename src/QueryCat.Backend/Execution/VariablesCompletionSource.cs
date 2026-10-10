@@ -15,7 +15,7 @@ public class VariablesCompletionSource : ICompletionSource
     {
         var items = new List<CompletionResult>();
         items.AddRange(FillWithScopesVariables(context));
-        return AsyncUtils.ToAsyncEnumerable(items);
+        return AsyncUtils.ToAsyncEnumerable(items, cancellationToken);
     }
 
     private IEnumerable<CompletionResult> FillWithScopesVariables(CompletionContext context)
@@ -25,6 +25,7 @@ public class VariablesCompletionSource : ICompletionSource
         {
             yield break;
         }
+        var returnedVariables = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         // Try to get from variables.
         var searchTerm = context.LastTokenText;
@@ -33,7 +34,8 @@ public class VariablesCompletionSource : ICompletionSource
         {
             foreach (var variable in scope.Variables)
             {
-                if (!IsVariableMatch(variable.Key, variable.Value))
+                if (returnedVariables.Contains(variable.Key)
+                    || !IsVariableMatch(variable.Key, variable.Value))
                 {
                     continue;
                 }
@@ -47,6 +49,7 @@ public class VariablesCompletionSource : ICompletionSource
                     context.TriggerTokenPosition,
                     context.TriggerTokenPosition + searchTerm.Length,
                     variable.Key);
+                returnedVariables.Add(variable.Key);
                 yield return new CompletionResult(
                     new Completion(variable.Key, CompletionItemKind.Variable, relevance: relevance), [textEdit]);
             }

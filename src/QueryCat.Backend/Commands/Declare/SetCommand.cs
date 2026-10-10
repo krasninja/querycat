@@ -24,6 +24,7 @@ internal sealed class SetCommand : ICommand
 
         var valueHandler = await new StatementsVisitor(executionThread, _resolveTypesVisitor)
             .RunAndReturnAsync(setNode.ValueNode, cancellationToken);
+        valueHandler = DeclareCommand.FixSelectSingleValueCase(valueHandler);
         var identifierHandler = await new SetIdentifierDelegateVisitor(executionThread, _resolveTypesVisitor, valueHandler)
             .RunAndReturnAsync(setNode.IdentifierNode, cancellationToken);
 

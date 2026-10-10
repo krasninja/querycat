@@ -31,6 +31,7 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(ThriftPluginsLoader));
     private readonly HashSet<string> _loadedPlugins = new();
     private readonly string _functionsCacheDirectory;
+    private bool _isDisposed;
 
     // Lazy loading.
     private readonly Dictionary<string, string> _fileTokenMap = new(); // file-token.
@@ -54,7 +55,7 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
 
     internal sealed record FunctionsCache(
         [property:JsonPropertyName("createdAt")] long CreatedAt,
-        [property:JsonPropertyName("functions")] List<PluginContextFunction> Functions);
+        [property:JsonPropertyName("functions")] IReadOnlyList<PluginContextFunction> Functions);
 
     private class FunctionCallPluginBase
     {
@@ -73,13 +74,17 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
                 named: new Dictionary<string, VariantValue>(),
                 positional: arguments.ToList());
             using var session = await context.GetSessionAsync(cancellationToken);
-            var rawValue = await session.ClientProxy.CallFunctionAsync(0, functionName, callArguments, -1, cancellationToken);
+            var rawValue = await session.ClientProxy.CallFunctionAsync(context.Token, functionName, callArguments, -1, cancellationToken);
             var result = SdkConvert.Convert(rawValue);
             if (result.Type == DataType.Object && result.AsObjectUnsafe is RemoteObject remoteObject)
             {
                 var sessionProvider = new ServerThriftSessionProvider(context);
-                var obj = await RemoteObjectUtils.ToLocalObjectAsync(remoteObject,
-                    sessionProvider, context.ObjectsStorage, cancellationToken: cancellationToken);
+                var obj = await RemoteObjectUtils.ToLocalObjectAsync(
+                    remoteObject,
+                    sessionProvider,
+                    context.ObjectsStorage,
+                    context.Token,
+                    cancellationToken: cancellationToken);
                 if (obj != null)
                 {
                     context.ObjectsStorage.Add(obj);
@@ -197,7 +202,7 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
             }
         }
 
-        if (_debugMode && !string.IsNullOrEmpty(ForceRegistrationToken) && !_loadedPlugins.Any())
+        if (_debugMode && !string.IsNullOrEmpty(ForceRegistrationToken) && _loadedPlugins.Count == 0)
         {
             _logger.LogDebug("Waiting for any plugin registration.");
             _server.SetRegistrationToken(ForceRegistrationToken, ".plugin");
@@ -475,7 +480,7 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
                 process.StartInfo.ArgumentList.Add(arg);
             }
             process.OutputDataReceived += (_, args) => LogPluginStdOut(fileName, args.Data);
-            process.ErrorDataReceived += (_, args) => LogPluginStdErr(file, args.Data);
+            process.ErrorDataReceived += (_, args) => LogPluginStdErr(fileName, args.Data);
             process.Start();
             process.BeginOutputReadLine();
             process.BeginErrorReadLine();
@@ -721,6 +726,12 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
     /// <inheritdoc />
     public void Dispose()
     {
+        if (_isDisposed)
+        {
+            return;
+        }
+        _isDisposed = true;
+
         _server.OnPluginRegistration -= OnPluginRegistration;
         _server.Dispose();
     }

@@ -13,4 +13,4 @@
   "RequestId": "0HNCNDGQAJP28:00000039",
   "ConnectionId": "0HNCNDGQAJP28"
 }
-{"@t":"2016-06-07T03:44:57.8532799Z","@mt":"Hello, {CurrentUserId}","CurrentUserId":"466"}
+{"@t":"2016-06-07T03:44:57.8532799Z","@mt":"Hello, {CurrentUserId}","CurrentUserId":466}

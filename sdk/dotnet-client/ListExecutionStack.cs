@@ -19,7 +19,7 @@ public sealed class ListExecutionStack : IExecutionStack
     /// <inheritdoc />
     public VariantValue this[int index]
     {
-        get => _lastFramePosition > -1 ? _stack[_lastFramePosition + index] : default;
+        get => _stack[_lastFramePosition + index];
         set => _stack[_lastFramePosition + index] = value;
     }
 

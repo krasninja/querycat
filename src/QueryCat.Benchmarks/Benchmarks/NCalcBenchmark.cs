@@ -20,7 +20,10 @@ public class NCalcBenchmark : IDisposable
     private const string LogicalExpression =
         "(1089 = (1000 + 89)) AND 13 IN (1,2,3,4,5,6,7,8,9,10,11,12,13,14,15) AND 'INSERT' = 'INSERT'";
 
-    private readonly IExecutionThread _executionThread = new ExecutionThreadBootstrapper()
+    private readonly IExecutionThread _executionThread = new ExecutionThreadBootstrapper(new ExecutionOptions()
+        {
+            PreventConcurrentRun = false,
+        })
         .WithStandardFunctions()
         .Create();
 

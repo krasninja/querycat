@@ -470,18 +470,19 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
     /// </summary>
     /// <typeparam name="T1">The type the property is a member of.</typeparam>
     /// <typeparam name="T2">The return value type.</typeparam>
-    /// <param name="property">The property.</param>
-    /// <returns>The property name.</returns>
+    /// <param name="property">The property expression.</param>
+    /// <returns>The property info or <c>null</c> if the expression is not a property access.</returns>
     private static PropertyInfo? GetProperty<T1, T2>(Expression<Func<T1, T2>> property)
     {
-        if (property.Body is UnaryExpression unaryExpression)
+        if (property.Body is UnaryExpression unaryExpression
+            && (unaryExpression.NodeType is ExpressionType.Convert || unaryExpression.NodeType is ExpressionType.ConvertChecked))
         {
             var memberExpression = (MemberExpression)unaryExpression.Operand;
-            return (PropertyInfo)memberExpression.Member;
+            return memberExpression.Member as PropertyInfo;
         }
         if (property.Body is MemberExpression bodyMemberExpression)
         {
-            return (PropertyInfo)bodyMemberExpression.Member;
+            return bodyMemberExpression.Member as PropertyInfo;
         }
 
         return null;
@@ -507,7 +508,7 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
 
     private bool AddOrReplaceColumn(Column column, Func<TClass, VariantValue> valueGetter)
     {
-        var existingColumnIndex = _columns.FindIndex(c => c.Column.Name == column.Name);
+        var existingColumnIndex = _columns.FindIndex(c => Column.NameEquals(c.Column.Name, column.Name));
         if (existingColumnIndex > -1)
         {
             _columns[existingColumnIndex] = new ColumnGetter(column, valueGetter);
@@ -515,10 +516,7 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
         }
         else
         {
-            _columns.Add(new ColumnGetter(
-                column,
-                obj => VariantValue.CreateFromObject(valueGetter.Invoke(obj))
-            ));
+            _columns.Add(new ColumnGetter(column, valueGetter));
             return true;
         }
     }
@@ -532,20 +530,24 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
 
         if (NamingConvention == NamingConventionStyle.CamelCase)
         {
-            return name.Length < 2 ? name.ToLower() : char.ToLower(name[0]) + name[1..];
+            return name.Length < 2 ? name.ToLowerInvariant() : char.ToLowerInvariant(name[0]) + name[1..];
         }
         else if (NamingConvention == NamingConventionStyle.SnakeCase)
         {
-            // Based on https://stackoverflow.com/questions/63055621/how-to-convert-camel-case-to-snake-case-with-two-capitals-next-to-each-other.
-            var sb = new StringBuilder()
-                .Append(char.ToLower(name[0]));
-            for (var i = 1; i < name.Length; ++i)
+            var sb = new StringBuilder(name.Length + 4);
+            for (var i = 0; i < name.Length; i++)
             {
                 var ch = name[i];
                 if (char.IsUpper(ch))
                 {
-                    sb.Append('_');
-                    sb.Append(char.ToLower(ch));
+                    // Split "aB" and "1B", and the last capital of an acronym: "HTTPServer" -> "http_server".
+                    if (i > 0 && name[i - 1] != '_'
+                              && (char.IsLower(name[i - 1]) || char.IsDigit(name[i - 1])
+                                                            || (i + 1 < name.Length && char.IsLower(name[i + 1]))))
+                    {
+                        sb.Append('_');
+                    }
+                    sb.Append(char.ToLowerInvariant(ch));
                 }
                 else
                 {
@@ -556,7 +558,7 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
         }
         else if (NamingConvention == NamingConventionStyle.PascalCase)
         {
-            return System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(name);
+            return char.ToUpperInvariant(name[0]) + name[1..];
         }
 
         return name;

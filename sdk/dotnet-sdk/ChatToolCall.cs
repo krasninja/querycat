@@ -32,21 +32,24 @@ using Thrift.Processor;
 namespace QueryCat.Plugins.Sdk
 {
 
-  public partial class QuestionRequest : TBase
+  public partial class ChatToolCall : TBase
   {
 
-    public List<global::QueryCat.Plugins.Sdk.QuestionMessage>? Messages { get; set; }
+    public string Id { get; set; } = string.Empty;
 
-    public string Type { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
 
-    public QuestionRequest()
+    public string Arguments { get; set; } = string.Empty;
+
+    public ChatToolCall()
     {
     }
 
-    public QuestionRequest(List<global::QueryCat.Plugins.Sdk.QuestionMessage>? @messages, string @type) : this()
+    public ChatToolCall(string @id, string @name, string @arguments) : this()
     {
-      this.Messages = @messages;
-      this.Type = @type;
+      this.Id = @id;
+      this.Name = @name;
+      this.Arguments = @arguments;
     }
 
     public async global::System.Threading.Tasks.Task ReadAsync(TProtocol iprot, CancellationToken cancellationToken)
@@ -54,8 +57,9 @@ namespace QueryCat.Plugins.Sdk
       iprot.IncrementRecursionDepth();
       try
       {
-        bool isset_messages = false;
-        bool isset_type = false;
+        bool isset_id = false;
+        bool isset_name = false;
+        bool isset_arguments = false;
         TField field;
         await iprot.ReadStructBeginAsync(cancellationToken);
         while (true)
@@ -69,21 +73,10 @@ namespace QueryCat.Plugins.Sdk
           switch (field.ID)
           {
             case 1:
-              if (field.Type == TType.List)
+              if (field.Type == TType.String)
               {
-                {
-                  var _list86 = await iprot.ReadListBeginAsync(cancellationToken);
-                  Messages = new List<global::QueryCat.Plugins.Sdk.QuestionMessage>(_list86.Count);
-                  for(int _i87 = 0; _i87 < _list86.Count; ++_i87)
-                  {
-                    global::QueryCat.Plugins.Sdk.QuestionMessage _elem88;
-                    _elem88 = new global::QueryCat.Plugins.Sdk.QuestionMessage();
-                    await _elem88.ReadAsync(iprot, cancellationToken);
-                    Messages.Add(_elem88);
-                  }
-                  await iprot.ReadListEndAsync(cancellationToken);
-                }
-                isset_messages = true;
+                Id = await iprot.ReadStringAsync(cancellationToken);
+                isset_id = true;
               }
               else
               {
@@ -93,8 +86,19 @@ namespace QueryCat.Plugins.Sdk
             case 2:
               if (field.Type == TType.String)
               {
-                Type = await iprot.ReadStringAsync(cancellationToken);
-                isset_type = true;
+                Name = await iprot.ReadStringAsync(cancellationToken);
+                isset_name = true;
+              }
+              else
+              {
+                await TProtocolUtil.SkipAsync(iprot, field.Type, cancellationToken);
+              }
+              break;
+            case 3:
+              if (field.Type == TType.String)
+              {
+                Arguments = await iprot.ReadStringAsync(cancellationToken);
+                isset_arguments = true;
               }
               else
               {
@@ -110,11 +114,15 @@ namespace QueryCat.Plugins.Sdk
         }
 
         await iprot.ReadStructEndAsync(cancellationToken);
-        if (!isset_messages)
+        if (!isset_id)
         {
           throw new TProtocolException(TProtocolException.INVALID_DATA);
         }
-        if (!isset_type)
+        if (!isset_name)
+        {
+          throw new TProtocolException(TProtocolException.INVALID_DATA);
+        }
+        if (!isset_arguments)
         {
           throw new TProtocolException(TProtocolException.INVALID_DATA);
         }
@@ -130,31 +138,35 @@ namespace QueryCat.Plugins.Sdk
       oprot.IncrementRecursionDepth();
       try
       {
-        var tmp89 = new TStruct("QuestionRequest");
+        var tmp89 = new TStruct("ChatToolCall");
         await oprot.WriteStructBeginAsync(tmp89, cancellationToken);
         #pragma warning disable IDE0017  // simplified init
         var tmp90 = new TField();
-        if((Messages != null))
+        if((Id != null))
         {
-          tmp90.Name = "messages";
-          tmp90.Type = TType.List;
+          tmp90.Name = "id";
+          tmp90.Type = TType.String;
           tmp90.ID = 1;
           await oprot.WriteFieldBeginAsync(tmp90, cancellationToken);
-          await oprot.WriteListBeginAsync(new TList(TType.Struct, Messages.Count), cancellationToken);
-          foreach (global::QueryCat.Plugins.Sdk.QuestionMessage _iter91 in Messages)
-          {
-            await _iter91.WriteAsync(oprot, cancellationToken);
-          }
-          await oprot.WriteListEndAsync(cancellationToken);
+          await oprot.WriteStringAsync(Id, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
-        if((Type != null))
+        if((Name != null))
         {
-          tmp90.Name = "type";
+          tmp90.Name = "name";
           tmp90.Type = TType.String;
           tmp90.ID = 2;
           await oprot.WriteFieldBeginAsync(tmp90, cancellationToken);
-          await oprot.WriteStringAsync(Type, cancellationToken);
+          await oprot.WriteStringAsync(Name, cancellationToken);
+          await oprot.WriteFieldEndAsync(cancellationToken);
+        }
+        if((Arguments != null))
+        {
+          tmp90.Name = "arguments";
+          tmp90.Type = TType.String;
+          tmp90.ID = 3;
+          await oprot.WriteFieldBeginAsync(tmp90, cancellationToken);
+          await oprot.WriteStringAsync(Arguments, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
         #pragma warning restore IDE0017  // simplified init
@@ -169,22 +181,27 @@ namespace QueryCat.Plugins.Sdk
 
     public override bool Equals(object? that)
     {
-      if (that is not QuestionRequest other) return false;
+      if (that is not ChatToolCall other) return false;
       if (ReferenceEquals(this, other)) return true;
-      return TCollections.Equals(Messages, other.Messages)
-        && global::System.Object.Equals(Type, other.Type);
+      return global::System.Object.Equals(Id, other.Id)
+        && global::System.Object.Equals(Name, other.Name)
+        && global::System.Object.Equals(Arguments, other.Arguments);
     }
 
     public override int GetHashCode() {
       int hashcode = 157;
       unchecked {
-        if((Messages != null))
+        if((Id != null))
         {
-          hashcode = (hashcode * 397) + TCollections.GetHashCode(Messages);
+          hashcode = (hashcode * 397) + Id.GetHashCode();
         }
-        if((Type != null))
+        if((Name != null))
         {
-          hashcode = (hashcode * 397) + Type.GetHashCode();
+          hashcode = (hashcode * 397) + Name.GetHashCode();
+        }
+        if((Arguments != null))
+        {
+          hashcode = (hashcode * 397) + Arguments.GetHashCode();
         }
       }
       return hashcode;
@@ -192,19 +209,24 @@ namespace QueryCat.Plugins.Sdk
 
     public override string ToString()
     {
-      var tmp92 = new StringBuilder("QuestionRequest(");
-      if((Messages != null))
+      var tmp91 = new StringBuilder("ChatToolCall(");
+      if((Id != null))
       {
-        tmp92.Append(", Messages: ");
-        Messages.ToString(tmp92);
+        tmp91.Append(", Id: ");
+        Id.ToString(tmp91);
       }
-      if((Type != null))
+      if((Name != null))
       {
-        tmp92.Append(", Type: ");
-        Type.ToString(tmp92);
+        tmp91.Append(", Name: ");
+        Name.ToString(tmp91);
       }
-      tmp92.Append(')');
-      return tmp92.ToString();
+      if((Arguments != null))
+      {
+        tmp91.Append(", Arguments: ");
+        Arguments.ToString(tmp91);
+      }
+      tmp91.Append(')');
+      return tmp91.ToString();
     }
   }
 

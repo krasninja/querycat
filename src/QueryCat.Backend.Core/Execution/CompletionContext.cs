@@ -51,12 +51,10 @@ public sealed class CompletionContext
         IReadOnlyList<ParserToken> tokens,
         int caretPosition)
     {
-        var tokensList = new ParserTokensList(tokens);
-
         ExecutionThread = executionThread;
         Text = text;
         CaretPosition = caretPosition;
         Tokens = new ParserTokensList(tokens);
-        TriggerTokens = tokensList.GetRange(tokensList.FindLastIndex(t => t.IsSeparator()) + 1);
+        TriggerTokens = Tokens.GetRange(Tokens.FindLastIndex(t => t.IsSeparator()) + 1);
     }
 }

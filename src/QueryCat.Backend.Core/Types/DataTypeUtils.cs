@@ -64,7 +64,7 @@ public static class DataTypeUtils
             DataType.Void => VariantValue.VoidValueString,
             DataType.Dynamic => "dynamic",
             DataType.Integer => "i:" + value.AsIntegerUnsafe.ToString(CultureInfo.InvariantCulture),
-            DataType.String => "s:" + StringUtils.Quote(value.AsStringUnsafe),
+            DataType.String => "s:" + StringUtils.Quote(value.AsStringUnsafe, force: true),
             DataType.Boolean => "bl:" + value.AsBooleanUnsafe.ToString(CultureInfo.InvariantCulture),
             DataType.Float => "fl:" + value.AsFloatUnsafe.ToString("G17", CultureInfo.InvariantCulture),
             DataType.Numeric => "n:" + value.AsNumericUnsafe.ToString(CultureInfo.InvariantCulture),

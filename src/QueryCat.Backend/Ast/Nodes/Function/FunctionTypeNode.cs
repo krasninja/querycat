@@ -4,7 +4,7 @@ namespace QueryCat.Backend.Ast.Nodes.Function;
 
 internal sealed class FunctionTypeNode : TypeNode, IEquatable<FunctionTypeNode>
 {
-    public static FunctionTypeNode NullTypeInstance { get; } = new(DataType.Null);
+    public static FunctionTypeNode NullTypeInstance => new(DataType.Null);
 
     public string TypeName { get; }
 

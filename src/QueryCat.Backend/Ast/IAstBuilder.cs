@@ -21,5 +21,5 @@ internal interface IAstBuilder
 
     FunctionSignatureNode BuildFunctionSignatureFromString(string function);
 
-    Token[] GetTokens(string text);
+    IReadOnlyList<Token> GetTokens(string text);
 }

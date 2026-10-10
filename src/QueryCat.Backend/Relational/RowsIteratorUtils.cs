@@ -8,44 +8,9 @@ namespace QueryCat.Backend.Relational;
 /// </summary>
 public static class RowsIteratorUtils
 {
-    private sealed class EmptyRowsIterator : IRowsIterator
-    {
-        /// <inheritdoc />
-        public Column[] Columns => [];
-
-        /// <inheritdoc />
-        public Row Current { get; }
-
-        public EmptyRowsIterator()
-        {
-            Current = new Row(this);
-        }
-
-        /// <inheritdoc />
-        public ValueTask<bool> MoveNextAsync(CancellationToken cancellationToken = default)
-            => ValueTask.FromResult(false);
-
-        /// <inheritdoc />
-        public Task ResetAsync(CancellationToken cancellationToken = default)
-        {
-            return Task.CompletedTask;
-        }
-
-        /// <inheritdoc />
-        public void Explain(IndentedStringBuilder stringBuilder)
-        {
-            stringBuilder.AppendLine("Empty");
-        }
-    }
-
-    /// <summary>
-    /// Empty rows iterator.
-    /// </summary>
-    public static IRowsIterator Empty => new EmptyRowsIterator();
-
     /// <summary>
     /// Read the rows from iterator and try to determine better type for string columns.
-    /// For example, if column contains only numbers the new rows set will set "integer" data type for it.
+    /// For example, if column contains only numbers the rows set will set "integer" data type for it.
     /// </summary>
     /// <param name="rowsIterator">Rows iterator to read.</param>
     /// <param name="numberOfRowsToAnalyze">Number of rows to analyze, default is 10.</param>
@@ -58,6 +23,7 @@ public static class RowsIteratorUtils
         int[]? skipColumnsIndexes = null,
         CancellationToken cancellationToken = default)
     {
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(numberOfRowsToAnalyze);
         skipColumnsIndexes ??= [];
 
         // Read.
@@ -86,6 +52,7 @@ public static class RowsIteratorUtils
             var values = rowsFrame.GetColumnValues(i);
             var newType = DataTypeUtils.DetermineTypeByValues(values);
             column.DataType = newType;
+            rowsIterator.Columns[i].DataType = newType;
         }
     }
 
@@ -100,12 +67,17 @@ public static class RowsIteratorUtils
     public static async Task<bool> DetermineIfHasHeaderAsync(IRowsIterator rowsIterator, int numberOfRowsToAnalyze = 10,
         CancellationToken cancellationToken = default)
     {
+        if (rowsIterator.Columns.Length < 1)
+        {
+            return false;
+        }
+
         // Probably it should be something like this:
         // https://github.com/python/cpython/blob/main/Lib/csv.py#L390.
 
         var rowsFrame = new RowsFrame(rowsIterator.Columns);
         var countDown = numberOfRowsToAnalyze;
-        while (await rowsIterator.MoveNextAsync(cancellationToken) && countDown > 0)
+        while (countDown > 0 && await rowsIterator.MoveNextAsync(cancellationToken))
         {
             rowsFrame.AddRow(rowsIterator.Current);
             countDown--;
@@ -121,14 +93,15 @@ public static class RowsIteratorUtils
         for (var columnIndex = 0; columnIndex < rowsFrame.Columns.Length; columnIndex++)
         {
             var values = rowsFrame.GetColumnValues(columnIndex);
-            var headerType = DataTypeUtils.DetermineTypeByValues([values.First()]);
+            var firstValue = values.First();
+            var headerType = DataTypeUtils.DetermineTypeByValues([firstValue]);
             var rowsType = DataTypeUtils.DetermineTypeByValues(values.Skip(1));
 
             // If there are more than 70% empty values - probably it is a bad header column. Skip if first value
             // is not empty.
-            if (string.IsNullOrWhiteSpace(values.First()))
+            if (string.IsNullOrWhiteSpace(firstValue))
             {
-                var emptyValuesPercent = (float)values.Count(v => string.IsNullOrWhiteSpace(v)) / values.Count;
+                var emptyValuesPercent = (float)values.Count(v => IsEmpty(v)) / values.Count;
                 if (emptyValuesPercent > 0.7f)
                 {
                     hasHeader--;
@@ -155,4 +128,7 @@ public static class RowsIteratorUtils
         // By default, consider this as header.
         return hasHeader >= 0;
     }
+
+    private static bool IsEmpty(in VariantValue value)
+        => value.IsNull || (value.Type == DataType.String && string.IsNullOrEmpty(value.AsStringUnsafe));
 }

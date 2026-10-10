@@ -83,6 +83,11 @@ public sealed class ThriftEndpoint
         }
         if (TransportType == ThriftTransportType.NamedPipes)
         {
+            var segments = uri.Segments;
+            if (segments.Length < 2)
+            {
+                throw new ArgumentException(string.Format(Resources.Errors.InvalidArgument, uri), nameof(uri));
+            }
             NamedPipe = uri.Segments[1];
             Port = NamedPipesPort;
         }

@@ -20,7 +20,7 @@ public static class ThriftTransportFactory
     public static TTransport CreateClientTransport(SimpleUri uri, TConfiguration? configuration = null)
     {
         configuration ??= new TConfiguration();
-        switch (uri.Scheme.ToLower())
+        switch (uri.Scheme.ToLowerInvariant())
         {
             case ThriftEndpoint.TransportNamedPipes:
                 // Endpoint format example: net.pipe://localhost/qcat-123.
@@ -51,7 +51,7 @@ public static class ThriftTransportFactory
                 return new TNamedPipeServerTransport(uri.Segments[1], configuration, flags, 1);
             // Endpoint format example: tcp://localhost:6780.
             case ThriftEndpoint.TransportTcp:
-                return new TServerSocketTransport(uri.Port, new TConfiguration());
+                return new TServerSocketTransport(uri.Port, configuration);
         }
         throw new ArgumentOutOfRangeException(uri.Scheme, uri, Resources.Errors.NotSupported_Scheme);
     }

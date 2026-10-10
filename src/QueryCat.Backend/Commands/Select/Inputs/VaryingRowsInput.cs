@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
@@ -73,7 +74,10 @@ internal sealed class VaryingRowsInput : IRowsInputDelete, IRowsInputUpdate, IRo
                 for (var i = 0; i < _sourceColumnsMapping.Length; i++)
                 {
                     var columnIndex = _currentInput.GetColumnIndexByName(Columns[i].Name);
-                    _sourceColumnsMapping[i] = columnIndex;
+                    _sourceColumnsMapping[i] = columnIndex > -1 ? columnIndex : i;
+#if DEBUG
+                    Debug.Assert(columnIndex > -1, $"Column '{Columns[i].Name}' not found in the current input.");
+#endif
                 }
             }
         }

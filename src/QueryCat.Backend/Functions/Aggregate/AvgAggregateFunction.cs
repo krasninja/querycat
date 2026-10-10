@@ -32,33 +32,57 @@ internal sealed class AvgAggregateFunction : IAggregateFunction
     public VariantValue[] GetInitialState(DataType type)
         =>
         [
-            VariantValue.Null, // 0: sum
-            new(DataType.Integer) // 1: count
+            VariantValue.Null, // 0: sum (for timestamp: the first value)
+            new(DataType.Integer), // 1: count
+            VariantValue.Null, // 2: timestamp only: sum of offsets from the first value
         ];
 
     /// <inheritdoc />
     public void Invoke(VariantValue[] state, IExecutionThread thread)
     {
         var value = thread.Stack[0];
-        if (!value.IsNull)
+        if (value.IsNull)
+        {
+            return;
+        }
+
+        if (value.Type == DataType.Timestamp)
+        {
+            if (state[0].IsNull)
+            {
+                state[0] = value;
+                state[2] = new VariantValue(TimeSpan.Zero);
+            }
+            else
+            {
+                var offset = value.AsTimestamp!.Value - state[0].AsTimestamp!.Value;
+                state[2] = new VariantValue(state[2].AsInterval!.Value + offset);
+            }
+        }
+        else
         {
             AggregateFunctionsUtils.ExecuteWithNullInitialState(ref state[0], in value, VariantValue.Add);
-            state[1] =
-                _addDelegate.Invoke(in state[1], in VariantValue.OneIntegerValue);
         }
+        state[1] = _addDelegate.Invoke(in state[1], in VariantValue.OneIntegerValue);
     }
 
     /// <inheritdoc />
     public VariantValue GetResult(VariantValue[] state)
     {
         var sum = state[0];
-        var count = state[1];
-
-        if (count == 0 || !count.AsInteger.HasValue)
+        var count = state[1].AsInteger ?? 0;
+        if (sum.IsNull || count == 0)
         {
             return VariantValue.Null;
         }
 
-        return new VariantValue(sum / (double)count.AsInteger);
+        return sum.Type switch
+        {
+            DataType.Integer or DataType.Float => new VariantValue(sum.AsFloat!.Value / count),
+            DataType.Numeric => new VariantValue(sum.AsNumeric!.Value / count),
+            DataType.Interval => new VariantValue(sum.AsInterval!.Value / count),
+            DataType.Timestamp => new VariantValue(sum.AsTimestamp!.Value + state[2].AsInterval!.Value / count),
+            _ => VariantValue.Null,
+        };
     }
 }

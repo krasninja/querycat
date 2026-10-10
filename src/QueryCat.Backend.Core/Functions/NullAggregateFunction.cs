@@ -19,5 +19,5 @@ internal sealed class NullAggregateFunction : IAggregateFunction
     }
 
     /// <inheritdoc />
-    public VariantValue GetResult(VariantValue[] state) => default;
+    public VariantValue GetResult(VariantValue[] state) => VariantValue.Null;
 }

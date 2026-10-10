@@ -29,11 +29,7 @@ internal sealed class LastValueAggregateFunction : IAggregateFunction
     /// <inheritdoc />
     public void Invoke(VariantValue[] state, IExecutionThread thread)
     {
-        var value = thread.Stack[0];
-        if (!value.IsNull)
-        {
-            state[0] = value;
-        }
+        state[0] = thread.Stack[0];
     }
 
     /// <inheritdoc />

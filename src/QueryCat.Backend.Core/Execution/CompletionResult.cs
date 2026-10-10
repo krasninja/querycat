@@ -22,12 +22,25 @@ public class CompletionResult
     /// </summary>
     public CompletionTextEdit[] Edits { get; }
 
+    /// <summary>
+    /// Constructor.
+    /// </summary>
+    /// <param name="completion">Completion instance.</param>
+    /// <param name="edits">Related edits to apply.</param>
     public CompletionResult(Completion completion, CompletionTextEdit[] edits)
     {
         Completion = completion;
         Edits = edits;
     }
 
+    /// <summary>
+    /// Completion result.
+    /// </summary>
+    /// <param name="label">Label.</param>
+    /// <param name="kind">Kind.</param>
+    /// <param name="documentation">Optional documentation.</param>
+    /// <param name="relevance">Relevance.</param>
+    /// <param name="edits">Edits to apply.</param>
     public CompletionResult(
         string label,
         CompletionItemKind kind = CompletionItemKind.Misc,
@@ -57,8 +70,9 @@ public class CompletionResult
     /// <param name="sb">Target instance of <see cref="StringBuilder" />.</param>
     public void Apply(StringBuilder sb)
     {
-        foreach (var edit in Edits)
+        for (var i = Edits.Length - 1; i >= 0; i--)
         {
+            var edit = Edits[i];
             sb.Remove(edit.Start, edit.ReplaceLength);
             sb.Insert(edit.Start, edit.NewText);
         }

@@ -14,7 +14,6 @@ internal sealed partial class SelectPlanner
     private async Task ContextCte_PrepareInputListAsync(SelectCommandContext context, SelectQuerySpecificationNode node,
         CancellationToken cancellationToken)
     {
-        context.CteList.AddRange(ContextCte_GetParentList(context));
         if (node.WithNode == null)
         {
             return;
@@ -39,6 +38,7 @@ internal sealed partial class SelectPlanner
         CancellationToken cancellationToken)
     {
         var rowsIterator = await CreateIteratorAsync(withNode.QueryNode, context, cancellationToken);
+        ContextCte_FixColumnsNames(withNode.ColumnNodes, rowsIterator);
         var cte = new CommonTableExpression(
             withNode.Name,
             rowsIterator);
@@ -76,15 +76,30 @@ internal sealed partial class SelectPlanner
         var totalResult = new RowsFrame(initialQueryCommandContext.CurrentIterator.Columns);
         var totalResultProxy = new ProxyRowsIterator(totalResult);
         var writeRowsIterator = new WriteRowsFrameIterator(totalResult,
-            combineNode.IsDistinct ? new DistinctRowsIteratorIterator(ExecutionThread, totalResultProxy) : totalResultProxy);
+            combineNode.IsDistinct ? new DistinctRowsIterator(ExecutionThread, totalResultProxy) : totalResultProxy);
 
         // Merge current working frame and recalculate it based on new result.
         var workingFrame = await initialQueryCommandContext.CurrentIterator.ToFrameAsync(cancellationToken);
         while (!workingFrame.IsEmpty)
         {
             // Append working iterator to the total result.
+            var totalRowsBefore = totalResult.TotalRows;
             totalResultProxy.Set(workingFrame.GetIterator());
             await writeRowsIterator.WriteAllAsync(cancellationToken);
+
+            if (combineNode.IsDistinct)
+            {
+                // UNION semantics: only rows not seen before feed the next iteration.
+                workingFrame = new RowsFrame(totalResult.Columns);
+                for (var i = totalRowsBefore; i < totalResult.TotalRows; i++)
+                {
+                    workingFrame.AddRow(totalResult.GetRow(i));
+                }
+                if (workingFrame.IsEmpty)
+                {
+                    break;
+                }
+            }
 
             // Run the recursive query based on new working rows set.
             proxyRowsIterator.Set(workingFrame.GetIterator());
@@ -97,25 +112,12 @@ internal sealed partial class SelectPlanner
         return true;
     }
 
-    private static IEnumerable<CommonTableExpression> ContextCte_GetParentList(SelectCommandContext context)
-    {
-        var parentContext = context.Parent;
-        while (parentContext != null)
-        {
-            foreach (var cte in parentContext.CteList)
-            {
-                yield return cte;
-            }
-            parentContext = parentContext.Parent;
-        }
-    }
-
     private static void ContextCte_FixColumnsNames(
         IList<SelectColumnsSublistNode> targetColumns,
         IRowsIterator iterator)
     {
         var columns = iterator.Columns;
-        for (var columnIndex = 0; columnIndex < targetColumns.Count && columns.Length - 1 >= columnIndex; columnIndex++)
+        for (var columnIndex = 0; columnIndex < targetColumns.Count && columnIndex < columns.Length; columnIndex++)
         {
             if (targetColumns[columnIndex] is SelectColumnsSublistExpressionNode { ExpressionNode: IdentifierExpressionNode idNode })
             {

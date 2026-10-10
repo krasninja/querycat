@@ -6,8 +6,15 @@ internal static class StringLikeEquals
 {
     private static readonly SimpleObjectPool<List<char>> _listCharPool = new(
         createFunc: () => new List<char>(),
-        beforeReturn: l => l.Clear()
-    );
+        beforeReturn: l =>
+        {
+            if (l.Capacity > 1024)
+            {
+                return false;
+            }
+            l.Clear();
+            return true;
+        });
 
     /// <summary>
     /// Implements SQL LIKE pattern comparision.

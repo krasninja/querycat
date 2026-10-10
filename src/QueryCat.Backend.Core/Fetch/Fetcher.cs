@@ -4,23 +4,38 @@ using Microsoft.Extensions.Logging;
 namespace QueryCat.Backend.Core.Fetch;
 
 /// <summary>
-/// The class contains various helper method to simplifies remote source
+/// The class contains various helper methods that simplify remote source
 /// iteration (offset, limit, fetch).
 /// </summary>
 /// <typeparam name="TClass">Source class type.</typeparam>
 public class Fetcher<TClass> where TClass : class
 {
+    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(Fetcher<TClass>));
+
+    private int _limit = 50;
+
     /// <summary>
     /// Default limit to fetch.
     /// </summary>
-    public int Limit { get; set; } = 50;
+    public int Limit
+    {
+        get => _limit;
+        set
+        {
+            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(value);
+            _limit = value;
+        }
+    }
 
     /// <summary>
     /// Start page index. Zero by default.
     /// </summary>
     public int PageStart { get; set; }
 
-    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(Fetcher<TClass>));
+    /// <summary>
+    /// Stop fetching if no results returned.
+    /// </summary>
+    public bool StopOnEmptyPage { get; set; } = true;
 
     /// <summary>
     /// Constructor.
@@ -29,22 +44,43 @@ public class Fetcher<TClass> where TClass : class
     {
     }
 
-    public delegate Task<TClass> FetchSingleDelegate(CancellationToken cancellationToken = default);
+    /// <summary>
+    /// Single item fetch delegate.
+    /// </summary>
+    public delegate Task<TClass?> FetchSingleDelegate(CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Fetch all items delegate.
+    /// </summary>
     public delegate Task<IEnumerable<TClass>> FetchAllDelegate(CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Fetch items with limit-offset strategy and HasMore flag.
+    /// </summary>
     public delegate Task<(IEnumerable<TClass> Items, bool HasMore)> FetchLimitOffsetFlagDelegate(int limit, int offset,
         CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Fetch items with limit-offset strategy.
+    /// </summary>
     public delegate Task<IEnumerable<TClass>> FetchLimitOffsetDelegate(int limit, int offset,
         CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Fetch items with paged strategy and HasMore flag.
+    /// </summary>
     public delegate Task<(IEnumerable<TClass> Items, bool HasMore)> FetchPagedFlagDelegate(int page, int limit,
         CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Fetch items with paged strategy.
+    /// </summary>
     public delegate Task<IEnumerable<TClass>> FetchPagedDelegate(int page, int limit,
         CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Fetch items with HasMore flag strategy.
+    /// </summary>
     public delegate Task<(IEnumerable<TClass> Items, bool HasMore)> FetchUntilFlagDelegate(
         CancellationToken cancellationToken = default);
 
@@ -58,8 +94,12 @@ public class Fetcher<TClass> where TClass : class
         FetchSingleDelegate action,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        var item = await action.Invoke(cancellationToken);
-        yield return item;
+        var item = await action.Invoke(cancellationToken)
+            .ConfigureAwait(false);
+        if (item != null)
+        {
+            yield return item;
+        }
     }
 
     /// <summary>
@@ -81,7 +121,7 @@ public class Fetcher<TClass> where TClass : class
     }
 
     /// <summary>
-    /// Fetch remote source using offset/limit method. The iteration ends if hasMore flag is set to <c>true</c>
+    /// Fetch remote source using offset/limit method. The iteration ends if hasMore flag is set to <c>false</c>
     /// or empty result.
     /// </summary>
     /// <param name="action">Action to get new data. It is called using new offset and limit values.</param>
@@ -97,18 +137,18 @@ public class Fetcher<TClass> where TClass : class
         do
         {
             _logger.LogDebug("Run with offset {Offset} and limit {Limit}.", offset, Limit);
-            var localOffset = offset;
-            var data = await action(Limit, localOffset, cancellationToken);
+            var data = await action(Limit, offset, cancellationToken)
+                .ConfigureAwait(false);
             fetchedCount = 0;
             foreach (var item in data.Items)
             {
                 fetchedCount++;
                 yield return item;
             }
-            offset += Limit;
+            offset += fetchedCount;
             hasMore = data.HasMore;
         }
-        while (fetchedCount > 0 && hasMore);
+        while (hasMore && fetchedCount > 0);
     }
 
     /// <summary>
@@ -123,13 +163,15 @@ public class Fetcher<TClass> where TClass : class
     {
         return FetchLimitOffsetAsync(async (limit, offset, ct) =>
         {
-            var data = await action.Invoke(limit, offset, ct);
-            return (data, true);
+            var data = await action.Invoke(limit, offset, ct)
+                .ConfigureAwait(false);
+            var items = data as ICollection<TClass> ?? data.ToList();
+            return (items, items.Count >= limit);
         }, cancellationToken);
     }
 
     /// <summary>
-    /// Fetch remote source using paged method. The iteration ends if hasMore flag is set to <c>true</c>
+    /// Fetch remote source using paged method. The iteration ends if hasMore flag is set to <c>false</c>
     /// or empty result.
     /// </summary>
     /// <param name="action">Action to get new data. It is called using new page values.</param>
@@ -145,8 +187,8 @@ public class Fetcher<TClass> where TClass : class
         do
         {
             _logger.LogDebug("Run with page {Page} and limit {Limit}.", page, Limit);
-            var localPage = page;
-            var data = await action(localPage, Limit, cancellationToken);
+            var data = await action(page, Limit, cancellationToken)
+                .ConfigureAwait(false);
             fetchedCount = 0;
             foreach (var item in data.Items)
             {
@@ -156,12 +198,11 @@ public class Fetcher<TClass> where TClass : class
             page++;
             hasMore = data.HasMore;
         }
-        while (fetchedCount > 0 && hasMore);
+        while (hasMore && (fetchedCount > 0 || !StopOnEmptyPage));
     }
 
     /// <summary>
-    /// Fetch remote source using paged method. The iteration ends if hasMore flag is set to <c>true</c>
-    /// or empty result.
+    /// Fetch remote source using paged method.
     /// </summary>
     /// <param name="action">Action to get new data. It is called using new page values.</param>
     /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
@@ -172,7 +213,8 @@ public class Fetcher<TClass> where TClass : class
     {
         return FetchPagedAsync(async (page, limit, ct) =>
         {
-            var data = await action.Invoke(page, limit, ct);
+            var data = await action.Invoke(page, limit, ct)
+                .ConfigureAwait(false);
             var enumerable = data as ICollection<TClass> ?? data.ToList();
             var hasMore = enumerable.Count >= limit;
             return (enumerable, hasMore);
@@ -181,11 +223,11 @@ public class Fetcher<TClass> where TClass : class
 
     /// <summary>
     /// Fetch until specific condition. If the end of iteration is reach the action must
-    /// return hasMore flag <c>true</c>.
+    /// return hasMore flag <c>false</c>.
     /// </summary>
     /// <param name="action">Action to fetch data.</param>
     /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
-    /// <returns>Async enumerable of objects or null.</returns>
+    /// <returns>Async enumerable of objects.</returns>
     public async IAsyncEnumerable<TClass> FetchUntilHasMoreAsync(
         FetchUntilFlagDelegate action,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
@@ -194,7 +236,8 @@ public class Fetcher<TClass> where TClass : class
         bool hasMore;
         do
         {
-            var data = await action(cancellationToken);
+            var data = await action(cancellationToken)
+                .ConfigureAwait(false);
             fetchedCount = 0;
             foreach (var item in data.Items)
             {
@@ -203,6 +246,6 @@ public class Fetcher<TClass> where TClass : class
             }
             hasMore = data.HasMore;
         }
-        while (fetchedCount > 0 && hasMore);
+        while (hasMore && (fetchedCount > 0 || !StopOnEmptyPage));
     }
 }

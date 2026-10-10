@@ -422,5 +422,83 @@ namespace QueryCat.Backend.Resources {
                 return ResourceManager.GetString("AnswerAgentNotFound", resourceCulture);
             }
         }
+        
+        internal static string CannotOverrideWindowPartition {
+            get {
+                return ResourceManager.GetString("CannotOverrideWindowPartition", resourceCulture);
+            }
+        }
+        
+        internal static string CannotOverrideWindowOrder {
+            get {
+                return ResourceManager.GetString("CannotOverrideWindowOrder", resourceCulture);
+            }
+        }
+        
+        internal static string WindowCircularReference {
+            get {
+                return ResourceManager.GetString("WindowCircularReference", resourceCulture);
+            }
+        }
+        
+        internal static string QueryTimeout {
+            get {
+                return ResourceManager.GetString("QueryTimeout", resourceCulture);
+            }
+        }
+        
+        internal static string InvalidFilterExpression {
+            get {
+                return ResourceManager.GetString("InvalidFilterExpression", resourceCulture);
+            }
+        }
+        
+        internal static string InvalidNumericLiteral {
+            get {
+                return ResourceManager.GetString("InvalidNumericLiteral", resourceCulture);
+            }
+        }
+        
+        internal static string InvalidSizeBase {
+            get {
+                return ResourceManager.GetString("InvalidSizeBase", resourceCulture);
+            }
+        }
+        
+        internal static string HttpRequestFailed {
+            get {
+                return ResourceManager.GetString("HttpRequestFailed", resourceCulture);
+            }
+        }
+        
+        internal static string PathNotExists {
+            get {
+                return ResourceManager.GetString("PathNotExists", resourceCulture);
+            }
+        }
+        
+        internal static string InvalidBufferSize {
+            get {
+                return ResourceManager.GetString("InvalidBufferSize", resourceCulture);
+            }
+        }
+        
+        internal static string BufferKeysAfterRead {
+            get {
+                return ResourceManager.GetString("BufferKeysAfterRead", resourceCulture);
+            }
+        }
+        
+        internal static string InvalidStepSize {
+            get {
+                return ResourceManager.GetString("InvalidStepSize", resourceCulture);
+            }
+        }
+        
+        internal static string CannotSetValue {
+            get {
+                return ResourceManager.GetString("CannotSetValue", resourceCulture);
+            }
+        }
     }
 }

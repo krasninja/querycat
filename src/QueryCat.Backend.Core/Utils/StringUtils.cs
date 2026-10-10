@@ -8,32 +8,39 @@ namespace QueryCat.Backend.Core.Utils;
 /// </summary>
 public static class StringUtils
 {
-    private const string QuoteChar = "\"";
+    private const char QuoteChar = '"';
+    private const int MaximumStringBuilderRetainedCapacity = 4 * 1024;
+
     private static readonly SimpleObjectPool<StringBuilder> _stringBuilderPool = new(
-        createFunc: () => new StringBuilder(),
-        beforeReturn: sb => sb.Clear());
+        createFunc: () => new StringBuilder(capacity: 100),
+        beforeReturn: sb =>
+        {
+            if (sb.Capacity > MaximumStringBuilderRetainedCapacity)
+            {
+                return false;
+            }
+            sb.Clear();
+            return true;
+        });
 
     /// <summary>
-    /// Quote the specified string. If string doesn't contain the quote character
-    /// the target string will be returned instead.
+    /// Quote the specified string. If already quoted, returns as-is.
     /// </summary>
     /// <param name="target">Target string.</param>
-    /// <param name="quote">Quote character.</param>
+    /// <param name="quoteChar">Quote character.</param>
     /// <param name="force">Force quote.</param>
     /// <returns>Quoted string.</returns>
     public static string Quote(
         string target,
-        string quote = QuoteChar,
+        char quoteChar = QuoteChar,
         bool force = false)
     {
         // If already quoted - return the target string.
-        if (!force
-            && target.IndexOf(quote, StringComparison.Ordinal) == 0
-            && target.LastIndexOf(quote, StringComparison.Ordinal) == target.Length - 1)
+        if (!force && IsQuoted(target, quoteChar))
         {
             return target;
         }
-        return Quote(target.AsSpan(), quote, force).ToString();
+        return Quote(target.AsSpan(), quoteChar, force);
     }
 
     /// <summary>
@@ -41,27 +48,33 @@ public static class StringUtils
     /// the target string will be returned instead.
     /// </summary>
     /// <param name="target">Target string.</param>
-    /// <param name="quote">Quote character.</param>
+    /// <param name="quoteChar">Quote character.</param>
     /// <param name="force">Force quote.</param>
     /// <returns>Quoted string.</returns>
-    public static ReadOnlySpan<char> Quote(
+    public static string Quote(
         ReadOnlySpan<char> target,
-        string quote = QuoteChar,
+        char quoteChar = QuoteChar,
         bool force = false)
     {
         // If already quoted - return the target string.
-        if (!force && target.IndexOf(quote) == 0 && target.LastIndexOf(quote) == target.Length - 1)
+        if (!force && IsQuoted(target, quoteChar))
         {
-            return target;
+            return target.ToString();
         }
-        var sb = _stringBuilderPool.Get()
-            .Append(quote)
-            .Append(target)
-            .Replace(quote, quote + quote, 1, target.Length)
-            .Append(quote);
-        var result = sb.ToString();
-        _stringBuilderPool.Return(sb);
-        return result;
+        var sb = _stringBuilderPool.Get();
+        try
+        {
+            sb.Append(quoteChar)
+                .Append(target)
+                .Replace($"{quoteChar}", $"{quoteChar}{quoteChar}", 1, target.Length)
+                .Append(quoteChar);
+            var result = sb.ToString();
+            return result;
+        }
+        finally
+        {
+            _stringBuilderPool.Return(sb);
+        }
     }
 
     /// <summary>
@@ -70,9 +83,9 @@ public static class StringUtils
     /// <param name="target">String to unquote.</param>
     /// <param name="quoteChar">Quote character.</param>
     /// <returns>Unquoted string.</returns>
-    public static string Unquote(string target, string quoteChar = QuoteChar)
+    public static string Unquote(string target, char quoteChar = QuoteChar)
     {
-        if (target.Length == 0 || !target.StartsWith(quoteChar))
+        if (!IsQuoted(target, quoteChar))
         {
             return target;
         }
@@ -85,19 +98,22 @@ public static class StringUtils
     /// <param name="target">String to unquote.</param>
     /// <param name="quoteChar">Quote character.</param>
     /// <returns>Unquoted string.</returns>
-    public static ReadOnlySpan<char> Unquote(ReadOnlySpan<char> target, string quoteChar = QuoteChar)
+    public static ReadOnlySpan<char> Unquote(ReadOnlySpan<char> target, char quoteChar = QuoteChar)
     {
-        if (target.Length == 0 || !target[..1].SequenceEqual(quoteChar))
+        if (!IsQuoted(target, quoteChar))
         {
             return target;
         }
         var sb = _stringBuilderPool.Get()
-            .Append(target.Slice(1, target.Length - 2))
-            .Replace(quoteChar + quoteChar, quoteChar);
+            .Append(target[1..^1])
+            .Replace($"{quoteChar}{quoteChar}", $"{quoteChar}");
         var result = sb.ToString();
         _stringBuilderPool.Return(sb);
         return result;
     }
+
+    private static bool IsQuoted(ReadOnlySpan<char> s, char quote)
+        => s.Length >= 2 && s[0] == quote && s[^1] == quote;
 
     /// <summary>
     /// Get fields array from string using the specified delimiter.
@@ -105,18 +121,25 @@ public static class StringUtils
     /// <param name="line">Target line to split.</param>
     /// <param name="delimiter">Delimiter.</param>
     /// <param name="quoteChar">Quote char.</param>
+    /// <param name="ignoreLeadingWhitespaces">Ignore leading whitespaces.</param>
     /// <returns>Fields.</returns>
-    /// <remarks>
-    /// Source: https://www.codeproject.com/Tips/823670/Csharp-Light-and-Fast-CSV-Parser.
-    /// </remarks>
-    public static string[] GetFieldsFromLine(string line, char delimiter = ',', char quoteChar = '"')
+    public static string[] GetFieldsFromLine(
+        string line,
+        char delimiter = ',',
+        char quoteChar = '"',
+        bool ignoreLeadingWhitespaces = false)
     {
+        if (string.IsNullOrEmpty(line))
+        {
+            return [];
+        }
+
         var inQuote = false;
         var record = new List<string>();
         var sb = _stringBuilderPool.Get();
-        var reader = new StringReader(line);
+        var reader = new StringReaderSlim(line);
 
-        while (reader.Peek() != -1)
+        while (!reader.IsEnd)
         {
             var readChar = (char)reader.Read();
 
@@ -156,7 +179,7 @@ public static class StringUtils
                     record.Add(sb.ToString());
                     sb.Clear();
                 }
-                else if (char.IsWhiteSpace(readChar))
+                else if (ignoreLeadingWhitespaces && char.IsWhiteSpace(readChar))
                 {
                     // Ignore leading whitespace.
                 }
@@ -222,44 +245,40 @@ public static class StringUtils
     /// <returns>Substring.</returns>
     internal static string SafeSubstring(string? target, int startIndex, int length = 0)
     {
-        if (target == null)
+        if (string.IsNullOrEmpty(target) || length < 0 || startIndex >= target.Length)
         {
             return string.Empty;
         }
-
-        if (startIndex < 0)
+        startIndex = Math.Max(startIndex, 0);
+        var available = target.Length - startIndex;
+        if (length == 0 || length > available)
         {
-            startIndex = 0;
-        }
-        else if (startIndex >= target.Length)
-        {
-            return string.Empty;
-        }
-        if (length == 0)
-        {
-            length = target.Length;
-        }
-        if (startIndex + length > target.Length)
-        {
-            length = target.Length - startIndex;
+            length = available;
         }
         return target.Substring(startIndex, length);
     }
 
     /// <summary>
-    /// Unwrap text from quotes and square brackets.
+    /// Unwrap text from quotes.
     /// </summary>
     /// <param name="text">Text to unwrap.</param>
     /// <returns>Unwrapped text.</returns>
     internal static string GetUnwrappedText(string text)
     {
-        if (text.StartsWith('\'') && text.EndsWith('\''))
+        if (string.IsNullOrEmpty(text))
         {
-            return text.Substring(1, text.Length - 2).Replace("''", "'");
+            return string.Empty;
         }
-        if (text.StartsWith('\"') && text.EndsWith('\"'))
+        if (text.Length > 1)
         {
-            return text.Substring(1, text.Length - 2).Replace("\"\"", "\"");
+            if (text.StartsWith('\'') && text.EndsWith('\''))
+            {
+                return text.Substring(1, text.Length - 2).Replace("''", "'");
+            }
+            if (text.StartsWith('\"') && text.EndsWith('\"'))
+            {
+                return text.Substring(1, text.Length - 2).Replace("\"\"", "\"");
+            }
         }
         return text;
     }
@@ -271,6 +290,10 @@ public static class StringUtils
     /// <returns>Converted string.</returns>
     internal static string Unescape(string str)
     {
+        if (string.IsNullOrEmpty(str))
+        {
+            return string.Empty;
+        }
         if (str.IndexOf('\\') < 0)
         {
             return str;
@@ -283,7 +306,7 @@ public static class StringUtils
         for (var i = 0; i < str.Length; i++)
         {
             var ch = str[i];
-            if (ch == '\\')
+            if (!escapeMode && ch == '\\')
             {
                 escapeMode = true;
                 continue;
@@ -332,43 +355,71 @@ public static class StringUtils
                 case '5':
                 case '6':
                 case '7':
-                    sb.Append(char.ConvertFromUtf32(GetOctetNumberInAdvance(ref i, str)));
+                    sb.Append(char.ConvertFromUtf32(GetOctalNumberInAdvance(ref i, str)));
                     break;
                 case 'x':
                     i++;
-                    sb.Append(char.ConvertFromUtf32(GetHexNumberInAdvance(ref i, str)));
+                    AppendCodePoint(sb, GetHexNumberInAdvance(ref i, str, 2));
                     break;
                 case 'u':
+                    i++;
+                    AppendCodePoint(sb, GetHexNumberInAdvance(ref i, str, 4));
+                    break;
                 case 'U':
                     i++;
-                    sb.Append(char.ConvertFromUtf32(GetHexNumberInAdvance(ref i, str)));
+                    AppendCodePoint(sb, GetHexNumberInAdvance(ref i, str, 8));
+                    break;
+                default:
+                    sb.Append('\\').Append(ch);
                     break;
             }
 
             escapeMode = false;
+        }
+        if (escapeMode)
+        {
+            sb.Append('\\');
         }
         var result = sb.ToString();
         _stringBuilderPool.Return(sb);
         return result;
     }
 
-    private static int GetOctetNumberInAdvance(ref int index, ReadOnlySpan<char> target)
+    private static void AppendCodePoint(StringBuilder sb, int value)
     {
-        var startIndex = index;
-        for (; index < target.Length && char.IsBetween(target[index], '0', '7'); index++)
+        if (value < 0 || value > 0x10FFFF || (value >= 0xD800 && value <= 0xDFFF))
         {
+            sb.Append('\\');
+            return;
         }
-        var result = target.Slice(startIndex, index - startIndex);
-        return Convert.ToInt32(result.ToString(), 8);
+        if (value <= 0xFFFF)
+        {
+            sb.Append((char)value);
+            return;
+        }
+        sb.Append(char.ConvertFromUtf32(value));
     }
 
-    private static int GetHexNumberInAdvance(ref int index, ReadOnlySpan<char> target)
+    private static int GetOctalNumberInAdvance(ref int index, ReadOnlySpan<char> target)
+    {
+        int value = 0, digits = 0;
+        for (; digits < 3 && index < target.Length && char.IsBetween(target[index], '0', '7'); index++, digits++)
+        {
+            value = value * 8 + (target[index] - '0');
+        }
+        index--;
+        return digits == 0 ? -1 : value;
+    }
+
+    private static int GetHexNumberInAdvance(ref int index, ReadOnlySpan<char> target, int maxDigits)
     {
         var startIndex = index;
-        for (; index < target.Length && char.IsAsciiHexDigit(target[index]); index++)
+        var end = Math.Min(target.Length, index + maxDigits);
+        for (; index < end && char.IsAsciiHexDigit(target[index]); index++)
         {
         }
         var result = target.Slice(startIndex, index - startIndex);
-        return int.Parse(result, NumberStyles.HexNumber);
+        index--;
+        return int.TryParse(result, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var n) ? n : -1;
     }
 }

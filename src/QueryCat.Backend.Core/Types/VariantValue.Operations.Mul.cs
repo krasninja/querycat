@@ -21,19 +21,19 @@ public readonly partial struct VariantValue
         {
             DataType.Integer => rightType switch
             {
-                DataType.Integer => (in VariantValue left, in VariantValue right) =>
+                DataType.Integer => (in left, in right) =>
                 {
                     return new VariantValue(left.AsIntegerUnsafe * right.AsIntegerUnsafe);
                 },
-                DataType.Float => (in VariantValue left, in VariantValue right) =>
+                DataType.Float => (in left, in right) =>
                 {
                     return new VariantValue(left.AsIntegerUnsafe * right.AsFloatUnsafe);
                 },
-                DataType.Numeric => (in VariantValue left, in VariantValue right) =>
+                DataType.Numeric => (in left, in right) =>
                 {
                     return new VariantValue(left.AsIntegerUnsafe * right.AsNumericUnsafe);
                 },
-                DataType.Interval => (in VariantValue left, in VariantValue right) =>
+                DataType.Interval => (in left, in right) =>
                 {
                     return new VariantValue(left.AsIntegerUnsafe * right.AsIntervalUnsafe);
                 },
@@ -41,11 +41,11 @@ public readonly partial struct VariantValue
             },
             DataType.Float => rightType switch
             {
-                DataType.Integer => (in VariantValue left, in VariantValue right) =>
+                DataType.Integer => (in left, in right) =>
                 {
                     return new VariantValue(left.AsFloatUnsafe * right.AsIntegerUnsafe);
                 },
-                DataType.Float => (in VariantValue left, in VariantValue right) =>
+                DataType.Float => (in left, in right) =>
                 {
                     return new VariantValue(left.AsFloatUnsafe * right.AsFloatUnsafe);
                 },
@@ -53,11 +53,11 @@ public readonly partial struct VariantValue
             },
             DataType.Numeric => rightType switch
             {
-                DataType.Integer => (in VariantValue left, in VariantValue right) =>
+                DataType.Integer => (in left, in right) =>
                 {
                     return new VariantValue(left.AsNumericUnsafe * right.AsIntegerUnsafe);
                 },
-                DataType.Numeric => (in VariantValue left, in VariantValue right) =>
+                DataType.Numeric => (in left, in right) =>
                 {
                     return new VariantValue(left.AsNumericUnsafe * right.AsNumericUnsafe);
                 },
@@ -65,7 +65,7 @@ public readonly partial struct VariantValue
             },
             DataType.Interval => rightType switch
             {
-                DataType.Integer => (in VariantValue left, in VariantValue right) =>
+                DataType.Integer => (in left, in right) =>
                 {
                     return new VariantValue(left.AsIntervalUnsafe * right.AsIntegerUnsafe);
                 },

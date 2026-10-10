@@ -29,7 +29,9 @@ public static class ClassRowsFrameBuilderExtensions
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] Type? type,
         out List<PropertyInfo> properties) where TClass : class
     {
-        var props = (type ?? typeof(TClass)).GetProperties().Where(p => p.CanRead).ToArray();
+        var props = (type ?? typeof(TClass)).GetProperties()
+            .Where(p => p.CanRead && p.GetIndexParameters().Length == 0)
+            .ToArray();
         properties = new List<PropertyInfo>(capacity: props.Length);
         foreach (var propertyInfo in props)
         {

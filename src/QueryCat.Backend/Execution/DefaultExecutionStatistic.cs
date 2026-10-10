@@ -39,6 +39,7 @@ public sealed class DefaultExecutionStatistic : ExecutionStatistic
     {
         base.Clear();
         _statistic.Clear();
+        _errorRows.Clear();
     }
 
     /// <inheritdoc />
@@ -58,7 +59,7 @@ public sealed class DefaultExecutionStatistic : ExecutionStatistic
             }
         }
 
-        if (_errorRows.Any())
+        if (_errorRows.Count > 0)
         {
             sb.AppendLine(new string('-', 5));
             sb.AppendLine("Rows with error(-s):");

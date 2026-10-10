@@ -4,6 +4,9 @@ using QueryCat.Backend.Core.Utils;
 
 namespace QueryCat.Backend.FunctionsManager;
 
+/// <summary>
+/// Completion source that returns available functions.
+/// </summary>
 public sealed class FunctionsCompletionSource : ICompletionSource
 {
     private readonly IFunctionsManager _functionsManager;
@@ -43,19 +46,20 @@ public sealed class FunctionsCompletionSource : ICompletionSource
                         context.TriggerTokenPosition,
                         context.TriggerTokenPosition + searchTerm.Length,
                         completion.Label);
-                    yield return new CompletionResult(completion, [textEdit]);
+                    yield return new CompletionResult(
+                        new Completion(completion.Label, completion.Kind, completion.Documentation, relevance), [textEdit]);
                 }
             }
         }
 
-        return AsyncUtils.ToAsyncEnumerable(Filter(_completions));
+        return AsyncUtils.ToAsyncEnumerable(Filter(_completions), cancellationToken);
     }
 
     private void Initialize()
     {
         _completions = _functionsManager
             .GetFunctions()
-            .Select(f => new Completion(f.Name, CompletionItemKind.Variable, f.Description, relevance: 0.6f))
+            .Select(f => new Completion(f.Name, CompletionItemKind.Function, f.Description, relevance: 0.6f))
             .ToArray();
     }
 }

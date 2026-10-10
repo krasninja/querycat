@@ -16,13 +16,17 @@ internal static class DateTimeFunctions
     [FunctionSignature("to_date(target: string, fmt: string): timestamp")]
     public static VariantValue ToDate(IExecutionThread thread)
     {
-        var target = thread.Stack[0].AsString;
-        var format = thread.Stack[1].AsString;
-        return new VariantValue(DateTime.ParseExact(target, format, Application.Culture));
+        var target = thread.Stack[0];
+        var format = thread.Stack[1];
+        if (target.IsNull || format.IsNull)
+        {
+            return VariantValue.Null;
+        }
+        return new VariantValue(DateTime.ParseExact(target.AsString, format.AsString, Application.Culture));
     }
 
     [SafeFunction]
-    [Description("Current date and time")]
+    [Description("Current date and time.")]
     [FunctionSignature("now(): timestamp")]
     public static VariantValue Now(IExecutionThread thread)
     {
@@ -34,13 +38,18 @@ internal static class DateTimeFunctions
     [FunctionSignature("date(datetime: timestamp): timestamp")]
     public static VariantValue Date(IExecutionThread thread)
     {
-        var ts = thread.Stack.Pop().AsTimestamp;
-        return new VariantValue(ts?.Date);
+        var ts = thread.Stack.Pop();
+        if (ts.IsNull)
+        {
+            return VariantValue.Null;
+        }
+        return new VariantValue(ts.AsTimestamp?.Date);
     }
 
     [SafeFunction]
     [Description("The function retrieves subfields such as year or hour from date/time values.")]
     [FunctionSignature("date_part(field: string, source: timestamp): integer")]
+    [FunctionSignature("date_part(field: string, source: interval): integer")]
     public static VariantValue Extract(IExecutionThread thread)
     {
         var field = thread.Stack[0].AsString.Trim().ToUpperInvariant();
@@ -54,15 +63,14 @@ internal static class DateTimeFunctions
             DataType.Timestamp => field switch
             {
                 "YEAR" or "Y" => source.AsTimestampUnsafe.Year,
-                "DOY" => source.AsTimestampUnsafe.DayOfYear,
-                "DAYOFYEAR" => source.AsTimestampUnsafe.DayOfYear,
-                "MONTH" => source.AsTimestampUnsafe.Month,
-                "DOW" => (int)source.AsTimestampUnsafe.DayOfWeek,
-                "WEEKDAY" => (int)source.AsTimestampUnsafe.DayOfWeek,
+                "DAYOFYEAR" or "DOY" => source.AsTimestampUnsafe.DayOfYear,
+                "MONTH" or "MM" => source.AsTimestampUnsafe.Month,
+                "WEEKDAY" or "DOW" => (int)source.AsTimestampUnsafe.DayOfWeek,
                 "DAY" or "D" => source.AsTimestampUnsafe.Day,
                 "HOUR" or "H" => source.AsTimestampUnsafe.Hour,
                 "MINUTE" or "MIN" or "M" => source.AsTimestampUnsafe.Minute,
                 "SECOND" or "SEC" or "S" => source.AsTimestampUnsafe.Second,
+                "MILLISECOND" or "MS" => source.AsTimestampUnsafe.Millisecond,
                 _ => throw new SemanticException(string.Format(Resources.Errors.InvalidField, field)),
             },
             DataType.Interval => field switch
@@ -98,13 +106,15 @@ internal static class DateTimeFunctions
             var timestamp = field switch
             {
                 "YEAR" or "Y" => new DateTime(target.Year, 1, 1, 0, 0, 0, target.Kind),
-                "MONTH" => new DateTime(target.Year, target.Month, 1, 0, 0, 0, target.Kind),
+                "MONTH" or "MM" => new DateTime(target.Year, target.Month, 1, 0, 0, 0, target.Kind),
                 "DAY" or "D" => new DateTime(target.Year, target.Month, target.Day, 0, 0, 0, target.Kind),
                 "HOUR" or "H" => new DateTime(target.Year, target.Month, target.Day, target.Hour, 0, 0, target.Kind),
                 "MINUTE" or "MIN" or "M" =>
                     new DateTime(target.Year, target.Month, target.Day, target.Hour, target.Minute, 0, target.Kind),
                 "SECOND" or "SEC" or "S" =>
                     new DateTime(target.Year, target.Month, target.Day, target.Hour, target.Minute, target.Second, target.Kind),
+                "MILLISECOND" or "MS" =>
+                    new DateTime(target.Year, target.Month, target.Day, target.Hour, target.Minute, target.Second, target.Millisecond, target.Kind),
                 _ => throw new SemanticException(string.Format(Resources.Errors.InvalidField, field)),
             };
             return new VariantValue(timestamp);
@@ -115,10 +125,12 @@ internal static class DateTimeFunctions
             var interval = field switch
             {
                 "DAY" or "D" => new TimeSpan(target.Days, 0, 0, 0),
-                "HOUR" or "H" => new TimeSpan(target.Days, target.Hours, 0),
+                "HOUR" or "H" => new TimeSpan(target.Days, target.Hours, 0, 0),
                 "MINUTE" or "MIN" or "M" => new TimeSpan(target.Days, target.Hours, target.Minutes, 0),
                 "SECOND" or "SEC" or "S" =>
                     new TimeSpan(target.Days, target.Hours, target.Minutes, target.Seconds, 0),
+                "MILLISECOND" or "MS" =>
+                    new TimeSpan(target.Days, target.Hours, target.Minutes, target.Seconds, target.Milliseconds),
                 _ => throw new SemanticException(string.Format(Resources.Errors.InvalidField, field)),
             };
             return new VariantValue(interval);
@@ -131,6 +143,10 @@ internal static class DateTimeFunctions
     [FunctionSignature("date_add(datepart: string, number: integer, source: timestamp): timestamp")]
     public static VariantValue DateAdd(IExecutionThread thread)
     {
+        if (thread.Stack[0].IsNull || thread.Stack[1].IsNull)
+        {
+            return VariantValue.Null;
+        }
         var datepart = thread.Stack[0].AsString.Trim().ToUpperInvariant();
         var number = (int)(thread.Stack[1].AsInteger ?? 0);
         var source = thread.Stack[2];
@@ -139,7 +155,7 @@ internal static class DateTimeFunctions
             return VariantValue.Null;
         }
 
-        var target = source.AsTimestamp.Value;
+        var target = source.AsTimestampUnsafe;
         var timestamp = datepart switch
         {
             "YEAR" or "Y" => target.AddYears(number),
@@ -149,7 +165,7 @@ internal static class DateTimeFunctions
             "HOUR" or "H" => target.AddHours(number),
             "MINUTE" or "MIN" or "M" => target.AddMinutes(number),
             "SECOND" or "SEC" or "S" => target.AddSeconds(number),
-            "MS" => target.AddMilliseconds(number),
+            "MILLISECOND" or "MS" => target.AddMilliseconds(number),
             _ => throw new SemanticException(string.Format(Resources.Errors.InvalidField, datepart)),
         };
         return new VariantValue(timestamp);

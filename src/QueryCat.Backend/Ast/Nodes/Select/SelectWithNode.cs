@@ -48,11 +48,12 @@ internal sealed class SelectWithNode : AstNode
     public override string ToString()
     {
         var sb = new StringBuilder();
+        sb.Append($" {Name}");
         if (ColumnNodes.Count > 0)
         {
             sb.Append($" ({string.Join(", ", ColumnNodes.Select(c => c.ToString()))})");
         }
-        sb.Append($" {Name} AS ({QueryNode})");
+        sb.Append($" AS ({QueryNode})");
         return sb.ToString();
     }
 }

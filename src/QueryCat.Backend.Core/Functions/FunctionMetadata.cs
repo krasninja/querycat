@@ -8,10 +8,19 @@ namespace QueryCat.Backend.Core.Functions;
 /// </summary>
 public sealed class FunctionMetadata
 {
+    /// <summary>
+    /// Function description.
+    /// </summary>
     public string Description { get; set; } = string.Empty;
 
-    public bool IsSafe { get; set; } = true;
+    /// <summary>
+    /// <c>True</c> if function has no side effects.
+    /// </summary>
+    public bool IsSafe { get; set; }
 
+    /// <summary>
+    /// <c>True</c> if it is the function used for aggregates.
+    /// </summary>
     public bool IsAggregate { get; set; }
 
     public string[] Formatters { get; set; } = [];
@@ -22,8 +31,8 @@ public sealed class FunctionMetadata
         var metadata = new FunctionMetadata
         {
             Description = memberInfo.GetCustomAttribute<DescriptionAttribute>()?.Description ?? string.Empty,
-            IsSafe = memberInfo.GetCustomAttribute<SafeFunctionAttribute>() != null,
-            IsAggregate = memberInfo.GetCustomAttribute<AggregateFunctionSignatureAttribute>() != null,
+            IsSafe = memberInfo.IsDefined(typeof(SafeFunctionAttribute)),
+            IsAggregate = memberInfo.IsDefined(typeof(AggregateFunctionSignatureAttribute)),
             Formatters = formatterAttribute != null ? formatterAttribute.FormatterIds : [],
         };
         return metadata;

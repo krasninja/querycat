@@ -94,12 +94,11 @@ public sealed class ThriftRemoteRowsOutput : IRowsOutput, IAsyncDisposable
     /// <inheritdoc />
     public async ValueTask<ErrorCode> WriteValuesAsync(VariantValue[] values, CancellationToken cancellationToken = default)
     {
-        var valuesArray = values.ToArray();
         using var session = await _sessionProvider.GetAsync(cancellationToken);
         var result = await session.Client.RowsSet_WriteValuesAsync(
             _token,
             _objectHandle,
-            valuesArray.Select(SdkConvert.Convert).ToList(),
+            values.Select(SdkConvert.Convert).ToList(),
             cancellationToken);
         return SdkConvert.Convert(result);
     }

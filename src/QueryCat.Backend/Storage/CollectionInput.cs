@@ -19,7 +19,7 @@ public class CollectionInput : IRowsOutput, IDisposable, IAsyncDisposable, IRows
     private readonly bool _isSimple;
     private readonly IEnumerable _enumerable;
     private readonly List<PropertyInfo> _columnsProperties = new();
-    private readonly IEnumerator _enumerator;
+    private IEnumerator _enumerator;
     private Column[] _columns = [];
     private PropertyInfo[]? _propertiesMapping;
 
@@ -58,7 +58,7 @@ public class CollectionInput : IRowsOutput, IDisposable, IAsyncDisposable, IRows
         {
             builder.AddPublicProperties(_type, out var properties);
             _columnsProperties.AddRange(properties);
-            Array.Resize(ref _columns, builder.Columns.Count);
+            Array.Resize(ref _columns, builder.Count);
             builder.Columns.ToArray().CopyTo(_columns, 0);
         }
         else
@@ -91,7 +91,7 @@ public class CollectionInput : IRowsOutput, IDisposable, IAsyncDisposable, IRows
     /// </summary>
     public void Reset()
     {
-        _enumerator.Reset();
+        _enumerator = _enumerable.GetEnumerator();
     }
 
     /// <inheritdoc />

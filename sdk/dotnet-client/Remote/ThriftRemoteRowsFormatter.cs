@@ -54,7 +54,7 @@ public sealed class ThriftRemoteRowsFormatter : IRowsFormatter, IAsyncDisposable
             var blobHandle = _objectsStorage.GetOrAdd(blob);
             using var session = await _sessionProvider.GetAsync(ct);
             var rowsInput = await session.Client.RowsFormatter_OpenInputAsync(_token, _objectHandle, blobHandle, key, ct);
-            return new ThriftRemoteRowsInput(_sessionProvider, rowsInput);
+            return new ThriftRemoteRowsInput(_sessionProvider, rowsInput, token: _token);
         });
         if (result == null)
         {
@@ -71,7 +71,7 @@ public sealed class ThriftRemoteRowsFormatter : IRowsFormatter, IAsyncDisposable
             var blobHandle = _objectsStorage.GetOrAdd(blob);
             using var session = await _sessionProvider.GetAsync(ct);
             var rowsInput = await session.Client.RowsFormatter_OpenOutputAsync(_token, _objectHandle, blobHandle, ct);
-            return new ThriftRemoteRowsOutput(_sessionProvider, rowsInput);
+            return new ThriftRemoteRowsOutput(_sessionProvider, rowsInput, token: _token);
         });
         if (result == null)
         {

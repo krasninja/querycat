@@ -17,12 +17,12 @@ internal sealed class SelectDistinctNode : AstNode
 
     public List<ExpressionNode> OnNodes { get; } = new();
 
-    public static SelectDistinctNode Empty { get; } = new()
+    public static SelectDistinctNode Empty => new()
     {
         IsEmpty = true
     };
 
-    public static SelectDistinctNode All { get; } = new()
+    public static SelectDistinctNode All => new()
     {
         IsAll = true
     };

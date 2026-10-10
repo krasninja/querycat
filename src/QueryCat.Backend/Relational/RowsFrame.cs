@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Specialized;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
@@ -10,13 +11,16 @@ namespace QueryCat.Backend.Relational;
 /// can be used for internal operations. The remove operation doesn't physically remove
 /// it from memory and just marks the row. Use IsRemoved method to check by the row index.
 /// </summary>
-public class RowsFrame : IRowsSchema, IEnumerable<Row>
+public class RowsFrame : IRowsSchema, IEnumerable<Row>, INotifyCollectionChanged
 {
     private readonly int _chunkSize;
     private readonly int _rowsPerChunk;
-    private readonly ChunkList<VariantValue[]> _storage;
+    private readonly List<VariantValue[]> _storage;
     private readonly Column[] _columns;
     private readonly HashSet<int> _removedRows = new();
+
+    /// <inheritdoc />
+    public event NotifyCollectionChangedEventHandler? CollectionChanged;
 
     /// <summary>
     /// Total rows.
@@ -50,14 +54,11 @@ public class RowsFrame : IRowsSchema, IEnumerable<Row>
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(options.ChunkSize, nameof(options.ChunkSize));
         ArgumentOutOfRangeException.ThrowIfLessThan(columns.Length, 1, nameof(columns));
-        _chunkSize = options.ChunkSize;
         _columns = columns;
-        _rowsPerChunk = _chunkSize / _columns.Length;
-        // Align.
-        var remains = _chunkSize - _rowsPerChunk * _columns.Length;
-        _chunkSize -= remains;
+        _rowsPerChunk = Math.Max(1, options.ChunkSize / columns.Length);
+        _chunkSize = _rowsPerChunk * _columns.Length;
 
-        _storage = new ChunkList<VariantValue[]>(_chunkSize);
+        _storage = new List<VariantValue[]>();
     }
 
     /// <summary>
@@ -75,7 +76,11 @@ public class RowsFrame : IRowsSchema, IEnumerable<Row>
     /// <returns>The first value or null.</returns>
     public VariantValue GetFirstValue(int rowIndex = 0)
     {
-        (int chunkIndex, int offset) = EnsureCapacityAndGetStartOffset(rowIndex);
+        if (rowIndex < 0 || rowIndex >= TotalRows || IsRemoved(rowIndex))
+        {
+            return VariantValue.Null;
+        }
+        (int chunkIndex, int offset) = GetChunkAndOffsetValidate(rowIndex);
         return _storage[chunkIndex][offset];
     }
 
@@ -111,6 +116,8 @@ public class RowsFrame : IRowsSchema, IEnumerable<Row>
         }
         (int chunkIndex, int offset) = EnsureCapacityAndGetStartOffset(TotalRows);
         Array.Copy(values, 0, _storage[chunkIndex], offset, _columns.Length);
+
+        CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, values));
         return TotalRows++;
     }
 
@@ -118,8 +125,14 @@ public class RowsFrame : IRowsSchema, IEnumerable<Row>
     /// Add row.
     /// </summary>
     /// <param name="values">Values to add.</param>
-    public void AddRow(params object[] values)
+    /// <returns>Inserted row index.</returns>
+    public int AddRow(params object[] values)
     {
+        if (values.Length != Columns.Length)
+        {
+            throw new QueryCatException(Resources.Errors.ColumnsCountNoMatch);
+        }
+
         (int chunkIndex, int offset) = EnsureCapacityAndGetStartOffset(TotalRows);
         for (int i = 0; i < _columns.Length; i++)
         {
@@ -132,7 +145,9 @@ public class RowsFrame : IRowsSchema, IEnumerable<Row>
                 _storage[chunkIndex][offset + i] = VariantValue.CreateFromObject(values[i]);
             }
         }
-        TotalRows++;
+
+        CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, values));
+        return TotalRows++;
     }
 
     /// <summary>
@@ -179,6 +194,11 @@ public class RowsFrame : IRowsSchema, IEnumerable<Row>
     /// <param name="rowIndex">Row index.</param>
     public bool RemoveRow(int rowIndex)
     {
+        if (rowIndex < 0 || rowIndex >= TotalRows)
+        {
+            return false;
+        }
+
         (int chunkIndex, int offset) = GetChunkAndOffset(rowIndex);
         if (chunkIndex > _storage.Count - 1)
         {
@@ -188,8 +208,15 @@ public class RowsFrame : IRowsSchema, IEnumerable<Row>
         {
             for (int i = 0; i < _columns.Length; i++)
             {
-                _storage[chunkIndex][offset] = VariantValue.Null;
+                _storage[chunkIndex][offset + i] = VariantValue.Null;
             }
+        }
+
+        if (CollectionChanged != null)
+        {
+            var removed = GetRow(rowIndex);
+            CollectionChanged.Invoke(this,
+                new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Remove, removed.Values));
         }
         return true;
     }
@@ -223,8 +250,14 @@ public class RowsFrame : IRowsSchema, IEnumerable<Row>
     {
         var max = numberOfRows > 0 ? numberOfRows : TotalRows;
         var values = new List<VariantValue>(max);
+        var i = 0;
         foreach (var item in this)
         {
+            i++;
+            if (numberOfRows > -1 && i >= numberOfRows)
+            {
+                break;
+            }
             values.Add(item[columnIndex]);
         }
         return values;
@@ -236,7 +269,10 @@ public class RowsFrame : IRowsSchema, IEnumerable<Row>
     public void Clear()
     {
         _storage.Clear();
+        _removedRows.Clear();
         TotalRows = 0;
+        CollectionChanged?.Invoke(this,
+            new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
     }
 
     private (int ChunkIndex, int Offset) GetChunkAndOffsetValidate(int rowIndex)
@@ -279,11 +315,10 @@ public class RowsFrame : IRowsSchema, IEnumerable<Row>
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
     /// <summary>
-    /// Creates new rows iterator.
+    /// Create a new rows iterator.
     /// </summary>
-    /// <param name="childIterator">Child iterator.</param>
     /// <returns>Instance of <see cref="IRowsIterator" />.</returns>
-    public RowsFrameIterator GetIterator(IRowsIterator? childIterator = null) => new(this);
+    public RowsFrameIterator GetIterator() => new(this);
 
     /// <inheritdoc />
     public override string ToString() => $"Table (rows: {TotalRows})";

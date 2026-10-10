@@ -1,5 +1,6 @@
 using System.Xml;
 using System.Xml.XPath;
+using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
@@ -11,22 +12,26 @@ namespace QueryCat.Backend.Addons.Formatters;
 /// <summary>
 /// XML input.
 /// </summary>
-internal sealed class XmlInput : IRowsInput, IDisposable, IAsyncDisposable
+internal sealed class XmlInput : IRowsInput, IDisposable
 {
     private const int NoColumnIndex = -1;
 
-    private readonly XmlReader _xmlReader;
+    private XmlReader _xmlReader;
+    private readonly StreamReader _streamReader;
 
     // State.
-    private readonly Dictionary<int, List<string>> _cache = new();
+    private readonly Dictionary<int, List<VariantValue>> _cache = new();
     private int _cacheSize;
-    private readonly SortedList<int, VariantValue> _currentRow = new(); // Values for current row.
-    // ReSharper disable once UseArrayEmptyMethod
+    private int _cacheRowIndex = -1; // Current cached row index, -1 if values are read from XML.
+    private readonly List<VariantValue> _currentRow = new(); // Values for current row.
     private Column[] _columns = [];
     private bool _initMode; // In open mode we should fill cache.
     private bool _skipNextRead; // On next row read we do not need to read XML since it was done before.
     private readonly Stack<int> _attributesColumns = new(); // The stack is used to reset attribute values on tag close.
+
     private readonly string[] _uniqueKey;
+    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(XmlInput));
+    private bool _isDisposed;
 
     /// <inheritdoc />
     public Column[] Columns => _columns;
@@ -39,7 +44,7 @@ internal sealed class XmlInput : IRowsInput, IDisposable, IAsyncDisposable
 
     public XmlInput(Stream stream, string? xpath = null, params string[] uniqueKeys)
     {
-        var streamReader = !string.IsNullOrEmpty(xpath)
+        _streamReader = !string.IsNullOrEmpty(xpath)
             ? new StreamReader(RunXPath(stream, xpath))
             : new StreamReader(stream);
         _uniqueKey = uniqueKeys;
@@ -48,7 +53,12 @@ internal sealed class XmlInput : IRowsInput, IDisposable, IAsyncDisposable
             _uniqueKey = uniqueKeys.Concat([xpath]).ToArray();
         }
 
-        _xmlReader = XmlReader.Create(streamReader, new XmlReaderSettings
+        _xmlReader = CreateXmlReader(_streamReader);
+    }
+
+    private static XmlReader CreateXmlReader(StreamReader streamReader)
+    {
+        return XmlReader.Create(streamReader, new XmlReaderSettings
         {
             IgnoreWhitespace = true,
             IgnoreComments = true,
@@ -60,11 +70,14 @@ internal sealed class XmlInput : IRowsInput, IDisposable, IAsyncDisposable
 
     private static Stream RunXPath(Stream stream, string xpath)
     {
-        using var streamReader = new StreamReader(stream);
+        using var reader = XmlReader.Create(stream, new XmlReaderSettings { DtdProcessing = DtdProcessing.Ignore });
         var xmlDocument = new XmlDocument();
-        xmlDocument.LoadXml(streamReader.ReadToEnd());
-        var xmlNamespaceManager = GetXmlNamespaceManager(xmlDocument);
-        var nodes = xmlDocument.SelectNodes(xpath, xmlNamespaceManager);
+        xmlDocument.Load(reader);
+        var nodes = xmlDocument.SelectNodes(xpath, GetXmlNamespaceManager(xmlDocument));
+        if (nodes == null)
+        {
+            throw new QueryCatException("Cannot evaluate xpath.");
+        }
 
         var memoryStream = new MemoryFileStream(stream);
         using var xmlWriter = XmlWriter.Create(memoryStream, new XmlWriterSettings
@@ -125,7 +138,7 @@ internal sealed class XmlInput : IRowsInput, IDisposable, IAsyncDisposable
         {
             for (var colIndex = 0; colIndex < Columns.Length; colIndex++)
             {
-                row[colIndex] = new VariantValue(_cache[colIndex][rowIndex]);
+                row[colIndex] = _cache[colIndex][rowIndex];
             }
             frame.AddRow(row);
         }
@@ -136,44 +149,59 @@ internal sealed class XmlInput : IRowsInput, IDisposable, IAsyncDisposable
     }
 
     /// <inheritdoc />
-    public async Task CloseAsync(CancellationToken cancellationToken = default)
+    public Task CloseAsync(CancellationToken cancellationToken = default)
     {
-        await DisposeAsync();
+        _xmlReader.Close();
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc />
     public Task ResetAsync(CancellationToken cancellationToken = default)
     {
-        if (_xmlReader is not XmlTextReader xmlTextReader)
+        if (_streamReader.BaseStream.CanSeek)
         {
-            throw new InvalidOperationException("Reset is not supported.");
+            _streamReader.BaseStream.Seek(0, SeekOrigin.Begin);
         }
-        xmlTextReader.ResetState();
+        _streamReader.DiscardBufferedData();
+        _xmlReader.Dispose();
+        _xmlReader = CreateXmlReader(_streamReader);
         _attributesColumns.Clear();
+        ClearCache();
         _cache.Clear();
         _cacheSize = 0;
+        _cacheRowIndex = -1;
         _currentRow.Clear();
-        _skipNextRead = true;
+        _skipNextRead = false;
         return Task.CompletedTask;
     }
 
     /// <inheritdoc />
     public ErrorCode ReadValue(int columnIndex, out VariantValue value)
     {
-        if (_cacheSize > 0)
+        VariantValue rawValue;
+        if (_cacheRowIndex > -1)
         {
             var values = _cache[columnIndex];
-            if (!VariantValue.TryCreateFromString(values[^(_cacheSize + 1)], Columns[columnIndex].DataType, out value))
-            {
-                return ErrorCode.CannotCast;
-            }
+            rawValue = _cacheRowIndex < values.Count ? values[_cacheRowIndex] : VariantValue.Null;
         }
         else
         {
-            if (!_currentRow.TryGetValue(columnIndex, out value))
-            {
-                value = VariantValue.Null;
-            }
+            rawValue = columnIndex < _currentRow.Count ? _currentRow[columnIndex] : VariantValue.Null;
+        }
+
+        return ConvertValue(rawValue, Columns[columnIndex].DataType, out value);
+    }
+
+    private static ErrorCode ConvertValue(in VariantValue rawValue, DataType targetType, out VariantValue value)
+    {
+        if (rawValue.IsNull || targetType == DataType.String)
+        {
+            value = rawValue;
+            return ErrorCode.OK;
+        }
+        if (!VariantValue.TryCreateFromString(rawValue.AsString, targetType, out value))
+        {
+            return ErrorCode.CannotCast;
         }
         return ErrorCode.OK;
     }
@@ -193,64 +221,92 @@ internal sealed class XmlInput : IRowsInput, IDisposable, IAsyncDisposable
 
         if (!_initMode && _cacheSize > 0)
         {
-            _cacheSize--;
-            return true;
+            _cacheRowIndex++;
+            if (_cacheRowIndex < _cacheSize)
+            {
+                return true;
+            }
+            // The cache is exhausted, continue reading XML.
+            ClearCache();
         }
 
         ResetValuesOnElementEnd();
 
-        while (_skipNextRead || await _xmlReader.ReadAsync())
+        try
         {
-            _skipNextRead = false;
-
-            // Enter to the tag, process attributes.
-            if (_xmlReader.NodeType == XmlNodeType.Element)
+            while (_skipNextRead || await _xmlReader.ReadAsync())
             {
-                currentColumnName = _xmlReader.Name;
-                _attributesColumns.Push(NoColumnIndex);
+                cancellationToken.ThrowIfCancellationRequested();
+                _skipNextRead = false;
 
-                if (_xmlReader.HasAttributes)
+                // Enter to the tag, process attributes.
+                if (_xmlReader.NodeType == XmlNodeType.Element)
                 {
-                    while (_xmlReader.MoveToNextAttribute())
+                    currentColumnName = _xmlReader.Name;
+                    _attributesColumns.Push(NoColumnIndex);
+
+                    if (_xmlReader.HasAttributes)
                     {
-                        var colIndex = _initMode ? AddAndGetColumnIndex(_xmlReader.Name) : GetColumnIndex(_xmlReader.Name);
-                        _currentRow[colIndex] = new VariantValue(_xmlReader.Value);
-                        _attributesColumns.Push(colIndex);
+                        while (_xmlReader.MoveToNextAttribute())
+                        {
+                            var columnIndex = _initMode ? AddAndGetColumnIndex(_xmlReader.Name) : GetColumnIndex(_xmlReader.Name);
+                            if (columnIndex < 0)
+                            {
+                                continue;
+                            }
+                            EnsureListSize(_currentRow, columnIndex + 1);
+                            _currentRow[columnIndex] = new VariantValue(_xmlReader.Value);
+                            _attributesColumns.Push(columnIndex);
+                        }
+                    }
+                }
+                // Read tag text value.
+                else if (_xmlReader.NodeType == XmlNodeType.Text
+                         && !string.IsNullOrEmpty(currentColumnName))
+                {
+                    var columnIndex = _initMode ? AddAndGetColumnIndex(currentColumnName) : GetColumnIndex(currentColumnName);
+                    if (columnIndex < 0)
+                    {
+                        continue;
+                    }
+                    EnsureListSize(_currentRow, columnIndex + 1);
+                    _currentRow[columnIndex] = new VariantValue(_xmlReader.Value.Trim());
+                    anyRead = true;
+                }
+                else if (_xmlReader.NodeType == XmlNodeType.EndElement && anyRead)
+                {
+                    _skipNextRead = true; // No need to call Read() next time since it is done below.
+                    while (await _xmlReader.ReadAsync()
+                        && _xmlReader.NodeType != XmlNodeType.EndElement
+                        && _xmlReader.NodeType != XmlNodeType.Element)
+                    {
+                    }
+
+                    if (_xmlReader.EOF)
+                    {
+                        if (_initMode)
+                        {
+                            AddCacheRow();
+                        }
+                        return true;
+                    }
+
+                    if (_xmlReader.NodeType == XmlNodeType.EndElement
+                        || (_xmlReader.NodeType == XmlNodeType.Element && _xmlReader.Name == currentColumnName))
+                    {
+                        if (_initMode)
+                        {
+                            AddCacheRow();
+                        }
+                        return true;
                     }
                 }
             }
-            // Read tag text value.
-            else if (_xmlReader.NodeType == XmlNodeType.Text
-                     && !string.IsNullOrEmpty(currentColumnName))
-            {
-                var columnIndex = _initMode ? AddAndGetColumnIndex(currentColumnName) : GetColumnIndex(currentColumnName);
-                _currentRow[columnIndex] = new VariantValue(_xmlReader.Value.Trim());
-                anyRead = true;
-            }
-            else if (_xmlReader.NodeType == XmlNodeType.EndElement && anyRead)
-            {
-                _skipNextRead = true; // No need to call Read() next time since it is done below.
-                while (await _xmlReader.ReadAsync()
-                    && _xmlReader.NodeType != XmlNodeType.EndElement
-                    && _xmlReader.NodeType != XmlNodeType.Element)
-                {
-                }
-
-                if (_xmlReader.EOF)
-                {
-                    return true;
-                }
-
-                if (_xmlReader.NodeType == XmlNodeType.EndElement
-                    || (_xmlReader.NodeType == XmlNodeType.Element && _xmlReader.Name == currentColumnName))
-                {
-                    if (_initMode)
-                    {
-                        AddCacheRow();
-                    }
-                    return true;
-                }
-            }
+        }
+        catch (XmlException e)
+        {
+            _logger.LogWarning("Cannot parse XML row: {Error}", e.Message);
+            throw new QueryCatException(e.Message, e);
         }
 
         return false;
@@ -262,8 +318,25 @@ internal sealed class XmlInput : IRowsInput, IDisposable, IAsyncDisposable
         stringBuilder.AppendLine(nameof(XmlInput));
     }
 
+    private static void EnsureListSize<T>(List<T?> list, int capacity)
+    {
+        while (list.Count < capacity)
+        {
+            list.Add(default);
+        }
+    }
+
     private int GetColumnIndex(string name)
-        => Array.FindIndex(_columns, c => c.Name.Equals(name));
+    {
+        for (var i = 0; i < _columns.Length; i++)
+        {
+            if (_columns[i].Name == name)
+            {
+                return i;
+            }
+        }
+        return -1;
+    }
 
     private int AddAndGetColumnIndex(string name)
     {
@@ -272,7 +345,7 @@ internal sealed class XmlInput : IRowsInput, IDisposable, IAsyncDisposable
         {
             Array.Resize(ref _columns, _columns.Length + 1);
             _columns[^1] = new Column(name, DataType.String);
-            _cache.Add(_columns.Length - 1, new List<string>());
+            _cache.Add(_columns.Length - 1, new List<VariantValue>());
             return _columns.Length - 1;
         }
         return index;
@@ -299,23 +372,34 @@ internal sealed class XmlInput : IRowsInput, IDisposable, IAsyncDisposable
         }
 
         _cacheSize++;
-        foreach (var keyValuePair in _currentRow)
+        for (var i = 0; i < _currentRow.Count; i++)
         {
-            _cache[keyValuePair.Key].Add(keyValuePair.Value);
+            _cache[i].Add(_currentRow[i]);
         }
+    }
+
+    private void ClearCache()
+    {
+        // Keep the dictionary keys, they are mapped to the columns.
+        foreach (var cacheItem in _cache.Values)
+        {
+            cacheItem.Clear();
+        }
+        _cacheSize = 0;
+        _cacheRowIndex = -1;
     }
 
     /// <inheritdoc />
     public void Dispose()
     {
-        _xmlReader.Dispose();
-    }
+        if (_isDisposed)
+        {
+            return;
+        }
+        _isDisposed = true;
 
-    /// <inheritdoc />
-    public ValueTask DisposeAsync()
-    {
         _xmlReader.Dispose();
-        return ValueTask.CompletedTask;
+        _streamReader.Dispose();
     }
 
     /// <inheritdoc />

@@ -1,0 +1,4 @@
+expected: |
+  26
+query: |
+  select coalesce(cast(null as integer), '2') + 6 as v;

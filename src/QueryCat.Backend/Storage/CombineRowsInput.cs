@@ -34,7 +34,7 @@ internal sealed class CombineRowsInput : RowsInput, IDisposable
 
     public CombineRowsInput(IReadOnlyList<IRowsInput> rowsInputs)
     {
-        if (!rowsInputs.Any())
+        if (rowsInputs.Count == 0)
         {
             throw new ArgumentException(Resources.Errors.NoInputs, nameof(rowsInputs));
         }

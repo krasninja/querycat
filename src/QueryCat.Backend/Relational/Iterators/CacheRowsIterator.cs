@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Globalization;
 using QueryCat.Backend.Core.Data;
 
 namespace QueryCat.Backend.Relational.Iterators;
@@ -13,12 +14,13 @@ public sealed class CacheRowsIterator : IRowsIteratorParent, ICursorRowsIterator
     private const int InitialPosition = -1;
 
     private readonly IRowsIterator _rowsIterator;
-    private int _rowsIteratorCursor = InitialPosition; // How many record we really read from rows iterator.
+    private int _rowsIteratorCursor = InitialPosition; // The index of last row read.
     private readonly int _cacheSize;
-    private readonly List<Row> _cache;
-    private int _cursor = InitialPosition; // Absolution cursor position, might be within cache of rows iterator.
+    private List<Row> _cache;
+    private int _cursor = InitialPosition; // Absolute cursor position, might be within cache of rows iterator.
     private Row _currentRow;
     private bool _isFrozen;
+    private int _removedCount;
 
     private readonly TimeSpan _expiresIn;
     private DateTime _expiresAt;
@@ -29,10 +31,15 @@ public sealed class CacheRowsIterator : IRowsIteratorParent, ICursorRowsIterator
     /// <summary>
     /// Cursor position.
     /// </summary>
-    public int Position => _cursor;
+    public long Position => _cursor;
 
     /// <inheritdoc />
-    public int TotalRows => Count;
+    public long TotalRows => Count;
+
+    /// <summary>
+    /// Whether the cache is complete and no more rows can be added.
+    /// </summary>
+    internal bool IsFrozen => _isFrozen;
 
     /// <summary>
     /// Total cache rows.
@@ -55,7 +62,7 @@ public sealed class CacheRowsIterator : IRowsIteratorParent, ICursorRowsIterator
     /// <summary>
     /// If cache is expired.
     /// </summary>
-    public bool IsExpired => _expiresIn != TimeSpan.Zero && DateTime.UtcNow > _expiresAt;
+    public bool IsExpired => _expiresIn != TimeSpan.Zero && _expiresAt != default && DateTime.UtcNow > _expiresAt;
 
     /// <summary>
     /// Constructor.
@@ -72,13 +79,16 @@ public sealed class CacheRowsIterator : IRowsIteratorParent, ICursorRowsIterator
         _cache = new List<Row>(_cacheSize > 0 ? _cacheSize : 32);
     }
 
-    internal CacheRowsIterator(IRowsIterator rowsIterator, CacheRowsIterator cache) : this(rowsIterator)
+    internal CacheRowsIterator(IRowsIterator rowsIterator, CacheRowsIterator cache)
     {
-        _cache = cache._cache;
+        _currentRow = new Row(rowsIterator);
+        _cache = cache._isFrozen ? cache._cache : new List<Row>(cache._cache);
         _cacheSize = cache._cacheSize;
         _expiresIn = cache._expiresIn;
         _expiresAt = cache._expiresAt;
         _isFrozen = cache._isFrozen;
+        _removedCount = cache._removedCount;
+        _rowsIterator = rowsIterator;
         if (cache._rowsIterator == rowsIterator)
         {
             _rowsIteratorCursor = cache._rowsIteratorCursor;
@@ -86,7 +96,7 @@ public sealed class CacheRowsIterator : IRowsIteratorParent, ICursorRowsIterator
     }
 
     /// <summary>
-    /// Get row at the specified position.
+    /// Get row at the specified position. IsFrozen flag is skipped.
     /// </summary>
     /// <param name="position">Row index/position.</param>
     /// <returns>Row instance.</returns>
@@ -98,22 +108,28 @@ public sealed class CacheRowsIterator : IRowsIteratorParent, ICursorRowsIterator
     /// <param name="row">Row to add.</param>
     public void AddLast(Row row)
     {
+        if (IsFrozen)
+        {
+            return;
+        }
         _cache.Add(new Row(row));
-        _cursor++;
     }
 
     /// <summary>
-    /// Remove row at beginning of cache.
+    /// Remove row at beginning of cache. IsFrozen flag is skipped.
     /// </summary>
     /// <param name="count">How many rows to remove.</param>
+    /// <returns><c>True</c> if rows were removed, <c>false</c> otherwise.</returns>
     public bool RemoveFirst(int count = 1)
     {
+        ArgumentOutOfRangeException.ThrowIfNegative(count);
         if (count > _cache.Count)
         {
             return false;
         }
         _cache.RemoveRange(0, count);
-        _cursor -= count;
+        _removedCount += count;
+        SetCursor(Math.Max(InitialPosition, _cursor - count));
         return true;
     }
 
@@ -121,13 +137,13 @@ public sealed class CacheRowsIterator : IRowsIteratorParent, ICursorRowsIterator
     public async ValueTask<bool> MoveNextAsync(CancellationToken cancellationToken = default)
     {
         // If this is the first call, make new expiration date.
-        if (_cursor == InitialPosition)
+        if (_cursor == InitialPosition && _expiresAt == default)
         {
             ResetExpiration();
         }
 
         // If our position within the cache - return cached data.
-        if (_cursor + 1 <= _cache.Count - 1)
+        if (_cursor + 1 < _cache.Count)
         {
             SetCursor(_cursor + 1);
             return true;
@@ -140,25 +156,24 @@ public sealed class CacheRowsIterator : IRowsIteratorParent, ICursorRowsIterator
 
         // After finishing the cache items and if it is not frozen, we start getting records from
         // rows iterator.
-        if (_cursor != _rowsIteratorCursor)
+        var sourcePosition = _cursor + _removedCount;
+        if (sourcePosition != _rowsIteratorCursor)
         {
-            await MoveRowsIteratorToCursorPositionAsync(_cursor, cancellationToken);
+            await MoveRowsIteratorToCursorPositionAsync(sourcePosition, cancellationToken);
         }
 
         var hasData = await _rowsIterator.MoveNextAsync(cancellationToken);
         if (!hasData)
         {
-            _isFrozen = true;
+            _isFrozen = _cacheSize == -1 || _cursor < _cache.Count;
             return false;
         }
-        else
-        {
-            _rowsIteratorCursor++;
-        }
+
+        _rowsIteratorCursor++;
 
         // Move next and add to cache.
         _currentRow = _rowsIterator.Current;
-        if (_cursor < _cacheSize || _cacheSize == -1)
+        if (_cache.Count < _cacheSize || _cacheSize == -1)
         {
             _cache.Add(new Row(_currentRow));
         }
@@ -173,19 +188,25 @@ public sealed class CacheRowsIterator : IRowsIteratorParent, ICursorRowsIterator
             return;
         }
 
-        if (_rowsIterator is ICursorRowsIterator cursorRowsIterator
-            && cursorRowsIterator.Position != position)
+        if (_rowsIterator is ICursorRowsIterator cursorRowsIterator)
         {
-            cursorRowsIterator.Seek(position, CursorSeekOrigin.Begin);
-        }
-        else
-        {
-            while (_rowsIteratorCursor < position && await _rowsIterator.MoveNextAsync(cancellationToken))
+            if (cursorRowsIterator.Position != position)
             {
-                _rowsIteratorCursor++;
+                cursorRowsIterator.Seek(position, CursorSeekOrigin.Begin);
             }
+            _rowsIteratorCursor = position;
+            return;
         }
-        _rowsIteratorCursor = position;
+
+        if (_rowsIteratorCursor > position)
+        {
+            await _rowsIterator.ResetAsync(cancellationToken);
+            _rowsIteratorCursor = InitialPosition;
+        }
+        while (_rowsIteratorCursor < position && await _rowsIterator.MoveNextAsync(cancellationToken))
+        {
+            _rowsIteratorCursor++;
+        }
     }
 
     /// <inheritdoc />
@@ -193,9 +214,11 @@ public sealed class CacheRowsIterator : IRowsIteratorParent, ICursorRowsIterator
     {
         await _rowsIterator.ResetAsync(cancellationToken);
         _rowsIteratorCursor = InitialPosition;
-        _cache.Clear();
+        _isFrozen = false;
+        _cache = new List<Row>(_cacheSize > 0 ? _cacheSize : 32);
         _cursor = InitialPosition;
         _currentRow = new Row(_rowsIterator);
+        _removedCount = 0;
         ResetExpiration();
     }
 
@@ -226,25 +249,24 @@ public sealed class CacheRowsIterator : IRowsIteratorParent, ICursorRowsIterator
     /// <inheritdoc />
     public void Explain(IndentedStringBuilder stringBuilder)
     {
-        var text = $"Cache (max={_cacheSize} fill={_cache.Count} expire={_expiresAt} pos={_cursor})";
+        var expireText = _expiresIn == TimeSpan.Zero ? "none" : _expiresAt.ToString("O", CultureInfo.InvariantCulture);
+        var text = $"Cache (max={_cacheSize} fill={_cache.Count} expire={expireText} pos={_cursor})";
         stringBuilder.AppendRowsIteratorsWithIndent(text, _rowsIterator);
     }
 
     /// <inheritdoc />
-    public void Seek(int offset, CursorSeekOrigin origin)
+    public void Seek(long offset, CursorSeekOrigin origin)
     {
-        if (origin == CursorSeekOrigin.Begin)
+        var newPosition = origin switch
         {
-            SetCursor(offset);
-        }
-        else if (origin == CursorSeekOrigin.Current)
-        {
-            SetCursor(_cursor + offset);
-        }
-        else if (origin == CursorSeekOrigin.End)
-        {
-            SetCursor(TotalRows - offset);
-        }
+            CursorSeekOrigin.Begin => offset,
+            CursorSeekOrigin.Current => _cursor + offset,
+            CursorSeekOrigin.End => TotalRows - offset - 1,
+            _ => throw new ArgumentOutOfRangeException(nameof(origin)),
+        };
+        ArgumentOutOfRangeException.ThrowIfLessThan(newPosition, InitialPosition, nameof(offset));
+        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(newPosition, _cache.Count, nameof(offset));
+        SetCursor((int)newPosition);
     }
 
     private void SetCursor(int newPosition)

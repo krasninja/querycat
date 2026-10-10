@@ -13,7 +13,7 @@ internal sealed class ForStatementNode : StatementNode, ICommandNode
     }
 
     /// <inheritdoc />
-    public ForStatementNode(StatementNode node) : base(node)
+    public ForStatementNode(ForStatementNode node) : base(node)
     {
     }
 

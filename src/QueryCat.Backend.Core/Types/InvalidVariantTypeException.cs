@@ -3,10 +3,7 @@ namespace QueryCat.Backend.Core.Types;
 /// <summary>
 /// The exception occurs when <see cref="Types.VariantValue" /> is attempted to use with invalid data type.
 /// </summary>
-[Serializable]
-#pragma warning disable CA2229
 public class InvalidVariantTypeException : QueryCatException
-#pragma warning restore CA2229
 {
     /// <summary>
     /// Constructor.

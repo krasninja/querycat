@@ -17,9 +17,13 @@ internal static class CryptoFunctions
     [FunctionSignature("md5(\"text\": string): string")]
     public static VariantValue Md5(IExecutionThread thread)
     {
-        var text = thread.Stack.Pop().AsString;
-        var textData = Encoding.UTF8.GetBytes(text);
-        return new VariantValue(Convert.ToHexString(MD5.HashData(textData)));
+        var value = thread.Stack.Pop();
+        if (value.IsNull)
+        {
+            return VariantValue.Null;
+        }
+        var textData = Encoding.UTF8.GetBytes(value.AsString);
+        return new VariantValue(ToHexLower(MD5.HashData(textData)));
     }
 
     [SafeFunction]
@@ -27,9 +31,13 @@ internal static class CryptoFunctions
     [FunctionSignature("sha1(\"text\": string): string")]
     public static VariantValue Sha1(IExecutionThread thread)
     {
-        var text = thread.Stack.Pop().AsString;
-        var textData = Encoding.UTF8.GetBytes(text);
-        return new VariantValue(Convert.ToHexString(SHA1.HashData(textData)));
+        var value = thread.Stack.Pop();
+        if (value.IsNull)
+        {
+            return VariantValue.Null;
+        }
+        var textData = Encoding.UTF8.GetBytes(value.AsString);
+        return new VariantValue(ToHexLower(SHA1.HashData(textData)));
     }
 
     [SafeFunction]
@@ -37,9 +45,13 @@ internal static class CryptoFunctions
     [FunctionSignature("sha256(\"text\": string): string")]
     public static VariantValue Sha256(IExecutionThread thread)
     {
-        var text = thread.Stack.Pop().AsString;
-        var textData = Encoding.UTF8.GetBytes(text);
-        return new VariantValue(Convert.ToHexString(SHA256.HashData(textData)));
+        var value = thread.Stack.Pop();
+        if (value.IsNull)
+        {
+            return VariantValue.Null;
+        }
+        var textData = Encoding.UTF8.GetBytes(value.AsString);
+        return new VariantValue(ToHexLower(SHA256.HashData(textData)));
     }
 
     [SafeFunction]
@@ -47,9 +59,13 @@ internal static class CryptoFunctions
     [FunctionSignature("sha384(\"text\": string): string")]
     public static VariantValue Sha384(IExecutionThread thread)
     {
-        var text = thread.Stack.Pop().AsString;
-        var textData = Encoding.UTF8.GetBytes(text);
-        return new VariantValue(Convert.ToHexString(SHA384.HashData(textData)));
+        var value = thread.Stack.Pop();
+        if (value.IsNull)
+        {
+            return VariantValue.Null;
+        }
+        var textData = Encoding.UTF8.GetBytes(value.AsString);
+        return new VariantValue(ToHexLower(SHA384.HashData(textData)));
     }
 
     [SafeFunction]
@@ -57,9 +73,22 @@ internal static class CryptoFunctions
     [FunctionSignature("sha512(\"text\": string): string")]
     public static VariantValue Sha512(IExecutionThread thread)
     {
-        var text = thread.Stack.Pop().AsString;
-        var textData = Encoding.UTF8.GetBytes(text);
-        return new VariantValue(Convert.ToHexString(SHA512.HashData(textData)));
+        var value = thread.Stack.Pop();
+        if (value.IsNull)
+        {
+            return VariantValue.Null;
+        }
+        var textData = Encoding.UTF8.GetBytes(value.AsString);
+        return new VariantValue(ToHexLower(SHA512.HashData(textData)));
+    }
+
+    private static string ToHexLower(ReadOnlySpan<byte> bytes)
+    {
+#if NET9_0_OR_GREATER
+        return Convert.ToHexStringLower(bytes);
+#else
+        return Convert.ToHexString(bytes).ToLowerInvariant();
+#endif
     }
 
     public static void RegisterFunctions(IFunctionsManager functionsManager)

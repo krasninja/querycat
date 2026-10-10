@@ -1,0 +1,4 @@
+expected: |
+  1
+query: |
+  with x(a) as (select 1) select a from x

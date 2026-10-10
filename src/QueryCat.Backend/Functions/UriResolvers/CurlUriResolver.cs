@@ -2,6 +2,9 @@ using QueryCat.Backend.Core.Functions;
 
 namespace QueryCat.Backend.Functions.UriResolvers;
 
+/// <summary>
+/// Web URIs resolver.
+/// </summary>
 internal sealed class CurlUriResolver : IUriResolver
 {
     /// <inheritdoc />

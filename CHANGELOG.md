@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## Fixed
+
+- Improve parser handling in ambiguity paths.
+- Fix WebServer bugger leaks, query processing improvements.
+- Reduce memory usage for GreaterOrEquals, LessOrEquals, NotEquals, Subtract operations.
+- Improve Window functions support.
+- Obsolete plugins clean up.
+- "row_number()" now respects ORDER BY inside the OVER clause.
+- "avg()" returns correct values and types for numeric, interval and timestamp arguments.
+- "first_value()" returns NULL when the first row's value is NULL.
+- Fix and improve "generate_series()" function.
+- Assembly plugins host: a broken plugin no longer stops loading of other plugins, native libraries cached fixes, Windows native library lookup is fixed.
+- JsonInput types detection.
+- JsonOutput supports objects and arrays.
+- XmlInput, XmlOutput improvements.
+- Run rc.sql from application config directory.
+- Overall bugfixes and improvements.
+
+### Changed
+
+- CannotSetValueException is thrown if value cannot be set with SET expression.
+- [Breaking] Plugins protocol changes.
+- [Breaking] `ICursorRowsIterator` `Position`, `TotalRows` and `Seek` use `long` instead of `int`.
+
+## [0.17.5] - 2026-07-31
+
 ### Fixed
 
 - CacheStream buffer allocate problem.

@@ -15,7 +15,7 @@ internal abstract class AstNode : IAstNode
     private static int _nextId = 1;
 
     /// <summary>
-    /// Node identifier. It is kept when node is cloned.
+    /// Node identifier. It is not kept when node is cloned.
     /// </summary>
     public int Id { get; } = Interlocked.Increment(ref _nextId);
 

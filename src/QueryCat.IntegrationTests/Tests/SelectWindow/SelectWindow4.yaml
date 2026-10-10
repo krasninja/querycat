@@ -1,0 +1,10 @@
+expected: |
+  aleksander,2
+  elina,3
+  ivan,1
+  lena,4
+  sergey,5
+query: |
+  select name, row_number() over (order by balance desc)
+  from 'Simple2.csv'
+  order by name;

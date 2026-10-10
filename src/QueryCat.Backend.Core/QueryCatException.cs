@@ -1,12 +1,9 @@
 namespace QueryCat.Backend.Core;
 
 /// <summary>
-/// Base application exception.
+/// Base QueryCat exception.
 /// </summary>
-[Serializable]
-#pragma warning disable CA2229
 public class QueryCatException : Exception
-#pragma warning restore CA2229
 {
     /// <summary>
     /// Constructor.

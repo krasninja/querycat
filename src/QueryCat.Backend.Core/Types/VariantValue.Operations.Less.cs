@@ -21,15 +21,15 @@ public partial struct VariantValue
         {
             DataType.Integer => rightType switch
             {
-                DataType.Integer => (in VariantValue left, in VariantValue right) =>
+                DataType.Integer => (in left, in right) =>
                 {
                     return new VariantValue(left.AsIntegerUnsafe < right.AsIntegerUnsafe);
                 },
-                DataType.Float => (in VariantValue left, in VariantValue right) =>
+                DataType.Float => (in left, in right) =>
                 {
                     return new VariantValue(left.AsIntegerUnsafe < right.AsFloatUnsafe);
                 },
-                DataType.Numeric => (in VariantValue left, in VariantValue right) =>
+                DataType.Numeric => (in left, in right) =>
                 {
                     return new VariantValue(left.AsIntegerUnsafe < right.AsNumericUnsafe);
                 },
@@ -37,15 +37,15 @@ public partial struct VariantValue
             },
             DataType.Float => rightType switch
             {
-                DataType.Integer => (in VariantValue left, in VariantValue right) =>
+                DataType.Integer => (in left, in right) =>
                 {
                     return new VariantValue(left.AsFloatUnsafe < right.AsIntegerUnsafe);
                 },
-                DataType.Float => (in VariantValue left, in VariantValue right) =>
+                DataType.Float => (in left, in right) =>
                 {
                     return new VariantValue(left.AsFloatUnsafe < right.AsFloatUnsafe);
                 },
-                DataType.Numeric => (in VariantValue left, in VariantValue right) =>
+                DataType.Numeric => (in left, in right) =>
                 {
                     return new VariantValue((decimal)left.AsFloatUnsafe < right.AsNumericUnsafe);
                 },
@@ -53,15 +53,15 @@ public partial struct VariantValue
             },
             DataType.Numeric => rightType switch
             {
-                DataType.Integer => (in VariantValue left, in VariantValue right) =>
+                DataType.Integer => (in left, in right) =>
                 {
                     return new VariantValue(left.AsNumericUnsafe < right.AsIntegerUnsafe);
                 },
-                DataType.Numeric => (in VariantValue left, in VariantValue right) =>
+                DataType.Numeric => (in left, in right) =>
                 {
                     return new VariantValue(left.AsNumericUnsafe < right.AsNumericUnsafe);
                 },
-                DataType.Float => (in VariantValue left, in VariantValue right) =>
+                DataType.Float => (in left, in right) =>
                 {
                     return new VariantValue(left.AsNumericUnsafe < (decimal)right.AsFloatUnsafe);
                 },
@@ -69,7 +69,7 @@ public partial struct VariantValue
             },
             DataType.Boolean => rightType switch
             {
-                DataType.Boolean or DataType.Integer => (in VariantValue left, in VariantValue right) =>
+                DataType.Boolean or DataType.Integer => (in left, in right) =>
                 {
                     return new VariantValue(left.AsIntegerUnsafe < right.AsIntegerUnsafe);
                 },
@@ -77,7 +77,7 @@ public partial struct VariantValue
             },
             DataType.String => rightType switch
             {
-                DataType.String => (in VariantValue left, in VariantValue right) =>
+                DataType.String => (in left, in right) =>
                 {
                     return new VariantValue(string.CompareOrdinal(left.AsStringUnsafe, right.AsStringUnsafe) < 0);
                 },
@@ -85,11 +85,11 @@ public partial struct VariantValue
             },
             DataType.Timestamp => rightType switch
             {
-                DataType.Timestamp => (in VariantValue left, in VariantValue right) =>
+                DataType.Timestamp => (in left, in right) =>
                 {
                     return new VariantValue(left.AsTimestampUnsafe < right.AsTimestampUnsafe);
                 },
-                DataType.String => (in VariantValue left, in VariantValue right) =>
+                DataType.String => (in left, in right) =>
                 {
                     return new VariantValue(left.AsTimestampUnsafe < right.AsTimestamp);
                 },
@@ -97,9 +97,101 @@ public partial struct VariantValue
             },
             DataType.Interval => rightType switch
             {
-                DataType.Interval => (in VariantValue left, in VariantValue right) =>
+                DataType.Interval => (in left, in right) =>
                 {
                     return new VariantValue(left.AsIntervalUnsafe < right.AsIntervalUnsafe);
+                },
+                _ => BinaryNullDelegate,
+            },
+            _ => BinaryNullDelegate,
+        };
+    }
+
+    internal static BinaryFunction GetLessOrEqualsDelegate(DataType leftType, DataType rightType)
+    {
+        return leftType switch
+        {
+            DataType.Integer => rightType switch
+            {
+                DataType.Integer => (in left, in right) =>
+                {
+                    return new VariantValue(left.AsIntegerUnsafe <= right.AsIntegerUnsafe);
+                },
+                DataType.Float => (in left, in right) =>
+                {
+                    return new VariantValue(left.AsIntegerUnsafe <= right.AsFloatUnsafe);
+                },
+                DataType.Numeric => (in left, in right) =>
+                {
+                    return new VariantValue(left.AsIntegerUnsafe <= right.AsNumericUnsafe);
+                },
+                _ => BinaryNullDelegate,
+            },
+            DataType.Float => rightType switch
+            {
+                DataType.Integer => (in left, in right) =>
+                {
+                    return new VariantValue(left.AsFloatUnsafe <= right.AsIntegerUnsafe);
+                },
+                DataType.Float => (in left, in right) =>
+                {
+                    return new VariantValue(left.AsFloatUnsafe <= right.AsFloatUnsafe);
+                },
+                DataType.Numeric => (in left, in right) =>
+                {
+                    return new VariantValue((decimal)left.AsFloatUnsafe <= right.AsNumericUnsafe);
+                },
+                _ => BinaryNullDelegate,
+            },
+            DataType.Numeric => rightType switch
+            {
+                DataType.Integer => (in left, in right) =>
+                {
+                    return new VariantValue(left.AsNumericUnsafe <= right.AsIntegerUnsafe);
+                },
+                DataType.Numeric => (in left, in right) =>
+                {
+                    return new VariantValue(left.AsNumericUnsafe <= right.AsNumericUnsafe);
+                },
+                DataType.Float => (in left, in right) =>
+                {
+                    return new VariantValue(left.AsNumericUnsafe <= (decimal)right.AsFloatUnsafe);
+                },
+                _ => BinaryNullDelegate,
+            },
+            DataType.Boolean => rightType switch
+            {
+                DataType.Boolean or DataType.Integer => (in left, in right) =>
+                {
+                    return new VariantValue(left.AsIntegerUnsafe <= right.AsIntegerUnsafe);
+                },
+                _ => BinaryNullDelegate,
+            },
+            DataType.String => rightType switch
+            {
+                DataType.String => (in left, in right) =>
+                {
+                    return new VariantValue(string.CompareOrdinal(left.AsStringUnsafe, right.AsStringUnsafe) <= 0);
+                },
+                _ => BinaryNullDelegate,
+            },
+            DataType.Timestamp => rightType switch
+            {
+                DataType.Timestamp => (in left, in right) =>
+                {
+                    return new VariantValue(left.AsTimestampUnsafe <= right.AsTimestampUnsafe);
+                },
+                DataType.String => (in left, in right) =>
+                {
+                    return new VariantValue(left.AsTimestampUnsafe <= right.AsTimestamp);
+                },
+                _ => BinaryNullDelegate,
+            },
+            DataType.Interval => rightType switch
+            {
+                DataType.Interval => (in left, in right) =>
+                {
+                    return new VariantValue(left.AsIntervalUnsafe <= right.AsIntervalUnsafe);
                 },
                 _ => BinaryNullDelegate,
             },
@@ -118,18 +210,5 @@ public partial struct VariantValue
 
         errorCode = ErrorCode.OK;
         return function.Invoke(in left, in right);
-    }
-
-    internal static BinaryFunction GetLessOrEqualsDelegate(DataType leftType, DataType rightType)
-    {
-        var lessDelegate = GetLessDelegate(leftType, rightType);
-        var equalsDelegate = GetEqualsDelegate(leftType, rightType);
-
-        return (in VariantValue left, in VariantValue right) =>
-        {
-            var result = lessDelegate.Invoke(in left, in right).AsBooleanUnsafe
-                || equalsDelegate.Invoke(in left, in right).AsBooleanUnsafe;
-            return new VariantValue(result);
-        };
     }
 }

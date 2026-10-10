@@ -168,4 +168,20 @@ public static class Application
         }
         return directory;
     }
+
+    /// <summary>
+    /// Get application configuration directory to store settings.
+    /// </summary>
+    /// <param name="ensureExists">Create the directory if it doesn't exist.</param>
+    /// <returns>Default configuration directory.</returns>
+    public static string GetConfigDirectory(bool ensureExists = false)
+    {
+        var directory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+            ApplicationDirectory);
+        if (ensureExists)
+        {
+            Directory.CreateDirectory(directory);
+        }
+        return directory;
+    }
 }

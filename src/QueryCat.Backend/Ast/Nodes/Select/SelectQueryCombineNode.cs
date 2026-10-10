@@ -32,20 +32,13 @@ internal sealed class SelectQueryCombineNode : SelectQueryNode
         }
     }
 
-    public SelectQueryCombineNode(SelectQueryCombineNode node) : base(node)
+    public SelectQueryCombineNode(SelectQueryCombineNode node) : this(
+        (SelectQueryNode)node.LeftQueryNode.Clone(),
+        (SelectQueryNode)node.RightQueryNode.Clone(),
+        node.CombineType,
+        node.IsDistinct)
     {
-        LeftQueryNode = (SelectQueryNode)node.LeftQueryNode.Clone();
-        RightQueryNode = (SelectQueryNode)node.RightQueryNode.Clone();
-        CombineType = node.CombineType;
-        IsDistinct = node.IsDistinct;
-        if (node.OffsetNode != null)
-        {
-            OffsetNode = (SelectOffsetNode)node.OffsetNode.Clone();
-        }
-        if (node.FetchNode != null)
-        {
-            FetchNode = (SelectFetchNode)node.FetchNode.Clone();
-        }
+        CopyClausesFrom(node);
         node.CopyTo(this);
     }
 
@@ -59,7 +52,10 @@ internal sealed class SelectQueryCombineNode : SelectQueryNode
         yield return RightQueryNode;
         foreach (var astNode in base.GetChildren())
         {
-            yield return astNode;
+            if (!ReferenceEquals(astNode, ColumnsListNode))
+            {
+                yield return astNode;
+            }
         }
     }
 

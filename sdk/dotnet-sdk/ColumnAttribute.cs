@@ -32,21 +32,21 @@ using Thrift.Processor;
 namespace QueryCat.Plugins.Sdk
 {
 
-  public partial class QuestionResponse : TBase
+  public partial class ColumnAttribute : TBase
   {
 
-    public string Answer { get; set; } = string.Empty;
+    public string Key { get; set; } = string.Empty;
 
-    public string MessageId { get; set; } = string.Empty;
+    public global::QueryCat.Plugins.Sdk.VariantValue? Value { get; set; }
 
-    public QuestionResponse()
+    public ColumnAttribute()
     {
     }
 
-    public QuestionResponse(string @answer, string message_id) : this()
+    public ColumnAttribute(string @key, global::QueryCat.Plugins.Sdk.VariantValue? @value) : this()
     {
-      this.Answer = @answer;
-      this.MessageId = message_id;
+      this.Key = @key;
+      this.Value = @value;
     }
 
     public async global::System.Threading.Tasks.Task ReadAsync(TProtocol iprot, CancellationToken cancellationToken)
@@ -54,8 +54,8 @@ namespace QueryCat.Plugins.Sdk
       iprot.IncrementRecursionDepth();
       try
       {
-        bool isset_answer = false;
-        bool isset_message_id = false;
+        bool isset_key = false;
+        bool isset_value = false;
         TField field;
         await iprot.ReadStructBeginAsync(cancellationToken);
         while (true)
@@ -71,8 +71,8 @@ namespace QueryCat.Plugins.Sdk
             case 1:
               if (field.Type == TType.String)
               {
-                Answer = await iprot.ReadStringAsync(cancellationToken);
-                isset_answer = true;
+                Key = await iprot.ReadStringAsync(cancellationToken);
+                isset_key = true;
               }
               else
               {
@@ -80,10 +80,11 @@ namespace QueryCat.Plugins.Sdk
               }
               break;
             case 2:
-              if (field.Type == TType.String)
+              if (field.Type == TType.Struct)
               {
-                MessageId = await iprot.ReadStringAsync(cancellationToken);
-                isset_message_id = true;
+                Value = new global::QueryCat.Plugins.Sdk.VariantValue();
+                await Value.ReadAsync(iprot, cancellationToken);
+                isset_value = true;
               }
               else
               {
@@ -99,11 +100,11 @@ namespace QueryCat.Plugins.Sdk
         }
 
         await iprot.ReadStructEndAsync(cancellationToken);
-        if (!isset_answer)
+        if (!isset_key)
         {
           throw new TProtocolException(TProtocolException.INVALID_DATA);
         }
-        if (!isset_message_id)
+        if (!isset_value)
         {
           throw new TProtocolException(TProtocolException.INVALID_DATA);
         }
@@ -119,26 +120,26 @@ namespace QueryCat.Plugins.Sdk
       oprot.IncrementRecursionDepth();
       try
       {
-        var tmp98 = new TStruct("QuestionResponse");
-        await oprot.WriteStructBeginAsync(tmp98, cancellationToken);
+        var tmp105 = new TStruct("ColumnAttribute");
+        await oprot.WriteStructBeginAsync(tmp105, cancellationToken);
         #pragma warning disable IDE0017  // simplified init
-        var tmp99 = new TField();
-        if((Answer != null))
+        var tmp106 = new TField();
+        if((Key != null))
         {
-          tmp99.Name = "answer";
-          tmp99.Type = TType.String;
-          tmp99.ID = 1;
-          await oprot.WriteFieldBeginAsync(tmp99, cancellationToken);
-          await oprot.WriteStringAsync(Answer, cancellationToken);
+          tmp106.Name = "key";
+          tmp106.Type = TType.String;
+          tmp106.ID = 1;
+          await oprot.WriteFieldBeginAsync(tmp106, cancellationToken);
+          await oprot.WriteStringAsync(Key, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
-        if((MessageId != null))
+        if((Value != null))
         {
-          tmp99.Name = "message_id";
-          tmp99.Type = TType.String;
-          tmp99.ID = 2;
-          await oprot.WriteFieldBeginAsync(tmp99, cancellationToken);
-          await oprot.WriteStringAsync(MessageId, cancellationToken);
+          tmp106.Name = "value";
+          tmp106.Type = TType.Struct;
+          tmp106.ID = 2;
+          await oprot.WriteFieldBeginAsync(tmp106, cancellationToken);
+          await Value.WriteAsync(oprot, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
         #pragma warning restore IDE0017  // simplified init
@@ -153,22 +154,22 @@ namespace QueryCat.Plugins.Sdk
 
     public override bool Equals(object? that)
     {
-      if (that is not QuestionResponse other) return false;
+      if (that is not ColumnAttribute other) return false;
       if (ReferenceEquals(this, other)) return true;
-      return global::System.Object.Equals(Answer, other.Answer)
-        && global::System.Object.Equals(MessageId, other.MessageId);
+      return global::System.Object.Equals(Key, other.Key)
+        && global::System.Object.Equals(Value, other.Value);
     }
 
     public override int GetHashCode() {
       int hashcode = 157;
       unchecked {
-        if((Answer != null))
+        if((Key != null))
         {
-          hashcode = (hashcode * 397) + Answer.GetHashCode();
+          hashcode = (hashcode * 397) + Key.GetHashCode();
         }
-        if((MessageId != null))
+        if((Value != null))
         {
-          hashcode = (hashcode * 397) + MessageId.GetHashCode();
+          hashcode = (hashcode * 397) + Value.GetHashCode();
         }
       }
       return hashcode;
@@ -176,19 +177,19 @@ namespace QueryCat.Plugins.Sdk
 
     public override string ToString()
     {
-      var tmp100 = new StringBuilder("QuestionResponse(");
-      if((Answer != null))
+      var tmp107 = new StringBuilder("ColumnAttribute(");
+      if((Key != null))
       {
-        tmp100.Append(", Answer: ");
-        Answer.ToString(tmp100);
+        tmp107.Append(", Key: ");
+        Key.ToString(tmp107);
       }
-      if((MessageId != null))
+      if((Value != null))
       {
-        tmp100.Append(", MessageId: ");
-        MessageId.ToString(tmp100);
+        tmp107.Append(", Value: ");
+        Value.ToString(tmp107);
       }
-      tmp100.Append(')');
-      return tmp100.ToString();
+      tmp107.Append(')');
+      return tmp107.ToString();
     }
   }
 

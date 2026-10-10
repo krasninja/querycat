@@ -14,9 +14,9 @@ public static class ExecutionThreadPrepareExtensions
         var prepareFunc = executionThread.Prepare(query);
         return async (parameters, ct) =>
         {
+            var scope = executionThread.PushScope();
             try
             {
-                var scope = executionThread.PushScope();
                 foreach (var parameter in parameters)
                 {
                     scope.Variables[parameter.Key] = parameter.Value;

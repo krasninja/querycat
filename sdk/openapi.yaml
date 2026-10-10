@@ -1,57 +1,297 @@
 openapi: 3.1.0
 info:
   title: QueryCat API
-  description: Use SQL to query different data sources like logs, JSON, CSV, XML, etc.
+  summary: Use SQL to query different data sources like logs, JSON, CSV, XML, etc.
+  description: |
+    REST API of the QueryCat built-in web server (`qcat serve`).
   version: 1.0.0
   contact:
     name: Ivan Kozhin
+    url: https://github.com/krasninja/querycat
   license:
     name: MIT
-    url: https://github.com/krasninja/querycat/blob/develop/LICENSE.txt
+    identifier: MIT
+
+externalDocs:
+  description: Web server documentation.
+  url: https://querycat.readthedocs.io/en/latest/features/web-server/
 
 servers:
-  - url: http://localhost:6789/api/
-    description: Localhost
+  - url: http://localhost:6789/api
+    description: Local web server (default address).
+
+security:
+  - {}
+  - basicAuth: []
+
+tags:
+  - name: query
+    description: Run SQL queries.
+  - name: files
+    description: Browse and download files from the served root directory.
+  - name: info
+    description: Server information.
 
 paths:
   /query:
     post:
+      tags: [query]
       summary: Run the query.
-      operationId: RunQueryOperation
+      description: |
+        Run the query passed in the request body. Only the JSON body supports query parameters.
+        Note that `application/x-www-form-urlencoded` body is treated as raw SQL text, not as encoded fields.
+      operationId: runQuery
       requestBody:
-        content:
-          multipart/form-data:
-            schema:
-              title: SQL text.
-              allOf:
-                - $ref: "#/components/schemas/QCQuery"
-          application/json:
-            schema:
-              title: SQL text.
-              allOf:
-                - $ref: "#/components/schemas/QCQuery"
-          text/plain:
-            schema:
-              title: SQL text.
-              example: "SELECT 'Hello World!'"
+        $ref: "#/components/requestBodies/QueryBody"
       responses:
-        200:
-          description: A table data.
+        "200":
+          $ref: "#/components/responses/QueryResult"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /schema:
+    post:
+      tags: [query]
+      summary: Get the query result schema.
+      description: Same as `GET /schema`, but the query is passed in the request body.
+      operationId: getQuerySchema
+      requestBody:
+        $ref: "#/components/requestBodies/QueryBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/SchemaResult"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /files:
+    get:
+      tags: [files]
+      summary: Browse or download a file.
+      description: |
+        Available only when the server is started with the files root directory, otherwise `404` is returned.
+        For a directory, returns its listing as a table (format is negotiated like for `/query`).
+        For a file, returns its content. The `Range` header is supported for partial downloads.
+      operationId: getFile
+      parameters:
+        - name: q
+          in: query
+          description: Path relative to the files root. Empty value means the root itself.
+          schema:
+            type: string
+          example: /logs/app.log
+        - name: Range
+          in: header
+          description: Request only part of the file. Only the first range is served.
+          schema:
+            type: string
+          example: bytes=0-1023
+      responses:
+        "200":
+          description: Directory listing or full file content.
+          headers:
+            Accept-Ranges:
+              $ref: "#/components/headers/AcceptRanges"
           content:
             application/json:
               schema:
-                title: Result table.
-                allOf:
-                  - $ref: "#/components/schemas/QCTable"
-        400:
-          description: Bad data.
+                $ref: "#/components/schemas/FilesTable"
+            text/html:
+              schema:
+                type: string
+            text/plain:
+              schema:
+                type: string
+            application/octet-stream:
+              schema:
+                type: string
+                contentMediaType: application/octet-stream
+        "206":
+          description: Partial file content.
+          headers:
+            Accept-Ranges:
+              $ref: "#/components/headers/AcceptRanges"
+            Content-Range:
+              description: The returned range and the total file size.
+              schema:
+                type: string
+              example: bytes 0-1023/4096
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                contentMediaType: application/octet-stream
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          description: The path is outside of the files root.
+        "404":
+          description: The file or directory does not exist, or files serving is disabled.
+        "405":
+          $ref: "#/components/responses/MethodNotAllowed"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /info:
+    get:
+      tags: [info]
+      summary: Get server information.
+      operationId: getInfo
+      responses:
+        "200":
+          description: Server information.
           content:
             application/json:
               schema:
-                title: Error.
-                allOf:
-                  - $ref: "#/components/schemas/Error"
+                $ref: "#/components/schemas/QCInfo"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
 components:
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+      description: Enabled when the server is started with a password. Only the password is checked; the user name may be any.
+
+  parameters:
+    Q:
+      name: q
+      in: query
+      description: SQL text.
+      schema:
+        type: string
+      example: SELECT 'Hello World!'
+    Query:
+      name: query
+      in: query
+      description: SQL text. Used when `q` is not set.
+      schema:
+        type: string
+      example: SELECT 'Hello World!'
+
+  headers:
+    AcceptRanges:
+      description: Range requests support.
+      schema:
+        type: string
+        const: bytes
+
+  requestBodies:
+    QueryBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/QCQuery"
+          examples:
+            simple:
+              summary: Simple query.
+              value:
+                query: SELECT 'Hello World!'
+            parameters:
+              summary: Query with parameters.
+              value:
+                query: SELECT * FROM generate_series(1, max_value)
+                parameters:
+                  - key: max_value
+                    value: 10
+        multipart/form-data:
+          schema:
+            type: object
+            required:
+              - query
+            properties:
+              query:
+                type: string
+                description: SQL text.
+                example: SELECT 'Hello World!'
+        text/plain:
+          schema:
+            type: string
+            description: SQL text.
+            example: SELECT 'Hello World!'
+        application/x-www-form-urlencoded:
+          schema:
+            type: string
+            description: Raw SQL text (the body is not decoded).
+            example: SELECT 2 + 2 AS result
+
+  responses:
+    QueryResult:
+      description: Query result.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/QCTable"
+          example:
+            schema:
+              - id: 1
+                name: result
+                type: Integer
+                description: ""
+            data:
+              - result: 4
+        text/html:
+          schema:
+            type: string
+            description: HTML page with the result table.
+        text/plain:
+          schema:
+            type: string
+            description: Result formatted as a text table.
+          example: |
+            | result |
+            | ------ |
+            | 4      |
+        "*/*":
+          schema:
+            type: string
+            description: Raw content, if the query result is a blob.
+    SchemaResult:
+      description: Columns of the query result.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/SchemaTable"
+        text/html:
+          schema:
+            type: string
+        text/plain:
+          schema:
+            type: string
+    BadRequest:
+      description: Invalid request content type, input data or query.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Unauthorized:
+      description: Invalid password or the client IP address is not allowed.
+      headers:
+        WWW-Authenticate:
+          schema:
+            type: string
+    MethodNotAllowed:
+      description: HTTP method is not supported by the endpoint.
+    PayloadTooLarge:
+      description: Request body is larger than 1 MB.
+    InternalError:
+      description: Unexpected server error. The details are written to the server log.
+
   schemas:
     QCQuery:
       type: object
@@ -61,7 +301,25 @@ components:
         query:
           type: string
           description: SQL text.
-          example: "SELECT 'Hello World!'"
+          example: SELECT 'Hello World!'
+        parameters:
+          type: array
+          description: Variables available to the query.
+          items:
+            $ref: "#/components/schemas/QCQueryParameter"
+    QCQueryParameter:
+      type: object
+      required:
+        - key
+      properties:
+        key:
+          type: string
+          description: Variable name.
+          example: max_value
+        value:
+          description: Variable value. Numbers are converted to numeric type, strings are parsed (dates, intervals, etc.).
+          type: [string, number, boolean, "null"]
+          example: 10
     QCTable:
       type: object
       required:
@@ -70,22 +328,22 @@ components:
       properties:
         schema:
           type: array
+          description: Result columns. Hidden columns are excluded.
           items:
             $ref: "#/components/schemas/QCTableColumn"
         data:
-          type: object
-          allOf:
-            - $ref: "#/components/schemas/QCTableData"
+          $ref: "#/components/schemas/QCTableData"
     QCTableColumn:
       type: object
       required:
         - id
         - name
         - type
+        - description
       properties:
         id:
           type: integer
-          format: int64
+          format: int32
           description: Column internal identifier.
           example: 1
         name:
@@ -93,19 +351,138 @@ components:
           description: Column name.
           example: value
         type:
-          type: object
-          allOf:
-            - $ref: "#/components/schemas/QCColumnType"
+          $ref: "#/components/schemas/QCColumnType"
         description:
           type: string
+          description: Column description.
     QCColumnType:
       type: string
       description: QueryCat data types.
-      enum: [Void, Integer, String, Float, Timestamp, Boolean, Numeric, Interval, Blob, Object, Dynamic]
+      enum: [Void, "Null", Integer, String, Float, Timestamp, Boolean, Numeric, Interval, Blob, Object, Dynamic, Array, Map]
       example: String
     QCTableData:
+      type: array
+      description: |
+        Result rows. Each row is an object keyed by column name. Integer, Float and Numeric values are written
+        as JSON numbers, Boolean as JSON boolean, null as JSON null, all other types as strings.
+      items:
+        $ref: "#/components/schemas/QCTableRow"
+    QCTableRow:
       type: object
-      additionalProperties: true
+      additionalProperties:
+        type: [string, number, boolean, "null"]
+      example:
+        result: 4
+    SchemaTable:
+      description: The `/query` table with the columns described below.
+      allOf:
+        - $ref: "#/components/schemas/QCTable"
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                type: object
+                properties:
+                  name:
+                    type: string
+                    description: Column full name.
+                  type:
+                    $ref: "#/components/schemas/QCColumnType"
+                  description:
+                    type: string
+                  key_operators:
+                    type: string
+                    description: Operators that can be pushed down to the input for this column, space separated.
+    FilesTable:
+      description: The `/query` table with the directory entries described below.
+      allOf:
+        - $ref: "#/components/schemas/QCTable"
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                type: object
+                properties:
+                  type:
+                    type: string
+                    description: Entry type (file or directory).
+                  name:
+                    type: string
+                  path:
+                    type: string
+                  size:
+                    type: integer
+                    format: int64
+                    description: Size in bytes.
+                  creation_time:
+                    type: string
+                  last_access_time:
+                    type: string
+                  last_write_time:
+                    type: string
+                  size_pretty:
+                    type: string
+                    description: Human-readable size.
+                    example: 1.2 MB
+    QCInfo:
+      type: object
+      required:
+        - installedPlugins
+        - version
+        - os
+        - platform
+        - date
+      properties:
+        installedPlugins:
+          type: array
+          items:
+            $ref: "#/components/schemas/QCPluginInfo"
+        version:
+          type: string
+          description: QueryCat version.
+          example: 0.12.0
+        os:
+          type: string
+          description: Operating system description.
+          example: Fedora Linux 44 (Workstation Edition)
+        platform:
+          type: string
+          description: .NET runtime version.
+          example: 10.0.0
+        date:
+          type: string
+          format: date-time
+          description: Current server date and time.
+    QCPluginInfo:
+      type: object
+      properties:
+        name:
+          type: string
+          example: QueryCat.Plugins.Sample
+        uri:
+          type: string
+        version:
+          type: string
+          example: 1.0.0
+        developmentVersion:
+          type: boolean
+        platform:
+          type: string
+          example: linux
+        architecture:
+          type: string
+          example: x64
+        isInstalled:
+          type: boolean
+        size:
+          type: integer
+          format: int64
+        description:
+          type: string
+        iconUri:
+          type: string
     Error:
       type: object
       required:
@@ -114,4 +491,4 @@ components:
         message:
           type: string
           description: Error message.
-          example: result
+          example: "Invalid input data: 'q' is an invalid start of a value."

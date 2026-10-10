@@ -38,6 +38,13 @@ public sealed class Completion : ICloneable
     /// </summary>
     public bool IsMatch => this != Empty;
 
+    /// <summary>
+    /// Constructor.
+    /// </summary>
+    /// <param name="label">Label.</param>
+    /// <param name="kind">Kind.</param>
+    /// <param name="documentation">Optional documentation.</param>
+    /// <param name="relevance">Relevance.</param>
     public Completion(
         string label,
         CompletionItemKind kind = CompletionItemKind.Misc,

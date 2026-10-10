@@ -1,36 +1,40 @@
-using System.Collections.Concurrent;
+using System.Runtime.ExceptionServices;
+using System.Threading.Channels;
+using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Backend.Inputs;
 
-internal abstract class BufferRowsSource : IRowsSource, IDisposable
+/// <summary>
+/// Base class for buffered rows sources. Rows are passed between the caller and the wrapped
+/// source through a bounded channel; the other side of the channel is served by a background worker.
+/// </summary>
+internal abstract class BufferRowsSource : IRowsSource, IAsyncDisposable
 {
-    protected const int DelayMs = 12;
+    public const int DefaultBufferSize = 1024;
 
     private readonly IRowsSource _rowsSource;
-    private Thread? _thread;
-    private bool _isThreadStarted;
-    private bool _isThreadFinished;
-    private readonly CancellationTokenSource _cancellationTokenSource = new();
-
-    private sealed record ThreadState(BufferRowsSource BufferRowsSource);
-
-    /// <summary>
-    /// Read/write queue.
-    /// </summary>
-    protected ConcurrentQueue<Row> RowsQueue { get; } = new();
-
-    /// <summary>
-    /// The semaphore is used to limit number of data in the queue.
-    /// </summary>
-    protected SemaphoreSlim QueueCountSemaphore { get; }
+    private Channel<VariantValue[]>? _channel;
+    private CancellationTokenSource? _workerCancellationTokenSource;
+    private Task? _workerTask;
+    private ExceptionDispatchInfo? _workerError;
 
     /// <summary>
     /// Buffer size.
     /// </summary>
     public int BufferSize { get; }
 
-    protected bool EndOfData => _cancellationTokenSource.IsCancellationRequested;
+    /// <summary>
+    /// <c>True</c> if the background worker has been started and not stopped yet.
+    /// </summary>
+    protected bool IsWorkerStarted => _workerTask != null;
+
+    /// <summary>
+    /// <c>True</c> to let the worker process all buffered rows on close/reset and rethrow its error (output),
+    /// <c>false</c> to cancel the worker and discard buffered rows (input).
+    /// </summary>
+    protected abstract bool FlushOnStop { get; }
 
     /// <inheritdoc />
     public QueryContext QueryContext
@@ -39,113 +43,171 @@ internal abstract class BufferRowsSource : IRowsSource, IDisposable
         set => _rowsSource.QueryContext = value;
     }
 
-    public BufferRowsSource(IRowsSource rowsSource, int bufferSize)
+    protected BufferRowsSource(IRowsSource rowsSource, int bufferSize)
     {
+        ArgumentOutOfRangeException.ThrowIfLessThan(bufferSize, 1);
         _rowsSource = rowsSource;
         BufferSize = bufferSize;
-        QueueCountSemaphore = new SemaphoreSlim(bufferSize);
-    }
-
-    private static async void QueueLoop(object? state)
-    {
-        if (state == null)
-        {
-            return;
-        }
-        var threadState = (ThreadState)state;
-        var cancellationToken = threadState.BufferRowsSource._cancellationTokenSource.Token;
-        var parent = threadState.BufferRowsSource;
-
-        // Loop while we have data or cancellation requested.
-        var hasDataToProcess = true;
-        while (hasDataToProcess)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-
-            hasDataToProcess = await parent.CallbackAsync(cancellationToken);
-            if (!hasDataToProcess)
-            {
-                // If we have no data - exit.
-                await parent._cancellationTokenSource.CancelAsync();
-            }
-        }
-
-        parent._isThreadFinished = true;
     }
 
     /// <summary>
-    /// Callback to be called within a separate thread.
+    /// Get and validate buffer size function argument.
     /// </summary>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns><c>True</c> if we have more data to process, <c>false</c> otherwise to end processing.</returns>
-    protected abstract ValueTask<bool> CallbackAsync(CancellationToken cancellationToken);
+    /// <param name="value">Argument value.</param>
+    /// <returns>Buffer size.</returns>
+    protected static int GetBufferSize(VariantValue value)
+    {
+        var size = value.AsInteger ?? DefaultBufferSize;
+        if (size < 1 || size > int.MaxValue)
+        {
+            throw new QueryCatException(string.Format(Resources.Errors.InvalidBufferSize, size));
+        }
+        return (int)size;
+    }
+
+    /// <summary>
+    /// The worker body. The input implementation writes into the channel, the output one reads from it.
+    /// Channel completion is handled by the base class.
+    /// </summary>
+    /// <param name="channel">Rows channel.</param>
+    /// <param name="cancellationToken">Cancellation token, triggered on reset/close.</param>
+    /// <returns>Awaitable task.</returns>
+    protected abstract Task RunWorkerAsync(Channel<VariantValue[]> channel, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Start the worker if it is not running and return the rows channel.
+    /// </summary>
+    /// <returns>Rows channel.</returns>
+    protected Channel<VariantValue[]> EnsureWorkerStarted()
+    {
+        if (_channel != null)
+        {
+            return _channel;
+        }
+
+        var channel = Channel.CreateBounded<VariantValue[]>(new BoundedChannelOptions(BufferSize)
+        {
+            SingleReader = true,
+            SingleWriter = true,
+            FullMode = BoundedChannelFullMode.Wait,
+        });
+        _workerCancellationTokenSource = new CancellationTokenSource();
+        var token = _workerCancellationTokenSource.Token;
+        // Do not pass the token to Task.Run: the core method must always run to complete the channel.
+        _workerTask = Task.Run(() => RunWorkerCoreAsync(channel, token), token);
+        _channel = channel;
+        return channel;
+    }
+
+    /// <summary>
+    /// Rethrow the worker exception (with the original stack trace) if any, only once.
+    /// </summary>
+    protected void ThrowIfWorkerFailed()
+    {
+        var error = _workerError;
+        if (error != null)
+        {
+            _workerError = null;
+            error.Throw();
+        }
+    }
+
+    private async Task RunWorkerCoreAsync(Channel<VariantValue[]> channel, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await RunWorkerAsync(channel, cancellationToken);
+            channel.Writer.TryComplete();
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            // Stopped by reset/close.
+            channel.Writer.TryComplete();
+        }
+        catch (Exception ex)
+        {
+            // Never let the exception escape the worker: store it and pass it to the other side.
+            _workerError = ExceptionDispatchInfo.Capture(ex);
+            channel.Writer.TryComplete(ex);
+        }
+    }
+
+    private async Task<ExceptionDispatchInfo?> StopWorkerAsync(bool flush, CancellationToken cancellationToken)
+    {
+        if (_workerTask == null)
+        {
+            return null;
+        }
+
+        var workerCancellationTokenSource = _workerCancellationTokenSource!;
+        try
+        {
+            if (flush)
+            {
+                // Let the worker drain the buffer; caller cancellation aborts the drain.
+                _channel!.Writer.TryComplete();
+                await using (cancellationToken.Register(
+                    static state => ((CancellationTokenSource)state!).Cancel(), workerCancellationTokenSource))
+                {
+                    await _workerTask;
+                }
+            }
+            else
+            {
+                // Cancel first, then wait: the worker may be blocked on a full channel.
+                await workerCancellationTokenSource.CancelAsync();
+                await _workerTask;
+            }
+            return _workerError;
+        }
+        finally
+        {
+            workerCancellationTokenSource.Dispose();
+            _workerCancellationTokenSource = null;
+            _workerTask = null;
+            _channel = null;
+            _workerError = null;
+        }
+    }
+
+    private async Task StopAsync(CancellationToken cancellationToken)
+    {
+        var error = await StopWorkerAsync(FlushOnStop, cancellationToken);
+        if (FlushOnStop)
+        {
+            error?.Throw();
+        }
+    }
 
     /// <inheritdoc />
-    public virtual async Task OpenAsync(CancellationToken cancellationToken = default)
-    {
-        _thread = new Thread(QueueLoop);
-        await _rowsSource.OpenAsync(cancellationToken);
-    }
+    public virtual Task OpenAsync(CancellationToken cancellationToken = default)
+        => _rowsSource.OpenAsync(cancellationToken);
 
     /// <inheritdoc />
     public virtual async Task CloseAsync(CancellationToken cancellationToken = default)
     {
-        await _rowsSource.CloseAsync(cancellationToken);
-        await WaitForThreadFinishAsync(cancellationToken);
-        if (!_cancellationTokenSource.IsCancellationRequested)
+        try
         {
-            await _cancellationTokenSource.CancelAsync();
+            await StopAsync(cancellationToken);
         }
-        Dispose();
-    }
-
-    protected void StartThread()
-    {
-        if (_thread != null && !_isThreadStarted)
+        finally
         {
-            _isThreadStarted = true;
-            _thread.Start(new ThreadState(this));
-        }
-    }
-
-    protected async Task WaitForThreadFinishAsync(CancellationToken cancellationToken)
-    {
-        while (!_isThreadFinished)
-        {
-            await Task.Delay(DelayMs, cancellationToken);
-        }
-    }
-
-    protected async Task WaitForQueueEmptyAsync(CancellationToken cancellationToken)
-    {
-        while (!RowsQueue.IsEmpty)
-        {
-            await Task.Delay(DelayMs, cancellationToken);
+            await _rowsSource.CloseAsync(cancellationToken);
         }
     }
 
     /// <inheritdoc />
     public virtual async Task ResetAsync(CancellationToken cancellationToken = default)
     {
+        // The worker must be stopped before the source is touched from this thread.
+        await StopAsync(cancellationToken);
         await _rowsSource.ResetAsync(cancellationToken);
-        RowsQueue.Clear();
-        QueueCountSemaphore.Release(QueueCountSemaphore.CurrentCount);
-        _isThreadStarted = false;
-    }
-
-    protected virtual void Dispose(bool disposing)
-    {
-        if (disposing)
-        {
-            _cancellationTokenSource.Dispose();
-            QueueCountSemaphore.Dispose();
-        }
     }
 
     /// <inheritdoc />
-    public void Dispose()
+    public async ValueTask DisposeAsync()
     {
-        Dispose(true);
+        await StopWorkerAsync(flush: false, CancellationToken.None);
         GC.SuppressFinalize(this);
     }
 }

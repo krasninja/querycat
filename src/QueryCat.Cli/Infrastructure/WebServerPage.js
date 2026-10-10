@@ -64,12 +64,12 @@ const queryPage = {
             const self = this;
             separator = separator || ',';
             function formatCsvValue(value) {
-                if (!value) {
+                if (value === null || value === undefined || value === '') {
                     return '';
                 }
                 return '"' + value.toString().replace(/"/g, '""') + '"';
             }
-            const csvLines = [];
+            const csvLines= [];
             const csvLine= [];
 
             // https://quasar.dev/vue-components/table/#exporting-data.
@@ -123,7 +123,7 @@ const queryPage = {
     },
     mounted: function() {
         const self = this;
-        self.query = localStorage.getItem('lastQuery');
+        self.query = localStorage.getItem('lastQuery') || '';
         if (location.protocol !== 'https:') {
             Quasar.Notify.create({
                 type: 'warning',
@@ -309,6 +309,119 @@ const filesPage = {
                     return 'rss_feed';
                 case 'eml':
                     return 'email';
+                case 'c':
+                case 'cpp':
+                case 'h':
+                case 'hpp':
+                case 'cs':
+                case 'go':
+                case 'java':
+                case 'kt':
+                case 'lua':
+                case 'php':
+                case 'py':
+                case 'r':
+                case 'rb':
+                case 'rs':
+                case 'scala':
+                case 'sh':
+                case 'bash':
+                case 'ps1':
+                case 'sql':
+                case 'swift':
+                case 'ts':
+                case 'tsx':
+                case 'jsx':
+                case 'pl':
+                case 'hs':
+                case 'dart':
+                case 'groovy':
+                case 'v':
+                case 'vb':
+                    return 'code';
+                case 'csv':
+                case 'tsv':
+                case 'xls':
+                case 'xlsx':
+                case 'xlsm':
+                case 'ods':
+                case 'numbers':
+                    return 'table_chart';
+                case 'ppt':
+                case 'pptx':
+                case 'odp':
+                case 'key':
+                    return 'slideshow';
+                case 'doc':
+                case 'docx':
+                case 'odt':
+                case 'rtf':
+                case 'wps':
+                case 'pages':
+                case 'tex':
+                case 'epub':
+                    return 'article';
+                case 'db':
+                case 'sqlite':
+                case 'mdb':
+                case 'accdb':
+                    return 'storage';
+                case 'ttf':
+                case 'otf':
+                case 'woff':
+                case 'woff2':
+                case 'eot':
+                    return 'font_download';
+                case 'exe':
+                case 'msi':
+                case 'dmg':
+                case 'deb':
+                case 'rpm':
+                case 'apk':
+                case 'jar':
+                case 'app':
+                case 'com':
+                case 'bat':
+                case 'cmd':
+                    return 'memory';
+                case 'pem':
+                case 'key':
+                case 'crt':
+                case 'cer':
+                case 'p12':
+                case 'pfx':
+                case 'der':
+                case 'gpg':
+                case 'asc':
+                    return 'vpn_key';
+                case 'ini':
+                case 'cfg':
+                case 'conf':
+                case 'toml':
+                case 'yaml':
+                case 'yml':
+                case 'xml':
+                case 'properties':
+                case 'env':
+                case 'editorconfig':
+                    return 'tune';
+                case 'iso':
+                case 'img':
+                case 'vmdk':
+                case 'vhd':
+                case 'vhdx':
+                    return 'album';
+                case 'psd':
+                case 'ai':
+                case 'sketch':
+                case 'fig':
+                case 'xd':
+                case 'blend':
+                case 'dwg':
+                case 'dxf':
+                    return 'palette';
+                case 'torrent':
+                    return 'cloud_download';
                 default:
                     return 'description';
             }
@@ -330,21 +443,22 @@ const filesPage = {
             })
             .then(function(response) {
                 self.rows = response.data.data;
+            })
+            .catch(function(error) {
+                self.$router.go(-1);
             });
         },
         setPathElements: function(to) {
             to = to ?? '';
-            const elements = ['/'].concat(to.split('/'));
-            // Convert /home/user/temp/.. to /home/user/.
-            for (let i = 1; i < elements.length; i++) {
-                if (elements[i] === '..') {
-                    elements[i] = '';
-                    elements[i - 1] = '';
+            const stack = [];
+            for (const segment of to.split('/')) {
+                if (segment === '..') {
+                    stack.pop();
+                } else if (segment.length > 0) {
+                    stack.push(segment);
                 }
             }
-            this.pathElements = elements.filter(function (el) {
-                return el.length > 0;
-            });
+            this.pathElements = ['/'].concat(stack);
         },
         setPathQuery: function(path) {
             app.config.globalProperties.path = path;

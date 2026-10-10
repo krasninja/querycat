@@ -8,7 +8,7 @@ namespace QueryCat.Backend.Commands;
 internal class StatementsBlockFuncUnit : IFuncUnit, IExecutionFlowFuncUnit
 {
     private readonly AstVisitor _statementsVisitor;
-    private readonly StatementNode[] _statements;
+    private readonly IReadOnlyList<StatementNode> _statements;
 
     /// <inheritdoc />
     public DataType OutputType => DataType.Void;
@@ -17,7 +17,7 @@ internal class StatementsBlockFuncUnit : IFuncUnit, IExecutionFlowFuncUnit
 
     public StatementsBlockFuncUnit(
         StatementsVisitor statementsVisitor,
-        StatementNode[] statements)
+        IReadOnlyList<StatementNode> statements)
     {
         _statementsVisitor = statementsVisitor;
         _statements = statements;
@@ -26,7 +26,7 @@ internal class StatementsBlockFuncUnit : IFuncUnit, IExecutionFlowFuncUnit
     /// <inheritdoc />
     public virtual async ValueTask<VariantValue> InvokeAsync(IExecutionThread thread, CancellationToken cancellationToken = default)
     {
-        if (_statements.Length < 1)
+        if (_statements.Count < 1)
         {
             return VariantValue.Null;
         }

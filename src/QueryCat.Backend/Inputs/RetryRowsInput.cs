@@ -44,7 +44,7 @@ internal sealed class RetryRowsInput : RetryRowsSource, IRowsInput, IRowsIterato
     /// <inheritdoc />
     public ValueTask<bool> ReadNextAsync(CancellationToken cancellationToken = default)
     {
-        return RetryWrapperAsync(async ct => await _rowsInput.ReadNextAsync(ct), cancellationToken);
+        return RetryWrapperAsync(async ct => await _rowsInput.ReadNextAsync(ct).ConfigureAwait(false), cancellationToken);
     }
 
     /// <inheritdoc />

@@ -13,7 +13,7 @@ internal sealed class SelectSubqueryExpressionNode : ExpressionNode
     }
 
     public SelectSubqueryExpressionNode(SelectSubqueryExpressionNode node)
-        : this((SelectQueryNode)node.Clone())
+        : this((SelectQueryNode)node.QueryNode.Clone())
     {
         node.CopyTo(this);
     }

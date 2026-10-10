@@ -1,6 +1,6 @@
 # Objects Selector
 
-The QueryCat allows to select properties from POCO. You can customize this behavior by implementing `IObjectSelector` interface or overriding `DefaultObjectSelector` class. Here is how you can do that:
+QueryCat allows to select properties from POCO. You can customize this behavior by implementing `IObjectSelector` interface or overriding `DefaultObjectSelector` class. Here is how you can do that:
 
 ```
 var thread = new ExecutionThreadBootstrapper()

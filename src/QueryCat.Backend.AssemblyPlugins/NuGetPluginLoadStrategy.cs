@@ -39,9 +39,12 @@ internal sealed class NuGetPluginLoadStrategy : IPluginLoadStrategy
         var zip = await ZipFile.OpenReadAsync(_file, cancellationToken);
         file = FixFilePath(file);
         var entry = zip.GetEntry(file);
-        return entry == null
-            ? Stream.Null
-            : new ZipStreamWrapper(await entry.OpenAsync(cancellationToken), zip);
+        if (entry == null)
+        {
+            await zip.DisposeAsync();
+            return Stream.Null;
+        }
+        return new ZipStreamWrapper(await entry.OpenAsync(cancellationToken), zip);
     }
 
     /// <inheritdoc />

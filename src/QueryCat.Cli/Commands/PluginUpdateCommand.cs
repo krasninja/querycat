@@ -3,7 +3,7 @@ using System.CommandLine;
 namespace QueryCat.Cli.Commands;
 
 #if ENABLE_PLUGINS
-internal class PluginUpdateCommand : BaseCommand
+internal sealed class PluginUpdateCommand : BaseCommand
 {
     /// <inheritdoc />
     public PluginUpdateCommand() : base("update", Resources.Messages.PluginUpdateCommand_Description)

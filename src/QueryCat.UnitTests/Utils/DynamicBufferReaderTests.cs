@@ -18,10 +18,11 @@ public class DynamicBufferReaderTests
         var reader = new DynamicBuffer<char>.DynamicBufferReader(dynamicBuffer);
 
         // Act.
-        reader.Advance(8);
+        var advanced = reader.Advance(8);
 
         // Assert.
         Assert.Equal('0', reader.Current);
+        Assert.Equal(8, advanced);
     }
 
     [Fact]
@@ -33,10 +34,11 @@ public class DynamicBufferReaderTests
         var reader = new DynamicBuffer<char>.DynamicBufferReader(dynamicBuffer);
 
         // Act.
-        reader.Advance(999);
+        var advanced = reader.Advance(999);
 
         // Assert.
-        Assert.Equal('0', reader.Current);
+        Assert.Equal('\0', reader.Current);
+        Assert.Equal(10, advanced);
     }
 
     [Fact]
@@ -46,13 +48,15 @@ public class DynamicBufferReaderTests
         var dynamicBuffer = new DynamicBuffer<char>(chunkSize: 4);
         dynamicBuffer.Write("1234");
         var reader = new DynamicBuffer<char>.DynamicBufferReader(dynamicBuffer);
-        reader.Advance(3);
+        reader.Advance(3); // 4.
 
         // Act.
         reader.Advance(1);
+        var count = reader.Advance(1);
 
         // Assert.
-        Assert.Equal('4', reader.Current);
+        Assert.Equal('\0', reader.Current);
+        Assert.Equal(0, count);
     }
 
     [Fact]
@@ -99,7 +103,7 @@ public class DynamicBufferReaderTests
         reader.AdvanceToEnd();
 
         // Assert.
-        Assert.Equal('0', reader.Current);
+        Assert.Equal('\0', reader.Current);
         Assert.Equal(dynamicBuffer.End, reader.Position);
     }
 
@@ -237,7 +241,24 @@ public class DynamicBufferReaderTests
         Assert.Equal('6', reader.Position.Value);
         Assert.Equal('1', reader.GetPosition(-5).Value);
         Assert.Equal('8', reader.GetPosition(2).Value);
-        Assert.Equal('9', reader.GetPosition(666).Value);
+        Assert.Equal('\0', reader.GetPosition(666).Value);
         Assert.Equal('1', reader.GetPosition(-666).Value);
+    }
+
+    [Fact]
+    public void AdvancePastAny_EmptyBufferAfterAllocate_ShouldNotException()
+    {
+        // Arrange.
+        var dynamicBuffer = new DynamicBuffer<char>(chunkSize: 5);
+        var reader = new DynamicBuffer<char>.DynamicBufferReader(dynamicBuffer);
+
+        // Act.
+        var buf = dynamicBuffer.Allocate();
+        dynamicBuffer.Commit(0);
+        reader.Reset();
+        reader.AdvancePastAny("1");
+
+        // Assert.
+        Assert.Equal(0, reader.UnreadSpan.Length);
     }
 }

@@ -13,8 +13,12 @@ internal sealed class CacheStream : Stream
     private readonly Stream _stream;
     private bool _cacheMode = true;
 
-    private readonly DynamicBuffer<byte> _buffer = new(chunkSize: DefaultBufferSize);
+    private readonly DynamicBuffer<byte> _buffer;
     private long _cachePosition;
+    private long _streamPosition;
+    private bool _isDisposed;
+
+    private long StreamPosition => _stream.CanSeek ? _stream.Position : _streamPosition;
 
     /// <inheritdoc />
     public override bool CanRead => _stream.CanRead;
@@ -31,7 +35,7 @@ internal sealed class CacheStream : Stream
     /// <inheritdoc />
     public override long Position
     {
-        get => IsInCache ? _cachePosition : _stream.Position;
+        get => IsInCache ? _cachePosition : StreamPosition;
         set => throw new NotSupportedException();
     }
 
@@ -55,9 +59,10 @@ internal sealed class CacheStream : Stream
     public Stream UnderlyingStream => _stream;
 
     /// <inheritdoc />
-    public CacheStream(Stream stream)
+    public CacheStream(Stream stream, int bufferSize = 0)
     {
         _stream = stream;
+        _buffer = new(chunkSize: bufferSize > 0 ? bufferSize : DefaultBufferSize);
     }
 
     /// <inheritdoc />
@@ -69,119 +74,85 @@ internal sealed class CacheStream : Stream
     /// <inheritdoc />
     public override int Read(byte[] buffer, int offset, int count)
     {
-        var bytesRead = 0;
-
-        // Read the cache if we are within it.
-        if (IsInCache)
-        {
-            bytesRead = ReadFromCache(buffer, offset, count);
-            if (!IsInCache)
-            {
-                bytesRead += _stream.Read(buffer, offset + bytesRead, count - bytesRead);
-            }
-        }
-        // Read from the stream.
-        else
-        {
-            bytesRead += _stream.Read(buffer, offset, count);
-            WriteToCache(buffer, offset, bytesRead);
-        }
-
-        return bytesRead;
+        ValidateBufferArguments(buffer, offset, count);
+        return Read(buffer.AsSpan(offset, count));
     }
 
     /// <inheritdoc />
-    public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
+    public override int Read(Span<byte> buffer)
     {
-        cancellationToken.ThrowIfCancellationRequested();
-
-        var bytesRead = 0;
-
-        // Read the cache if we are within it.
-        if (IsInCache)
-        {
-            bytesRead = ReadFromCache(buffer, offset, count);
-            if (!IsInCache)
-            {
-                bytesRead += await _stream.ReadAsync(buffer, offset + bytesRead, count - bytesRead, cancellationToken);
-            }
-        }
-        // Read from the stream.
-        else
-        {
-            bytesRead += await _stream.ReadAsync(buffer, offset, count, cancellationToken);
-            WriteToCache(buffer, offset, bytesRead);
-        }
-
-        return bytesRead;
-    }
-
-    /// <inheritdoc />
-    public override async ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
-    {
-        cancellationToken.ThrowIfCancellationRequested();
-
-        var bytesRead = 0;
-
-        // Read the cache if we are within it.
-        if (IsInCache)
-        {
-            bytesRead = ReadFromCache(buffer);
-            if (!IsInCache)
-            {
-                bytesRead += await _stream.ReadAsync(buffer.Slice(bytesRead, buffer.Length - bytesRead), cancellationToken);
-            }
-        }
-        // Read from the stream.
-        else
-        {
-            bytesRead += await _stream.ReadAsync(buffer, cancellationToken);
-            WriteToCache(buffer.Slice(0, bytesRead));
-        }
-
-        return bytesRead;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private int WriteToCache(byte[] buffer, int offset, int bytesRead)
-    {
-        if (!_cacheMode)
-        {
-            return 0;
-        }
-        return WriteToCache(buffer.AsMemory(offset, bytesRead));
-    }
-
-    private int WriteToCache(Memory<byte> buffer)
-    {
-        if (!_cacheMode)
-        {
-            return 0;
-        }
         if (buffer.IsEmpty)
         {
             return 0;
         }
-        var span = buffer.Span;
-        _buffer.Write(span);
-        _cachePosition = _buffer.Size;
-        return span.Length;
+        // Serve either cache or source, never both: avoids zero-length source reads and uncached gaps.
+        if (IsInCache)
+        {
+            return ReadFromCache(buffer);
+        }
+        var bytesRead = _stream.Read(buffer);
+        OnStreamRead(buffer[..bytesRead]);
+        return bytesRead;
     }
 
-    private int ReadFromCache(byte[] buffer, int offset, int count)
-        => ReadFromCache(buffer.AsMemory(offset, count));
-
-    private int ReadFromCache(Memory<byte> buffer)
+    /// <inheritdoc />
+    public override int ReadByte()
     {
-        var cachePosition = (int)_cachePosition;
-        var span = _buffer.Slice(cachePosition, cachePosition + buffer.Length - 1);
-        _cachePosition += span.Length;
-        span.CopyTo(buffer.Span);
+        Span<byte> value = stackalloc byte[1];
+        return Read(value) == 1 ? value[0] : -1;
+    }
+
+    /// <inheritdoc />
+    public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
+    {
+        ValidateBufferArguments(buffer, offset, count);
+        return ReadAsync(buffer.AsMemory(offset, count), cancellationToken).AsTask();
+    }
+
+    /// <inheritdoc />
+    public override ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
+    {
+        if (cancellationToken.IsCancellationRequested)
+        {
+            return ValueTask.FromCanceled<int>(cancellationToken);
+        }
+        if (buffer.IsEmpty)
+        {
+            return ValueTask.FromResult(0);
+        }
+        if (IsInCache)
+        {
+            return ValueTask.FromResult(ReadFromCache(buffer.Span));
+        }
+        return ReadFromStreamAsync(buffer, cancellationToken);
+    }
+
+    private async ValueTask<int> ReadFromStreamAsync(Memory<byte> buffer, CancellationToken cancellationToken)
+    {
+        var bytesRead = await _stream.ReadAsync(buffer, cancellationToken);
+        OnStreamRead(buffer.Span[..bytesRead]);
+        return bytesRead;
+    }
+
+    private void OnStreamRead(ReadOnlySpan<byte> data)
+    {
+        _streamPosition += data.Length;
+        if (_cacheMode && !data.IsEmpty)
+        {
+            _buffer.Write(data);
+            _cachePosition = _buffer.Size;
+        }
+    }
+
+    private int ReadFromCache(Span<byte> buffer)
+    {
+        var totalCopied = _buffer.CopyTo(buffer, _cachePosition, buffer.Length);
+        _cachePosition += totalCopied;
         if (!IsInCache && _stream.CanSeek && _cachePosition != _stream.Position)
         {
             _stream.Position = _cachePosition;
         }
-        return span.Length;
+        return (int)totalCopied;
     }
 
     /// <inheritdoc />
@@ -189,26 +160,44 @@ internal sealed class CacheStream : Stream
     {
         if (origin != SeekOrigin.Begin)
         {
-            ArgumentOutOfRangeException.ThrowIfNotEqual((int)origin, (int)SeekOrigin.Begin, nameof(origin));
+            throw new NotSupportedException("Only SeekOrigin.Begin is supported.");
         }
-        if (_stream.CanSeek && offset > _stream.Position)
+        ArgumentOutOfRangeException.ThrowIfNegative(offset);
+
+        var cacheSize = _buffer.Size;
+        if (offset < cacheSize)
         {
-            ArgumentOutOfRangeException.ThrowIfGreaterThan(offset, _stream.Position, nameof(offset));
+            // Non-seekable source can resume after the cache only if nothing was read past it.
+            if (!_stream.CanSeek && _streamPosition != cacheSize)
+            {
+                throw new NotSupportedException("Data after the cache end was not cached.");
+            }
+            _cachePosition = offset;
+            return offset;
         }
-        _cachePosition = offset;
-        return _cachePosition;
+
+        if (offset != StreamPosition)
+        {
+            if (!_stream.CanSeek || (_cacheMode && offset != cacheSize))
+            {
+                throw new NotSupportedException("Cannot seek past the cached data.");
+            }
+            _stream.Position = offset;
+        }
+        _cachePosition = cacheSize;
+        return offset;
     }
 
     /// <inheritdoc />
     public override void SetLength(long value)
     {
-        _stream.SetLength(value);
+        throw new NotSupportedException();
     }
 
     /// <inheritdoc />
     public override void Write(byte[] buffer, int offset, int count)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     /// <summary>
@@ -222,6 +211,11 @@ internal sealed class CacheStream : Stream
     /// <inheritdoc />
     protected override void Dispose(bool disposing)
     {
+        if (_isDisposed)
+        {
+            return;
+        }
+        _isDisposed = true;
         if (disposing)
         {
             _stream.Dispose();

@@ -14,8 +14,11 @@ internal sealed partial class WaitQueue : IDisposable
 {
     private static readonly DisposableObjectPool<WaitingConsumer> _waitingConsumerPool = new(
         createFunc: () => new WaitingConsumer(),
-        beforeReturn: wc => wc.Check()
-    );
+        beforeReturn: wc =>
+        {
+            wc.Check();
+            return true;
+        });
 
     private readonly ConcurrentQueue<WaitingConsumer> _awaitClientQueue = new();
     private readonly ConcurrentQueue<object> _availableItemsObjects = new();

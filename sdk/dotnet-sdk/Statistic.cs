@@ -113,14 +113,14 @@ namespace QueryCat.Plugins.Sdk
               if (field.Type == TType.List)
               {
                 {
-                  var _list74 = await iprot.ReadListBeginAsync(cancellationToken);
-                  Errors = new List<global::QueryCat.Plugins.Sdk.StatisticRowError>(_list74.Count);
-                  for(int _i75 = 0; _i75 < _list74.Count; ++_i75)
+                  var _list77 = await iprot.ReadListBeginAsync(cancellationToken);
+                  Errors = new List<global::QueryCat.Plugins.Sdk.StatisticRowError>(_list77.Count);
+                  for(int _i78 = 0; _i78 < _list77.Count; ++_i78)
                   {
-                    global::QueryCat.Plugins.Sdk.StatisticRowError _elem76;
-                    _elem76 = new global::QueryCat.Plugins.Sdk.StatisticRowError();
-                    await _elem76.ReadAsync(iprot, cancellationToken);
-                    Errors.Add(_elem76);
+                    global::QueryCat.Plugins.Sdk.StatisticRowError _elem79;
+                    _elem79 = new global::QueryCat.Plugins.Sdk.StatisticRowError();
+                    await _elem79.ReadAsync(iprot, cancellationToken);
+                    Errors.Add(_elem79);
                   }
                   await iprot.ReadListEndAsync(cancellationToken);
                 }
@@ -168,38 +168,38 @@ namespace QueryCat.Plugins.Sdk
       oprot.IncrementRecursionDepth();
       try
       {
-        var tmp77 = new TStruct("Statistic");
-        await oprot.WriteStructBeginAsync(tmp77, cancellationToken);
+        var tmp80 = new TStruct("Statistic");
+        await oprot.WriteStructBeginAsync(tmp80, cancellationToken);
         #pragma warning disable IDE0017  // simplified init
-        var tmp78 = new TField();
-        tmp78.Name = "execution_time_ms";
-        tmp78.Type = TType.I64;
-        tmp78.ID = 1;
-        await oprot.WriteFieldBeginAsync(tmp78, cancellationToken);
+        var tmp81 = new TField();
+        tmp81.Name = "execution_time_ms";
+        tmp81.Type = TType.I64;
+        tmp81.ID = 1;
+        await oprot.WriteFieldBeginAsync(tmp81, cancellationToken);
         await oprot.WriteI64Async(ExecutionTimeMs, cancellationToken);
         await oprot.WriteFieldEndAsync(cancellationToken);
-        tmp78.Name = "processed_count";
-        tmp78.Type = TType.I64;
-        tmp78.ID = 2;
-        await oprot.WriteFieldBeginAsync(tmp78, cancellationToken);
+        tmp81.Name = "processed_count";
+        tmp81.Type = TType.I64;
+        tmp81.ID = 2;
+        await oprot.WriteFieldBeginAsync(tmp81, cancellationToken);
         await oprot.WriteI64Async(ProcessedCount, cancellationToken);
         await oprot.WriteFieldEndAsync(cancellationToken);
-        tmp78.Name = "errors_count";
-        tmp78.Type = TType.I64;
-        tmp78.ID = 3;
-        await oprot.WriteFieldBeginAsync(tmp78, cancellationToken);
+        tmp81.Name = "errors_count";
+        tmp81.Type = TType.I64;
+        tmp81.ID = 3;
+        await oprot.WriteFieldBeginAsync(tmp81, cancellationToken);
         await oprot.WriteI64Async(ErrorsCount, cancellationToken);
         await oprot.WriteFieldEndAsync(cancellationToken);
         if((Errors != null))
         {
-          tmp78.Name = "errors";
-          tmp78.Type = TType.List;
-          tmp78.ID = 4;
-          await oprot.WriteFieldBeginAsync(tmp78, cancellationToken);
+          tmp81.Name = "errors";
+          tmp81.Type = TType.List;
+          tmp81.ID = 4;
+          await oprot.WriteFieldBeginAsync(tmp81, cancellationToken);
           await oprot.WriteListBeginAsync(new TList(TType.Struct, Errors.Count), cancellationToken);
-          foreach (global::QueryCat.Plugins.Sdk.StatisticRowError _iter79 in Errors)
+          foreach (global::QueryCat.Plugins.Sdk.StatisticRowError _iter82 in Errors)
           {
-            await _iter79.WriteAsync(oprot, cancellationToken);
+            await _iter82.WriteAsync(oprot, cancellationToken);
           }
           await oprot.WriteListEndAsync(cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
@@ -240,20 +240,20 @@ namespace QueryCat.Plugins.Sdk
 
     public override string ToString()
     {
-      var tmp80 = new StringBuilder("Statistic(");
-      tmp80.Append(", ExecutionTimeMs: ");
-      ExecutionTimeMs.ToString(tmp80);
-      tmp80.Append(", ProcessedCount: ");
-      ProcessedCount.ToString(tmp80);
-      tmp80.Append(", ErrorsCount: ");
-      ErrorsCount.ToString(tmp80);
+      var tmp83 = new StringBuilder("Statistic(");
+      tmp83.Append(", ExecutionTimeMs: ");
+      ExecutionTimeMs.ToString(tmp83);
+      tmp83.Append(", ProcessedCount: ");
+      ProcessedCount.ToString(tmp83);
+      tmp83.Append(", ErrorsCount: ");
+      ErrorsCount.ToString(tmp83);
       if((Errors != null))
       {
-        tmp80.Append(", Errors: ");
-        Errors.ToString(tmp80);
+        tmp83.Append(", Errors: ");
+        Errors.ToString(tmp83);
       }
-      tmp80.Append(')');
-      return tmp80.ToString();
+      tmp83.Append(')');
+      return tmp83.ToString();
     }
   }
 

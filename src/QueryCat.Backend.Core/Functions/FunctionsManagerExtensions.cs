@@ -104,12 +104,11 @@ public static class FunctionsManagerExtensions
         {
             foreach (var function in functions)
             {
-                if (!function.IsAggregate)
+                if (function.IsAggregate
+                    && function.Delegate is Func<IExecutionThread, VariantValue> factory)
                 {
-                    continue;
+                    return factory(NullExecutionThread.Instance).AsRequired<IAggregateFunction>();
                 }
-                var value = (VariantValue)functions[0].Delegate.DynamicInvoke(NullExecutionThread.Instance)!;
-                return value.AsRequired<IAggregateFunction>();
             }
         }
 

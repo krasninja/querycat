@@ -56,10 +56,20 @@ public class Column : ICloneable, IModelDescription
     /// </summary>
     public int Length { get; internal set; }
 
+    private Dictionary<string, VariantValue>? _attributes;
+
+    /// <summary>
+    /// Column metadata attributes.
+    /// </summary>
+    public IReadOnlyDictionary<string, VariantValue> Attributes
+    {
+        get => _attributes ??= new Dictionary<string, VariantValue>();
+    }
+
     /// <summary>
     /// Should the column be visible on output. It doesn't affect column search.
     /// </summary>
-    public bool IsHidden => Name.StartsWith("__");
+    public bool IsHidden => Name.StartsWith("__", StringComparison.Ordinal);
 
     /// <summary>
     /// Constructor.
@@ -69,7 +79,7 @@ public class Column : ICloneable, IModelDescription
     /// <param name="description">Description.</param>
     public Column(string name, DataType dataType, string? description = null)
     {
-        ArgumentException.ThrowIfNullOrEmpty(name, nameof(name));
+        ArgumentException.ThrowIfNullOrEmpty(name);
         if (!DataTypeUtils.RowDataTypes.Contains(dataType))
         {
             throw new ArgumentOutOfRangeException(nameof(dataType),
@@ -101,9 +111,21 @@ public class Column : ICloneable, IModelDescription
     /// <param name="columnIndex">Column index.</param>
     /// <param name="dataType">Column type.</param>
     /// <param name="description">Description.</param>
-    public Column(int columnIndex, DataType dataType, string? description = null) :
+    /// <param name="attributes">Attributes.</param>
+    public Column(
+        int columnIndex,
+        DataType dataType,
+        string? description = null,
+        KeyValuePair<string, VariantValue>[]? attributes = null) :
         this($"column{columnIndex}", dataType, description)
     {
+        if (attributes != null)
+        {
+            foreach (var attribute in attributes)
+            {
+                SetAttribute(attribute.Key, attribute.Value);
+            }
+        }
     }
 
     /// <summary>
@@ -117,6 +139,25 @@ public class Column : ICloneable, IModelDescription
         DataType = column.DataType;
         Description = column.Description;
         Length = column.Length;
+        if (column._attributes != null)
+        {
+            foreach (var attribute in column._attributes)
+            {
+                SetAttribute(attribute.Key, attribute.Value);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Set column metadata attribute. The existing value will be overridden.
+    /// </summary>
+    /// <param name="name">Attribute name.</param>
+    /// <param name="value">Attribute value.</param>
+    public void SetAttribute(string name, VariantValue value)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(name);
+        var attributes = _attributes ??= new Dictionary<string, VariantValue>();
+        attributes[name] = value;
     }
 
     private int GetDefaultColumnLength()

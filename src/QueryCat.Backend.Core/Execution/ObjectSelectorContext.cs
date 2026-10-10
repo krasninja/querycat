@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using System.Reflection;
 
@@ -42,14 +43,25 @@ public sealed class ObjectSelectorContext
         {
             object? result;
             PropertyInfo? propertyInfo = null;
-            if (expression.Body is UnaryExpression)
+
+            // Value type properties are wrapped into Convert(...) to fit object return type.
+            var body = expression.Body;
+            while (body is UnaryExpression { NodeType: ExpressionType.Convert or ExpressionType.ConvertChecked } unary)
             {
-                result = expression.Compile().Invoke(owner);
+                body = unary.Operand;
+            }
+
+            // The compiler binds the property by the static type T (or by the virtual declaration for overrides),
+            // so resolve it again using the runtime owner type.
+            if (body is MemberExpression { Member: PropertyInfo declaredProperty } memberExpression
+                && memberExpression.Expression == expression.Parameters[0])
+            {
+                propertyInfo = ResolveOwnerProperty(owner.GetType(), declaredProperty);
+                result = propertyInfo.GetValue(owner);
             }
             else
             {
-                propertyInfo = GetPropertyInfo(expression);
-                result = propertyInfo.GetValue(owner);
+                result = expression.Compile().Invoke(owner);
             }
 
             if (result == null)
@@ -120,20 +132,54 @@ public sealed class ObjectSelectorContext
     public Token Peek() => SelectStack[^1];
 
     /// <summary>
+    /// Trim stack to a specific length.
+    /// </summary>
+    /// <param name="targetLength">Target stack length.</param>
+    public void Trim(int targetLength)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegative(targetLength);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(targetLength, Length);
+        _selectStack.RemoveRange(targetLength, Length - targetLength);
+    }
+
+    /// <summary>
     /// Reset state.
     /// </summary>
     public void Clear()
     {
         _selectStack.Clear();
+        ExecutionThread = NullExecutionThread.Instance;
     }
 
-    private static PropertyInfo GetPropertyInfo<T>(Expression<Func<T, object?>> property)
+    [UnconditionalSuppressMessage("Trimming", "IL2070",
+        Justification = "Object selector works with arbitrary runtime objects whose properties cannot be statically annotated.")]
+    [UnconditionalSuppressMessage("Trimming", "IL2075",
+        Justification = "Object selector works with arbitrary runtime objects whose properties cannot be statically annotated.")]
+    private static PropertyInfo ResolveOwnerProperty(Type runtimeType, PropertyInfo declaredProperty)
     {
-        LambdaExpression lambda = property;
-        var memberExpression = lambda.Body is UnaryExpression expression
-            ? (MemberExpression)expression.Operand
-            : (MemberExpression)lambda.Body;
+        if (runtimeType == declaredProperty.DeclaringType)
+        {
+            return declaredProperty;
+        }
 
-        return (PropertyInfo)memberExpression.Member;
+        // Find the most derived declaration (override or "new" hidden property).
+        // DeclaredOnly is used to avoid AmbiguousMatchException for hidden properties.
+        const BindingFlags flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance
+                                   | BindingFlags.DeclaredOnly;
+        var indexParametersCount = declaredProperty.GetIndexParameters().Length;
+        for (var type = runtimeType; type != null; type = type.BaseType)
+        {
+            foreach (var property in type.GetProperties(flags))
+            {
+                if (property.Name == declaredProperty.Name
+                    && property.GetIndexParameters().Length == indexParametersCount)
+                {
+                    return property;
+                }
+            }
+        }
+
+        // For example, explicit interface implementation.
+        return declaredProperty;
     }
 }

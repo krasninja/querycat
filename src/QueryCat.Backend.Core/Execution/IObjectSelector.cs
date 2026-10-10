@@ -34,7 +34,7 @@ public interface IObjectSelector
     /// </summary>
     /// <param name="context">Selector context.</param>
     /// <param name="newValue">New value.</param>
-    /// <param name="cancellationToken"></param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns><c>True</c> if property was set, <c>false</c> otherwise.</returns>
     ValueTask<bool> SetValueAsync(
         ObjectSelectorContext context,

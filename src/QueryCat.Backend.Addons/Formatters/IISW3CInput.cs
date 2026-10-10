@@ -41,10 +41,10 @@ public sealed class IISW3CInput : StreamRowsInput
         ["cs-method"] = new("cs-method", DataType.String, "The requested action, for example, a GET method."),
         ["cs-uri-stem"] = new("cs-uri-stem", DataType.String, "The URI, or target, of the action."),
         ["cs-uri-query"] = new("cs-uri-query", DataType.String, "The query, if any, that the client was trying to perform."),
-        ["sc-status"] = new("sc-status", DataType.String, "The HTTP request status code."),
-        ["sc-substatus"] = new("sc-substatus", DataType.String, "The HTTP request substatus error code."),
-        ["sc-win32-status"] = new("sc-win32-status", DataType.String, "The Windows status code."),
-        ["sc-bytes"] = new("sc-bytes", DataType.Numeric, "The number of bytes that the server sent to the client."),
+        ["sc-status"] = new("sc-status", DataType.Integer, "The HTTP request status code."),
+        ["sc-substatus"] = new("sc-substatus", DataType.Integer, "The HTTP request substatus error code."),
+        ["sc-win32-status"] = new("sc-win32-status", DataType.Integer, "The Windows status code."),
+        ["sc-bytes"] = new("sc-bytes", DataType.Integer, "The number of bytes that the server sent to the client."),
         ["cs-bytes"] = new("cs-bytes", DataType.Integer, "The number of bytes that the server received from the client."),
         ["time-taken"] = new("time-taken", DataType.Integer, "The time that the request took to complete (in milliseconds)."),
         ["cs-version"] = new("cs-version", DataType.String, "The HTTP protocol version that the client used."),
@@ -88,7 +88,7 @@ public sealed class IISW3CInput : StreamRowsInput
             {
                 var stringDate = string.Concat(GetInputColumnValue(_dateColumnIndex), " ", GetInputColumnValue(_timeColumnIndex));
                 if (DateTime.TryParseExact(stringDate, "yyyy'-'MM'-'dd HH:mm:ss",
-                        CultureInfo.InvariantCulture, DateTimeStyles.None, out var datetime))
+                        CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out var datetime))
                 {
                     value = new VariantValue(datetime);
                     return ErrorCode.OK;
@@ -187,6 +187,8 @@ public sealed class IISW3CInput : StreamRowsInput
     /// <inheritdoc />
     public override async Task ResetAsync(CancellationToken cancellationToken = default)
     {
+        _dateColumnIndex = -1;
+        _timeColumnIndex = -1;
         _isInitialized = false;
         await base.ResetAsync(cancellationToken);
         await SeekToFieldsHeaderAsync(cancellationToken);

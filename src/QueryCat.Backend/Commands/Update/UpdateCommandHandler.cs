@@ -1,4 +1,5 @@
 using QueryCat.Backend.Commands.Select;
+using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
@@ -34,11 +35,19 @@ internal sealed class UpdateCommandHandler : IFuncUnit
         var updateCount = 0;
         while (await _selectCommandContext.CurrentIterator.MoveNextAsync(cancellationToken))
         {
-            updateCount++;
+            var updated = true;
             foreach (var setter in _setters)
             {
                 var value = await setter.FuncUnit.InvokeAsync(thread, cancellationToken);
-                await _rowsInput.UpdateValueAsync(setter.ColumnIndex, value, cancellationToken);
+                var errorCode = await _rowsInput.UpdateValueAsync(setter.ColumnIndex, value, cancellationToken);
+                if (errorCode != ErrorCode.OK)
+                {
+                    updated = false;
+                }
+            }
+            if (updated)
+            {
+                updateCount++;
             }
         }
 

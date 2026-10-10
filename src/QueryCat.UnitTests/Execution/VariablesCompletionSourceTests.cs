@@ -19,7 +19,7 @@ public sealed class VariablesCompletionSourceTests
     [InlineData("", "userName")]
     [InlineData("use", "userName")]
     [InlineData("name", "name")]
-    [InlineData("-- name", "-")]
+    [InlineData("-- name", "userName")]
     [InlineData("'me' + 3; 'add' || name", "name")]
     [InlineData("callme() + 'asd asd' ;  \n\t \"na\".no[0]", "-")]
     public async Task GetCompletions_PartVariableName_ReturnsExpectedCompletions(string query, string expected)
@@ -30,7 +30,7 @@ public sealed class VariablesCompletionSourceTests
         thread.TopScope.Variables["name"] = VariantValue.Null;
 
         // Act.
-        var firstCompletion = await thread.GetCompletionsAsync(query).FirstOrDefaultAsync(CompletionResult.Empty);
+        var firstCompletion = (await thread.GetCompletionsAsync(query)).FirstOrDefault(CompletionResult.Empty);
 
         // Assert.
         Assert.Equal(expected, firstCompletion.Completion.Label);
@@ -48,7 +48,7 @@ public sealed class VariablesCompletionSourceTests
         thread.TopScope.Variables["name"] = VariantValue.Null;
 
         // Act.
-        var firstCompletion = await thread.GetCompletionsAsync(query).FirstOrDefaultAsync(CompletionResult.Empty);
+        var firstCompletion = (await thread.GetCompletionsAsync(query)).FirstOrDefault(CompletionResult.Empty);
         var replacedText = firstCompletion.Apply(query);
 
         // Assert.

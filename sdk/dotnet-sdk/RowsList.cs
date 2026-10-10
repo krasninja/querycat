@@ -34,36 +34,18 @@ namespace QueryCat.Plugins.Sdk
 
   public partial class RowsList : TBase
   {
-    private bool _has_more;
 
-    public bool HasMore
-    {
-      get
-      {
-        return _has_more;
-      }
-      set
-      {
-        __isset.has_more = true;
-        this._has_more = value;
-      }
-    }
+    public bool HasMore { get; set; } = false;
 
     public List<global::QueryCat.Plugins.Sdk.VariantValue>? Values { get; set; }
-
-
-    public Isset __isset;
-    public struct Isset
-    {
-      public bool has_more;
-    }
 
     public RowsList()
     {
     }
 
-    public RowsList(List<global::QueryCat.Plugins.Sdk.VariantValue>? @values) : this()
+    public RowsList(bool has_more, List<global::QueryCat.Plugins.Sdk.VariantValue>? @values) : this()
     {
+      this.HasMore = has_more;
       this.Values = @values;
     }
 
@@ -72,6 +54,7 @@ namespace QueryCat.Plugins.Sdk
       iprot.IncrementRecursionDepth();
       try
       {
+        bool isset_has_more = false;
         bool isset_values = false;
         TField field;
         await iprot.ReadStructBeginAsync(cancellationToken);
@@ -89,6 +72,7 @@ namespace QueryCat.Plugins.Sdk
               if (field.Type == TType.Bool)
               {
                 HasMore = await iprot.ReadBoolAsync(cancellationToken);
+                isset_has_more = true;
               }
               else
               {
@@ -99,14 +83,14 @@ namespace QueryCat.Plugins.Sdk
               if (field.Type == TType.List)
               {
                 {
-                  var _list106 = await iprot.ReadListBeginAsync(cancellationToken);
-                  Values = new List<global::QueryCat.Plugins.Sdk.VariantValue>(_list106.Count);
-                  for(int _i107 = 0; _i107 < _list106.Count; ++_i107)
+                  var _list144 = await iprot.ReadListBeginAsync(cancellationToken);
+                  Values = new List<global::QueryCat.Plugins.Sdk.VariantValue>(_list144.Count);
+                  for(int _i145 = 0; _i145 < _list144.Count; ++_i145)
                   {
-                    global::QueryCat.Plugins.Sdk.VariantValue _elem108;
-                    _elem108 = new global::QueryCat.Plugins.Sdk.VariantValue();
-                    await _elem108.ReadAsync(iprot, cancellationToken);
-                    Values.Add(_elem108);
+                    global::QueryCat.Plugins.Sdk.VariantValue _elem146;
+                    _elem146 = new global::QueryCat.Plugins.Sdk.VariantValue();
+                    await _elem146.ReadAsync(iprot, cancellationToken);
+                    Values.Add(_elem146);
                   }
                   await iprot.ReadListEndAsync(cancellationToken);
                 }
@@ -126,6 +110,10 @@ namespace QueryCat.Plugins.Sdk
         }
 
         await iprot.ReadStructEndAsync(cancellationToken);
+        if (!isset_has_more)
+        {
+          throw new TProtocolException(TProtocolException.INVALID_DATA);
+        }
         if (!isset_values)
         {
           throw new TProtocolException(TProtocolException.INVALID_DATA);
@@ -142,29 +130,26 @@ namespace QueryCat.Plugins.Sdk
       oprot.IncrementRecursionDepth();
       try
       {
-        var tmp109 = new TStruct("RowsList");
-        await oprot.WriteStructBeginAsync(tmp109, cancellationToken);
+        var tmp147 = new TStruct("RowsList");
+        await oprot.WriteStructBeginAsync(tmp147, cancellationToken);
         #pragma warning disable IDE0017  // simplified init
-        var tmp110 = new TField();
-        if(__isset.has_more)
-        {
-          tmp110.Name = "has_more";
-          tmp110.Type = TType.Bool;
-          tmp110.ID = 1;
-          await oprot.WriteFieldBeginAsync(tmp110, cancellationToken);
-          await oprot.WriteBoolAsync(HasMore, cancellationToken);
-          await oprot.WriteFieldEndAsync(cancellationToken);
-        }
+        var tmp148 = new TField();
+        tmp148.Name = "has_more";
+        tmp148.Type = TType.Bool;
+        tmp148.ID = 1;
+        await oprot.WriteFieldBeginAsync(tmp148, cancellationToken);
+        await oprot.WriteBoolAsync(HasMore, cancellationToken);
+        await oprot.WriteFieldEndAsync(cancellationToken);
         if((Values != null))
         {
-          tmp110.Name = "values";
-          tmp110.Type = TType.List;
-          tmp110.ID = 2;
-          await oprot.WriteFieldBeginAsync(tmp110, cancellationToken);
+          tmp148.Name = "values";
+          tmp148.Type = TType.List;
+          tmp148.ID = 2;
+          await oprot.WriteFieldBeginAsync(tmp148, cancellationToken);
           await oprot.WriteListBeginAsync(new TList(TType.Struct, Values.Count), cancellationToken);
-          foreach (global::QueryCat.Plugins.Sdk.VariantValue _iter111 in Values)
+          foreach (global::QueryCat.Plugins.Sdk.VariantValue _iter149 in Values)
           {
-            await _iter111.WriteAsync(oprot, cancellationToken);
+            await _iter149.WriteAsync(oprot, cancellationToken);
           }
           await oprot.WriteListEndAsync(cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
@@ -183,17 +168,14 @@ namespace QueryCat.Plugins.Sdk
     {
       if (that is not RowsList other) return false;
       if (ReferenceEquals(this, other)) return true;
-      return ((__isset.has_more == other.__isset.has_more) && ((!__isset.has_more) || (global::System.Object.Equals(HasMore, other.HasMore))))
+      return global::System.Object.Equals(HasMore, other.HasMore)
         && TCollections.Equals(Values, other.Values);
     }
 
     public override int GetHashCode() {
       int hashcode = 157;
       unchecked {
-        if(__isset.has_more)
-        {
-          hashcode = (hashcode * 397) + HasMore.GetHashCode();
-        }
+        hashcode = (hashcode * 397) + HasMore.GetHashCode();
         if((Values != null))
         {
           hashcode = (hashcode * 397) + TCollections.GetHashCode(Values);
@@ -204,22 +186,16 @@ namespace QueryCat.Plugins.Sdk
 
     public override string ToString()
     {
-      var tmp112 = new StringBuilder("RowsList(");
-      int tmp113 = 0;
-      if(__isset.has_more)
-      {
-        if(0 < tmp113++) { tmp112.Append(", "); }
-        tmp112.Append("HasMore: ");
-        HasMore.ToString(tmp112);
-      }
+      var tmp150 = new StringBuilder("RowsList(");
+      tmp150.Append(", HasMore: ");
+      HasMore.ToString(tmp150);
       if((Values != null))
       {
-        if(0 < tmp113) { tmp112.Append(", "); }
-        tmp112.Append("Values: ");
-        Values.ToString(tmp112);
+        tmp150.Append(", Values: ");
+        Values.ToString(tmp150);
       }
-      tmp112.Append(')');
-      return tmp112.ToString();
+      tmp150.Append(')');
+      return tmp150.ToString();
     }
   }
 

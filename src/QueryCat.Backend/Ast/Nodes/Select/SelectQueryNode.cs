@@ -44,6 +44,12 @@ internal abstract class SelectQueryNode : ExpressionNode, ISelectAliasNode
 
     public SelectQueryNode(SelectQueryNode node) : this((SelectColumnsListNode)node.ColumnsListNode.Clone())
     {
+        CopyClausesFrom(node);
+        node.CopyTo(this);
+    }
+
+    protected void CopyClausesFrom(SelectQueryNode node)
+    {
         Alias = node.Alias;
         if (node.ExceptIdentifiersNode != null)
         {
@@ -65,7 +71,6 @@ internal abstract class SelectQueryNode : ExpressionNode, ISelectAliasNode
         {
             FetchNode = (SelectFetchNode)node.FetchNode.Clone();
         }
-        node.CopyTo(this);
     }
 
     /// <summary>
