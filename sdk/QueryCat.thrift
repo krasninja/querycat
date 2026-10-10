@@ -223,19 +223,39 @@ struct ModelDescription {
   2: required string description
 }
 
-struct QuestionMessage {
+struct ChatToolCall {
+  1: required string id,
+  2: required string name,
+  3: required string arguments // JSON.
+}
+
+struct ChatTool {
+  1: required string name,
+  2: required string description,
+  3: required string parameters_schema // JSON schema.
+}
+
+struct ChatMessage {
   1: required string content,
-  2: required string role
+  2: required string role,
+  3: optional list<ChatToolCall> tool_calls, // Assistant only.
+  4: optional string tool_call_id // Tool only.
 }
 
-struct QuestionRequest {
-  1: required list<QuestionMessage> messages,
-  2: required string type
+struct ChatRequest {
+  1: required list<ChatMessage> messages,
+  2: required string type,
+  3: optional string model,
+  4: optional list<ChatTool> tools,
+  5: optional map<string, VariantValue> options
 }
 
-struct QuestionResponse {
-  1: required string answer,
-  2: required string message_id
+struct ChatResponse {
+  1: required list<ChatMessage> messages,
+  2: required string message_id,
+  3: optional string model,
+  4: optional string stop_reason, // "end", "tool_calls", "max_tokens".
+  5: optional map<string, VariantValue> metadata
 }
 
 struct Column {
@@ -472,10 +492,10 @@ service QueryCatIO {
   ) throws (1: QueryCatPluginException e),
 
   // Get an answer from agent based on question.
-  QuestionResponse AnswerAgent_Ask(
+  ChatResponse AnswerAgent_Ask(
     1: required i64 token, // Authorization token.
     2: required Handle object_answer_agent_handle,
-    3: required QuestionRequest request
+    3: required ChatRequest request
   ) throws (1: QueryCatPluginException e),
 
   // Free handle resources.

@@ -98,13 +98,13 @@ namespace QueryCat.Plugins.Sdk
               if (field.Type == TType.List)
               {
                 {
-                  var _list122 = await iprot.ReadListBeginAsync(cancellationToken);
-                  Operations = new List<string>(_list122.Count);
-                  for(int _i123 = 0; _i123 < _list122.Count; ++_i123)
+                  var _list152 = await iprot.ReadListBeginAsync(cancellationToken);
+                  Operations = new List<string>(_list152.Count);
+                  for(int _i153 = 0; _i153 < _list152.Count; ++_i153)
                   {
-                    string _elem124;
-                    _elem124 = await iprot.ReadStringAsync(cancellationToken);
-                    Operations.Add(_elem124);
+                    string _elem154;
+                    _elem154 = await iprot.ReadStringAsync(cancellationToken);
+                    Operations.Add(_elem154);
                   }
                   await iprot.ReadListEndAsync(cancellationToken);
                 }
@@ -148,32 +148,32 @@ namespace QueryCat.Plugins.Sdk
       oprot.IncrementRecursionDepth();
       try
       {
-        var tmp125 = new TStruct("KeyColumn");
-        await oprot.WriteStructBeginAsync(tmp125, cancellationToken);
+        var tmp155 = new TStruct("KeyColumn");
+        await oprot.WriteStructBeginAsync(tmp155, cancellationToken);
         #pragma warning disable IDE0017  // simplified init
-        var tmp126 = new TField();
-        tmp126.Name = "column_index";
-        tmp126.Type = TType.I32;
-        tmp126.ID = 1;
-        await oprot.WriteFieldBeginAsync(tmp126, cancellationToken);
+        var tmp156 = new TField();
+        tmp156.Name = "column_index";
+        tmp156.Type = TType.I32;
+        tmp156.ID = 1;
+        await oprot.WriteFieldBeginAsync(tmp156, cancellationToken);
         await oprot.WriteI32Async(ColumnIndex, cancellationToken);
         await oprot.WriteFieldEndAsync(cancellationToken);
-        tmp126.Name = "is_required";
-        tmp126.Type = TType.Bool;
-        tmp126.ID = 2;
-        await oprot.WriteFieldBeginAsync(tmp126, cancellationToken);
+        tmp156.Name = "is_required";
+        tmp156.Type = TType.Bool;
+        tmp156.ID = 2;
+        await oprot.WriteFieldBeginAsync(tmp156, cancellationToken);
         await oprot.WriteBoolAsync(IsRequired, cancellationToken);
         await oprot.WriteFieldEndAsync(cancellationToken);
         if((Operations != null))
         {
-          tmp126.Name = "operations";
-          tmp126.Type = TType.List;
-          tmp126.ID = 3;
-          await oprot.WriteFieldBeginAsync(tmp126, cancellationToken);
+          tmp156.Name = "operations";
+          tmp156.Type = TType.List;
+          tmp156.ID = 3;
+          await oprot.WriteFieldBeginAsync(tmp156, cancellationToken);
           await oprot.WriteListBeginAsync(new TList(TType.String, Operations.Count), cancellationToken);
-          foreach (string _iter127 in Operations)
+          foreach (string _iter157 in Operations)
           {
-            await oprot.WriteStringAsync(_iter127, cancellationToken);
+            await oprot.WriteStringAsync(_iter157, cancellationToken);
           }
           await oprot.WriteListEndAsync(cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
@@ -212,18 +212,18 @@ namespace QueryCat.Plugins.Sdk
 
     public override string ToString()
     {
-      var tmp128 = new StringBuilder("KeyColumn(");
-      tmp128.Append(", ColumnIndex: ");
-      ColumnIndex.ToString(tmp128);
-      tmp128.Append(", IsRequired: ");
-      IsRequired.ToString(tmp128);
+      var tmp158 = new StringBuilder("KeyColumn(");
+      tmp158.Append(", ColumnIndex: ");
+      ColumnIndex.ToString(tmp158);
+      tmp158.Append(", IsRequired: ");
+      IsRequired.ToString(tmp158);
       if((Operations != null))
       {
-        tmp128.Append(", Operations: ");
-        Operations.ToString(tmp128);
+        tmp158.Append(", Operations: ");
+        Operations.ToString(tmp158);
       }
-      tmp128.Append(')');
-      return tmp128.ToString();
+      tmp158.Append(')');
+      return tmp158.ToString();
     }
   }
 

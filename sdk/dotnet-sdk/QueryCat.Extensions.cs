@@ -72,6 +72,51 @@ namespace QueryCat.Plugins.Sdk
     }
 
 
+    public static bool Equals(this List<global::QueryCat.Plugins.Sdk.ChatMessage> instance, object that)
+    {
+      if (that is not List<global::QueryCat.Plugins.Sdk.ChatMessage> other) return false;
+      if (ReferenceEquals(instance, other)) return true;
+
+      return TCollections.Equals(instance, other);
+    }
+
+
+    public static int GetHashCode(this List<global::QueryCat.Plugins.Sdk.ChatMessage> instance)
+    {
+      return TCollections.GetHashCode(instance);
+    }
+
+
+    public static bool Equals(this List<global::QueryCat.Plugins.Sdk.ChatTool> instance, object that)
+    {
+      if (that is not List<global::QueryCat.Plugins.Sdk.ChatTool> other) return false;
+      if (ReferenceEquals(instance, other)) return true;
+
+      return TCollections.Equals(instance, other);
+    }
+
+
+    public static int GetHashCode(this List<global::QueryCat.Plugins.Sdk.ChatTool> instance)
+    {
+      return TCollections.GetHashCode(instance);
+    }
+
+
+    public static bool Equals(this List<global::QueryCat.Plugins.Sdk.ChatToolCall> instance, object that)
+    {
+      if (that is not List<global::QueryCat.Plugins.Sdk.ChatToolCall> other) return false;
+      if (ReferenceEquals(instance, other)) return true;
+
+      return TCollections.Equals(instance, other);
+    }
+
+
+    public static int GetHashCode(this List<global::QueryCat.Plugins.Sdk.ChatToolCall> instance)
+    {
+      return TCollections.GetHashCode(instance);
+    }
+
+
     public static bool Equals(this List<global::QueryCat.Plugins.Sdk.Column> instance, object that)
     {
       if (that is not List<global::QueryCat.Plugins.Sdk.Column> other) return false;
@@ -157,21 +202,6 @@ namespace QueryCat.Plugins.Sdk
 
 
     public static int GetHashCode(this List<global::QueryCat.Plugins.Sdk.MapEntry> instance)
-    {
-      return TCollections.GetHashCode(instance);
-    }
-
-
-    public static bool Equals(this List<global::QueryCat.Plugins.Sdk.QuestionMessage> instance, object that)
-    {
-      if (that is not List<global::QueryCat.Plugins.Sdk.QuestionMessage> other) return false;
-      if (ReferenceEquals(instance, other)) return true;
-
-      return TCollections.Equals(instance, other);
-    }
-
-
-    public static int GetHashCode(this List<global::QueryCat.Plugins.Sdk.QuestionMessage> instance)
     {
       return TCollections.GetHashCode(instance);
     }

@@ -10,8 +10,8 @@ using CompletionResult = QueryCat.Plugins.Sdk.CompletionResult;
 using FunctionCallArguments = QueryCat.Plugins.Sdk.FunctionCallArguments;
 using FunctionCallArgumentsTypes = QueryCat.Plugins.Sdk.FunctionCallArgumentsTypes;
 using LogLevel = QueryCat.Plugins.Sdk.LogLevel;
-using QuestionRequest = QueryCat.Plugins.Sdk.QuestionRequest;
-using QuestionResponse = QueryCat.Plugins.Sdk.QuestionResponse;
+using ChatRequest = QueryCat.Plugins.Sdk.ChatRequest;
+using ChatResponse = QueryCat.Plugins.Sdk.ChatResponse;
 using VariantValue = QueryCat.Plugins.Sdk.VariantValue;
 
 namespace QueryCat.Backend.ThriftPlugins;
@@ -918,7 +918,7 @@ public partial class ThriftPluginsServer
         }
 
         /// <inheritdoc />
-        public async Task<QuestionResponse> AnswerAgent_AskAsync(long token, int object_answer_agent_handle, QuestionRequest? request,
+        public async Task<ChatResponse> AnswerAgent_AskAsync(long token, int object_answer_agent_handle, ChatRequest? request,
             CancellationToken cancellationToken = default)
         {
             try

@@ -101,7 +101,7 @@ public class AIAssistant
 
         public bool IsSuccess => !string.IsNullOrEmpty(Query);
 
-        internal static QuestionResponse CreateSuccessMessage(string sql)
+        internal static ChatResponse CreateSuccessMessage(string sql)
             => new(
                 JsonSerializer.Serialize(new PromptResponseModel
                 {
@@ -221,7 +221,7 @@ public class AIAssistant
                 {
                     throw new QueryCatException(string.Format(Resources.Errors.AnswerAgentIssue, model.Refusal));
                 }
-                currentAiRequest = new QuestionRequest(userResponse);
+                currentAiRequest = new ChatRequest(userResponse);
                 continue;
             }
 
@@ -244,7 +244,7 @@ public class AIAssistant
                     throw new QueryCatException(
                         string.Format(Resources.Errors.CannotProcessMaxAttempts, queryAttempts));
                 }
-                currentAiRequest = new QuestionRequest(GetPromptIssue(e.Message));
+                currentAiRequest = new ChatRequest(GetPromptIssue(e.Message));
                 continue;
             }
 
@@ -254,18 +254,18 @@ public class AIAssistant
         return null;
     }
 
-    private static QuestionRequest GetInitialQuestion(
+    private static ChatRequest GetInitialQuestion(
         string question,
         IReadOnlyDictionary<string, IRowsInput> inputs)
     {
-        var messages = new QuestionMessage[]
+        var messages = new ChatMessage[]
         {
-            new(PromptPreamble, QuestionMessage.RoleSystem),
-            new(PromptGuidelines, QuestionMessage.RoleSystem),
+            new(PromptPreamble, ChatMessage.RoleSystem),
+            new(PromptGuidelines, ChatMessage.RoleSystem),
             new(GetPromptTablesInformation(inputs)),
             new(GetPromptQuestion(question))
         };
-        return new QuestionRequest(messages, QuestionRequest.TypeSql);
+        return new ChatRequest(messages, ChatRequest.TypeSql);
     }
 
     private PromptResponseModel ConvertAnswerToSql(string answer)

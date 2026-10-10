@@ -159,16 +159,16 @@ namespace QueryCat.Plugins.Sdk
               if (field.Type == TType.Map)
               {
                 {
-                  var _map105 = await iprot.ReadMapBeginAsync(cancellationToken);
-                  Attributes = new Dictionary<string, global::QueryCat.Plugins.Sdk.VariantValue>(_map105.Count);
-                  for(int _i106 = 0; _i106 < _map105.Count; ++_i106)
+                  var _map135 = await iprot.ReadMapBeginAsync(cancellationToken);
+                  Attributes = new Dictionary<string, global::QueryCat.Plugins.Sdk.VariantValue>(_map135.Count);
+                  for(int _i136 = 0; _i136 < _map135.Count; ++_i136)
                   {
-                    string _key107;
-                    global::QueryCat.Plugins.Sdk.VariantValue _val108;
-                    _key107 = await iprot.ReadStringAsync(cancellationToken);
-                    _val108 = new global::QueryCat.Plugins.Sdk.VariantValue();
-                    await _val108.ReadAsync(iprot, cancellationToken);
-                    Attributes[_key107] = _val108;
+                    string _key137;
+                    global::QueryCat.Plugins.Sdk.VariantValue _val138;
+                    _key137 = await iprot.ReadStringAsync(cancellationToken);
+                    _val138 = new global::QueryCat.Plugins.Sdk.VariantValue();
+                    await _val138.ReadAsync(iprot, cancellationToken);
+                    Attributes[_key137] = _val138;
                   }
                   await iprot.ReadMapEndAsync(cancellationToken);
                 }
@@ -211,51 +211,51 @@ namespace QueryCat.Plugins.Sdk
       oprot.IncrementRecursionDepth();
       try
       {
-        var tmp109 = new TStruct("Column");
-        await oprot.WriteStructBeginAsync(tmp109, cancellationToken);
+        var tmp139 = new TStruct("Column");
+        await oprot.WriteStructBeginAsync(tmp139, cancellationToken);
         #pragma warning disable IDE0017  // simplified init
-        var tmp110 = new TField();
-        tmp110.Name = "id";
-        tmp110.Type = TType.I32;
-        tmp110.ID = 1;
-        await oprot.WriteFieldBeginAsync(tmp110, cancellationToken);
+        var tmp140 = new TField();
+        tmp140.Name = "id";
+        tmp140.Type = TType.I32;
+        tmp140.ID = 1;
+        await oprot.WriteFieldBeginAsync(tmp140, cancellationToken);
         await oprot.WriteI32Async(Id, cancellationToken);
         await oprot.WriteFieldEndAsync(cancellationToken);
         if((Name != null))
         {
-          tmp110.Name = "name";
-          tmp110.Type = TType.String;
-          tmp110.ID = 2;
-          await oprot.WriteFieldBeginAsync(tmp110, cancellationToken);
+          tmp140.Name = "name";
+          tmp140.Type = TType.String;
+          tmp140.ID = 2;
+          await oprot.WriteFieldBeginAsync(tmp140, cancellationToken);
           await oprot.WriteStringAsync(Name, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
-        tmp110.Name = "type";
-        tmp110.Type = TType.I32;
-        tmp110.ID = 3;
-        await oprot.WriteFieldBeginAsync(tmp110, cancellationToken);
+        tmp140.Name = "type";
+        tmp140.Type = TType.I32;
+        tmp140.ID = 3;
+        await oprot.WriteFieldBeginAsync(tmp140, cancellationToken);
         await oprot.WriteI32Async((int)Type, cancellationToken);
         await oprot.WriteFieldEndAsync(cancellationToken);
         if((Description != null) && __isset.@description)
         {
-          tmp110.Name = "description";
-          tmp110.Type = TType.String;
-          tmp110.ID = 4;
-          await oprot.WriteFieldBeginAsync(tmp110, cancellationToken);
+          tmp140.Name = "description";
+          tmp140.Type = TType.String;
+          tmp140.ID = 4;
+          await oprot.WriteFieldBeginAsync(tmp140, cancellationToken);
           await oprot.WriteStringAsync(Description, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
         if((Attributes != null) && __isset.@attributes)
         {
-          tmp110.Name = "attributes";
-          tmp110.Type = TType.Map;
-          tmp110.ID = 5;
-          await oprot.WriteFieldBeginAsync(tmp110, cancellationToken);
+          tmp140.Name = "attributes";
+          tmp140.Type = TType.Map;
+          tmp140.ID = 5;
+          await oprot.WriteFieldBeginAsync(tmp140, cancellationToken);
           await oprot.WriteMapBeginAsync(new TMap(TType.String, TType.Struct, Attributes.Count), cancellationToken);
-          foreach (string _iter111 in Attributes.Keys)
+          foreach (string _iter141 in Attributes.Keys)
           {
-            await oprot.WriteStringAsync(_iter111, cancellationToken);
-            await Attributes[_iter111].WriteAsync(oprot, cancellationToken);
+            await oprot.WriteStringAsync(_iter141, cancellationToken);
+            await Attributes[_iter141].WriteAsync(oprot, cancellationToken);
           }
           await oprot.WriteMapEndAsync(cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
@@ -304,28 +304,28 @@ namespace QueryCat.Plugins.Sdk
 
     public override string ToString()
     {
-      var tmp112 = new StringBuilder("Column(");
-      tmp112.Append(", Id: ");
-      Id.ToString(tmp112);
+      var tmp142 = new StringBuilder("Column(");
+      tmp142.Append(", Id: ");
+      Id.ToString(tmp142);
       if((Name != null))
       {
-        tmp112.Append(", Name: ");
-        Name.ToString(tmp112);
+        tmp142.Append(", Name: ");
+        Name.ToString(tmp142);
       }
-      tmp112.Append(", Type: ");
-      Type.ToString(tmp112);
+      tmp142.Append(", Type: ");
+      Type.ToString(tmp142);
       if((Description != null) && __isset.@description)
       {
-        tmp112.Append(", Description: ");
-        Description.ToString(tmp112);
+        tmp142.Append(", Description: ");
+        Description.ToString(tmp142);
       }
       if((Attributes != null) && __isset.@attributes)
       {
-        tmp112.Append(", Attributes: ");
-        Attributes.ToString(tmp112);
+        tmp142.Append(", Attributes: ");
+        Attributes.ToString(tmp142);
       }
-      tmp112.Append(')');
-      return tmp112.ToString();
+      tmp142.Append(')');
+      return tmp142.ToString();
     }
   }
 

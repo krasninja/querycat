@@ -19,7 +19,7 @@ public sealed class ThriftRemoteAnswerAgent : IAnswerAgent, IAsyncDisposable
     }
 
     /// <inheritdoc />
-    public async Task<QuestionResponse> AskAsync(QuestionRequest request, CancellationToken cancellationToken = default)
+    public async Task<ChatResponse> AskAsync(ChatRequest request, CancellationToken cancellationToken = default)
     {
         using var session = await _sessionProvider.GetAsync(cancellationToken);
         var response = await session.Client.AnswerAgent_AskAsync(_token, _objectHandle,

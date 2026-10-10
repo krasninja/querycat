@@ -10,8 +10,8 @@ using Column = QueryCat.Plugins.Sdk.Column;
 using CursorSeekOrigin = QueryCat.Plugins.Sdk.CursorSeekOrigin;
 using KeyColumn = QueryCat.Plugins.Sdk.KeyColumn;
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
-using QuestionRequest = QueryCat.Plugins.Sdk.QuestionRequest;
-using QuestionResponse = QueryCat.Plugins.Sdk.QuestionResponse;
+using ChatRequest = QueryCat.Plugins.Sdk.ChatRequest;
+using ChatResponse = QueryCat.Plugins.Sdk.ChatResponse;
 using VariantValue = QueryCat.Plugins.Sdk.VariantValue;
 
 namespace QueryCat.Plugins.Client;
@@ -487,7 +487,7 @@ public partial class ThriftPluginClient
         }
 
         /// <inheritdoc />
-        public async Task<QuestionResponse> AnswerAgent_AskAsync(long token, int object_answer_agent_handle, QuestionRequest? request,
+        public async Task<ChatResponse> AnswerAgent_AskAsync(long token, int object_answer_agent_handle, ChatRequest? request,
             CancellationToken cancellationToken = default)
         {
             LogCallMethod(nameof(AnswerAgent_AskAsync));

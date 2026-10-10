@@ -93,14 +93,14 @@ namespace QueryCat.Plugins.Sdk
               if (field.Type == TType.List)
               {
                 {
-                  var _list130 = await iprot.ReadListBeginAsync(cancellationToken);
-                  Columns = new List<global::QueryCat.Plugins.Sdk.Column>(_list130.Count);
-                  for(int _i131 = 0; _i131 < _list130.Count; ++_i131)
+                  var _list160 = await iprot.ReadListBeginAsync(cancellationToken);
+                  Columns = new List<global::QueryCat.Plugins.Sdk.Column>(_list160.Count);
+                  for(int _i161 = 0; _i161 < _list160.Count; ++_i161)
                   {
-                    global::QueryCat.Plugins.Sdk.Column _elem132;
-                    _elem132 = new global::QueryCat.Plugins.Sdk.Column();
-                    await _elem132.ReadAsync(iprot, cancellationToken);
-                    Columns.Add(_elem132);
+                    global::QueryCat.Plugins.Sdk.Column _elem162;
+                    _elem162 = new global::QueryCat.Plugins.Sdk.Column();
+                    await _elem162.ReadAsync(iprot, cancellationToken);
+                    Columns.Add(_elem162);
                   }
                   await iprot.ReadListEndAsync(cancellationToken);
                 }
@@ -161,36 +161,36 @@ namespace QueryCat.Plugins.Sdk
       oprot.IncrementRecursionDepth();
       try
       {
-        var tmp133 = new TStruct("ContextQueryInfo");
-        await oprot.WriteStructBeginAsync(tmp133, cancellationToken);
+        var tmp163 = new TStruct("ContextQueryInfo");
+        await oprot.WriteStructBeginAsync(tmp163, cancellationToken);
         #pragma warning disable IDE0017  // simplified init
-        var tmp134 = new TField();
+        var tmp164 = new TField();
         if((Columns != null))
         {
-          tmp134.Name = "columns";
-          tmp134.Type = TType.List;
-          tmp134.ID = 1;
-          await oprot.WriteFieldBeginAsync(tmp134, cancellationToken);
+          tmp164.Name = "columns";
+          tmp164.Type = TType.List;
+          tmp164.ID = 1;
+          await oprot.WriteFieldBeginAsync(tmp164, cancellationToken);
           await oprot.WriteListBeginAsync(new TList(TType.Struct, Columns.Count), cancellationToken);
-          foreach (global::QueryCat.Plugins.Sdk.Column _iter135 in Columns)
+          foreach (global::QueryCat.Plugins.Sdk.Column _iter165 in Columns)
           {
-            await _iter135.WriteAsync(oprot, cancellationToken);
+            await _iter165.WriteAsync(oprot, cancellationToken);
           }
           await oprot.WriteListEndAsync(cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
-        tmp134.Name = "offset";
-        tmp134.Type = TType.I64;
-        tmp134.ID = 2;
-        await oprot.WriteFieldBeginAsync(tmp134, cancellationToken);
+        tmp164.Name = "offset";
+        tmp164.Type = TType.I64;
+        tmp164.ID = 2;
+        await oprot.WriteFieldBeginAsync(tmp164, cancellationToken);
         await oprot.WriteI64Async(Offset, cancellationToken);
         await oprot.WriteFieldEndAsync(cancellationToken);
         if(__isset.@limit)
         {
-          tmp134.Name = "limit";
-          tmp134.Type = TType.I64;
-          tmp134.ID = 3;
-          await oprot.WriteFieldBeginAsync(tmp134, cancellationToken);
+          tmp164.Name = "limit";
+          tmp164.Type = TType.I64;
+          tmp164.ID = 3;
+          await oprot.WriteFieldBeginAsync(tmp164, cancellationToken);
           await oprot.WriteI64Async(Limit, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
@@ -231,21 +231,21 @@ namespace QueryCat.Plugins.Sdk
 
     public override string ToString()
     {
-      var tmp136 = new StringBuilder("ContextQueryInfo(");
+      var tmp166 = new StringBuilder("ContextQueryInfo(");
       if((Columns != null))
       {
-        tmp136.Append(", Columns: ");
-        Columns.ToString(tmp136);
+        tmp166.Append(", Columns: ");
+        Columns.ToString(tmp166);
       }
-      tmp136.Append(", Offset: ");
-      Offset.ToString(tmp136);
+      tmp166.Append(", Offset: ");
+      Offset.ToString(tmp166);
       if(__isset.@limit)
       {
-        tmp136.Append(", Limit: ");
-        Limit.ToString(tmp136);
+        tmp166.Append(", Limit: ");
+        Limit.ToString(tmp166);
       }
-      tmp136.Append(')');
-      return tmp136.ToString();
+      tmp166.Append(')');
+      return tmp166.ToString();
     }
   }
 

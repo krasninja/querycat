@@ -1,11 +1,12 @@
 using System.Text;
+using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Backend.Core.Execution;
 
 /// <summary>
-/// Question request.
+/// Chat request to AI agent.
 /// </summary>
-public class QuestionRequest
+public class ChatRequest
 {
     public const string TypeGeneral = "general";
     public const string TypeSql = "sql";
@@ -14,7 +15,7 @@ public class QuestionRequest
     /// <summary>
     /// Question, issue or clarification text.
     /// </summary>
-    public QuestionMessage[] Messages { get; }
+    public ChatMessage[] Messages { get; }
 
     /// <summary>
     /// The whole message, sum of messages.
@@ -27,12 +28,27 @@ public class QuestionRequest
     public string Type { get; }
 
     /// <summary>
+    /// Optional model identifier.
+    /// </summary>
+    public string? Model { get; set; }
+
+    /// <summary>
+    /// Optional tools available for the agent to call.
+    /// </summary>
+    public IReadOnlyList<ChatTool>? Tools { get; set; }
+
+    /// <summary>
+    /// Optional additional request options.
+    /// </summary>
+    public IDictionary<string, VariantValue>? Options { get; set; }
+
+    /// <summary>
     /// Constructor.
     /// </summary>
     /// <param name="text">Question text.</param>
     /// <param name="type">Question type.</param>
-    public QuestionRequest(string text, string? type = null)
-        : this([new QuestionMessage(text)], type)
+    public ChatRequest(string text, string? type = null)
+        : this([new ChatMessage(text)], type)
     {
     }
 
@@ -41,7 +57,7 @@ public class QuestionRequest
     /// </summary>
     /// <param name="messages">Messages.</param>
     /// <param name="type">Question type.</param>
-    public QuestionRequest(QuestionMessage[] messages, string? type = null)
+    public ChatRequest(ChatMessage[] messages, string? type = null)
     {
         Messages = messages;
         Type = type ?? TypeGeneral;
@@ -52,6 +68,14 @@ public class QuestionRequest
     {
         var sb = new StringBuilder();
         sb.AppendLine("Type: " + Type);
+        if (!string.IsNullOrEmpty(Model))
+        {
+            sb.AppendLine("Model: " + Model);
+        }
+        if (Tools != null && Tools.Count > 0)
+        {
+            sb.AppendLine("Tools: " + string.Join(", ", Tools.Select(t => t.Name)));
+        }
         foreach (var message in Messages)
         {
             sb.AppendLine(message.ToString());

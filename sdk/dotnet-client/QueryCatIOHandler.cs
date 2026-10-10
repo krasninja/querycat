@@ -20,8 +20,8 @@ using DataType = QueryCat.Backend.Core.Types.DataType;
 using FunctionCallArguments = QueryCat.Plugins.Sdk.FunctionCallArguments;
 using KeyColumn = QueryCat.Plugins.Sdk.KeyColumn;
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
-using QuestionRequest = QueryCat.Plugins.Sdk.QuestionRequest;
-using QuestionResponse = QueryCat.Plugins.Sdk.QuestionResponse;
+using ChatRequest = QueryCat.Plugins.Sdk.ChatRequest;
+using ChatResponse = QueryCat.Plugins.Sdk.ChatResponse;
 using VariantValue = QueryCat.Plugins.Sdk.VariantValue;
 
 namespace QueryCat.Plugins.Client;
@@ -612,7 +612,7 @@ public partial class QueryCatIOHandler : global::QueryCat.Plugins.Sdk.QueryCatIO
     }
 
     /// <inheritdoc />
-    public virtual async Task<QuestionResponse> AnswerAgent_AskAsync(long token, int object_answer_agent_handle, QuestionRequest? request,
+    public virtual async Task<ChatResponse> AnswerAgent_AskAsync(long token, int object_answer_agent_handle, ChatRequest? request,
         CancellationToken cancellationToken = default)
     {
         await BeforeCallAsync(token, nameof(AnswerAgent_AskAsync), cancellationToken);

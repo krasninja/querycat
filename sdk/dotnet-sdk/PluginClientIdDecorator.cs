@@ -145,7 +145,7 @@ public sealed class PluginClientIdDecorator : Plugin.IAsync
         => _client.ServeAsync(token, cancellationToken);
 
     /// <inheritdoc />
-    public Task<QuestionResponse> AnswerAgent_AskAsync(long token, int object_answer_agent_handle, QuestionRequest? request,
+    public Task<ChatResponse> AnswerAgent_AskAsync(long token, int object_answer_agent_handle, ChatRequest? request,
         CancellationToken cancellationToken = default)
         => _client.AnswerAgent_AskAsync(token, object_answer_agent_handle, request, cancellationToken);
 

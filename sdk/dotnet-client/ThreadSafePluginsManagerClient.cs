@@ -5,8 +5,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using QueryCat.Plugins.Sdk;
 using CompletionResult = QueryCat.Plugins.Sdk.CompletionResult;
-using QuestionRequest = QueryCat.Plugins.Sdk.QuestionRequest;
-using QuestionResponse = QueryCat.Plugins.Sdk.QuestionResponse;
+using ChatRequest = QueryCat.Plugins.Sdk.ChatRequest;
+using ChatResponse = QueryCat.Plugins.Sdk.ChatResponse;
 
 namespace QueryCat.Plugins.Client;
 
@@ -558,7 +558,7 @@ internal sealed class ThreadSafePluginsManagerClient : PluginsManager.IAsync, ID
     }
 
     /// <inheritdoc />
-    public async Task<QuestionResponse> AnswerAgent_AskAsync(long token, int object_answer_agent_handle, QuestionRequest? request,
+    public async Task<ChatResponse> AnswerAgent_AskAsync(long token, int object_answer_agent_handle, ChatRequest? request,
         CancellationToken cancellationToken = default)
     {
         await _semaphore.WaitAsync(cancellationToken);

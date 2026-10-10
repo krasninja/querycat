@@ -32,21 +32,24 @@ using Thrift.Processor;
 namespace QueryCat.Plugins.Sdk
 {
 
-  public partial class QuestionRequest : TBase
+  public partial class ChatTool : TBase
   {
 
-    public List<global::QueryCat.Plugins.Sdk.QuestionMessage>? Messages { get; set; }
+    public string Name { get; set; } = string.Empty;
 
-    public string Type { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
 
-    public QuestionRequest()
+    public string ParametersSchema { get; set; } = string.Empty;
+
+    public ChatTool()
     {
     }
 
-    public QuestionRequest(List<global::QueryCat.Plugins.Sdk.QuestionMessage>? @messages, string @type) : this()
+    public ChatTool(string @name, string @description, string parameters_schema) : this()
     {
-      this.Messages = @messages;
-      this.Type = @type;
+      this.Name = @name;
+      this.Description = @description;
+      this.ParametersSchema = parameters_schema;
     }
 
     public async global::System.Threading.Tasks.Task ReadAsync(TProtocol iprot, CancellationToken cancellationToken)
@@ -54,8 +57,9 @@ namespace QueryCat.Plugins.Sdk
       iprot.IncrementRecursionDepth();
       try
       {
-        bool isset_messages = false;
-        bool isset_type = false;
+        bool isset_name = false;
+        bool isset_description = false;
+        bool isset_parameters_schema = false;
         TField field;
         await iprot.ReadStructBeginAsync(cancellationToken);
         while (true)
@@ -69,21 +73,10 @@ namespace QueryCat.Plugins.Sdk
           switch (field.ID)
           {
             case 1:
-              if (field.Type == TType.List)
+              if (field.Type == TType.String)
               {
-                {
-                  var _list93 = await iprot.ReadListBeginAsync(cancellationToken);
-                  Messages = new List<global::QueryCat.Plugins.Sdk.QuestionMessage>(_list93.Count);
-                  for(int _i94 = 0; _i94 < _list93.Count; ++_i94)
-                  {
-                    global::QueryCat.Plugins.Sdk.QuestionMessage _elem95;
-                    _elem95 = new global::QueryCat.Plugins.Sdk.QuestionMessage();
-                    await _elem95.ReadAsync(iprot, cancellationToken);
-                    Messages.Add(_elem95);
-                  }
-                  await iprot.ReadListEndAsync(cancellationToken);
-                }
-                isset_messages = true;
+                Name = await iprot.ReadStringAsync(cancellationToken);
+                isset_name = true;
               }
               else
               {
@@ -93,8 +86,19 @@ namespace QueryCat.Plugins.Sdk
             case 2:
               if (field.Type == TType.String)
               {
-                Type = await iprot.ReadStringAsync(cancellationToken);
-                isset_type = true;
+                Description = await iprot.ReadStringAsync(cancellationToken);
+                isset_description = true;
+              }
+              else
+              {
+                await TProtocolUtil.SkipAsync(iprot, field.Type, cancellationToken);
+              }
+              break;
+            case 3:
+              if (field.Type == TType.String)
+              {
+                ParametersSchema = await iprot.ReadStringAsync(cancellationToken);
+                isset_parameters_schema = true;
               }
               else
               {
@@ -110,11 +114,15 @@ namespace QueryCat.Plugins.Sdk
         }
 
         await iprot.ReadStructEndAsync(cancellationToken);
-        if (!isset_messages)
+        if (!isset_name)
         {
           throw new TProtocolException(TProtocolException.INVALID_DATA);
         }
-        if (!isset_type)
+        if (!isset_description)
+        {
+          throw new TProtocolException(TProtocolException.INVALID_DATA);
+        }
+        if (!isset_parameters_schema)
         {
           throw new TProtocolException(TProtocolException.INVALID_DATA);
         }
@@ -130,31 +138,35 @@ namespace QueryCat.Plugins.Sdk
       oprot.IncrementRecursionDepth();
       try
       {
-        var tmp96 = new TStruct("QuestionRequest");
-        await oprot.WriteStructBeginAsync(tmp96, cancellationToken);
+        var tmp93 = new TStruct("ChatTool");
+        await oprot.WriteStructBeginAsync(tmp93, cancellationToken);
         #pragma warning disable IDE0017  // simplified init
-        var tmp97 = new TField();
-        if((Messages != null))
+        var tmp94 = new TField();
+        if((Name != null))
         {
-          tmp97.Name = "messages";
-          tmp97.Type = TType.List;
-          tmp97.ID = 1;
-          await oprot.WriteFieldBeginAsync(tmp97, cancellationToken);
-          await oprot.WriteListBeginAsync(new TList(TType.Struct, Messages.Count), cancellationToken);
-          foreach (global::QueryCat.Plugins.Sdk.QuestionMessage _iter98 in Messages)
-          {
-            await _iter98.WriteAsync(oprot, cancellationToken);
-          }
-          await oprot.WriteListEndAsync(cancellationToken);
+          tmp94.Name = "name";
+          tmp94.Type = TType.String;
+          tmp94.ID = 1;
+          await oprot.WriteFieldBeginAsync(tmp94, cancellationToken);
+          await oprot.WriteStringAsync(Name, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
-        if((Type != null))
+        if((Description != null))
         {
-          tmp97.Name = "type";
-          tmp97.Type = TType.String;
-          tmp97.ID = 2;
-          await oprot.WriteFieldBeginAsync(tmp97, cancellationToken);
-          await oprot.WriteStringAsync(Type, cancellationToken);
+          tmp94.Name = "description";
+          tmp94.Type = TType.String;
+          tmp94.ID = 2;
+          await oprot.WriteFieldBeginAsync(tmp94, cancellationToken);
+          await oprot.WriteStringAsync(Description, cancellationToken);
+          await oprot.WriteFieldEndAsync(cancellationToken);
+        }
+        if((ParametersSchema != null))
+        {
+          tmp94.Name = "parameters_schema";
+          tmp94.Type = TType.String;
+          tmp94.ID = 3;
+          await oprot.WriteFieldBeginAsync(tmp94, cancellationToken);
+          await oprot.WriteStringAsync(ParametersSchema, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
         #pragma warning restore IDE0017  // simplified init
@@ -169,22 +181,27 @@ namespace QueryCat.Plugins.Sdk
 
     public override bool Equals(object? that)
     {
-      if (that is not QuestionRequest other) return false;
+      if (that is not ChatTool other) return false;
       if (ReferenceEquals(this, other)) return true;
-      return TCollections.Equals(Messages, other.Messages)
-        && global::System.Object.Equals(Type, other.Type);
+      return global::System.Object.Equals(Name, other.Name)
+        && global::System.Object.Equals(Description, other.Description)
+        && global::System.Object.Equals(ParametersSchema, other.ParametersSchema);
     }
 
     public override int GetHashCode() {
       int hashcode = 157;
       unchecked {
-        if((Messages != null))
+        if((Name != null))
         {
-          hashcode = (hashcode * 397) + TCollections.GetHashCode(Messages);
+          hashcode = (hashcode * 397) + Name.GetHashCode();
         }
-        if((Type != null))
+        if((Description != null))
         {
-          hashcode = (hashcode * 397) + Type.GetHashCode();
+          hashcode = (hashcode * 397) + Description.GetHashCode();
+        }
+        if((ParametersSchema != null))
+        {
+          hashcode = (hashcode * 397) + ParametersSchema.GetHashCode();
         }
       }
       return hashcode;
@@ -192,19 +209,24 @@ namespace QueryCat.Plugins.Sdk
 
     public override string ToString()
     {
-      var tmp99 = new StringBuilder("QuestionRequest(");
-      if((Messages != null))
+      var tmp95 = new StringBuilder("ChatTool(");
+      if((Name != null))
       {
-        tmp99.Append(", Messages: ");
-        Messages.ToString(tmp99);
+        tmp95.Append(", Name: ");
+        Name.ToString(tmp95);
       }
-      if((Type != null))
+      if((Description != null))
       {
-        tmp99.Append(", Type: ");
-        Type.ToString(tmp99);
+        tmp95.Append(", Description: ");
+        Description.ToString(tmp95);
       }
-      tmp99.Append(')');
-      return tmp99.ToString();
+      if((ParametersSchema != null))
+      {
+        tmp95.Append(", ParametersSchema: ");
+        ParametersSchema.ToString(tmp95);
+      }
+      tmp95.Append(')');
+      return tmp95.ToString();
     }
   }
 

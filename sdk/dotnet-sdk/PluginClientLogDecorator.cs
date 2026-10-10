@@ -219,7 +219,7 @@ public sealed partial class PluginClientLogDecorator : Plugin.IAsync
     }
 
     /// <inheritdoc />
-    public Task<QuestionResponse> AnswerAgent_AskAsync(long token, int object_answer_agent_handle, QuestionRequest? request,
+    public Task<ChatResponse> AnswerAgent_AskAsync(long token, int object_answer_agent_handle, ChatRequest? request,
         CancellationToken cancellationToken = default)
     {
         LogStartMethodCall(nameof(AnswerAgent_AskAsync));
