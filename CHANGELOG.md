@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - JsonInput types detection.
 - JsonOutput supports objects and arrays.
 - XmlInput, XmlOutput improvements.
+- Run rc.sql from application config directory.
 - Overall bugfixes and improvements.
 
 ### Changed

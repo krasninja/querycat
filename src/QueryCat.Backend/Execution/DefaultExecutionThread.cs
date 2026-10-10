@@ -415,6 +415,13 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IExecu
                 var query = await File.ReadAllTextAsync(rcFile, cancellationToken);
                 await RunInternalAsync(query, cancellationToken: cancellationToken);
             }
+
+            rcFile = Path.Combine(Application.GetConfigDirectory(), BootstrapFileName);
+            if (File.Exists(rcFile))
+            {
+                var query = await File.ReadAllTextAsync(rcFile, cancellationToken);
+                await RunInternalAsync(query, cancellationToken: cancellationToken);
+            }
         }
     }
 
