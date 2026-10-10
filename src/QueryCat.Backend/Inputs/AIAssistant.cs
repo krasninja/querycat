@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
+using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Storage;
@@ -26,25 +27,24 @@ public class AIAssistant
 
     public const string PromptPreamble =
         """
-        You are the DuckDB expert.
-
-        Please help to generate an SQL query to answer the question.
-        Your response should ONLY be based on the given context and follow the response guidelines and format instructions.
-
+        You translate questions into QueryCat SQL. QueryCat is a SQL engine with a
+        PostgreSQL-like dialect (it is NOT DuckDB, MySQL or SQLite).
         """;
 
     public const string PromptGuidelines =
         """
-        == Response Guidelines
-        1. If the provided context is sufficient, please generate a valid query without any explanations for the question.
-        2. If the provided context is insufficient, please explain why it cannot be generated.
-        3. Please use the most relevant table(s). Use table identifiers for the FROM clause.
-        4. Please format the query before responding.
-        5. The following types only are available: integer, string, float, timestamp, boolean, numeric, interval, BLOB.
-        6. Please output in JSON format with the following structure: `{ "Query": "", "Refusal": "" }`.
-           Put generated SQL into the `Query` field. If you cannot generate SQL, fill the `Refusal` field.
-        7. If possible, use the following documentation to format the SQL query correctly: 'https://querycat.readthedocs.io/en/latest/'.
+        == Rules
+        1. Generate exactly one read-only SELECT statement (CTEs allowed). Never INSERT, UPDATE, DELETE, SET or DECLARE.
+        2. Use only the tables and columns listed below. Reference tables by their identifier.
+        3. Quote identifiers with double quotes ("my col"); use single quotes only for string literals.
+        4. Available types for CAST / ::: integer, string, float, timestamp, boolean, numeric, interval, blob.
+        5. Supported: WITH [RECURSIVE], window functions, DISTINCT ON, LIMIT/OFFSET, FETCH FIRST n ROWS,
+           LIKE, SIMILAR TO (uses .NET regex). Use only those functions listed in Functions section.
+        6. If the question cannot be answered from the given tables, do not guess; explain why in "Refusal".
 
+        Respond with a single JSON object and nothing else (no markdown, no comments):
+        {"Query": "<sql or empty>", "Refusal": "<reason or empty>"}
+        Example: {"Query": "SELECT \"name\" FROM \"actors\" WHERE \"age\" >= 18", "Refusal": ""}
         """;
 
     private const int MaxQueryFixAttempts = 3;
@@ -201,13 +201,16 @@ public class AIAssistant
         IExecutionThread thread,
         CancellationToken cancellationToken)
     {
+        var messages = new List<ChatMessage>();
         var canProceedQuery = false;
-        var currentAiRequest = GetInitialQuestion(question, inputs);
+        var currentAiRequest = GetInitialQuestion(question, thread.FunctionsManager.GetFunctions(), inputs);
+        messages.AddRange(currentAiRequest.Messages);
         var queryAttempts = 0;
+        _logger.LogDebug("Prompt: {Prompt}.", currentAiRequest);
         while (!canProceedQuery)
         {
-            _logger.LogDebug("Prompt: {Prompt}.", currentAiRequest);
-            var response = await answerAgent.AskAsync(currentAiRequest, cancellationToken);
+            var response = await answerAgent.AskAsync(new ChatRequest(messages.ToArray(), ChatRequest.TypeSql), cancellationToken);
+            messages.AddRange(response.Messages);
             if (_logger.IsEnabled(LogLevel.Trace))
             {
                 _logger.LogTrace("Resolver response: {Response}", response.ToString());
@@ -222,6 +225,7 @@ public class AIAssistant
                     throw new QueryCatException(string.Format(Resources.Errors.AnswerAgentIssue, model.Refusal));
                 }
                 currentAiRequest = new ChatRequest(userResponse);
+                messages.AddRange(currentAiRequest.Messages);
                 continue;
             }
 
@@ -245,6 +249,7 @@ public class AIAssistant
                         string.Format(Resources.Errors.CannotProcessMaxAttempts, queryAttempts));
                 }
                 currentAiRequest = new ChatRequest(GetPromptIssue(e.Message));
+                messages.AddRange(currentAiRequest.Messages);
                 continue;
             }
 
@@ -256,16 +261,33 @@ public class AIAssistant
 
     private static ChatRequest GetInitialQuestion(
         string question,
+        IEnumerable<IFunction> functions,
         IReadOnlyDictionary<string, IRowsInput> inputs)
     {
         var messages = new ChatMessage[]
         {
             new(PromptPreamble, ChatMessage.RoleSystem),
             new(PromptGuidelines, ChatMessage.RoleSystem),
+            new(GetFunctionsPreamble(functions), ChatMessage.RoleSystem),
             new(GetPromptTablesInformation(inputs)),
             new(GetPromptQuestion(question))
         };
         return new ChatRequest(messages, ChatRequest.TypeSql);
+    }
+
+    private static string GetFunctionsPreamble(IEnumerable<IFunction> functions)
+    {
+        var functionSection = new StringBuilder()
+            .AppendLine("== Functions");
+        foreach (var function in functions)
+        {
+            if (!function.IsSafe || function.Name.StartsWith('_') || function.Name == "ai_input")
+            {
+                continue;
+            }
+            functionSection.AppendLine("- " + FunctionFormatter.GetSignature(function, forceLowerCase: true));
+        }
+        return functionSection.ToString();
     }
 
     private PromptResponseModel ConvertAnswerToSql(string answer)
@@ -301,8 +323,8 @@ public class AIAssistant
         return Task.FromResult(string.Empty);
     }
 
-    private static string Quote(string target)
-        => StringUtils.Quote(target, quoteChar: '\'', force: true);
+    private static string Quote(string target, char quoteChar = '"')
+        => StringUtils.Quote(target, quoteChar: quoteChar, force: true);
 
     public static string GetPromptTablesInformation(IReadOnlyDictionary<string, IRowsInput> inputs)
     {
@@ -316,11 +338,11 @@ public class AIAssistant
             {
                 if (!string.IsNullOrEmpty(modelDescription.Name))
                 {
-                    sb.AppendFormat(" Table logical label: {0}.", Quote(modelDescription.Name));
+                    sb.AppendFormat(" Table logical label: {0}.", Quote(modelDescription.Name, '\''));
                 }
                 if (!string.IsNullOrEmpty(modelDescription.Description))
                 {
-                    sb.AppendFormat(" Table description: {0}.", Quote(modelDescription.Name));
+                    sb.AppendFormat(" Table description: {0}.", Quote(modelDescription.Description, '\''));
                 }
             }
             sb.Append(" Columns:");
@@ -334,7 +356,7 @@ public class AIAssistant
                 sb.AppendFormat("- Column {0} of type '{1}';", Quote(column.Name), column.DataType);
                 if (!string.IsNullOrEmpty(column.Description))
                 {
-                    sb.AppendFormat(" Description: {0};", Quote(column.Description));
+                    sb.AppendFormat(" Description: {0};", Quote(column.Description, '\''));
                 }
                 sb.AppendLine();
             }
@@ -362,11 +384,12 @@ public class AIAssistant
     /// <returns>Prompt lines.</returns>
     public static string GetPromptIssue(string issue)
     {
-        var sb = new StringBuilder();
-        sb.AppendLine(PromptGuidelines);
-        sb.AppendLine("== Error");
-        sb.AppendLine("I was not able to run the generated SQL. Try to re-format the SQL. The error is below:");
-        sb.AppendLine(issue);
+        var sb = new StringBuilder()
+            .AppendLine(PromptGuidelines)
+            .AppendLine("== Error")
+            .AppendLine("The query failed with this error:")
+            .AppendLine(issue)
+            .AppendLine("Fix the query and respond with the same JSON object.");
         return sb.ToString();
     }
 }

@@ -15,7 +15,7 @@ public class ChatRequest
     /// <summary>
     /// Question, issue or clarification text.
     /// </summary>
-    public ChatMessage[] Messages { get; }
+    public IReadOnlyList<ChatMessage> Messages { get; }
 
     /// <summary>
     /// The whole message, sum of messages.
@@ -57,7 +57,7 @@ public class ChatRequest
     /// </summary>
     /// <param name="messages">Messages.</param>
     /// <param name="type">Question type.</param>
-    public ChatRequest(ChatMessage[] messages, string? type = null)
+    public ChatRequest(IReadOnlyList<ChatMessage> messages, string? type = null)
     {
         Messages = messages;
         Type = type ?? TypeGeneral;
