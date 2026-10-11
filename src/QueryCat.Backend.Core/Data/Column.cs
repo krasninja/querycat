@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Core.Utils;
 using DataType = QueryCat.Backend.Core.Types.DataType;
 
 namespace QueryCat.Backend.Core.Data;
@@ -7,13 +8,56 @@ namespace QueryCat.Backend.Core.Data;
 /// <summary>
 /// Represents a relational column.
 /// </summary>
-[Serializable]
 public class Column : ICloneable, IModelDescription
 {
     /// <summary>
     /// The title can be used for a single result, or when there is only one column in result.
     /// </summary>
     public const string ValueColumnTitle = "value";
+
+    #region Attributes
+
+    /// <summary>
+    /// The attribute should be used to mark unique identifier columns.
+    /// No value required.
+    /// </summary>
+    public const string AttributeId = "@id";
+
+    /// <summary>
+    /// The attribute should be used to mark timestamp fields that identifies
+    /// of event or log creation date and time.
+    /// </summary>
+    public const string AttributeTimestamp = "@ts";
+
+    /// <summary>
+    /// The attribute should be used to mark currency numeric fields.
+    /// </summary>
+    public const string AttributeCurrency = "@currency";
+
+    /// <summary>
+    /// The attribute should be used to mark raw data (JSON, string) representation fields.
+    /// </summary>
+    public const string AttributeRawData = "@raw";
+
+    /// <summary>
+    /// The attribute should be used to mark string columns which have a specific format
+    /// (file names, URI, JSON, etc.).
+    /// </summary>
+    public const string AttributeFormat = "@fmt";
+
+    public const string AttributeFormatJson = "json";
+    public const string AttributeFormatXml = "xml";
+    public const string AttributeFormatEmail = "email";
+    public const string AttributeFormatPhone = "phone";
+    public const string AttributeFormatRegularExpression = "regexp";
+    public const string AttributeFormatUri = "uri";
+    public const string AttributeFormatFile = "file";
+    public const string AttributeFormatBase64 = "base64";
+    public const string AttributeFormatCreditCard = "credit_card";
+    public const string AttributeFormatPassword = "password";
+    public const string AttributeFormatType = "type";
+
+    #endregion
 
     private static int _nextId = 1;
 
@@ -56,14 +100,14 @@ public class Column : ICloneable, IModelDescription
     /// </summary>
     public int Length { get; internal set; }
 
-    private Dictionary<string, VariantValue>? _attributes;
+    private SmallDictionary<string, VariantValue>? _attributes;
 
     /// <summary>
     /// Column metadata attributes.
     /// </summary>
     public IReadOnlyDictionary<string, VariantValue> Attributes
     {
-        get => _attributes ??= new Dictionary<string, VariantValue>();
+        get => _attributes ??= new SmallDictionary<string, VariantValue>();
     }
 
     /// <summary>
@@ -156,7 +200,7 @@ public class Column : ICloneable, IModelDescription
     public void SetAttribute(string name, VariantValue value)
     {
         ArgumentException.ThrowIfNullOrEmpty(name);
-        var attributes = _attributes ??= new Dictionary<string, VariantValue>();
+        var attributes = _attributes ??= new SmallDictionary<string, VariantValue>();
         attributes[name] = value;
     }
 

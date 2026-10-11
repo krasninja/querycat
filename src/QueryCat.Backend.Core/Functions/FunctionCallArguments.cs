@@ -1,4 +1,5 @@
 using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Core.Utils;
 
 namespace QueryCat.Backend.Core.Functions;
 
@@ -7,7 +8,7 @@ namespace QueryCat.Backend.Core.Functions;
 /// </summary>
 public sealed class FunctionCallArguments
 {
-    private readonly Dictionary<string, VariantValue> _named = new();
+    private readonly SmallDictionary<string, VariantValue> _named = new();
     private readonly List<VariantValue> _positional = new();
 
     internal static FunctionCallArguments Empty => new();

@@ -1,6 +1,6 @@
 using System.Collections.Immutable;
 using QueryCat.Backend.Core.Types;
-using QueryCat.Backend.Utils;
+using QueryCat.Backend.Core.Utils;
 
 namespace QueryCat.Backend.Ast;
 
