@@ -58,8 +58,7 @@ public class CollectionInput : IRowsOutput, IDisposable, IAsyncDisposable, IRows
         {
             builder.AddPublicProperties(_type, out var properties);
             _columnsProperties.AddRange(properties);
-            Array.Resize(ref _columns, builder.Count);
-            builder.Columns.ToArray().CopyTo(_columns, 0);
+            _columns = builder.Columns.ToArray();
         }
         else
         {

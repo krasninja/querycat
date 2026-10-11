@@ -16,7 +16,7 @@ internal sealed class ProjectedRowsIterator : IRowsIterator, IRowsIteratorParent
     private readonly IRowsIterator _rowsIterator;
     private Row _currentRow;
     private Column[] _columns = [];
-    private IFuncUnit[] _funcUnits = [];
+    private readonly List<IFuncUnit> _funcUnits = [];
 
     /// <inheritdoc />
     public Column[] Columns => _columns;
@@ -37,7 +37,7 @@ internal sealed class ProjectedRowsIterator : IRowsIterator, IRowsIteratorParent
         var moveResult = await _rowsIterator.MoveNextAsync(cancellationToken);
         if (moveResult)
         {
-            for (var i = 0; i < _funcUnits.Length; i++)
+            for (var i = 0; i < _funcUnits.Count; i++)
             {
                 _currentRow[i] = await _funcUnits[i].InvokeAsync(_thread, cancellationToken);
             }
@@ -54,9 +54,8 @@ internal sealed class ProjectedRowsIterator : IRowsIterator, IRowsIteratorParent
     public int AddFuncColumn(Column column, IFuncUnit func)
     {
         Array.Resize(ref _columns, _columns.Length + 1);
-        Array.Resize(ref _funcUnits, _funcUnits.Length + 1);
         _columns[^1] = column;
-        _funcUnits[^1] = func;
+        _funcUnits.Add(func);
         _currentRow = new Row(this);
         return _columns.Length - 1;
     }

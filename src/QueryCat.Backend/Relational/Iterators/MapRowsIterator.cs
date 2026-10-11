@@ -9,11 +9,8 @@ namespace QueryCat.Backend.Relational.Iterators;
 internal sealed class MapRowsIterator : IRowsIterator, IRowsIteratorParent
 {
     private readonly IRowsIterator _rowsIterator;
-    // ReSharper disable once UseArrayEmptyMethod
-    private int[] _mapping = [];
-    // ReSharper disable once UseArrayEmptyMethod
-    private DataType[] _mappingTypesCast = [];
-    // ReSharper disable once UseArrayEmptyMethod
+    private readonly List<int> _mapping = [];
+    private readonly List<DataType> _mappingTypesCast = [];
     private Column[] _columns = [];
     private Row _row;
 
@@ -37,13 +34,11 @@ internal sealed class MapRowsIterator : IRowsIterator, IRowsIteratorParent
     /// <returns>Instance of <see cref="MapRowsIterator" />.</returns>
     public MapRowsIterator Add(int index, DataType? targetType = null)
     {
-        Array.Resize(ref _mapping, _mapping.Length + 1);
         Array.Resize(ref _columns, _columns.Length + 1);
-        Array.Resize(ref _mappingTypesCast, _mappingTypesCast.Length + 1);
         var column = _rowsIterator.Columns[index];
-        _mapping[^1] = index;
+        _mapping.Add(index);
         _columns[^1] = column;
-        _mappingTypesCast[^1] = targetType ?? column.DataType;
+        _mappingTypesCast.Add(targetType ?? column.DataType);
         _row = new Row(_columns);
         return this;
     }
@@ -56,7 +51,7 @@ internal sealed class MapRowsIterator : IRowsIterator, IRowsIteratorParent
         {
             return false;
         }
-        for (var i = 0; i < _mapping.Length; i++)
+        for (var i = 0; i < _mapping.Count; i++)
         {
             var mappedIndex = _mapping[i];
             if (_rowsIterator.Columns[mappedIndex].DataType != _mappingTypesCast[i])

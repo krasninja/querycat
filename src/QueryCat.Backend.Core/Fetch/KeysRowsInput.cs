@@ -58,8 +58,8 @@ public abstract class KeysRowsInput : RowsInput, IDisposable
         }
     }
 
-    private KeyColumn[] _keyColumns = [];
-    private readonly IDictionary<int, KeyColumnValue[]> _setKeyColumns = new SortedDictionary<int, KeyColumnValue[]>();
+    private readonly List<KeyColumn> _keyColumns = [];
+    private readonly IDictionary<int, List<KeyColumnValue>> _setKeyColumns = new SortedDictionary<int, List<KeyColumnValue>>();
 
     /// <inheritdoc />
     public override Column[] Columns { get; protected set; } = [];
@@ -148,7 +148,8 @@ public abstract class KeysRowsInput : RowsInput, IDisposable
         {
             keyColumn = GetKeyColumn(columnIndex, operation);
             kcv = new KeyColumnValue(keyColumn.ColumnIndex);
-            _setKeyColumns[columnIndex] = [kcv];
+            keyColumnValues = [kcv];
+            _setKeyColumns[columnIndex] = keyColumnValues;
             return kcv;
         }
 
@@ -162,9 +163,7 @@ public abstract class KeysRowsInput : RowsInput, IDisposable
 
         keyColumn = GetKeyColumn(columnIndex, operation);
         kcv = new KeyColumnValue(keyColumn.ColumnIndex);
-        Array.Resize(ref keyColumnValues, keyColumnValues.Length + 1);
-        _setKeyColumns[columnIndex] = keyColumnValues;
-        keyColumnValues[^1] = kcv;
+        keyColumnValues.Add(kcv);
         return kcv;
     }
 
@@ -295,13 +294,8 @@ public abstract class KeysRowsInput : RowsInput, IDisposable
 
     protected void AddKeyColumns(IReadOnlyList<KeyColumn> keyColumns)
     {
-        var originalLength = _keyColumns.Length;
-        Array.Resize(ref _keyColumns, _keyColumns.Length + keyColumns.Count);
-        for (var i = 0; i < keyColumns.Count; i++)
-        {
-            _keyColumns[originalLength + i] = keyColumns[i];
-        }
-        Array.Sort(_keyColumns, KeyColumnColumnIndexComparer.Instance);
+        _keyColumns.AddRange(keyColumns);
+        _keyColumns.Sort(KeyColumnColumnIndexComparer.Instance);
     }
 
     #endregion
