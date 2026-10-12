@@ -24,10 +24,22 @@ public class Column : ICloneable, IModelDescription
     public const string AttributeId = "@id";
 
     /// <summary>
+    /// The attribute should be used to mark unique identifier columns.
+    /// No value required.
+    /// </summary>
+    public static ColumnAttribute ColumnAttributeId { get; } = new(AttributeId);
+
+    /// <summary>
     /// The attribute should be used to mark timestamp fields that identifies
     /// of event or log creation date and time.
     /// </summary>
     public const string AttributeTimestamp = "@ts";
+
+    /// <summary>
+    /// The attribute should be used to mark timestamp fields that identifies
+    /// of event or log creation date and time.
+    /// </summary>
+    public static ColumnAttribute ColumnAttributeTimestamp { get; } = new(AttributeTimestamp);
 
     /// <summary>
     /// The attribute should be used to mark currency numeric fields.
@@ -35,9 +47,31 @@ public class Column : ICloneable, IModelDescription
     public const string AttributeCurrency = "@currency";
 
     /// <summary>
+    /// The attribute should be used to mark currency numeric fields.
+    /// </summary>
+    public static ColumnAttribute ColumnAttributeCurrency { get; } = new(AttributeCurrency);
+
+    /// <summary>
     /// The attribute should be used to mark raw data (JSON, string) representation fields.
     /// </summary>
     public const string AttributeRawData = "@raw";
+
+    /// <summary>
+    /// The attribute should be used to mark raw data (JSON, string) representation fields.
+    /// </summary>
+    public static ColumnAttribute ColumnAttributeRawData { get; } = new(AttributeRawData);
+
+    /// <summary>
+    /// The attribute should be used to mark string fields that contain
+    /// error message or exception.
+    /// </summary>
+    public const string AttributeError = "@error";
+
+    /// <summary>
+    /// The attribute should be used to mark string fields that contain
+    /// error message or exception.
+    /// </summary>
+    public static ColumnAttribute ColumnAttributeError { get; } = new(AttributeError);
 
     /// <summary>
     /// The attribute should be used to mark string columns which have a specific format
@@ -56,6 +90,7 @@ public class Column : ICloneable, IModelDescription
     public const string AttributeFormatCreditCard = "credit_card";
     public const string AttributeFormatPassword = "password";
     public const string AttributeFormatType = "type";
+    public const string AttributeFormatIpAddress = "ip_address";
 
     #endregion
 
@@ -100,6 +135,41 @@ public class Column : ICloneable, IModelDescription
     /// </summary>
     public int Length { get; internal set; }
 
+    /// <summary>
+    /// Column attribute.
+    /// </summary>
+    /// <param name="key">Attribute key.</param>
+    /// <param name="value">Attribute value.</param>
+    public readonly struct ColumnAttribute(string key, VariantValue value)
+    {
+        /// <summary>
+        /// Key.
+        /// </summary>
+        public string Key { get; } = key;
+
+        /// <summary>
+        /// Value.
+        /// </summary>
+        public VariantValue Value { get; } = value;
+
+        /// <summary>
+        /// Constructor.
+        /// </summary>
+        /// <param name="key">Attribute key.</param>
+        public ColumnAttribute(string key) : this(key, VariantValue.Null)
+        {
+        }
+
+        /// <summary>
+        /// Constructor.
+        /// </summary>
+        /// <param name="key">Attribute key.</param>
+        /// <param name="value">Attribute value.</param>
+        public ColumnAttribute(string key, string value) : this(key, new VariantValue(value))
+        {
+        }
+    }
+
     private SmallDictionary<string, VariantValue>? _attributes;
 
     /// <summary>
@@ -121,7 +191,8 @@ public class Column : ICloneable, IModelDescription
     /// <param name="name">Column name.</param>
     /// <param name="dataType">Column type.</param>
     /// <param name="description">Description.</param>
-    public Column(string name, DataType dataType, string? description = null)
+    /// <param name="attributes">Attributes.</param>
+    public Column(string name, DataType dataType, string? description = null, params ColumnAttribute[]? attributes)
     {
         ArgumentException.ThrowIfNullOrEmpty(name);
         if (!DataTypeUtils.RowDataTypes.Contains(dataType))
@@ -134,6 +205,13 @@ public class Column : ICloneable, IModelDescription
         DataType = dataType;
         Description = description ?? string.Empty;
         Length = GetDefaultColumnLength();
+        if (attributes != null)
+        {
+            foreach (var attribute in attributes)
+            {
+                SetAttribute(attribute.Key, attribute.Value);
+            }
+        }
     }
 
     /// <summary>
@@ -143,8 +221,10 @@ public class Column : ICloneable, IModelDescription
     /// <param name="sourceName">Source name.</param>
     /// <param name="dataType">Column type.</param>
     /// <param name="description">Description.</param>
-    public Column(string name, string sourceName, DataType dataType, string? description = null) :
-        this(name, dataType, description)
+    /// <param name="attributes">Attributes.</param>
+    public Column(string name, string sourceName, DataType dataType, string? description = null,
+        params ColumnAttribute[]? attributes) :
+        this(name, dataType, description, attributes)
     {
         SourceName = sourceName;
     }
@@ -155,21 +235,12 @@ public class Column : ICloneable, IModelDescription
     /// <param name="columnIndex">Column index.</param>
     /// <param name="dataType">Column type.</param>
     /// <param name="description">Description.</param>
-    /// <param name="attributes">Attributes.</param>
     public Column(
         int columnIndex,
         DataType dataType,
-        string? description = null,
-        KeyValuePair<string, VariantValue>[]? attributes = null) :
+        string? description = null) :
         this($"column{columnIndex}", dataType, description)
     {
-        if (attributes != null)
-        {
-            foreach (var attribute in attributes)
-            {
-                SetAttribute(attribute.Key, attribute.Value);
-            }
-        }
     }
 
     /// <summary>
@@ -197,11 +268,21 @@ public class Column : ICloneable, IModelDescription
     /// </summary>
     /// <param name="name">Attribute name.</param>
     /// <param name="value">Attribute value.</param>
-    public void SetAttribute(string name, VariantValue value)
+    public void SetAttribute(string name, VariantValue value = default)
     {
         ArgumentException.ThrowIfNullOrEmpty(name);
         var attributes = _attributes ??= new SmallDictionary<string, VariantValue>();
         attributes[name] = value;
+    }
+
+    /// <summary>
+    /// Set column metadata attribute. The existing value will be overridden.
+    /// </summary>
+    /// <param name="name">Attribute name.</param>
+    /// <param name="value">Attribute value.</param>
+    public void SetAttribute(string name, string value)
+    {
+        SetAttribute(name, new VariantValue(value));
     }
 
     private int GetDefaultColumnLength()

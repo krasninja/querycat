@@ -58,6 +58,7 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
     public ClassRowsFrameBuilder<TClass> AddDataProperty(string? description = null)
     {
         var column = new Column(DataColumn, DataType.Object, description ?? "The raw data representation.");
+        column.SetAttribute(Column.AttributeRawData);
         AddOrReplaceColumn(
             column,
             obj => VariantValue.CreateFromObject(obj)
@@ -75,6 +76,8 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
     public ClassRowsFrameBuilder<TClass> AddDataPropertyAsJson(string? description = null)
     {
         var column = new Column(DataColumn, DataType.String, description ?? "The raw JSON data representation.");
+        column.SetAttribute(Column.AttributeRawData);
+        column.SetAttribute(Column.AttributeFormat, Column.AttributeFormatJson);
         AddOrReplaceColumn(
             column,
             obj =>
@@ -106,6 +109,8 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
         string? description = null)
     {
         var column = new Column(DataColumn, DataType.String, description ?? "The raw JSON data representation.");
+        column.SetAttribute(Column.AttributeRawData);
+        column.SetAttribute(Column.AttributeFormat, Column.AttributeFormatJson);
         AddOrReplaceColumn(
             column,
             obj =>
@@ -654,6 +659,68 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
         var keyColumn = new KeyColumn(columnIndex, isRequired, operation, orOperation);
         _keyColumns.Add(keyColumn);
         return this;
+    }
+
+    #endregion
+
+    #region Attributes
+
+    /// <summary>
+    /// Set attribute for column.
+    /// </summary>
+    /// <param name="columnName">Column name.</param>
+    /// <param name="attributeName">Attribute name.</param>
+    /// <param name="value">Attribute value.</param>
+    /// <returns>Instance of <see cref="ClassRowsFrameBuilder{TClass}" />.</returns>
+    public ClassRowsFrameBuilder<TClass> SetAttribute(string columnName, string attributeName, VariantValue value)
+    {
+        var columnIndex = GetColumnIndexByName(columnName);
+        _columns[columnIndex].Column.SetAttribute(attributeName, value);
+        return this;
+    }
+
+    /// <summary>
+    /// Set attribute for column.
+    /// </summary>
+    /// <param name="columnName">Column name.</param>
+    /// <param name="attributeName">Attribute name.</param>
+    /// <param name="value">Attribute value.</param>
+    /// <returns>Instance of <see cref="ClassRowsFrameBuilder{TClass}" />.</returns>
+    public ClassRowsFrameBuilder<TClass> SetAttribute(string columnName, string attributeName, string value)
+    {
+        return SetAttribute(columnName, attributeName, new VariantValue(value));
+    }
+
+    /// <summary>
+    /// Set attribute for column.
+    /// </summary>
+    /// <param name="propertyExpression">Property expression.</param>
+    /// <param name="attributeName">Attribute name.</param>
+    /// <param name="value">Attribute value.</param>
+    /// <returns>Instance of <see cref="ClassRowsFrameBuilder{TClass}" />.</returns>
+    public ClassRowsFrameBuilder<TClass> SetAttribute<T>(
+        Expression<Func<TClass, T>> propertyExpression,
+        string attributeName,
+        VariantValue value)
+    {
+        var columnName = GetNameFromProperty(propertyExpression);
+        return SetAttribute(columnName, attributeName, value);
+    }
+
+    /// <summary>
+    /// Set attribute for column.
+    /// </summary>
+    /// <param name="propertyExpression">Property expression.</param>
+    /// <param name="attributeName">Attribute name.</param>
+    /// <param name="value">Attribute value.</param>
+    /// <returns>Instance of <see cref="ClassRowsFrameBuilder{TClass}" />.</returns>
+    public ClassRowsFrameBuilder<TClass> SetAttribute<T>(
+        Expression<Func<TClass, T>> propertyExpression,
+        string attributeName,
+        string value)
+    {
+        var columnName = GetNameFromProperty(propertyExpression);
+        return SetAttribute(columnName, attributeName, new VariantValue(value));
     }
 
     #endregion
