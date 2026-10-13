@@ -25,6 +25,8 @@ public static class Converter
         DataType.Blob => typeof(byte[]),
         DataType.Object => typeof(object),
         DataType.Dynamic => typeof(object),
+        DataType.Array => typeof(VariantValue[]),
+        DataType.Map => typeof(IDictionary<VariantValue, VariantValue>),
         DataType.Null => typeof(void),
         DataType.Void => typeof(void),
         _ => typeof(void)
@@ -68,7 +70,11 @@ public static class Converter
         {
             return DataType.Blob;
         }
-        if (typeof(ICollection).IsAssignableFrom(type))
+        if (typeof(IDictionary).IsAssignableFrom(type))
+        {
+            return DataType.Map;
+        }
+        if (typeof(VariantValue[]).IsAssignableFrom(type))
         {
             return DataType.Array;
         }

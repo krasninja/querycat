@@ -93,7 +93,7 @@ public static class InfoFunctions
                         .Select(a => new VariantValue(a))
                         .ToArray(),
                     description: "Column attributes.")
-                .AddProperty("key_operators", GetKeyConditions, description: "Supported indexed operations..")
+                .AddProperty("key_operators", GetKeyConditions, description: "Supported indexed operations.")
             );
         return VariantValue.CreateFromObject(inputResult);
     }
