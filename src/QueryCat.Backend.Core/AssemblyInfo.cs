@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("QueryCat.Backend.Addons")]
 [assembly: InternalsVisibleTo("QueryCat.Backend")]
 [assembly: InternalsVisibleTo("QueryCat.Backend.ThriftPlugins")]
+[assembly: InternalsVisibleTo("QueryCat.WebServer")]
 
 [assembly: InternalsVisibleTo("QueryCat.UnitTests")]
 [assembly: InternalsVisibleTo("QueryCat.IntegrationTests")]

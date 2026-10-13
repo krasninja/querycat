@@ -2,9 +2,9 @@ using System.Net;
 using System.Text.Json;
 using QueryCat.Backend.Core;
 
-namespace QueryCat.Cli.Infrastructure;
+namespace QueryCat.WebServer;
 
-internal partial class WebServer
+public partial class WebServer
 {
     private async Task Info_HandleInfoApiActionAsync(HttpListenerRequest request, HttpListenerResponse response, CancellationToken cancellationToken)
     {

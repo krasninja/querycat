@@ -1,6 +1,7 @@
 using System.CommandLine;
 using System.Net;
-using QueryCat.Cli.Infrastructure;
+using WebServerClass = QueryCat.WebServer.WebServer;
+using QueryCat.WebServer;
 
 namespace QueryCat.Cli.Commands;
 
@@ -64,7 +65,7 @@ internal sealed class ServeCommand : BaseCommand
             await using var root = await applicationOptions.CreateApplicationRootAsync();
             root.Thread.Options.AddRowNumberColumn = true;
             root.Thread.Options.SafeMode = safeMode;
-            var webServer = new WebServer(root.Thread, new WebServerOptions
+            var webServer = new WebServerClass(root.Thread, new WebServerOptions
             {
                 Url = urls,
                 Password = password,

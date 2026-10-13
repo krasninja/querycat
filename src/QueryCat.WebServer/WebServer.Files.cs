@@ -4,9 +4,9 @@ using System.Net;
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core.Types;
 
-namespace QueryCat.Cli.Infrastructure;
+namespace QueryCat.WebServer;
 
-internal partial class WebServer
+public partial class WebServer
 {
     private const string SelectFilesQuery = @"select *, size_pretty(size) as 'size_pretty' from ls_dir(path);";
     private const int ReadBufferSize = 1024 * 4;

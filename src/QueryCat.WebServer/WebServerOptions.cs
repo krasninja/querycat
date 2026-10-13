@@ -1,8 +1,8 @@
 using System.Net;
 
-namespace QueryCat.Cli.Infrastructure;
+namespace QueryCat.WebServer;
 
-internal sealed class WebServerOptions
+public sealed class WebServerOptions
 {
     public string? Url { get; set; }
 

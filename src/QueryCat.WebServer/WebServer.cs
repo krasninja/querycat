@@ -18,12 +18,12 @@ using QueryCat.Backend.Formatters;
 using QueryCat.Backend.Storage;
 using QueryCat.Backend.Utils;
 
-namespace QueryCat.Cli.Infrastructure;
+namespace QueryCat.WebServer;
 
 /// <summary>
 /// Simple web server that provides endpoint to run queries.
 /// </summary>
-internal sealed partial class WebServer
+public sealed partial class WebServer
 {
     private const string DefaultEndpointUri = "http://localhost:6789/";
     private const string QueryField = "query";
@@ -214,12 +214,12 @@ internal sealed partial class WebServer
 
     private Task HandleIndexActionAsync(HttpListenerRequest request, HttpListenerResponse response, CancellationToken cancellationToken)
     {
-        return WriteResourceToStream(@"QueryCat.Cli.Infrastructure.WebServerIndex.html", response, cancellationToken);
+        return WriteResourceToStream(@"QueryCat.WebServer.WebServerIndex.html", response, cancellationToken);
     }
 
     private Task HandleIndexJsActionAsync(HttpListenerRequest request, HttpListenerResponse response, CancellationToken cancellationToken)
     {
-        return WriteResourceToStream(@"QueryCat.Cli.Infrastructure.WebServerPage.js", response, cancellationToken);
+        return WriteResourceToStream(@"QueryCat.WebServer.WebServerPage.js", response, cancellationToken);
     }
 
     private async Task HandleQueryApiActionAsync(HttpListenerRequest request, HttpListenerResponse response, CancellationToken cancellationToken)
