@@ -164,6 +164,16 @@ internal sealed partial class SelectPlanner
                     continue;
                 }
             }
+
+            // Restore attributes.
+            if (funcs[i] is FuncUnitRowsIteratorColumn iteratorColumn && iteratorColumn.SourceColumn.HasAttributes)
+            {
+                foreach (var attribute in iteratorColumn.SourceColumn.Attributes)
+                {
+                    selectColumns[i].Column.SetAttribute(attribute.Key, attribute.Value);
+                }
+            }
+
             var columnIndex = projectedIterator.AddFuncColumn(selectColumns[i].Column, funcs[i]);
             var info = context.ColumnsInfoContainer.GetByColumnOrAdd(projectedIterator.Columns[columnIndex]);
             info.RelatedSelectSublistNode = columnsNode.ColumnsNodes[selectColumns[i].ColumnIndex];

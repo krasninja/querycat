@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Text;
 
 namespace QueryCat.Backend.Core.Types;
@@ -66,6 +67,10 @@ public static class Converter
         if (typeof(byte[]).IsAssignableFrom(type) || typeof(IBlobData).IsAssignableFrom(type))
         {
             return DataType.Blob;
+        }
+        if (typeof(ICollection).IsAssignableFrom(type))
+        {
+            return DataType.Array;
         }
         if (!type.IsValueType)
         {

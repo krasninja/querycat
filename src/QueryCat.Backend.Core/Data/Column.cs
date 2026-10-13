@@ -181,6 +181,11 @@ public class Column : ICloneable, IModelDescription
     }
 
     /// <summary>
+    /// <c>True</c> if column has attribute.
+    /// </summary>
+    public bool HasAttributes => _attributes != null && _attributes.Count > 0;
+
+    /// <summary>
     /// Should the column be visible on output. It doesn't affect column search.
     /// </summary>
     public bool IsHidden => Name.StartsWith("__", StringComparison.Ordinal);
@@ -271,8 +276,8 @@ public class Column : ICloneable, IModelDescription
     public void SetAttribute(string name, VariantValue value = default)
     {
         ArgumentException.ThrowIfNullOrEmpty(name);
-        var attributes = _attributes ??= new SmallDictionary<string, VariantValue>();
-        attributes[name] = value;
+        _attributes = _attributes ??= new SmallDictionary<string, VariantValue>();
+        _attributes[name] = value;
     }
 
     /// <summary>
@@ -282,6 +287,7 @@ public class Column : ICloneable, IModelDescription
     /// <param name="value">Attribute value.</param>
     public void SetAttribute(string name, string value)
     {
+        ArgumentException.ThrowIfNullOrEmpty(name);
         SetAttribute(name, new VariantValue(value));
     }
 

@@ -51,6 +51,12 @@ internal sealed class ProjectedRowsIterator : IRowsIterator, IRowsIteratorParent
         return _rowsIterator.ResetAsync(cancellationToken);
     }
 
+    /// <summary>
+    /// Add column with delegate.
+    /// </summary>
+    /// <param name="column">Column to add.</param>
+    /// <param name="func">Delegate.</param>
+    /// <returns>Created column index.</returns>
     public int AddFuncColumn(Column column, IFuncUnit func)
     {
         Array.Resize(ref _columns, _columns.Length + 1);

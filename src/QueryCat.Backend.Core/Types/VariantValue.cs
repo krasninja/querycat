@@ -333,6 +333,12 @@ public readonly partial struct VariantValue :
         _valueUnion = new TypeUnion(DataType.Array);
     }
 
+    public VariantValue(VariantValue[] arr)
+    {
+        _object = arr;
+        _valueUnion = new TypeUnion(DataType.Array);
+    }
+
     public VariantValue(IDictionary<VariantValue, VariantValue> map)
     {
         _object = map;
@@ -448,6 +454,10 @@ public readonly partial struct VariantValue :
         if (obj is IList<VariantValue> list)
         {
             return new VariantValue(list);
+        }
+        if (obj is VariantValue[] arr)
+        {
+            return new VariantValue(arr);
         }
         if (obj is IDictionary<VariantValue, VariantValue> map)
         {

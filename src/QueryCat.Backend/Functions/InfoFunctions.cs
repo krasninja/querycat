@@ -79,15 +79,21 @@ public static class InfoFunctions
         var inputResult = EnumerableRowsInput<Column>.FromSource(columns,
             builder => builder
 #if DEBUG
-                .AddProperty("id", f => f.Id)
+                .AddProperty("id", f => f.Id, description: "Column internal identifier.")
 #endif
-                .AddProperty("name", f => f.FullName, defaultLength: 45)
-                .AddProperty("type", f => f.DataType)
+                .AddProperty("name", f => f.FullName, defaultLength: 45, description: "Column name.")
+                .AddProperty("type", f => f.DataType, description: "Column data type.")
 #if DEBUG
-                .AddProperty("length", f => f.Length)
+                .AddProperty("length", f => f.Length, description: "Column approximate length.")
 #endif
-                .AddProperty("description", f => f.Description)
-                .AddProperty("key_operators", GetKeyConditions)
+                .AddProperty("description", f => f.Description, description: "Column description.")
+                .AddProperty("attributes",
+                    f => f.Attributes
+                        .Select(a => string.Join('=', a.Key, a.Value))
+                        .Select(a => new VariantValue(a))
+                        .ToArray(),
+                    description: "Column attributes.")
+                .AddProperty("key_operators", GetKeyConditions, description: "Supported indexed operations..")
             );
         return VariantValue.CreateFromObject(inputResult);
     }
