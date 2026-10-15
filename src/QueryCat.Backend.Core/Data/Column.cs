@@ -223,6 +223,17 @@ public class Column : ICloneable, IModelDescription
     /// Constructor.
     /// </summary>
     /// <param name="name">Column name.</param>
+    /// <param name="dataType">Column type.</param>
+    /// <param name="description">Description.</param>
+    public Column(string name, DataType dataType, string? description = null) :
+        this(name, dataType, description, null)
+    {
+    }
+
+    /// <summary>
+    /// Constructor.
+    /// </summary>
+    /// <param name="name">Column name.</param>
     /// <param name="sourceName">Source name.</param>
     /// <param name="dataType">Column type.</param>
     /// <param name="description">Description.</param>
@@ -230,6 +241,19 @@ public class Column : ICloneable, IModelDescription
     public Column(string name, string sourceName, DataType dataType, string? description = null,
         params ColumnAttribute[]? attributes) :
         this(name, dataType, description, attributes)
+    {
+        SourceName = sourceName;
+    }
+
+    /// <summary>
+    /// Constructor.
+    /// </summary>
+    /// <param name="name">Column name.</param>
+    /// <param name="sourceName">Source name.</param>
+    /// <param name="dataType">Column type.</param>
+    /// <param name="description">Description.</param>
+    public Column(string name, string sourceName, DataType dataType, string? description = null) :
+        this(name, dataType, description, null)
     {
         SourceName = sourceName;
     }
