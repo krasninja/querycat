@@ -9,6 +9,9 @@ using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Storage;
+#if NET8_0
+using QueryCat.Backend.Utils;
+#endif
 
 namespace QueryCat.Backend.Commands;
 
@@ -38,14 +41,17 @@ internal partial class CreateDelegateVisitor : AstVisitor
         ExecutionThread = thread;
         _resolveTypesVisitor = resolveTypesVisitor;
 
-        AstTraversal.TypesToIgnore.Add(typeof(Ast.Nodes.Select.SelectQuerySpecificationNode));
-        AstTraversal.TypesToIgnore.Add(typeof(Ast.Nodes.Select.SelectQueryCombineNode));
-        AstTraversal.TypesToIgnore.Add(typeof(Ast.Nodes.Declare.DeclareNode));
-        AstTraversal.TypesToIgnore.Add(typeof(Ast.Nodes.Declare.SetNode));
-        AstTraversal.TypesToIgnore.Add(typeof(Ast.Nodes.Insert.InsertNode));
-        AstTraversal.TypesToIgnore.Add(typeof(Ast.Nodes.Update.UpdateNode));
-        AstTraversal.TypesToIgnore.Add(typeof(Ast.Nodes.Delete.DeleteNode));
-        AstTraversal.TypesToIgnore.Add(typeof(Ast.Nodes.For.ForNode));
+        AstTraversal.TypesToIgnore.AddRange(
+            typeof(Ast.Nodes.Select.SelectQuerySpecificationNode),
+            typeof(Ast.Nodes.Select.SelectQueryCombineNode),
+            typeof(Ast.Nodes.Declare.DeclareNode),
+            typeof(Ast.Nodes.Declare.SetNode),
+            typeof(Ast.Nodes.Call.CallFunctionNode),
+            typeof(Ast.Nodes.Insert.InsertNode),
+            typeof(Ast.Nodes.Update.UpdateNode),
+            typeof(Ast.Nodes.Delete.DeleteNode),
+            typeof(Ast.Nodes.For.ForNode)
+        );
         AstTraversal.AcceptBeforeIgnore = true;
     }
 
@@ -762,6 +768,13 @@ internal partial class CreateDelegateVisitor : AstVisitor
 
     /// <inheritdoc />
     public override async ValueTask VisitAsync(Ast.Nodes.Declare.DeclareNode node, CancellationToken cancellationToken)
+    {
+        await VisitWithStatementVisitor(node, cancellationToken);
+        await base.VisitAsync(node, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public override async ValueTask VisitAsync(Ast.Nodes.Call.CallFunctionNode node, CancellationToken cancellationToken)
     {
         await VisitWithStatementVisitor(node, cancellationToken);
         await base.VisitAsync(node, cancellationToken);

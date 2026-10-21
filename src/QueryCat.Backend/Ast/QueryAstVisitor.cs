@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text;
 using QueryCat.Backend.Ast.Nodes;
+using QueryCat.Backend.Ast.Nodes.Call;
 using QueryCat.Backend.Ast.Nodes.Declare;
 using QueryCat.Backend.Ast.Nodes.Function;
 using QueryCat.Backend.Ast.Nodes.Select;
@@ -315,6 +316,24 @@ internal class QueryAstVisitor : AstVisitor
     public override ValueTask VisitAsync(SelectTableReferenceListNode node, CancellationToken cancellationToken)
     {
         Set(node, string.Join(", ", node.TableFunctionsNodes.Select(Get)));
+        return ValueTask.CompletedTask;
+    }
+
+    #endregion
+
+    #region Call
+
+    /// <inheritdoc />
+    public override ValueTask VisitAsync(CallFunctionStatementNode node, CancellationToken cancellationToken)
+    {
+        Copy(node, node.RootNode);
+        return ValueTask.CompletedTask;
+    }
+
+    /// <inheritdoc />
+    public override ValueTask VisitAsync(CallFunctionNode node, CancellationToken cancellationToken)
+    {
+        Set(node, "CALL " + Get(node.FunctionCallNode));
         return ValueTask.CompletedTask;
     }
 

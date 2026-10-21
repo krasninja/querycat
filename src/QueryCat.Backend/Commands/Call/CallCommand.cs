@@ -12,9 +12,9 @@ internal sealed class CallCommand : ICommand
         StatementNode node,
         CancellationToken cancellationToken = default)
     {
-        var declareNode = (CallFunctionNode)node.RootNode;
-        var handler = await new StatementsVisitor(executionThread)
-            .RunAndReturnAsync(declareNode.FunctionCallNode, cancellationToken);
+        var callFunctionNode = (CallFunctionNode)node.RootNode;
+        var handler = await new CreateDelegateVisitor(executionThread)
+            .RunAndReturnAsync(callFunctionNode.FunctionCallNode, cancellationToken);
         return handler;
     }
 }
