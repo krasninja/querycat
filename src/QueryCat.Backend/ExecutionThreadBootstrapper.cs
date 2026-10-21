@@ -296,6 +296,7 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
             CryptoFunctions.RegisterFunctions(_functionsManager);
             MiscFunctions.RegisterFunctions(_functionsManager);
             InfoFunctions.RegisterFunctions(_functionsManager);
+            ArrayFunctions.RegisterFunctions(_functionsManager);
             BlobFunctions.RegisterFunctions(_functionsManager);
         }
         foreach (var registration in _registrations)

@@ -9,7 +9,7 @@ using QueryCat.Backend.Core.Utils;
 namespace QueryCat.Backend.Core.Functions;
 
 /// <summary>
-/// Various format methods for functions maintenance (common naming, arguments formatting, etc).
+/// Various format methods for functions maintenance (common naming, arguments formatting, etc.).
 /// </summary>
 internal static class FunctionFormatter
 {
@@ -57,6 +57,10 @@ internal static class FunctionFormatter
             if (objType.IsAssignableTo(typeof(IRowsFormatter)))
             {
                 return nameof(IRowsFormatter);
+            }
+            if (objType.IsAssignableTo(typeof(IAnswerAgent)))
+            {
+                return nameof(IAnswerAgent);
             }
             return string.Empty;
         }
