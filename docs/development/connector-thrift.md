@@ -35,7 +35,7 @@ QueryCat Host <---> Plugin Executable
     dotnet new console --name SimplePlugin
     ```
 
-    **NOTE:** The plugin must contain "Plugin" (case insensitive) word in its name.
+    **NOTE:** The plugin must contain "Plugin" (case-insensitive) word in its name.
 
 2. Reference `QueryCat.Plugins.Client` project: [NuGet](https://www.nuget.org/packages/QueryCat.Plugins.Client). For example:
 
@@ -105,7 +105,7 @@ QueryCat Host <---> QueryCat Proxy <---> Plugin Executable
 
     ```
     <ItemGroup>
-        <PackageReference Include="QueryCat" Version="0.11.0" />
+        <PackageReference Include="QueryCat" Version="0.19.0" />
     </ItemGroup>
     ```
 
@@ -193,3 +193,7 @@ qcat plugin debug
 ```
 
 In that mode the server pipe name will always be `qcat-test` and token will be `test`.
+
+## QueryCat Tester
+
+There is a `QueryCat.Tester` project in QueryCat repostiory. It is simplified version of QueryCat designed to run plugins functions.

@@ -14,16 +14,63 @@ To prepare a plugin follow the steps:
     dotnet new classlib --name SimplePlugin
     ```
 
-    **NOTE:** The plugin must contain "Plugin" (case insensitive) word in its name.
+    **NOTE:** The plugin must contain "Plugin" (case-insensitive) word in its name.
 
-2. Reference `QueryCat.Plugins.Client` package: [NuGet](https://www.nuget.org/packages/QueryCat.Plugins.Client). For example:
+2. Reference `QueryCat` package: [NuGet](https://www.nuget.org/packages/QueryCat). For example here is the proposed `.csproj` structure:
 
+    ```xml
+    <Project Sdk="Microsoft.NET.Sdk">
+      <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <PackageVersion>0.1.0</PackageVersion>
+        <Title>My Plugin</Title>
+        <Authors>Author Name</Authors>
+        <Description>Plugin description.</Description>
+        <PackageTags>myplugin querycat</PackageTags>
+        <AssemblyName Condition=" '$(UseAssemblyName)' == 'true' ">qcat-plugins-my-$(PackageVersion)-$(Runtime)</AssemblyName>
+      </PropertyGroup>
+      <ItemGroup>
+        <PackageReference Include="QueryCat" Version="0.19.0" />
+      </ItemGroup>
+    </Project>
     ```
-    <ItemGroup>
-        <PackageReference Include="QueryCat.Plugins.Client" Version="0.11.0" />
-    </ItemGroup>
+
+3. Every plugin MUST have a `Registration` static class. The plugin loader discovers it via reflection.
+
+    ```csharp
+    using QueryCat.Backend.Core.Functions;
+
+    namespace QueryCat.Plugins.MyPlugin;
+
+    public static class Registration
+    {
+        public static void RegisterFunctions(IFunctionsManager functionsManager)
+        {
+            functionsManager.RegisterFunction(MyFunction.MyFunctionDelegate);
+            functionsManager.RegisterFunction(MyRowsInput.MyRowsInputFunction);
+        }
+
+        // Optional. Called after plugin is loaded.
+        public static Task OnLoadAsync(IExecutionThread executionThread, CancellationToken cancellationToken)
+            => Task.CompletedTask;
+    }
     ```
 
-3. Implement functions and rows inputs. They will be discovered in the assembly using reflection.
+4. Implement functions and rows inputs. They will be discovered in the assembly using reflection.
 
 4. Publish the assembly. It can be published as `.dll` or `.nupkg` file.
+
+## Plugin Project Structure
+
+```
+QueryCat.Plugins.<Name>/
+├── QueryCat.Plugins.<Name>.csproj   # Project file
+├── Registration.cs                   # Entry point — registers all functions
+├── Functions/                        # Custom functions (optional)
+│   └── MyFunction.cs
+├── Inputs/                           # Rows input sources (optional)
+│   └── MyRowsInput.cs
+├── Models/                           # Domain models (optional)
+│   └── MyModel.cs
+└── Docs/                             # Plugin documentation (optional)
+```
