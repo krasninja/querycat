@@ -1,5 +1,6 @@
 using System.CommandLine;
 using QueryCat.Mcp;
+using QueryCat.Mcp.Transports;
 
 namespace QueryCat.Cli.Commands;
 
@@ -18,6 +19,10 @@ internal sealed class McpCommand : BaseCommand
         {
             Description = Resources.Messages.ServeCommand_UrlsDescription,
         };
+        var allowOriginOption = new Option<string>("--allow-origin")
+        {
+            Description = Resources.Messages.ServeCommand_AllowOriginDescription,
+        };
         var transportOption = new Option<McpTransport>("--transport")
         {
             Description = Resources.Messages.McpCommand_TransportDescription,
@@ -29,6 +34,7 @@ internal sealed class McpCommand : BaseCommand
         };
 
         Add(urlOption);
+        Add(allowOriginOption);
         Add(transportOption);
         Add(safeModeOption);
         this.SetAction(async (parseResult, cancellationToken) =>
@@ -37,29 +43,45 @@ internal sealed class McpCommand : BaseCommand
 
             var applicationOptions = GetApplicationOptions(parseResult);
             var urls = parseResult.GetValue(urlOption);
+            var allowOrigin = parseResult.GetValue(allowOriginOption);
             var transport = parseResult.GetValue(transportOption);
             var safeMode = parseResult.GetValue(safeModeOption);
 
-            applicationOptions.InitializeLogger();
-            applicationOptions.InitializeAIAssistant();
+            applicationOptions.InitializeLogger(useErrorOut: true);
             await using var root = await applicationOptions.CreateApplicationRootAsync();
             root.Thread.Options.SafeMode = safeMode;
             var mcpTransport = CreateTransport(new McpServerOptions
             {
                 Url = urls,
+                AllowOrigin = allowOrigin,
             }, transport);
             var mcpServer = new McpServer(root.Thread, mcpTransport);
             await mcpTransport.StartAsync(cancellationToken: cancellationToken);
-            await mcpServer.LoopAsync(cancellationToken);
+            try
+            {
+                await mcpServer.LoopAsync(cancellationToken);
+            }
+            finally
+            {
+                await mcpTransport.StopAsync(cancellationToken);
+                if (mcpTransport is IAsyncDisposable asyncDisposable)
+                {
+                    await asyncDisposable.DisposeAsync();
+                }
+                else if (mcpTransport is IDisposable disposable)
+                {
+                    disposable.Dispose();
+                }
+            }
         });
     }
 
-    private IMcpTransport CreateTransport(McpServerOptions options, McpTransport transport)
+    private static IMcpTransport CreateTransport(McpServerOptions options, McpTransport transport)
     {
         if (transport == McpTransport.Stdio)
         {
             return new McpStdioTransport();
         }
-        return new McpWebTransport(options);
+        return new McpHttpTransport(options);
     }
 }

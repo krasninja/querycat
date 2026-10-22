@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
 using QueryCat.Mcp.Models;
 
-namespace QueryCat.Mcp;
+namespace QueryCat.Mcp.Transports;
 
 /// <summary>
 /// MCP transport over HTTP. Every JSON-RPC message is sent by the client as a separate POST request.
@@ -13,7 +13,7 @@ namespace QueryCat.Mcp;
 /// <remarks>
 /// https://modelcontextprotocol.io/specification/2025-11-25/basic/transports#streamable-http.
 /// </remarks>
-public sealed class McpWebTransport : IMcpTransport, IAsyncDisposable
+public sealed class McpHttpTransport : IMcpTransport, IAsyncDisposable
 {
     private const string DefaultEndpointUri = "http://localhost:6799/";
     private const long MaxRequestLength = 1024 * 1024;
@@ -21,7 +21,7 @@ public sealed class McpWebTransport : IMcpTransport, IAsyncDisposable
     private HttpListener? _httpListener;
     private readonly string? _allowOrigin;
     private readonly ConcurrentDictionary<Guid, HttpListenerContext> _contexts = new();
-    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(McpWebTransport));
+    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(McpHttpTransport));
 
     /// <summary>
     /// Endpoint URI.
@@ -32,7 +32,7 @@ public sealed class McpWebTransport : IMcpTransport, IAsyncDisposable
     /// Constructor.
     /// </summary>
     /// <param name="options">Server options.</param>
-    public McpWebTransport(McpServerOptions options)
+    public McpHttpTransport(McpServerOptions options)
     {
         Uri = options.Url ?? DefaultEndpointUri;
         _allowOrigin = options.AllowOrigin;
@@ -56,7 +56,10 @@ public sealed class McpWebTransport : IMcpTransport, IAsyncDisposable
     /// <inheritdoc />
     public Task StopAsync(CancellationToken cancellationToken)
     {
-        _httpListener?.Close();
+        if (_httpListener != null)
+        {
+            _httpListener.Close();
+        }
         _httpListener = null;
         return Task.CompletedTask;
     }
@@ -67,7 +70,7 @@ public sealed class McpWebTransport : IMcpTransport, IAsyncDisposable
         var httpListener = EnsureStarted();
 
         // HttpListener.GetContextAsync does not support cancellation, stop the listener instead.
-        await using var registration = cancellationToken.Register(() => httpListener.Stop());
+        await using var registration = cancellationToken.Register(httpListener.Stop);
         while (true)
         {
             HttpListenerContext context;

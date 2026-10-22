@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
 using QueryCat.Mcp.Models;
 
-namespace QueryCat.Mcp;
+namespace QueryCat.Mcp.Transports;
 
 /// <summary>
 /// MCP transport over standard I/O (stdin/stdout) using newline-delimited JSON.

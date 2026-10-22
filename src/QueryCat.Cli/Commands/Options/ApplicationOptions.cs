@@ -176,10 +176,12 @@ internal sealed class ApplicationOptions
     /// <summary>
     /// Pre initialization step for logger.
     /// </summary>
-    public void InitializeLogger()
+    /// <param name="useErrorOut">Use error standard stream.
+    /// It can be needed if standard output is consumed by another tool.</param>
+    public void InitializeLogger(bool useErrorOut = false)
     {
         Application.LoggerFactory = new LoggerFactory(
-            providers: [new QueryCatConsoleLoggerProvider()],
+            providers: [new QueryCatConsoleLoggerProvider(useErrorOut)],
             new LoggerFilterOptions
             {
                 MinLevel = LogLevel,

@@ -11,12 +11,16 @@ namespace QueryCat.Cli.Infrastructure;
 internal sealed class QueryCatConsoleLogger : ILogger, IDisposable
 {
     private readonly string _name;
-    private readonly StreamWriter _streamWriter;
+    private readonly bool _useErrorOut;
+    private readonly StreamWriter _outputStreamWriter;
+    private readonly StreamWriter _errorStreamWriter;
 
-    public QueryCatConsoleLogger(string name)
+    public QueryCatConsoleLogger(string name, bool useErrorOut = false)
     {
         _name = name;
-        _streamWriter = new StreamWriter(Stdio.GetConsoleOutput());
+        _useErrorOut = useErrorOut;
+        _outputStreamWriter = new StreamWriter(Stdio.GetConsoleOutput(), leaveOpen: true);
+        _errorStreamWriter = new StreamWriter(Stdio.GetConsoleError(), leaveOpen: true);
     }
 
     private static string GetLogLevelString(LogLevel logLevel)
@@ -41,10 +45,10 @@ internal sealed class QueryCatConsoleLogger : ILogger, IDisposable
             return;
         }
 
-        TextWriter writer = _streamWriter;
+        TextWriter writer = _useErrorOut ? _errorStreamWriter : _outputStreamWriter;
         if (logLevel >= LogLevel.Error)
         {
-            writer = Console.Error;
+            writer = _errorStreamWriter;
         }
 
         writer.Write(GetLogLevelString(logLevel));
@@ -73,6 +77,7 @@ internal sealed class QueryCatConsoleLogger : ILogger, IDisposable
     /// <inheritdoc />
     public void Dispose()
     {
-        _streamWriter.Dispose();
+        _outputStreamWriter.Dispose();
+        _errorStreamWriter.Dispose();
     }
 }
