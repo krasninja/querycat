@@ -199,4 +199,10 @@
   <data name="QueryCommand_AIDescription" xml:space="preserve">
     <value>Uses AI answer agent to convert natural language query to SQL.</value>
   </data>
+  <data name="McpCommand_Description" xml:space="preserve">
+    <value>Run simple MCP server.</value>
+  </data>
+  <data name="McpCommand_TransportDescription" xml:space="preserve">
+    <value>Use stdio or HTTP transport.</value>
+  </data>
 </root>

@@ -77,7 +77,7 @@ internal sealed class ServeCommand : BaseCommand
             {
                 webServer.AllowOrigin = allowOrigin;
             }
-            await webServer.RunAsync(cancellationToken: cancellationToken);
+            await webServer.StartAsync(cancellationToken: cancellationToken);
         });
     }
 }

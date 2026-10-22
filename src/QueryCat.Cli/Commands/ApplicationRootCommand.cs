@@ -16,6 +16,7 @@ internal sealed class ApplicationRootCommand : RootCommand
             new SchemaCommand(),
             new CallFunctionCommand(),
             new ServeCommand(),
+            new McpCommand(),
 #if ENABLE_PLUGINS
             new Command("plugin", Resources.Messages.PluginCommand_Description)
             {

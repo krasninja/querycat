@@ -392,5 +392,17 @@ namespace QueryCat.Cli.Resources {
                 return ResourceManager.GetString("QueryCommand_AIDescription", resourceCulture);
             }
         }
+        
+        internal static string McpCommand_Description {
+            get {
+                return ResourceManager.GetString("McpCommand_Description", resourceCulture);
+            }
+        }
+        
+        internal static string McpCommand_TransportDescription {
+            get {
+                return ResourceManager.GetString("McpCommand_TransportDescription", resourceCulture);
+            }
+        }
     }
 }

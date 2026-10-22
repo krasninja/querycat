@@ -50,7 +50,7 @@ public sealed partial class WebServer
 
     internal sealed class WebServerReply : Dictionary<string, object>;
 
-    public WebServer(DefaultExecutionThread executionThread, WebServerOptions options)
+    public WebServer(IExecutionThread executionThread, WebServerOptions options)
     {
         _actions = new Dictionary<string, Func<HttpListenerRequest, HttpListenerResponse, CancellationToken, Task>>
         {
@@ -77,7 +77,7 @@ public sealed partial class WebServer
     /// </summary>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Awaitable task.</returns>
-    public async Task RunAsync(CancellationToken cancellationToken = default)
+    public async Task StartAsync(CancellationToken cancellationToken = default)
     {
         using var listener = new HttpListener();
         listener.Prefixes.Add(Uri);
@@ -248,16 +248,23 @@ public sealed partial class WebServer
         var query = GetQueryDataFromRequest(request);
         _logger.LogInformation("[{Address}] Schema: {Query}", request.RemoteEndPoint.Address, query);
 
-        var thread = (DefaultExecutionThread)_executionThread;
+        var thread = _executionThread as DefaultExecutionThread;
+        if (thread == null)
+        {
+            return;
+        }
+
         void ThreadOnStatementExecuted(object? sender, ExecuteEventArgs e)
         {
-            if (!e.Result.IsNull && e.Result.Type == DataType.Object
-                && e.Result.AsObject is IRowsSchema rowsSchema)
+            if (!e.Result.IsNull
+                && e.Result.Type == DataType.Object
+                && e.Result.AsObject is IRowsSchema rowsSchema
+                && _executionThread is DefaultExecutionThread defaultExecutionThread)
             {
                 AsyncUtils.RunSync(async () =>
                 {
-                    var schema = await FunctionCaller.CallWithArgumentsAsync(Backend.Functions.InfoFunctions.Schema, thread,
-                        [rowsSchema], cancellationToken);
+                    var schema = await FunctionCaller.CallWithArgumentsAsync(Backend.Functions.InfoFunctions.Schema,
+                        defaultExecutionThread, [rowsSchema], cancellationToken);
                     await WriteValueAsync(schema, request, response, cancellationToken);
                 });
                 e.ContinueExecution = false;
