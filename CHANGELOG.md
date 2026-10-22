@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Column attributes.
 - Add function "array_to_string".
 
+### Changed
+
+- Improve "to_json" function.
+
 ## [0.19.0] - 2026-10-10
 
 ### Fixed

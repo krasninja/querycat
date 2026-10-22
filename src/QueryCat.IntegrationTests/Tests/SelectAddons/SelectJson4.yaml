@@ -1,5 +1,5 @@
 expected: |
-  True,False,{"value":"1"},2
+  True,False,1,2
 query: |
   declare json := '
   {

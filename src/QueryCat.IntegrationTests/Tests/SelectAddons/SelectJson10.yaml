@@ -1,0 +1,13 @@
+expected: |
+  1,"hello",true,3.14,"[1,2,3]","{""a"":1,""b"":2}","[[1,2],[3,4]]","{""nested"":{""array"":[1,2,3]}}",null
+query: |
+  select
+    to_json(1),
+    to_json('hello'),
+    to_json(true),
+    to_json(3.14),
+    to_json(ARRAY [1, 2, 3]),
+    to_json(MAP ['a': 1, 'b': 2]),
+    to_json(ARRAY [ARRAY [1, 2], ARRAY [3, 4]]),
+    to_json(MAP ['nested': MAP ['array': ARRAY [1, 2, 3]]]),
+    to_json(null);
