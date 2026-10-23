@@ -9,6 +9,7 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("QueryCat.Tests.QueryRunner")]
 [assembly: InternalsVisibleTo("QueryCat.Benchmarks")]
 [assembly: InternalsVisibleTo("QueryCat.Build")]
+[assembly: InternalsVisibleTo("QueryCat.Mcp")]
 
 [assembly: InternalsVisibleTo("qcat")]
 [assembly: InternalsVisibleTo("QueryCat.Studio.Domain")]

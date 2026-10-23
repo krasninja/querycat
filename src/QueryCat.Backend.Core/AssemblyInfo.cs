@@ -13,4 +13,5 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("QueryCat.Benchmarks")]
 [assembly: InternalsVisibleTo("QueryCat.Build")]
 [assembly: InternalsVisibleTo("qcat")]
+[assembly: InternalsVisibleTo("qcatstudio")]
 [assembly: InternalsVisibleTo("QueryCat.Studio.Domain")]
