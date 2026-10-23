@@ -1,3 +1,4 @@
+using System.Globalization;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Core.Utils;
 
@@ -107,5 +108,14 @@ public sealed class FunctionCallArguments
             _positional.Select((p, i) => new KeyValuePair<int, DataType>(i, p.Type)).ToArray(),
             _named.Select(p => new KeyValuePair<string, DataType>(p.Key, p.Value.Type)).ToArray()
         );
+    }
+
+    /// <inheritdoc />
+    public override string ToString()
+    {
+        var args = _positional
+            .Select(p => p.ToString(CultureInfo.InvariantCulture))
+            .Concat(_named.Select(n => $"{n.Key}={n.Value}"));
+        return string.Join(',', args);
     }
 }

@@ -14,7 +14,22 @@ public class McpImplementationModel
     public string Name { get; set; } = string.Empty;
 
     /// <summary>
+    /// The title of the implementation.
+    /// </summary>
+    public string? Title { get; set; }
+
+    /// <summary>
+    /// The description of the implementation.
+    /// </summary>
+    public string? Description { get; set; }
+
+    /// <summary>
     /// The version of the implementation.
     /// </summary>
-    public string Version { get; set; } = string.Empty;
+    public string? Version { get; set; }
+
+    /// <summary>
+    /// Implementation website.
+    /// </summary>
+    public string? WebsiteUrl { get; set; }
 }

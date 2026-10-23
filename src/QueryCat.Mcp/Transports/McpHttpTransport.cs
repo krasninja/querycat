@@ -15,7 +15,7 @@ namespace QueryCat.Mcp.Transports;
 /// </remarks>
 public sealed class McpHttpTransport : IMcpTransport, IAsyncDisposable
 {
-    private const string DefaultEndpointUri = "http://localhost:6799/";
+    private const string DefaultEndpointUri = "http://localhost:6799/mcp/";
     private const long MaxRequestLength = 1024 * 1024;
 
     private HttpListener? _httpListener;
@@ -206,7 +206,7 @@ public sealed class McpHttpTransport : IMcpTransport, IAsyncDisposable
             _logger.LogWarning("[{Address}]: request is null.", context.Request.RemoteEndPoint.Address);
             await SendResponseInternalAsync(
                 new JsonRpcErrorResponse(new McpErrorModel(McpErrorModel.ErrorCodeInvalidRequest,
-                    Resources.Messages.McpInvalidRequest)),
+                    Resources.Errors.McpInvalidRequest)),
                 context,
                 HttpStatusCode.BadRequest,
                 cancellationToken);

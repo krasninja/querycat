@@ -246,4 +246,7 @@
   <data name="CannotSetValue" xml:space="preserve">
     <value>Cannot set value '{0}'.</value>
   </data>
+  <data name="CannotRunFunctionInSafeMode" xml:space="preserve">
+    <value>Cannot run the function '{0}' in safe mode.</value>
+  </data>
 </root>

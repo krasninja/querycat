@@ -22,4 +22,9 @@ public class McpInitializeResultModel
     /// Server implementation information.
     /// </summary>
     public McpImplementationModel? ServerInfo { get; set; }
+
+    /// <summary>
+    /// Optional instructions for the client.
+    /// </summary>
+    public string? Instructions { get; set; }
 }

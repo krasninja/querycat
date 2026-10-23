@@ -20,13 +20,28 @@ public sealed class McpServer
 
     private readonly IExecutionThread _executionThread;
     private readonly IMcpTransport _mcpTransport;
+    private readonly Dictionary<string, IMcpTool> _tools = new();
 
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(McpServer));
 
+    /// <summary>
+    /// Constructor.
+    /// </summary>
+    /// <param name="executionThread">The execution thread.</param>
+    /// <param name="mcpTransport">The transport to use.</param>
     public McpServer(IExecutionThread executionThread, IMcpTransport mcpTransport)
     {
         _executionThread = executionThread;
         _mcpTransport = mcpTransport;
+    }
+
+    /// <summary>
+    /// Register a tool with the server.
+    /// </summary>
+    /// <param name="tool">The tool model.</param>
+    public void AddTool(IMcpTool tool)
+    {
+        _tools[tool.Metadata.Name] = tool;
     }
 
     /// <summary>
@@ -47,11 +62,13 @@ public sealed class McpServer
         return rpcRequest.Method switch
         {
             "initialize" => await ProcessInitializeAsync(rpcRequest, cancellationToken),
-            "ping" => new JsonRpcResponse(new McpEmptyResultModel()) { Id = rpcRequest.Id },
+            "ping" => new JsonRpcResponse(rpcRequest.Id, new McpEmptyResultModel()),
+            "tools/list" => await ProcessListToolsAsync(rpcRequest, cancellationToken),
+            "tools/call" => await ProcessCallToolAsync(rpcRequest, cancellationToken),
             _ => CreateError(
                 rpcRequest,
                 McpErrorModel.ErrorCodeMethodNotFound,
-                string.Format(Resources.Messages.McpMethodNotFound, rpcRequest.Method)
+                string.Format(Resources.Errors.McpMethodNotFound, rpcRequest.Method)
             ),
         };
     }
@@ -104,12 +121,20 @@ public sealed class McpServer
         var result = new McpInitializeResultModel
         {
             ProtocolVersion = protocolVersion,
-            Capabilities = new McpServerCapabilitiesModel(),
+            Capabilities = new McpServerCapabilitiesModel
+            {
+                Tools = new McpServerToolsCapabilityModel
+                {
+                    ListChanged = false,
+                },
+            },
             ServerInfo = new McpImplementationModel
             {
                 Name = Application.ProductName,
                 Version = Application.GetShortVersion(),
+                WebsiteUrl = @"https://github.com/krasninja/querycat",
             },
+            Instructions = Resources.Messages.McpInstructions,
         };
         var response = new JsonRpcResponse
         {
@@ -118,6 +143,65 @@ public sealed class McpServer
         };
         _logger.LogTrace("Initialize request, protocol version {ProtocolVersion}.", protocolVersion);
         return Task.FromResult<JsonRpcFrame>(response);
+    }
+
+    private Task<JsonRpcFrame> ProcessListToolsAsync(JsonRpcRequest rpcRequest, CancellationToken cancellationToken)
+    {
+        var result = new McpListToolsResultModel
+        {
+            Tools = _tools.Values.Select(t => t.Metadata).ToList(),
+        };
+        var response = new JsonRpcResponse
+        {
+            Id = rpcRequest.Id,
+            Result = result,
+        };
+        _logger.LogTrace("List tools request, {Count} tool(s).", _tools.Count);
+        return Task.FromResult<JsonRpcFrame>(response);
+    }
+
+    private async Task<JsonRpcFrame> ProcessCallToolAsync(JsonRpcRequest rpcRequest, CancellationToken cancellationToken)
+    {
+        if (rpcRequest.Params == null
+            || !rpcRequest.Params.TryGetValue("name", out var nameElement)
+            || nameElement.ValueKind != JsonValueKind.String)
+        {
+            return CreateError(
+                rpcRequest,
+                McpErrorModel.ErrorCodeInvalidParams,
+                Resources.Errors.McpInvalidRequest
+            );
+        }
+
+        var toolName = nameElement.GetString()!;
+        if (!_tools.TryGetValue(toolName, out var tool))
+        {
+            return CreateError(
+                rpcRequest,
+                McpErrorModel.ErrorCodeMethodNotFound,
+                string.Format(Resources.Errors.McpMethodNotFound, toolName)
+            );
+        }
+
+        // Parse optional arguments.
+        Dictionary<string, JsonElement>? arguments = null;
+        if (rpcRequest.Params.TryGetValue("arguments", out var argumentsElement)
+            && argumentsElement.ValueKind == JsonValueKind.Object)
+        {
+            arguments = argumentsElement.Deserialize(SourceGenerationContext.Default.DictionaryStringJsonElement);
+        }
+        if (arguments == null)
+        {
+            arguments = new Dictionary<string, JsonElement>();
+        }
+
+        _logger.LogTrace("Call tool '{ToolName}'.", toolName);
+        var result = await tool.CallAsync(_executionThread, arguments, cancellationToken);
+        return new JsonRpcResponse
+        {
+            Id = rpcRequest.Id,
+            Result = result,
+        };
     }
 
     private static JsonRpcErrorResponse CreateError(JsonRpcRequest rpcRequest, int code, string message)

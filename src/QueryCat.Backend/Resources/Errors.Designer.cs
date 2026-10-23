@@ -500,5 +500,11 @@ namespace QueryCat.Backend.Resources {
                 return ResourceManager.GetString("CannotSetValue", resourceCulture);
             }
         }
+        
+        internal static string CannotRunFunctionInSafeMode {
+            get {
+                return ResourceManager.GetString("CannotRunFunctionInSafeMode", resourceCulture);
+            }
+        }
     }
 }

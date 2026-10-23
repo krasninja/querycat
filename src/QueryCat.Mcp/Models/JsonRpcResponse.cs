@@ -24,9 +24,11 @@ public class JsonRpcResponse : JsonRpcFrame
     /// <summary>
     /// Constructor.
     /// </summary>
+    /// <param name="id">Response id.</param>
     /// <param name="result">Result object.</param>
-    public JsonRpcResponse(object? result)
+    public JsonRpcResponse(object? id, object result)
     {
+        Id = id;
         Result = result;
     }
 }

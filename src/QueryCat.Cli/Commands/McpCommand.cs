@@ -1,4 +1,5 @@
 using System.CommandLine;
+using QueryCat.Cli.Infrastructure;
 using QueryCat.Mcp;
 using QueryCat.Mcp.Transports;
 
@@ -47,16 +48,23 @@ internal sealed class McpCommand : BaseCommand
             var transport = parseResult.GetValue(transportOption);
             var safeMode = parseResult.GetValue(safeModeOption);
 
-            applicationOptions.InitializeLogger(useErrorOut: true);
-            await using var root = await applicationOptions.CreateApplicationRootAsync();
-            root.Thread.Options.SafeMode = safeMode;
+            applicationOptions.InitializeLogger(useErrorOut: transport == McpTransport.Stdio);
+            await using var root = await applicationOptions.CreateApplicationRootAsync(new AppExecutionOptions
+            {
+                SafeMode = safeMode,
+                RunBootstrapScript = true,
+                UseConfig = true,
+            });
             var mcpTransport = CreateTransport(new McpServerOptions
             {
                 Url = urls,
                 AllowOrigin = allowOrigin,
             }, transport);
             var mcpServer = new McpServer(root.Thread, mcpTransport);
+            McpServerInitializer.AddDefaultTools(mcpServer);
             await mcpTransport.StartAsync(cancellationToken: cancellationToken);
+
+            // Loop.
             try
             {
                 await mcpServer.LoopAsync(cancellationToken);

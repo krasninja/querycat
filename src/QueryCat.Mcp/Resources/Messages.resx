@@ -21,10 +21,20 @@
   <data name="McpServerListen" xml:space="preserve">
     <value>Listening on {0}</value>
   </data>
-  <data name="McpMethodNotFound" xml:space="preserve">
-    <value>Method not found: {0}</value>
-  </data>
-  <data name="McpInvalidRequest" xml:space="preserve">
-    <value>The request is not a valid JSON-RPC request object.</value>
+  <data name="McpInstructions" xml:space="preserve">
+    <value>QueryCat exposes its function library (built-in functions plus functions from loaded plugins) as MCP tools. Use it for data transformations: string, date/time, math, JSON, encoding, and similar.
+
+Workflow:
+1. Call `search_functions` with a few keywords, e.g. {"term": "date truncate"}. Each word is matched against function names and descriptions. Results include `name`, `description`, `signature` and `relevance`; name matches rank higher. If nothing fits, try synonyms.
+2. Read the `signature`, e.g. `substr(target: string, start: integer, count?: integer): string`. `?` marks an optional argument and `= value` shows its default. A function may have several overloads with different argument types.
+3. Call `call_function` with the exact `name` and `args` as an object keyed by argument name, e.g. {"name": "substr", "args": {"target": "hello", "start": 1, "count": 3}}. You can leave out optional arguments.
+
+Notes:
+- Aggregate functions such as sum or avg cannot be called.
+- In safe mode only read-only functions are allowed.
+- Errors come back as a tool result with isError=true and a message. Fix the arguments and retry.
+- The result is returned as {"result": value}. Integer, Float, Numeric and Boolean are JSON numbers/booleans; String, Timestamp, Interval and other objects are strings; Array and Map are JSON arrays/objects.
+- Functions returning `Object&lt;IRowsInput&gt;` or `Object&lt;IRowsIterator&gt;` return a table: {"columns": {"id": {"type": "integer"}}, "rows": [{"id": 1}, {"id": 2}]}. At most 1000 rows are returned.
+</value>
   </data>
 </root>

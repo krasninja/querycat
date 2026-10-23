@@ -51,15 +51,9 @@ namespace QueryCat.Mcp.Resources {
             }
         }
         
-        internal static string McpMethodNotFound {
+        internal static string McpInstructions {
             get {
-                return ResourceManager.GetString("McpMethodNotFound", resourceCulture);
-            }
-        }
-        
-        internal static string McpInvalidRequest {
-            get {
-                return ResourceManager.GetString("McpInvalidRequest", resourceCulture);
+                return ResourceManager.GetString("McpInstructions", resourceCulture);
             }
         }
     }

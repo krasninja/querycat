@@ -2,6 +2,9 @@ using QueryCat.Backend;
 
 namespace QueryCat.Cli.Infrastructure;
 
+/// <summary>
+/// Application execution options.
+/// </summary>
 public class AppExecutionOptions : ExecutionOptions
 {
 #if ENABLE_PLUGINS
