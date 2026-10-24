@@ -267,7 +267,25 @@ internal sealed partial class SelectPlanner
             if (keyCondition.KeyColumn.IsRequired && keyCondition.Conditions.Length < 1)
             {
                 var column = keyCondition.RowsInput.Columns[keyCondition.KeyColumn.ColumnIndex];
-                throw new QueryMissedConditionException(column.FullName, keyCondition.KeyColumn.GetOperations());
+                var inputContext = context.Inputs.FirstOrDefault(i => i.RowsInput == keyCondition.RowsInput);
+                if (inputContext != null && inputContext.InputSourceFunction != null)
+                {
+                    throw new QueryMissedConditionException(
+                        inputContext.InputSourceFunction.Name,
+                        QueryMissedConditionException.MissedConditionInputSourceType.Function,
+                        column.Name, keyCondition.KeyColumn.GetOperations());
+                }
+                else if (inputContext != null && !string.IsNullOrEmpty(inputContext.InputSourceIdentifier))
+                {
+                    throw new QueryMissedConditionException(
+                        inputContext.InputSourceIdentifier,
+                        QueryMissedConditionException.MissedConditionInputSourceType.Identifier,
+                        column.Name, keyCondition.KeyColumn.GetOperations());
+                }
+                else
+                {
+                    throw new QueryMissedConditionException(column.FullName, keyCondition.KeyColumn.GetOperations());
+                }
             }
         }
     }

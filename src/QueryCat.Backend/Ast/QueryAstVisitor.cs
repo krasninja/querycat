@@ -347,7 +347,7 @@ internal class QueryAstVisitor : AstVisitor
 
     private string GetStringWithParens(IAstNode node) => string.Concat("(", Get(node), ")");
 
-    private static string GetOperationString(VariantValue.Operation operation) => operation switch
+    internal static string GetOperationString(VariantValue.Operation operation) => operation switch
     {
         VariantValue.Operation.Add => "+",
         VariantValue.Operation.Subtract => "-",
@@ -358,7 +358,7 @@ internal class QueryAstVisitor : AstVisitor
         VariantValue.Operation.RightShift => ">>",
 
         VariantValue.Operation.Equals => "=",
-        VariantValue.Operation.NotEquals => "!=",
+        VariantValue.Operation.NotEquals => "<>",
         VariantValue.Operation.Greater => ">",
         VariantValue.Operation.GreaterOrEquals => ">=",
         VariantValue.Operation.Less => "<",

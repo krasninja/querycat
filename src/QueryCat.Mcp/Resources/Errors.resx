@@ -36,4 +36,10 @@
   <data name="McpCannotCallUnsafeFunction" xml:space="preserve">
     <value>Cannot call unsafe function '{0}' in safe mode.</value>
   </data>
+  <data name="McpMissedRequiredOperation" xml:space="preserve">
+    <value>The function returns the input (`Object&lt;IRowsInput&gt;`) that requires filter operation(-s). Try to use `execute_query` tool with the query like `{0}`. Required columns and operations: {1}.</value>
+  </data>
+  <data name="McpQueryRequired" xml:space="preserve">
+    <value>Query argument is required.</value>
+  </data>
 </root>

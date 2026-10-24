@@ -33,6 +33,8 @@ public sealed class ThriftRemoteRowsInput : IRowsInputUpdate, IRowsInputDelete, 
     /// <inheritdoc />
     public Column[] Columns { get; private set; } = [];
 
+    public KeyColumn[] KeyColumns { get; private set; } = [];
+
     private QueryContext _queryContext = NullQueryContext.Instance;
 
     /// <inheritdoc />
@@ -101,8 +103,16 @@ public sealed class ThriftRemoteRowsInput : IRowsInputUpdate, IRowsInputDelete, 
         await session.Client.RowsSet_OpenAsync(_token, _objectHandle, cancellationToken);
         Columns = (await session.Client.RowsSet_GetColumnsAsync(_token, _objectHandle, cancellationToken))
             .Select(SdkConvert.Convert).ToArray();
+        KeyColumns = (await session.Client.RowsSet_GetKeyColumnsAsync(_token, _objectHandle, cancellationToken))
+            .Select(k => new KeyColumn(k.ColumnIndex, k.IsRequired,
+                (k.Operations ?? []).Select(GetOperationByString).ToArray()
+            ))
+            .ToArray();
         UniqueKey = (await session.Client.RowsSet_GetUniqueKeyAsync(_token, _objectHandle, cancellationToken)).ToArray();
     }
+
+    private static VariantValue.Operation GetOperationByString(string op)
+        => Enum.Parse<VariantValue.Operation>(op, ignoreCase: true);
 
     /// <inheritdoc />
     public async Task CloseAsync(CancellationToken cancellationToken = default)
