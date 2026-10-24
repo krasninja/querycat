@@ -92,5 +92,23 @@ namespace QueryCat.Mcp.Resources {
                 return ResourceManager.GetString("McpQueryRequired", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot open the input to get the columns schema. Provide 'args' that match the function signature..
+        /// </summary>
+        internal static string McpFunctionInfoArgumentsRequired {
+            get {
+                return ResourceManager.GetString("McpFunctionInfoArgumentsRequired", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The function result is not a rows input or rows iterator..
+        /// </summary>
+        internal static string McpFunctionInfoInvalidRowsInput {
+            get {
+                return ResourceManager.GetString("McpFunctionInfoInvalidRowsInput", resourceCulture);
+            }
+        }
     }
 }

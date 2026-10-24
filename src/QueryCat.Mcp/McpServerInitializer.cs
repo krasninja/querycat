@@ -16,5 +16,6 @@ public static class McpServerInitializer
         mcpServer.AddTool(new SearchFunctionsTool());
         mcpServer.AddTool(new CallFunctionTool());
         mcpServer.AddTool(new ExecuteQueryTool());
+        mcpServer.AddTool(new GetFunctionInfoTool());
     }
 }

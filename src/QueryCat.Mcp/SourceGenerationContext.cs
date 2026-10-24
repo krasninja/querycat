@@ -33,4 +33,8 @@ namespace QueryCat.Mcp;
 [JsonSerializable(typeof(Dictionary<string, JsonElement>))]
 [JsonSerializable(typeof(SearchFunctionsTool.SearchFunctionsToolFunctionResponse))]
 [JsonSerializable(typeof(SearchFunctionsTool.SearchFunctionsToolResponse))]
+[JsonSerializable(typeof(GetFunctionInfoTool.GetFunctionInfoToolArgumentResponse))]
+[JsonSerializable(typeof(GetFunctionInfoTool.GetFunctionInfoToolColumnResponse))]
+[JsonSerializable(typeof(GetFunctionInfoTool.GetFunctionInfoToolFunctionResponse))]
+[JsonSerializable(typeof(GetFunctionInfoTool.GetFunctionInfoToolResponse))]
 internal partial class SourceGenerationContext : JsonSerializerContext;

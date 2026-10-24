@@ -5,7 +5,6 @@ using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Fetch;
 using QueryCat.Backend.Core.Functions;
-using QueryCat.Backend.Core.Types;
 using QueryCat.Mcp.Models;
 using QueryCat.Mcp.Utils;
 
@@ -52,7 +51,7 @@ internal sealed class CallFunctionTool : IMcpTool
             return McpCallToolResultModel.CreateError(Resources.Errors.McpFunctionNameRequired);
         }
 
-        if (!TryGetCallArguments(arguments, out var callArguments))
+        if (!FunctionCallArgumentsReader.TryRead(arguments, ArgsKey, out var callArguments))
         {
             return McpCallToolResultModel.CreateError(Resources.Errors.McpInvalidFunctionArguments);
         }
@@ -115,47 +114,5 @@ internal sealed class CallFunctionTool : IMcpTool
             ],
             StructuredContent = structuredContent,
         };
-    }
-
-    private static bool TryGetCallArguments(
-        IReadOnlyDictionary<string, JsonElement> arguments,
-        out FunctionCallArguments callArguments)
-    {
-        callArguments = new FunctionCallArguments();
-        if (!arguments.TryGetValue(ArgsKey, out var argsElement)
-            || argsElement.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
-        {
-            return true;
-        }
-
-        // Named arguments.
-        if (argsElement.ValueKind == JsonValueKind.Object)
-        {
-            foreach (var property in argsElement.EnumerateObject())
-            {
-                if (!VariantValue.TryGetValueFromJsonElement(property.Value, out var value))
-                {
-                    return false;
-                }
-                callArguments.Add(property.Name, value);
-            }
-            return true;
-        }
-
-        // Positional arguments.
-        if (argsElement.ValueKind == JsonValueKind.Array)
-        {
-            foreach (var item in argsElement.EnumerateArray())
-            {
-                if (!VariantValue.TryGetValueFromJsonElement(item, out var value))
-                {
-                    return false;
-                }
-                callArguments.Add(value);
-            }
-            return true;
-        }
-
-        return false;
     }
 }

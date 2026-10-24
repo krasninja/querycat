@@ -1,4 +1,6 @@
 using System.Text.Json;
+using Microsoft.Extensions.Logging;
+using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Mcp.Models;
@@ -8,6 +10,8 @@ namespace QueryCat.Mcp.Tools;
 internal sealed class SearchFunctionsTool : IMcpTool
 {
     private const string TermKey = "term";
+
+    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(SearchFunctionsTool));
 
     /// <inheritdoc />
     public McpToolModel Metadata { get; } = new(
@@ -86,6 +90,8 @@ internal sealed class SearchFunctionsTool : IMcpTool
             }
         }
         response.Functions = response.Functions.OrderByDescending(x => x.Relevance).ToList();
+
+        _logger.LogTrace("Search functions by term '{Term}'. Found candidates {CandidatesCount}.", term, response.Functions.Count);
 
         var json = JsonSerializer.SerializeToElement(response,
             SourceGenerationContext.Default.SearchFunctionsToolResponse);

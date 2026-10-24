@@ -42,4 +42,10 @@
   <data name="McpQueryRequired" xml:space="preserve">
     <value>Query argument is required.</value>
   </data>
+  <data name="McpFunctionInfoArgumentsRequired" xml:space="preserve">
+    <value>Cannot open the input to get the columns schema. Provide 'args' that match the function signature.</value>
+  </data>
+  <data name="McpFunctionInfoInvalidRowsInput" xml:space="preserve">
+    <value>The function result is not a rows input or rows iterator.</value>
+  </data>
 </root>

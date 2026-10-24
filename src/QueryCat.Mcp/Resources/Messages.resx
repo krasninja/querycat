@@ -27,7 +27,7 @@
 Workflow:
 1. Call `search_functions` with a few keywords, e.g. {"term": "date truncate"}. Each word is matched against function names and descriptions. Results include `name`, `description`, `signature` and `relevance`; name matches rank higher. If nothing fits, try synonyms.
 2. Read the `signature`, e.g. `substr(target: string, start: integer, count?: integer): string`. `?` marks an optional argument and `= value` shows its default. A function may have several overloads with different argument types.
-3. If function's return type is `Object&lt;IRowsInput&gt;` or `Object&lt;IRowsIterator&gt;` call `execute_query` tool, f.e. "SELECT * FROM function_name()".
+3. If function's return type is `Object&lt;IRowsInput&gt;` or `Object&lt;IRowsIterator&gt;` call `execute_query` tool, f.e. "SELECT * FROM function_name()". For "FROM" use functions calling format (`SELECT * FROM get_users` must be `SELECT * FROM get_users()`).
 4. Otherwise call `call_function` with the exact `name` and `args` as an object keyed by argument name, e.g. {"name": "substr", "args": {"target": "hello", "start": 1, "count": 3}}. You can leave out optional arguments.
 
 Notes:
