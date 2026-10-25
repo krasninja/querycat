@@ -1,6 +1,5 @@
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
-using QueryCat.Backend.Commands;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Fetch;
@@ -29,27 +28,30 @@ internal sealed class ExecuteQueryTool : IMcpTool
             {
                 [QueryKey] = new(McpToolSchemaPropertyModel.TypeString, "SQL query"),
                 [MaxRowsKey] = new(McpToolSchemaPropertyModel.TypeInteger,
-                    "Max rows to return"),
+                    $"Max rows to return, cannot be greater than {VariantValueJsonSerializer.MaxRowsCount}. "
+                    + "The result has 'truncated' flag set if there are more rows."),
             },
             Required = [QueryKey],
+        },
+        Annotations = new McpToolAnnotationsModel
+        {
+            ReadOnlyHint = false,
+            OpenWorldHint = true,
         },
     };
 
     /// <inheritdoc />
-    public async Task<McpCallToolResultModel> CallAsync(IExecutionThread thread, IReadOnlyDictionary<string, JsonElement> arguments, CancellationToken cancellationToken)
+    public async Task<McpCallToolResultModel> CallAsync(
+        IExecutionThread thread,
+        IReadOnlyDictionary<string, JsonElement> arguments,
+        CancellationToken cancellationToken)
     {
-        var query = arguments.TryGetValue(QueryKey, out var queryElement) && queryElement.ValueKind == JsonValueKind.String
-            ? (queryElement.GetString() ?? string.Empty).Trim()
-            : string.Empty;
+        var query = ToolArgumentsUtils.GetString(arguments, QueryKey);
         if (string.IsNullOrEmpty(query))
         {
             return McpCallToolResultModel.CreateError(Resources.Errors.McpQueryRequired);
         }
-        var maxRows = arguments.TryGetValue(MaxRowsKey, out var maxRowsElement)
-                      && maxRowsElement.ValueKind == JsonValueKind.Number
-                      && maxRowsElement.TryGetInt32(out var maxRowsInt)
-            ? maxRowsInt
-            : VariantValueJsonSerializer.MaxRowsCount;
+        var maxRows = ToolArgumentsUtils.GetInt32(arguments, MaxRowsKey, VariantValueJsonSerializer.MaxRowsCount);
 
         _logger.LogTrace("Query '{Query}', MaxRows {MaxRows}.", query, maxRows);
         JsonElement structuredContent;
@@ -57,10 +59,6 @@ internal sealed class ExecuteQueryTool : IMcpTool
         {
             var result = await thread.RunAsync(query, null, cancellationToken);
             structuredContent = await VariantValueJsonSerializer.CreateStructuredContentAsync(result, maxRows, cancellationToken);
-        }
-        catch (SafeModeException e)
-        {
-            return McpCallToolResultModel.CreateError(e.Message);
         }
         catch (QueryMissedConditionException e)
         {
@@ -71,16 +69,6 @@ internal sealed class ExecuteQueryTool : IMcpTool
             return McpCallToolResultModel.CreateError(e.Message);
         }
 
-        return new McpCallToolResultModel
-        {
-            Content =
-            [
-                new McpToolTextContentModel
-                {
-                    Text = structuredContent.ToString(),
-                },
-            ],
-            StructuredContent = structuredContent,
-        };
+        return McpCallToolResultModel.CreateStructured(structuredContent);
     }
 }

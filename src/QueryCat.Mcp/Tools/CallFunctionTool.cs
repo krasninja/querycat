@@ -35,6 +35,11 @@ internal sealed class CallFunctionTool : IMcpTool
             },
             Required = [NameKey],
         },
+        Annotations = new McpToolAnnotationsModel
+        {
+            ReadOnlyHint = false,
+            OpenWorldHint = true,
+        },
     };
 
     /// <inheritdoc />
@@ -43,9 +48,7 @@ internal sealed class CallFunctionTool : IMcpTool
         IReadOnlyDictionary<string, JsonElement> arguments,
         CancellationToken cancellationToken)
     {
-        var name = arguments.TryGetValue(NameKey, out var nameElement) && nameElement.ValueKind == JsonValueKind.String
-            ? (nameElement.GetString() ?? string.Empty).Trim()
-            : string.Empty;
+        var name = ToolArgumentsUtils.GetString(arguments, NameKey);
         if (string.IsNullOrEmpty(name))
         {
             return McpCallToolResultModel.CreateError(Resources.Errors.McpFunctionNameRequired);
@@ -103,16 +106,6 @@ internal sealed class CallFunctionTool : IMcpTool
             return McpCallToolResultModel.CreateError(e.Message);
         }
 
-        return new McpCallToolResultModel
-        {
-            Content =
-            [
-                new McpToolTextContentModel
-                {
-                    Text = structuredContent.ToString(),
-                },
-            ],
-            StructuredContent = structuredContent,
-        };
+        return McpCallToolResultModel.CreateStructured(structuredContent);
     }
 }

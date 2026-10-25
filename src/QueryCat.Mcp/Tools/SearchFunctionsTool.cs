@@ -4,6 +4,7 @@ using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Mcp.Models;
+using QueryCat.Mcp.Utils;
 
 namespace QueryCat.Mcp.Tools;
 
@@ -27,6 +28,13 @@ internal sealed class SearchFunctionsTool : IMcpTool
             },
             Required = [TermKey],
         },
+        Annotations = new McpToolAnnotationsModel
+        {
+            ReadOnlyHint = true,
+            DestructiveHint = false,
+            IdempotentHint = true,
+            OpenWorldHint = false,
+        },
     };
 
     internal sealed class SearchFunctionsToolFunctionResponse
@@ -39,7 +47,7 @@ internal sealed class SearchFunctionsTool : IMcpTool
 
         public float Relevance { get; }
 
-        public SearchFunctionsToolFunctionResponse(IFunction function, float relevance = 0.5f)
+        public SearchFunctionsToolFunctionResponse(IFunction function, float relevance)
         {
             Name = function.Name;
             Description = function.Description;
@@ -54,17 +62,15 @@ internal sealed class SearchFunctionsTool : IMcpTool
     }
 
     /// <inheritdoc />
-    public async Task<McpCallToolResultModel> CallAsync(
+    public Task<McpCallToolResultModel> CallAsync(
         IExecutionThread thread,
         IReadOnlyDictionary<string, JsonElement> arguments,
         CancellationToken cancellationToken)
     {
-        var term = arguments.TryGetValue(TermKey, out var termElement) && termElement.ValueKind == JsonValueKind.String
-            ? (termElement.GetString() ?? string.Empty).Trim()
-            : string.Empty;
+        var term = ToolArgumentsUtils.GetString(arguments, TermKey);
         if (string.IsNullOrEmpty(term))
         {
-            return McpCallToolResultModel.CreateError("Term is required.");
+            return Task.FromResult(McpCallToolResultModel.CreateError(Resources.Errors.McpTermRequired));
         }
 
         var response = new SearchFunctionsToolResponse();
@@ -74,7 +80,7 @@ internal sealed class SearchFunctionsTool : IMcpTool
             var relevance = 0.0f;
             foreach (var termPart in termParts)
             {
-                if (function.Name.Contains(termPart, StringComparison.OrdinalIgnoreCase) )
+                if (function.Name.Contains(termPart, StringComparison.OrdinalIgnoreCase))
                 {
                     relevance += 0.3f;
                 }
@@ -95,16 +101,6 @@ internal sealed class SearchFunctionsTool : IMcpTool
 
         var json = JsonSerializer.SerializeToElement(response,
             SourceGenerationContext.Default.SearchFunctionsToolResponse);
-        return new McpCallToolResultModel
-        {
-            Content =
-            [
-                new McpToolTextContentModel
-                {
-                    Text = json.ToString(),
-                }
-            ],
-            StructuredContent = json,
-        };
+        return Task.FromResult(McpCallToolResultModel.CreateStructured(json));
     }
 }

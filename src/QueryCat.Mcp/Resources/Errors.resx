@@ -48,4 +48,22 @@
   <data name="McpFunctionInfoInvalidRowsInput" xml:space="preserve">
     <value>The function result is not a rows input or rows iterator.</value>
   </data>
+  <data name="McpToolNameRequired" xml:space="preserve">
+    <value>Tool name is required.</value>
+  </data>
+  <data name="McpUnknownTool" xml:space="preserve">
+    <value>Unknown tool: {0}</value>
+  </data>
+  <data name="McpInternalError" xml:space="preserve">
+    <value>Internal server error.</value>
+  </data>
+  <data name="McpTermRequired" xml:space="preserve">
+    <value>Term is required.</value>
+  </data>
+  <data name="McpFunctionInfoUnsafeFunction" xml:space="preserve">
+    <value>The function is not safe, it is not called to get the columns schema. Use `execute_query` tool with the query like `SELECT * FROM {0}([arguments]) LIMIT 0` instead.</value>
+  </data>
+  <data name="McpRequestTooLarge" xml:space="preserve">
+    <value>The request is too large.</value>
+  </data>
 </root>

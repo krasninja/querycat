@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Column attributes.
 - Add function "array_to_string".
+- MCP server (`qcat mcp`) with stdio and HTTP transports.
 
 ### Changed
 

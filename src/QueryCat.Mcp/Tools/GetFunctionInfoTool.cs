@@ -26,7 +26,8 @@ internal sealed class GetFunctionInfoTool : IMcpTool
         Description = "Returns detailed information about all function overloads: signature, description, "
             + "arguments and return type. For functions that return Object<IRowsInput> or Object<IRowsIterator> "
             + "it also returns the output columns schema (names, types and supported key filter operations). "
-            + "To get the columns schema provide the arguments required to open the input.",
+            + "To get the columns schema provide the arguments required to open the input. "
+            + "Only safe functions are called to get the columns schema.",
         InputSchema = new McpToolInputSchemaModel
         {
             Properties = new Dictionary<string, McpToolSchemaPropertyModel>
@@ -37,6 +38,11 @@ internal sealed class GetFunctionInfoTool : IMcpTool
                     + "Used only to open rows input and get its columns schema."),
             },
             Required = [NameKey],
+        },
+        Annotations = new McpToolAnnotationsModel
+        {
+            ReadOnlyHint = true,
+            DestructiveHint = false,
         },
     };
 
@@ -135,9 +141,7 @@ internal sealed class GetFunctionInfoTool : IMcpTool
         IReadOnlyDictionary<string, JsonElement> arguments,
         CancellationToken cancellationToken)
     {
-        var name = arguments.TryGetValue(NameKey, out var nameElement) && nameElement.ValueKind == JsonValueKind.String
-            ? (nameElement.GetString() ?? string.Empty).Trim()
-            : string.Empty;
+        var name = ToolArgumentsUtils.GetString(arguments, NameKey);
         if (string.IsNullOrEmpty(name))
         {
             return McpCallToolResultModel.CreateError(Resources.Errors.McpFunctionNameRequired);
@@ -156,8 +160,12 @@ internal sealed class GetFunctionInfoTool : IMcpTool
             return McpCallToolResultModel.CreateError(new CannotFindFunctionException(name).Message);
         }
 
-        // The overload to call to get the rows input schema.
-        var callFunction = thread.FunctionsManager.FindByName(name, callArguments.GetTypes()).FirstOrDefault();
+        // The overload to call to get the rows input schema. Call it only if the arguments are explicitly provided.
+        var hasArguments = arguments.TryGetValue(ArgsKey, out var argsElement)
+            && argsElement.ValueKind is not (JsonValueKind.Null or JsonValueKind.Undefined);
+        var callFunction = hasArguments
+            ? thread.FunctionsManager.FindByName(name, callArguments.GetTypes()).FirstOrDefault()
+            : null;
 
         var response = new GetFunctionInfoToolResponse();
         foreach (var function in functions)
@@ -169,6 +177,10 @@ internal sealed class GetFunctionInfoTool : IMcpTool
                 {
                     functionResponse.ColumnsError = Resources.Errors.McpFunctionInfoArgumentsRequired;
                 }
+                else if (callFunction == function && !function.IsSafe)
+                {
+                    functionResponse.ColumnsError = string.Format(Resources.Errors.McpFunctionInfoUnsafeFunction, function.Name);
+                }
                 else if (callFunction == function)
                 {
                     await FillColumnsAsync(thread, function, callArguments, functionResponse, cancellationToken);
@@ -179,17 +191,7 @@ internal sealed class GetFunctionInfoTool : IMcpTool
 
         var json = JsonSerializer.SerializeToElement(response,
             SourceGenerationContext.Default.GetFunctionInfoToolResponse);
-        return new McpCallToolResultModel
-        {
-            Content =
-            [
-                new McpToolTextContentModel
-                {
-                    Text = json.ToString(),
-                },
-            ],
-            StructuredContent = json,
-        };
+        return McpCallToolResultModel.CreateStructured(json);
     }
 
     private static bool IsRowsSourceFunction(IFunction function)

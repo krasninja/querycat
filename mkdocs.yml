@@ -57,6 +57,7 @@ nav:
   - 'Features':
     - 'Autoexec': features/autoexec.md
     - 'Web Server': features/web-server.md
+    - 'MCP Server': features/mcp-server.md
   - 'Development':
     - 'Overview': development/index.md
     - 'Components': development/components.md

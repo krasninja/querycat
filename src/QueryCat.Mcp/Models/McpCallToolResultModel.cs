@@ -46,4 +46,25 @@ public sealed class McpCallToolResultModel : McpResultModel
             }
         };
     }
+
+    /// <summary>
+    /// Create successful response with structured content. The same content is also added
+    /// as serialized text for clients that do not support structured content.
+    /// </summary>
+    /// <param name="structuredContent">Structured content.</param>
+    /// <returns>Instance of <see cref="McpCallToolResultModel" />.</returns>
+    public static McpCallToolResultModel CreateStructured(JsonElement structuredContent)
+    {
+        return new McpCallToolResultModel
+        {
+            Content =
+            [
+                new McpToolTextContentModel
+                {
+                    Text = structuredContent.ToString(),
+                },
+            ],
+            StructuredContent = structuredContent,
+        };
+    }
 }

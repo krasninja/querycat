@@ -35,7 +35,8 @@ Notes:
 - In safe mode only read-only functions are allowed.
 - Errors come back as a tool result with isError=true and a message. Fix the arguments and retry.
 - The result is returned as {"result": value}. Integer, Float, Numeric and Boolean are JSON numbers/booleans; String, Timestamp, Interval and other objects are strings; Array and Map are JSON arrays/objects.
-- Functions returning `Object&lt;IRowsInput&gt;` or `Object&lt;IRowsIterator&gt;` return a table: {"columns": {"id": {"type": "integer"}}, "rows": [{"id": 1}, {"id": 2}]}. At most 1000 rows are returned.
+- Functions returning `Object&lt;IRowsInput&gt;` or `Object&lt;IRowsIterator&gt;` return a table: {"columns": {"id": {"type": "integer"}}, "rows": [{"id": 1}, {"id": 2}]}. At most 1000 rows are returned, `truncated` is true if there are more rows.
+- Float NaN and infinity values are returned as strings.
 </value>
   </data>
 </root>

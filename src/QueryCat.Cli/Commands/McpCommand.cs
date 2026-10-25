@@ -29,15 +29,15 @@ internal sealed class McpCommand : BaseCommand
             Description = Resources.Messages.McpCommand_TransportDescription,
             DefaultValueFactory = _ => McpTransport.Http,
         };
-        var safeModeOption = new Option<bool>("--safe-mode")
+        var unsafeOption = new Option<bool>("--unsafe")
         {
-            Description = Resources.Messages.ServeCommand_SafeModeDescription,
+            Description = Resources.Messages.McpCommand_UnsafeDescription,
         };
 
         Add(urlOption);
         Add(allowOriginOption);
         Add(transportOption);
-        Add(safeModeOption);
+        Add(unsafeOption);
         this.SetAction(async (parseResult, cancellationToken) =>
         {
             parseResult.InvocationConfiguration.EnableDefaultExceptionHandler = false;
@@ -46,12 +46,12 @@ internal sealed class McpCommand : BaseCommand
             var urls = parseResult.GetValue(urlOption);
             var allowOrigin = parseResult.GetValue(allowOriginOption);
             var transport = parseResult.GetValue(transportOption);
-            var safeMode = parseResult.GetValue(safeModeOption);
+            var unsafeMode = parseResult.GetValue(unsafeOption);
 
             applicationOptions.InitializeLogger(useErrorOut: transport == McpTransport.Stdio);
             await using var root = await applicationOptions.CreateApplicationRootAsync(new AppExecutionOptions
             {
-                SafeMode = safeMode,
+                SafeMode = !unsafeMode,
                 RunBootstrapScript = true,
                 UseConfig = true,
             });

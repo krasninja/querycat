@@ -110,5 +110,59 @@ namespace QueryCat.Mcp.Resources {
                 return ResourceManager.GetString("McpFunctionInfoInvalidRowsInput", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Tool name is required..
+        /// </summary>
+        internal static string McpToolNameRequired {
+            get {
+                return ResourceManager.GetString("McpToolNameRequired", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Unknown tool: {0}.
+        /// </summary>
+        internal static string McpUnknownTool {
+            get {
+                return ResourceManager.GetString("McpUnknownTool", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Internal server error..
+        /// </summary>
+        internal static string McpInternalError {
+            get {
+                return ResourceManager.GetString("McpInternalError", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Term is required..
+        /// </summary>
+        internal static string McpTermRequired {
+            get {
+                return ResourceManager.GetString("McpTermRequired", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The function is not safe, it is not called to get the columns schema. Use `execute_query` tool with the query like `SELECT * FROM {0}([arguments]) LIMIT 0` instead..
+        /// </summary>
+        internal static string McpFunctionInfoUnsafeFunction {
+            get {
+                return ResourceManager.GetString("McpFunctionInfoUnsafeFunction", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The request is too large..
+        /// </summary>
+        internal static string McpRequestTooLarge {
+            get {
+                return ResourceManager.GetString("McpRequestTooLarge", resourceCulture);
+            }
+        }
     }
 }

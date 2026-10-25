@@ -404,5 +404,11 @@ namespace QueryCat.Cli.Resources {
                 return ResourceManager.GetString("McpCommand_TransportDescription", resourceCulture);
             }
         }
+        
+        internal static string McpCommand_UnsafeDescription {
+            get {
+                return ResourceManager.GetString("McpCommand_UnsafeDescription", resourceCulture);
+            }
+        }
     }
 }

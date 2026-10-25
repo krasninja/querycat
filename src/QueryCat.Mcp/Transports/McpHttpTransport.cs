@@ -104,9 +104,10 @@ public sealed class McpHttpTransport : IMcpTransport, IAsyncDisposable
             }
             catch (Exception e) when (e is not OperationCanceledException)
             {
-                _logger.LogDebug(e, "[{Address}]: cannot process request.", context.Request.RemoteEndPoint.Address);
+                _logger.LogWarning(e, "[{Address}]: cannot process request.", context.Request.RemoteEndPoint.Address);
                 await SendResponseInternalAsync(
-                    new JsonRpcErrorResponse(new McpErrorModel(McpErrorModel.ErrorCodeInternalError, e.Message)),
+                    new JsonRpcErrorResponse(new McpErrorModel(McpErrorModel.ErrorCodeInternalError,
+                        Resources.Errors.McpInternalError)),
                     context,
                     HttpStatusCode.InternalServerError,
                     cancellationToken).ConfigureAwait(false);
@@ -189,13 +190,16 @@ public sealed class McpHttpTransport : IMcpTransport, IAsyncDisposable
             return null;
         }
 
-        // Large request protection.
+        // Large request protection. Content length is not set for chunked requests, so limit the read as well.
         if (context.Request.ContentLength64 > MaxRequestLength)
         {
-            _logger.LogWarning("[{Address}]: request content length is too large: {Length} bytes.",
-                context.Request.RemoteEndPoint.Address, context.Request.ContentLength64);
-            response.StatusCode = (int)HttpStatusCode.RequestEntityTooLarge;
-            response.Close();
+            _logger.LogWarning("[{Address}]: request content length is too large.", context.Request.RemoteEndPoint.Address);
+            await SendResponseInternalAsync(
+                new JsonRpcErrorResponse(new McpErrorModel(McpErrorModel.ErrorCodeInvalidRequest,
+                    Resources.Errors.McpRequestTooLarge)),
+                context,
+                HttpStatusCode.RequestEntityTooLarge,
+                cancellationToken);
             return null;
         }
 

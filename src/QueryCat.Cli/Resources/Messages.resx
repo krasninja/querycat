@@ -205,4 +205,7 @@
   <data name="McpCommand_TransportDescription" xml:space="preserve">
     <value>Use stdio or HTTP transport.</value>
   </data>
+  <data name="McpCommand_UnsafeDescription" xml:space="preserve">
+    <value>Allow to call unsafe functions and modification commands (INSERT, UPDATE, DELETE). By default, the MCP server runs in safe mode.</value>
+  </data>
 </root>

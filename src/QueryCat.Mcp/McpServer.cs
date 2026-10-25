@@ -16,7 +16,8 @@ public sealed class McpServer
     /// </summary>
     public const string ProtocolVersion = "2025-11-25";
 
-    private static readonly string[] _supportedProtocolVersions = [ProtocolVersion, "2025-06-18", "2025-03-26"];
+    // The 2025-03-26 version is not supported because it requires JSON-RPC batching.
+    private static readonly string[] _supportedProtocolVersions = [ProtocolVersion, "2025-06-18"];
 
     private readonly IExecutionThread _executionThread;
     private readonly IMcpTransport _mcpTransport;
@@ -94,10 +95,10 @@ public sealed class McpServer
             }
             catch (Exception e)
             {
-                _logger.LogDebug(e, "Error processing '{Method}'.", request.Method);
+                _logger.LogWarning(e, "Error processing '{Method}'.", request.Method);
                 response = request.IsNotification
                     ? new JsonRpcResponse()
-                    : CreateError(request, McpErrorModel.ErrorCodeInternalError, e.Message);
+                    : CreateError(request, McpErrorModel.ErrorCodeInternalError, Resources.Errors.McpInternalError);
             }
             response.SpanId = request.SpanId;
             await _mcpTransport.SendResponseAsync(response, cancellationToken);
@@ -169,7 +170,7 @@ public sealed class McpServer
             return CreateError(
                 rpcRequest,
                 McpErrorModel.ErrorCodeInvalidParams,
-                Resources.Errors.McpInvalidRequest
+                Resources.Errors.McpToolNameRequired
             );
         }
 
@@ -178,8 +179,8 @@ public sealed class McpServer
         {
             return CreateError(
                 rpcRequest,
-                McpErrorModel.ErrorCodeMethodNotFound,
-                string.Format(Resources.Errors.McpMethodNotFound, toolName)
+                McpErrorModel.ErrorCodeInvalidParams,
+                string.Format(Resources.Errors.McpUnknownTool, toolName)
             );
         }
 
@@ -190,13 +191,20 @@ public sealed class McpServer
         {
             arguments = argumentsElement.Deserialize(SourceGenerationContext.Default.DictionaryStringJsonElement);
         }
-        if (arguments == null)
-        {
-            arguments = new Dictionary<string, JsonElement>();
-        }
+        arguments ??= new Dictionary<string, JsonElement>();
 
         _logger.LogTrace("Call tool '{ToolName}'.", toolName);
-        var result = await tool.CallAsync(_executionThread, arguments, cancellationToken);
+        McpCallToolResultModel result;
+        try
+        {
+            result = await tool.CallAsync(_executionThread, arguments, cancellationToken);
+        }
+        catch (Exception e) when (e is not OperationCanceledException)
+        {
+            // Report tool execution errors as the tool result, so the client can see it and retry.
+            _logger.LogDebug(e, "Error calling tool '{ToolName}'.", toolName);
+            result = McpCallToolResultModel.CreateError(e.Message);
+        }
         return new JsonRpcResponse
         {
             Id = rpcRequest.Id,
