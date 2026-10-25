@@ -288,6 +288,8 @@ public partial class ThriftPluginClient : IDisposable
             {
                 IsSafe = f.IsSafe,
                 FormatterIds = f.Formatters.ToList(),
+                ArgumentsDescriptions = SdkConvert.GetArgumentsDescriptions(f),
+                Examples = f.Examples.ToList(),
             }).ToList();
         pluginData ??= SdkConvert.Convert(Assembly.GetEntryAssembly());
         pluginData.Functions = functions;

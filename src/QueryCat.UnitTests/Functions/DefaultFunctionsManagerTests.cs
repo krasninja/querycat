@@ -158,4 +158,34 @@ public sealed class DefaultFunctionsManagerTests
             return int.Parse(str);
         }
     }
+
+    [Fact]
+    public void RegisterFunction_WithArgumentDescriptionsAndExamples_ShouldExposeMetadata()
+    {
+        // Act.
+        _functionsManager.RegisterFunction(SumIntegersDescribed);
+        var func = _functionsManager.FindByNameFirst("add_described",
+            FunctionCallArgumentsTypes.FromPositionArguments(DataType.Integer, DataType.Integer));
+        var funcFromMetadata = _functionsManager.Factory.CreateFromSignature(
+            "add_described(a: integer, b: integer): integer",
+            SumIntegersDescribed,
+            FunctionMetadata.CreateFromAttributes(((Delegate)SumIntegersDescribed).Method));
+
+        // Assert.
+        foreach (var function in new[] { func, funcFromMetadata })
+        {
+            Assert.Equal("First value.", function.Arguments[0].Description);
+            Assert.Equal(string.Empty, function.Arguments[1].Description);
+            Assert.Equal(["add_described(1, 2)", "SELECT add_described(1, 2)"], function.Examples);
+        }
+    }
+
+    [FunctionSignature("add_described(a: integer, b: integer): integer")]
+    [FunctionArgumentDescription("a", "First value.")]
+    [FunctionExample("add_described(1, 2)")]
+    [FunctionExample("SELECT add_described(1, 2)")]
+    private static VariantValue SumIntegersDescribed(IExecutionThread thread)
+    {
+        return new VariantValue(thread.Stack[0].AsInteger + thread.Stack[1].AsInteger);
+    }
 }

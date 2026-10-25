@@ -602,6 +602,8 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
                     IsSafe = function.IsSafe,
                     IsAggregate = function.IsAggregate,
                     Formatters = function.Formatters ?? [],
+                    ArgumentsDescriptions = function.ArgumentsDescriptions ?? new Dictionary<string, string>(),
+                    Examples = function.Examples ?? [],
                 });
             functionsManager.RegisterFunction(internalFunction);
             wrapper.FunctionName = internalFunction.Name;
@@ -660,6 +662,9 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
                     Description = function.Description,
                     IsSafe = function.IsSafe,
                     IsAggregate = function.IsAggregate,
+                    Formatters = function.Formatters ?? [],
+                    ArgumentsDescriptions = function.ArgumentsDescriptions ?? new Dictionary<string, string>(),
+                    Examples = function.Examples ?? [],
                 });
             functionsManager.RegisterFunction(internalFunction);
             wrapper.FunctionName = internalFunction.Name;

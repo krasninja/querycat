@@ -46,7 +46,10 @@ public sealed class GetFunctionsInMarkdownTask : AsyncFrostingTask<BuildContext>
                 a.DefaultValue,
                 a.IsOptional,
                 a.IsArray,
-                a.IsVariadic))
+                a.IsVariadic)
+            {
+                Description = a.Description,
+            })
             .ToArray();
 
         /// <inheritdoc />
@@ -54,6 +57,9 @@ public sealed class GetFunctionsInMarkdownTask : AsyncFrostingTask<BuildContext>
 
         /// <inheritdoc />
         public string[] Formatters => _function.Formatters;
+
+        /// <inheritdoc />
+        public string[] Examples => _function.Examples;
 
         public LowercaseFunctionWrapper(IFunction function)
         {

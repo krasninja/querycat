@@ -43,6 +43,11 @@ public sealed class FunctionSignatureArgument : ICloneable
     public bool IsVariadic { get; }
 
     /// <summary>
+    /// Argument description.
+    /// </summary>
+    public string Description { get; init; } = string.Empty;
+
+    /// <summary>
     /// Constructor.
     /// </summary>
     /// <param name="name">Argument name.</param>
@@ -90,6 +95,7 @@ public sealed class FunctionSignatureArgument : ICloneable
             argument.IsArray,
             argument.IsVariadic)
     {
+        Description = argument.Description;
     }
 
     /// <inheritdoc />

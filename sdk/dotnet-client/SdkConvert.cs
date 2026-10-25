@@ -638,6 +638,16 @@ public static class SdkConvert
         return callArgs;
     }
 
+    /// <summary>
+    /// Get map of argument name to its description. Arguments without description are skipped.
+    /// </summary>
+    /// <param name="function">Function.</param>
+    /// <returns>Arguments descriptions.</returns>
+    public static Dictionary<string, string> GetArgumentsDescriptions(Backend.Core.Functions.IFunction function)
+        => function.Arguments
+            .Where(a => !string.IsNullOrEmpty(a.Description))
+            .ToDictionary(a => a.Name, a => a.Description);
+
     public static Sdk.FunctionCallArgumentsTypes Convert(Backend.Core.Functions.FunctionCallArgumentsTypes target)
         => new(
             named: target.Named.ToDictionary(a => a.Key, a => Convert(a.Value)),

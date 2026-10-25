@@ -86,7 +86,9 @@ public partial class ThriftPluginsServer
                             function.Description,
                             function.IsSafe,
                             function.IsAggregate,
-                            (function.FormatterIds ?? []).ToArray()
+                            (function.FormatterIds ?? []).ToArray(),
+                            function.ArgumentsDescriptions,
+                            function.Examples?.ToArray()
                         )
                     );
                 }
@@ -325,6 +327,9 @@ public partial class ThriftPluginsServer
                 function.IsAggregate)
             {
                 IsSafe = function.IsSafe,
+                FormatterIds = function.Formatters.ToList(),
+                ArgumentsDescriptions = SdkConvert.GetArgumentsDescriptions(function),
+                Examples = function.Examples.ToList(),
             };
 
         /// <inheritdoc />
@@ -344,7 +349,9 @@ public partial class ThriftPluginsServer
                         function.Description,
                         function.IsSafe,
                         function.IsAggregate,
-                        (function.FormatterIds ?? []).ToArray()
+                        (function.FormatterIds ?? []).ToArray(),
+                        function.ArgumentsDescriptions,
+                        function.Examples?.ToArray()
                     )
                 );
             }

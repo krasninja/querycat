@@ -52,4 +52,9 @@ public interface IFunction
     /// It is applied only for rows sources.
     /// </summary>
     string[] Formatters { get; }
+
+    /// <summary>
+    /// Examples of the function call or its usage in SQL query.
+    /// </summary>
+    string[] Examples { get; }
 }

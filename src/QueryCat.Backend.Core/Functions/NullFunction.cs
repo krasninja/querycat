@@ -39,4 +39,7 @@ public sealed class NullFunction : IFunction
 
     /// <inheritdoc />
     public string[] Formatters => [];
+
+    /// <inheritdoc />
+    public string[] Examples => [];
 }
