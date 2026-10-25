@@ -100,6 +100,16 @@ enum ErrorType {
   INVALID_AUTH_TOKEN = 11,
 
   INVALID_FUNCTION = 20,
+
+  QUERYCAT_IO_SOURCE = 50, // IOSourceException.
+  QUERYCAT_AUTHORIZATION = 51, // AuthorizationException.
+  QUERYCAT_CANNOT_FIND_ARGUMENT = 52, // CannotFindArgumentException.
+  QUERYCAT_CANNOT_FIND_FUNCTION = 53, // CannotFindFunctionException.
+  QUERYCAT_CANNOT_SET_VALUE = 54, // CannotSetValueException.
+  QUERYCAT_INVALID_FUNCTION_ARGUMENT = 55, // InvalidFunctionArgumentException.
+  QUERYCAT_INVALID_VARIANT_TYPE = 56, // InvalidVariantTypeException.
+  QUERYCAT_MISSED_CONDITION = 57, // QueryMissedConditionException.
+  QUERYCAT_SAFE_MODE = 58 // SafeModeException.
 }
 
 // The error code that is returned by several QueryCat methods.
@@ -143,7 +153,9 @@ exception QueryCatPluginException {
   3: optional i32 object_handle,
   4: optional string exception_type,
   5: optional string exception_stack_trace,
-  6: optional QueryCatPluginException exception_nested
+  6: optional QueryCatPluginException exception_nested,
+  // Exception data, it can be used to construct the original exception.
+  7: optional map<string, VariantValue> data
 }
 
 /*
@@ -160,7 +172,13 @@ struct Function {
   // The function is safe if it only reads data.
   4: optional bool is_safe,
   // Register formatter for a specific file extensions or MIME types.
-  5: optional list<string> formatter_ids
+  5: optional list<string> formatter_ids,
+  // Map of argument name (as in signature) -> description.
+  6: optional map<string, string> arguments_descriptions,
+  // Examples of function call.
+  7: optional list<string> examples,
+  // Function category.
+  8: optional string category
 }
 
 struct PluginData {

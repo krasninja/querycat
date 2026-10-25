@@ -12,7 +12,8 @@ public sealed class QueryMissedConditionException : QueryCatException
     /// </summary>
     public enum MissedConditionInputSourceType
     {
-        Function,
+        Unknown = -1,
+        Function = 0,
         Identifier,
     }
 
@@ -29,7 +30,7 @@ public sealed class QueryMissedConditionException : QueryCatException
     /// <summary>
     /// Input source name of function or identifier.
     /// </summary>
-    public string InputSourceName { get; } = string.Empty;
+    public string InputSourceName { get; }
 
     /// <summary>
     /// Input source type.
@@ -39,13 +40,25 @@ public sealed class QueryMissedConditionException : QueryCatException
     /// <summary>
     /// Constructor.
     /// </summary>
+    /// <param name="sourceName">Source name.</param>
+    /// <param name="sourceType">Source type.</param>
     /// <param name="columnName">Column name.</param>
     /// <param name="operations">Operations.</param>
-    public QueryMissedConditionException(string columnName, IReadOnlyCollection<VariantValue.Operation> operations)
-        : base(string.Format(Resources.Errors.QueryMissedRequiredCondition, columnName, string.Join(", ", operations)))
+    /// <param name="innerException">Inner exception.</param>
+    public QueryMissedConditionException(
+        string sourceName,
+        MissedConditionInputSourceType sourceType,
+        string columnName,
+        IReadOnlyCollection<VariantValue.Operation> operations,
+        Exception? innerException)
+        : base(
+            string.Format(Resources.Errors.QueryMissedRequiredCondition, columnName, string.Join(", ", operations)),
+            innerException)
     {
         ColumnName = columnName;
         Operations = operations;
+        InputSourceName = sourceName;
+        InputSourceType = sourceType;
     }
 
     /// <summary>
@@ -60,9 +73,19 @@ public sealed class QueryMissedConditionException : QueryCatException
         MissedConditionInputSourceType sourceType,
         string columnName,
         IReadOnlyCollection<VariantValue.Operation> operations)
-        : this(columnName, operations)
+        : this(sourceName, sourceType, columnName, operations, null)
     {
-        InputSourceName = sourceName;
-        InputSourceType = sourceType;
+    }
+
+    /// <summary>
+    /// Constructor.
+    /// </summary>
+    /// <param name="columnName">Column name.</param>
+    /// <param name="operations">Operations.</param>
+    public QueryMissedConditionException(
+        string columnName,
+        IReadOnlyCollection<VariantValue.Operation> operations)
+        : this(string.Empty, MissedConditionInputSourceType.Unknown, columnName, operations, null)
+    {
     }
 }

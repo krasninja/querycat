@@ -130,14 +130,14 @@ namespace QueryCat.Plugins.Sdk
               if (field.Type == TType.List)
               {
                 {
-                  var _list97 = await iprot.ReadListBeginAsync(cancellationToken);
-                  ToolCalls = new List<global::QueryCat.Plugins.Sdk.ChatToolCall>(_list97.Count);
-                  for(int _i98 = 0; _i98 < _list97.Count; ++_i98)
+                  var _list111 = await iprot.ReadListBeginAsync(cancellationToken);
+                  ToolCalls = new List<global::QueryCat.Plugins.Sdk.ChatToolCall>(_list111.Count);
+                  for(int _i112 = 0; _i112 < _list111.Count; ++_i112)
                   {
-                    global::QueryCat.Plugins.Sdk.ChatToolCall _elem99;
-                    _elem99 = new global::QueryCat.Plugins.Sdk.ChatToolCall();
-                    await _elem99.ReadAsync(iprot, cancellationToken);
-                    ToolCalls.Add(_elem99);
+                    global::QueryCat.Plugins.Sdk.ChatToolCall _elem113;
+                    _elem113 = new global::QueryCat.Plugins.Sdk.ChatToolCall();
+                    await _elem113.ReadAsync(iprot, cancellationToken);
+                    ToolCalls.Add(_elem113);
                   }
                   await iprot.ReadListEndAsync(cancellationToken);
                 }
@@ -186,48 +186,48 @@ namespace QueryCat.Plugins.Sdk
       oprot.IncrementRecursionDepth();
       try
       {
-        var tmp100 = new TStruct("ChatMessage");
-        await oprot.WriteStructBeginAsync(tmp100, cancellationToken);
+        var tmp114 = new TStruct("ChatMessage");
+        await oprot.WriteStructBeginAsync(tmp114, cancellationToken);
         #pragma warning disable IDE0017  // simplified init
-        var tmp101 = new TField();
+        var tmp115 = new TField();
         if((Content != null))
         {
-          tmp101.Name = "content";
-          tmp101.Type = TType.String;
-          tmp101.ID = 1;
-          await oprot.WriteFieldBeginAsync(tmp101, cancellationToken);
+          tmp115.Name = "content";
+          tmp115.Type = TType.String;
+          tmp115.ID = 1;
+          await oprot.WriteFieldBeginAsync(tmp115, cancellationToken);
           await oprot.WriteStringAsync(Content, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
         if((Role != null))
         {
-          tmp101.Name = "role";
-          tmp101.Type = TType.String;
-          tmp101.ID = 2;
-          await oprot.WriteFieldBeginAsync(tmp101, cancellationToken);
+          tmp115.Name = "role";
+          tmp115.Type = TType.String;
+          tmp115.ID = 2;
+          await oprot.WriteFieldBeginAsync(tmp115, cancellationToken);
           await oprot.WriteStringAsync(Role, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
         if((ToolCalls != null) && __isset.tool_calls)
         {
-          tmp101.Name = "tool_calls";
-          tmp101.Type = TType.List;
-          tmp101.ID = 3;
-          await oprot.WriteFieldBeginAsync(tmp101, cancellationToken);
+          tmp115.Name = "tool_calls";
+          tmp115.Type = TType.List;
+          tmp115.ID = 3;
+          await oprot.WriteFieldBeginAsync(tmp115, cancellationToken);
           await oprot.WriteListBeginAsync(new TList(TType.Struct, ToolCalls.Count), cancellationToken);
-          foreach (global::QueryCat.Plugins.Sdk.ChatToolCall _iter102 in ToolCalls)
+          foreach (global::QueryCat.Plugins.Sdk.ChatToolCall _iter116 in ToolCalls)
           {
-            await _iter102.WriteAsync(oprot, cancellationToken);
+            await _iter116.WriteAsync(oprot, cancellationToken);
           }
           await oprot.WriteListEndAsync(cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
         if((ToolCallId != null) && __isset.tool_call_id)
         {
-          tmp101.Name = "tool_call_id";
-          tmp101.Type = TType.String;
-          tmp101.ID = 4;
-          await oprot.WriteFieldBeginAsync(tmp101, cancellationToken);
+          tmp115.Name = "tool_call_id";
+          tmp115.Type = TType.String;
+          tmp115.ID = 4;
+          await oprot.WriteFieldBeginAsync(tmp115, cancellationToken);
           await oprot.WriteStringAsync(ToolCallId, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
@@ -276,29 +276,29 @@ namespace QueryCat.Plugins.Sdk
 
     public override string ToString()
     {
-      var tmp103 = new StringBuilder("ChatMessage(");
+      var tmp117 = new StringBuilder("ChatMessage(");
       if((Content != null))
       {
-        tmp103.Append(", Content: ");
-        Content.ToString(tmp103);
+        tmp117.Append(", Content: ");
+        Content.ToString(tmp117);
       }
       if((Role != null))
       {
-        tmp103.Append(", Role: ");
-        Role.ToString(tmp103);
+        tmp117.Append(", Role: ");
+        Role.ToString(tmp117);
       }
       if((ToolCalls != null) && __isset.tool_calls)
       {
-        tmp103.Append(", ToolCalls: ");
-        ToolCalls.ToString(tmp103);
+        tmp117.Append(", ToolCalls: ");
+        ToolCalls.ToString(tmp117);
       }
       if((ToolCallId != null) && __isset.tool_call_id)
       {
-        tmp103.Append(", ToolCallId: ");
-        ToolCallId.ToString(tmp103);
+        tmp117.Append(", ToolCallId: ");
+        ToolCallId.ToString(tmp117);
       }
-      tmp103.Append(')');
-      return tmp103.ToString();
+      tmp117.Append(')');
+      return tmp117.ToString();
     }
   }
 

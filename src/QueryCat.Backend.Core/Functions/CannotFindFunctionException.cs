@@ -7,12 +7,30 @@ namespace QueryCat.Backend.Core.Functions;
 public class CannotFindFunctionException : QueryCatException
 {
     /// <summary>
+    /// Function name.
+    /// </summary>
+    public string FunctionName { get; }
+
+    /// <summary>
     /// Constructor.
     /// </summary>
     /// <param name="name">Function name.</param>
     public CannotFindFunctionException(string name) :
         base(string.Format(Resources.Errors.CannotFindFunction, name))
     {
+        FunctionName = name;
+    }
+
+    /// <summary>
+    /// Constructor.
+    /// </summary>
+    /// <param name="name">Function name.</param>
+    /// <param name="callArguments">Function arguments types.</param>
+    /// <param name="innerException">Inner exception.</param>
+    public CannotFindFunctionException(string name, FunctionCallArgumentsTypes callArguments, Exception? innerException) :
+        base(string.Format(Resources.Errors.CannotFindFunctionWithArguments, name, callArguments), innerException)
+    {
+        FunctionName = name;
     }
 
     /// <summary>
@@ -21,7 +39,7 @@ public class CannotFindFunctionException : QueryCatException
     /// <param name="name">Function name.</param>
     /// <param name="callArguments">Function arguments types.</param>
     public CannotFindFunctionException(string name, FunctionCallArgumentsTypes callArguments) :
-        base(string.Format(Resources.Errors.CannotFindFunctionWithArguments, name, callArguments))
+        this(name, callArguments, null)
     {
     }
 }

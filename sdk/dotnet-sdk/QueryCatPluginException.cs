@@ -38,6 +38,7 @@ namespace QueryCat.Plugins.Sdk
     private string? _exception_type;
     private string? _exception_stack_trace;
     private global::QueryCat.Plugins.Sdk.QueryCatPluginException? _exception_nested;
+    private Dictionary<string, global::QueryCat.Plugins.Sdk.VariantValue>? _data;
 
     /// <summary>
     /// 
@@ -99,6 +100,19 @@ namespace QueryCat.Plugins.Sdk
       }
     }
 
+    public Dictionary<string, global::QueryCat.Plugins.Sdk.VariantValue>? Data
+    {
+      get
+      {
+        return _data;
+      }
+      set
+      {
+        __isset.@data = true;
+        this._data = value;
+      }
+    }
+
 
     public Isset __isset;
     public struct Isset
@@ -107,6 +121,7 @@ namespace QueryCat.Plugins.Sdk
       public bool exception_type;
       public bool exception_stack_trace;
       public bool exception_nested;
+      public bool @data;
     }
 
     public QueryCatPluginException()
@@ -201,6 +216,29 @@ namespace QueryCat.Plugins.Sdk
                 await TProtocolUtil.SkipAsync(iprot, field.Type, cancellationToken);
               }
               break;
+            case 7:
+              if (field.Type == TType.Map)
+              {
+                {
+                  var _map24 = await iprot.ReadMapBeginAsync(cancellationToken);
+                  Data = new Dictionary<string, global::QueryCat.Plugins.Sdk.VariantValue>(_map24.Count);
+                  for(int _i25 = 0; _i25 < _map24.Count; ++_i25)
+                  {
+                    string _key26;
+                    global::QueryCat.Plugins.Sdk.VariantValue _val27;
+                    _key26 = await iprot.ReadStringAsync(cancellationToken);
+                    _val27 = new global::QueryCat.Plugins.Sdk.VariantValue();
+                    await _val27.ReadAsync(iprot, cancellationToken);
+                    Data[_key26] = _val27;
+                  }
+                  await iprot.ReadMapEndAsync(cancellationToken);
+                }
+              }
+              else
+              {
+                await TProtocolUtil.SkipAsync(iprot, field.Type, cancellationToken);
+              }
+              break;
             default: 
               await TProtocolUtil.SkipAsync(iprot, field.Type, cancellationToken);
               break;
@@ -230,59 +268,74 @@ namespace QueryCat.Plugins.Sdk
       oprot.IncrementRecursionDepth();
       try
       {
-        var tmp24 = new TStruct("QueryCatPluginException");
-        await oprot.WriteStructBeginAsync(tmp24, cancellationToken);
+        var tmp28 = new TStruct("QueryCatPluginException");
+        await oprot.WriteStructBeginAsync(tmp28, cancellationToken);
         #pragma warning disable IDE0017  // simplified init
-        var tmp25 = new TField();
-        tmp25.Name = "type";
-        tmp25.Type = TType.I32;
-        tmp25.ID = 1;
-        await oprot.WriteFieldBeginAsync(tmp25, cancellationToken);
+        var tmp29 = new TField();
+        tmp29.Name = "type";
+        tmp29.Type = TType.I32;
+        tmp29.ID = 1;
+        await oprot.WriteFieldBeginAsync(tmp29, cancellationToken);
         await oprot.WriteI32Async((int)Type, cancellationToken);
         await oprot.WriteFieldEndAsync(cancellationToken);
         if((ErrorMessage != null))
         {
-          tmp25.Name = "error_message";
-          tmp25.Type = TType.String;
-          tmp25.ID = 2;
-          await oprot.WriteFieldBeginAsync(tmp25, cancellationToken);
+          tmp29.Name = "error_message";
+          tmp29.Type = TType.String;
+          tmp29.ID = 2;
+          await oprot.WriteFieldBeginAsync(tmp29, cancellationToken);
           await oprot.WriteStringAsync(ErrorMessage, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
         if(__isset.object_handle)
         {
-          tmp25.Name = "object_handle";
-          tmp25.Type = TType.I32;
-          tmp25.ID = 3;
-          await oprot.WriteFieldBeginAsync(tmp25, cancellationToken);
+          tmp29.Name = "object_handle";
+          tmp29.Type = TType.I32;
+          tmp29.ID = 3;
+          await oprot.WriteFieldBeginAsync(tmp29, cancellationToken);
           await oprot.WriteI32Async(ObjectHandle, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
         if((ExceptionType != null) && __isset.exception_type)
         {
-          tmp25.Name = "exception_type";
-          tmp25.Type = TType.String;
-          tmp25.ID = 4;
-          await oprot.WriteFieldBeginAsync(tmp25, cancellationToken);
+          tmp29.Name = "exception_type";
+          tmp29.Type = TType.String;
+          tmp29.ID = 4;
+          await oprot.WriteFieldBeginAsync(tmp29, cancellationToken);
           await oprot.WriteStringAsync(ExceptionType, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
         if((ExceptionStackTrace != null) && __isset.exception_stack_trace)
         {
-          tmp25.Name = "exception_stack_trace";
-          tmp25.Type = TType.String;
-          tmp25.ID = 5;
-          await oprot.WriteFieldBeginAsync(tmp25, cancellationToken);
+          tmp29.Name = "exception_stack_trace";
+          tmp29.Type = TType.String;
+          tmp29.ID = 5;
+          await oprot.WriteFieldBeginAsync(tmp29, cancellationToken);
           await oprot.WriteStringAsync(ExceptionStackTrace, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
         if((ExceptionNested != null) && __isset.exception_nested)
         {
-          tmp25.Name = "exception_nested";
-          tmp25.Type = TType.Struct;
-          tmp25.ID = 6;
-          await oprot.WriteFieldBeginAsync(tmp25, cancellationToken);
+          tmp29.Name = "exception_nested";
+          tmp29.Type = TType.Struct;
+          tmp29.ID = 6;
+          await oprot.WriteFieldBeginAsync(tmp29, cancellationToken);
           await ExceptionNested.WriteAsync(oprot, cancellationToken);
+          await oprot.WriteFieldEndAsync(cancellationToken);
+        }
+        if((Data != null) && __isset.@data)
+        {
+          tmp29.Name = "data";
+          tmp29.Type = TType.Map;
+          tmp29.ID = 7;
+          await oprot.WriteFieldBeginAsync(tmp29, cancellationToken);
+          await oprot.WriteMapBeginAsync(new TMap(TType.String, TType.Struct, Data.Count), cancellationToken);
+          foreach (string _iter30 in Data.Keys)
+          {
+            await oprot.WriteStringAsync(_iter30, cancellationToken);
+            await Data[_iter30].WriteAsync(oprot, cancellationToken);
+          }
+          await oprot.WriteMapEndAsync(cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
         #pragma warning restore IDE0017  // simplified init
@@ -304,7 +357,8 @@ namespace QueryCat.Plugins.Sdk
         && ((__isset.object_handle == other.__isset.object_handle) && ((!__isset.object_handle) || (global::System.Object.Equals(ObjectHandle, other.ObjectHandle))))
         && ((__isset.exception_type == other.__isset.exception_type) && ((!__isset.exception_type) || (global::System.Object.Equals(ExceptionType, other.ExceptionType))))
         && ((__isset.exception_stack_trace == other.__isset.exception_stack_trace) && ((!__isset.exception_stack_trace) || (global::System.Object.Equals(ExceptionStackTrace, other.ExceptionStackTrace))))
-        && ((__isset.exception_nested == other.__isset.exception_nested) && ((!__isset.exception_nested) || (global::System.Object.Equals(ExceptionNested, other.ExceptionNested))));
+        && ((__isset.exception_nested == other.__isset.exception_nested) && ((!__isset.exception_nested) || (global::System.Object.Equals(ExceptionNested, other.ExceptionNested))))
+        && ((__isset.@data == other.__isset.@data) && ((!__isset.@data) || (TCollections.Equals(Data, other.Data))));
     }
 
     public override int GetHashCode() {
@@ -331,42 +385,51 @@ namespace QueryCat.Plugins.Sdk
         {
           hashcode = (hashcode * 397) + ExceptionNested.GetHashCode();
         }
+        if((Data != null) && __isset.@data)
+        {
+          hashcode = (hashcode * 397) + TCollections.GetHashCode(Data);
+        }
       }
       return hashcode;
     }
 
     public override string ToString()
     {
-      var tmp26 = new StringBuilder("QueryCatPluginException(");
-      tmp26.Append(", Type: ");
-      Type.ToString(tmp26);
+      var tmp31 = new StringBuilder("QueryCatPluginException(");
+      tmp31.Append(", Type: ");
+      Type.ToString(tmp31);
       if((ErrorMessage != null))
       {
-        tmp26.Append(", ErrorMessage: ");
-        ErrorMessage.ToString(tmp26);
+        tmp31.Append(", ErrorMessage: ");
+        ErrorMessage.ToString(tmp31);
       }
       if(__isset.object_handle)
       {
-        tmp26.Append(", ObjectHandle: ");
-        ObjectHandle.ToString(tmp26);
+        tmp31.Append(", ObjectHandle: ");
+        ObjectHandle.ToString(tmp31);
       }
       if((ExceptionType != null) && __isset.exception_type)
       {
-        tmp26.Append(", ExceptionType: ");
-        ExceptionType.ToString(tmp26);
+        tmp31.Append(", ExceptionType: ");
+        ExceptionType.ToString(tmp31);
       }
       if((ExceptionStackTrace != null) && __isset.exception_stack_trace)
       {
-        tmp26.Append(", ExceptionStackTrace: ");
-        ExceptionStackTrace.ToString(tmp26);
+        tmp31.Append(", ExceptionStackTrace: ");
+        ExceptionStackTrace.ToString(tmp31);
       }
       if((ExceptionNested != null) && __isset.exception_nested)
       {
-        tmp26.Append(", ExceptionNested: ");
-        ExceptionNested.ToString(tmp26);
+        tmp31.Append(", ExceptionNested: ");
+        ExceptionNested.ToString(tmp31);
       }
-      tmp26.Append(')');
-      return tmp26.ToString();
+      if((Data != null) && __isset.@data)
+      {
+        tmp31.Append(", Data: ");
+        Data.ToString(tmp31);
+      }
+      tmp31.Append(')');
+      return tmp31.ToString();
     }
   }
 

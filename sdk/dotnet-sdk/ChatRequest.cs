@@ -123,14 +123,14 @@ namespace QueryCat.Plugins.Sdk
               if (field.Type == TType.List)
               {
                 {
-                  var _list105 = await iprot.ReadListBeginAsync(cancellationToken);
-                  Messages = new List<global::QueryCat.Plugins.Sdk.ChatMessage>(_list105.Count);
-                  for(int _i106 = 0; _i106 < _list105.Count; ++_i106)
+                  var _list119 = await iprot.ReadListBeginAsync(cancellationToken);
+                  Messages = new List<global::QueryCat.Plugins.Sdk.ChatMessage>(_list119.Count);
+                  for(int _i120 = 0; _i120 < _list119.Count; ++_i120)
                   {
-                    global::QueryCat.Plugins.Sdk.ChatMessage _elem107;
-                    _elem107 = new global::QueryCat.Plugins.Sdk.ChatMessage();
-                    await _elem107.ReadAsync(iprot, cancellationToken);
-                    Messages.Add(_elem107);
+                    global::QueryCat.Plugins.Sdk.ChatMessage _elem121;
+                    _elem121 = new global::QueryCat.Plugins.Sdk.ChatMessage();
+                    await _elem121.ReadAsync(iprot, cancellationToken);
+                    Messages.Add(_elem121);
                   }
                   await iprot.ReadListEndAsync(cancellationToken);
                 }
@@ -166,14 +166,14 @@ namespace QueryCat.Plugins.Sdk
               if (field.Type == TType.List)
               {
                 {
-                  var _list108 = await iprot.ReadListBeginAsync(cancellationToken);
-                  Tools = new List<global::QueryCat.Plugins.Sdk.ChatTool>(_list108.Count);
-                  for(int _i109 = 0; _i109 < _list108.Count; ++_i109)
+                  var _list122 = await iprot.ReadListBeginAsync(cancellationToken);
+                  Tools = new List<global::QueryCat.Plugins.Sdk.ChatTool>(_list122.Count);
+                  for(int _i123 = 0; _i123 < _list122.Count; ++_i123)
                   {
-                    global::QueryCat.Plugins.Sdk.ChatTool _elem110;
-                    _elem110 = new global::QueryCat.Plugins.Sdk.ChatTool();
-                    await _elem110.ReadAsync(iprot, cancellationToken);
-                    Tools.Add(_elem110);
+                    global::QueryCat.Plugins.Sdk.ChatTool _elem124;
+                    _elem124 = new global::QueryCat.Plugins.Sdk.ChatTool();
+                    await _elem124.ReadAsync(iprot, cancellationToken);
+                    Tools.Add(_elem124);
                   }
                   await iprot.ReadListEndAsync(cancellationToken);
                 }
@@ -187,16 +187,16 @@ namespace QueryCat.Plugins.Sdk
               if (field.Type == TType.Map)
               {
                 {
-                  var _map111 = await iprot.ReadMapBeginAsync(cancellationToken);
-                  Options = new Dictionary<string, global::QueryCat.Plugins.Sdk.VariantValue>(_map111.Count);
-                  for(int _i112 = 0; _i112 < _map111.Count; ++_i112)
+                  var _map125 = await iprot.ReadMapBeginAsync(cancellationToken);
+                  Options = new Dictionary<string, global::QueryCat.Plugins.Sdk.VariantValue>(_map125.Count);
+                  for(int _i126 = 0; _i126 < _map125.Count; ++_i126)
                   {
-                    string _key113;
-                    global::QueryCat.Plugins.Sdk.VariantValue _val114;
-                    _key113 = await iprot.ReadStringAsync(cancellationToken);
-                    _val114 = new global::QueryCat.Plugins.Sdk.VariantValue();
-                    await _val114.ReadAsync(iprot, cancellationToken);
-                    Options[_key113] = _val114;
+                    string _key127;
+                    global::QueryCat.Plugins.Sdk.VariantValue _val128;
+                    _key127 = await iprot.ReadStringAsync(cancellationToken);
+                    _val128 = new global::QueryCat.Plugins.Sdk.VariantValue();
+                    await _val128.ReadAsync(iprot, cancellationToken);
+                    Options[_key127] = _val128;
                   }
                   await iprot.ReadMapEndAsync(cancellationToken);
                 }
@@ -235,67 +235,67 @@ namespace QueryCat.Plugins.Sdk
       oprot.IncrementRecursionDepth();
       try
       {
-        var tmp115 = new TStruct("ChatRequest");
-        await oprot.WriteStructBeginAsync(tmp115, cancellationToken);
+        var tmp129 = new TStruct("ChatRequest");
+        await oprot.WriteStructBeginAsync(tmp129, cancellationToken);
         #pragma warning disable IDE0017  // simplified init
-        var tmp116 = new TField();
+        var tmp130 = new TField();
         if((Messages != null))
         {
-          tmp116.Name = "messages";
-          tmp116.Type = TType.List;
-          tmp116.ID = 1;
-          await oprot.WriteFieldBeginAsync(tmp116, cancellationToken);
+          tmp130.Name = "messages";
+          tmp130.Type = TType.List;
+          tmp130.ID = 1;
+          await oprot.WriteFieldBeginAsync(tmp130, cancellationToken);
           await oprot.WriteListBeginAsync(new TList(TType.Struct, Messages.Count), cancellationToken);
-          foreach (global::QueryCat.Plugins.Sdk.ChatMessage _iter117 in Messages)
+          foreach (global::QueryCat.Plugins.Sdk.ChatMessage _iter131 in Messages)
           {
-            await _iter117.WriteAsync(oprot, cancellationToken);
+            await _iter131.WriteAsync(oprot, cancellationToken);
           }
           await oprot.WriteListEndAsync(cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
         if((Type != null))
         {
-          tmp116.Name = "type";
-          tmp116.Type = TType.String;
-          tmp116.ID = 2;
-          await oprot.WriteFieldBeginAsync(tmp116, cancellationToken);
+          tmp130.Name = "type";
+          tmp130.Type = TType.String;
+          tmp130.ID = 2;
+          await oprot.WriteFieldBeginAsync(tmp130, cancellationToken);
           await oprot.WriteStringAsync(Type, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
         if((Model != null) && __isset.@model)
         {
-          tmp116.Name = "model";
-          tmp116.Type = TType.String;
-          tmp116.ID = 3;
-          await oprot.WriteFieldBeginAsync(tmp116, cancellationToken);
+          tmp130.Name = "model";
+          tmp130.Type = TType.String;
+          tmp130.ID = 3;
+          await oprot.WriteFieldBeginAsync(tmp130, cancellationToken);
           await oprot.WriteStringAsync(Model, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
         if((Tools != null) && __isset.@tools)
         {
-          tmp116.Name = "tools";
-          tmp116.Type = TType.List;
-          tmp116.ID = 4;
-          await oprot.WriteFieldBeginAsync(tmp116, cancellationToken);
+          tmp130.Name = "tools";
+          tmp130.Type = TType.List;
+          tmp130.ID = 4;
+          await oprot.WriteFieldBeginAsync(tmp130, cancellationToken);
           await oprot.WriteListBeginAsync(new TList(TType.Struct, Tools.Count), cancellationToken);
-          foreach (global::QueryCat.Plugins.Sdk.ChatTool _iter118 in Tools)
+          foreach (global::QueryCat.Plugins.Sdk.ChatTool _iter132 in Tools)
           {
-            await _iter118.WriteAsync(oprot, cancellationToken);
+            await _iter132.WriteAsync(oprot, cancellationToken);
           }
           await oprot.WriteListEndAsync(cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
         if((Options != null) && __isset.@options)
         {
-          tmp116.Name = "options";
-          tmp116.Type = TType.Map;
-          tmp116.ID = 5;
-          await oprot.WriteFieldBeginAsync(tmp116, cancellationToken);
+          tmp130.Name = "options";
+          tmp130.Type = TType.Map;
+          tmp130.ID = 5;
+          await oprot.WriteFieldBeginAsync(tmp130, cancellationToken);
           await oprot.WriteMapBeginAsync(new TMap(TType.String, TType.Struct, Options.Count), cancellationToken);
-          foreach (string _iter119 in Options.Keys)
+          foreach (string _iter133 in Options.Keys)
           {
-            await oprot.WriteStringAsync(_iter119, cancellationToken);
-            await Options[_iter119].WriteAsync(oprot, cancellationToken);
+            await oprot.WriteStringAsync(_iter133, cancellationToken);
+            await Options[_iter133].WriteAsync(oprot, cancellationToken);
           }
           await oprot.WriteMapEndAsync(cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
@@ -350,34 +350,34 @@ namespace QueryCat.Plugins.Sdk
 
     public override string ToString()
     {
-      var tmp120 = new StringBuilder("ChatRequest(");
+      var tmp134 = new StringBuilder("ChatRequest(");
       if((Messages != null))
       {
-        tmp120.Append(", Messages: ");
-        Messages.ToString(tmp120);
+        tmp134.Append(", Messages: ");
+        Messages.ToString(tmp134);
       }
       if((Type != null))
       {
-        tmp120.Append(", Type: ");
-        Type.ToString(tmp120);
+        tmp134.Append(", Type: ");
+        Type.ToString(tmp134);
       }
       if((Model != null) && __isset.@model)
       {
-        tmp120.Append(", Model: ");
-        Model.ToString(tmp120);
+        tmp134.Append(", Model: ");
+        Model.ToString(tmp134);
       }
       if((Tools != null) && __isset.@tools)
       {
-        tmp120.Append(", Tools: ");
-        Tools.ToString(tmp120);
+        tmp134.Append(", Tools: ");
+        Tools.ToString(tmp134);
       }
       if((Options != null) && __isset.@options)
       {
-        tmp120.Append(", Options: ");
-        Options.ToString(tmp120);
+        tmp134.Append(", Options: ");
+        Options.ToString(tmp134);
       }
-      tmp120.Append(')');
-      return tmp120.ToString();
+      tmp134.Append(')');
+      return tmp134.ToString();
     }
   }
 

@@ -120,25 +120,25 @@ namespace QueryCat.Plugins.Sdk
       oprot.IncrementRecursionDepth();
       try
       {
-        var tmp57 = new TStruct("ScopeVariable");
-        await oprot.WriteStructBeginAsync(tmp57, cancellationToken);
+        var tmp71 = new TStruct("ScopeVariable");
+        await oprot.WriteStructBeginAsync(tmp71, cancellationToken);
         #pragma warning disable IDE0017  // simplified init
-        var tmp58 = new TField();
+        var tmp72 = new TField();
         if((Name != null))
         {
-          tmp58.Name = "name";
-          tmp58.Type = TType.String;
-          tmp58.ID = 1;
-          await oprot.WriteFieldBeginAsync(tmp58, cancellationToken);
+          tmp72.Name = "name";
+          tmp72.Type = TType.String;
+          tmp72.ID = 1;
+          await oprot.WriteFieldBeginAsync(tmp72, cancellationToken);
           await oprot.WriteStringAsync(Name, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
         if((Value != null))
         {
-          tmp58.Name = "value";
-          tmp58.Type = TType.Struct;
-          tmp58.ID = 2;
-          await oprot.WriteFieldBeginAsync(tmp58, cancellationToken);
+          tmp72.Name = "value";
+          tmp72.Type = TType.Struct;
+          tmp72.ID = 2;
+          await oprot.WriteFieldBeginAsync(tmp72, cancellationToken);
           await Value.WriteAsync(oprot, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
@@ -177,19 +177,19 @@ namespace QueryCat.Plugins.Sdk
 
     public override string ToString()
     {
-      var tmp59 = new StringBuilder("ScopeVariable(");
+      var tmp73 = new StringBuilder("ScopeVariable(");
       if((Name != null))
       {
-        tmp59.Append(", Name: ");
-        Name.ToString(tmp59);
+        tmp73.Append(", Name: ");
+        Name.ToString(tmp73);
       }
       if((Value != null))
       {
-        tmp59.Append(", Value: ");
-        Value.ToString(tmp59);
+        tmp73.Append(", Value: ");
+        Value.ToString(tmp73);
       }
-      tmp59.Append(')');
-      return tmp59.ToString();
+      tmp73.Append(')');
+      return tmp73.ToString();
     }
   }
 

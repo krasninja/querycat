@@ -183,7 +183,7 @@ internal sealed class ThriftPluginContext : IDisposable, IAsyncDisposable
             _clients.Add(pluginClient);
 
             // The new client will be returned to the queue after session release.
-            return new PluginClientIdDecorator(newClient);
+            return new PluginClientIdDecorator(new ExceptionHandlePluginDecorator(newClient));
         }
         catch (Exception)
         {

@@ -1,3 +1,4 @@
+using System;
 using QueryCat.Backend.Core;
 
 namespace QueryCat.Plugins.Client;
@@ -19,6 +20,15 @@ public sealed class AuthorizationException : QueryCatException
     /// </summary>
     /// <param name="message">Exception message.</param>
     public AuthorizationException(string message) : base(message)
+    {
+    }
+    
+    /// <summary>
+    /// Constructor.
+    /// </summary>
+    /// <param name="message">Exception message.</param>
+    /// <param name="innerException">Inner exception.</param>
+    public AuthorizationException(string message, Exception innerException) : base(message, innerException)
     {
     }
 }

@@ -119,25 +119,25 @@ namespace QueryCat.Plugins.Sdk
       oprot.IncrementRecursionDepth();
       try
       {
-        var tmp85 = new TStruct("ModelDescription");
-        await oprot.WriteStructBeginAsync(tmp85, cancellationToken);
+        var tmp99 = new TStruct("ModelDescription");
+        await oprot.WriteStructBeginAsync(tmp99, cancellationToken);
         #pragma warning disable IDE0017  // simplified init
-        var tmp86 = new TField();
+        var tmp100 = new TField();
         if((Name != null))
         {
-          tmp86.Name = "name";
-          tmp86.Type = TType.String;
-          tmp86.ID = 1;
-          await oprot.WriteFieldBeginAsync(tmp86, cancellationToken);
+          tmp100.Name = "name";
+          tmp100.Type = TType.String;
+          tmp100.ID = 1;
+          await oprot.WriteFieldBeginAsync(tmp100, cancellationToken);
           await oprot.WriteStringAsync(Name, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
         if((Description != null))
         {
-          tmp86.Name = "description";
-          tmp86.Type = TType.String;
-          tmp86.ID = 2;
-          await oprot.WriteFieldBeginAsync(tmp86, cancellationToken);
+          tmp100.Name = "description";
+          tmp100.Type = TType.String;
+          tmp100.ID = 2;
+          await oprot.WriteFieldBeginAsync(tmp100, cancellationToken);
           await oprot.WriteStringAsync(Description, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
@@ -176,19 +176,19 @@ namespace QueryCat.Plugins.Sdk
 
     public override string ToString()
     {
-      var tmp87 = new StringBuilder("ModelDescription(");
+      var tmp101 = new StringBuilder("ModelDescription(");
       if((Name != null))
       {
-        tmp87.Append(", Name: ");
-        Name.ToString(tmp87);
+        tmp101.Append(", Name: ");
+        Name.ToString(tmp101);
       }
       if((Description != null))
       {
-        tmp87.Append(", Description: ");
-        Description.ToString(tmp87);
+        tmp101.Append(", Description: ");
+        Description.ToString(tmp101);
       }
-      tmp87.Append(')');
-      return tmp87.ToString();
+      tmp101.Append(')');
+      return tmp101.ToString();
     }
   }
 

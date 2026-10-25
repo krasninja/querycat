@@ -97,14 +97,14 @@ namespace QueryCat.Plugins.Sdk
               if (field.Type == TType.List)
               {
                 {
-                  var _list36 = await iprot.ReadListBeginAsync(cancellationToken);
-                  Functions = new List<global::QueryCat.Plugins.Sdk.Function>(_list36.Count);
-                  for(int _i37 = 0; _i37 < _list36.Count; ++_i37)
+                  var _list50 = await iprot.ReadListBeginAsync(cancellationToken);
+                  Functions = new List<global::QueryCat.Plugins.Sdk.Function>(_list50.Count);
+                  for(int _i51 = 0; _i51 < _list50.Count; ++_i51)
                   {
-                    global::QueryCat.Plugins.Sdk.Function _elem38;
-                    _elem38 = new global::QueryCat.Plugins.Sdk.Function();
-                    await _elem38.ReadAsync(iprot, cancellationToken);
-                    Functions.Add(_elem38);
+                    global::QueryCat.Plugins.Sdk.Function _elem52;
+                    _elem52 = new global::QueryCat.Plugins.Sdk.Function();
+                    await _elem52.ReadAsync(iprot, cancellationToken);
+                    Functions.Add(_elem52);
                   }
                   await iprot.ReadListEndAsync(cancellationToken);
                 }
@@ -141,16 +141,16 @@ namespace QueryCat.Plugins.Sdk
               if (field.Type == TType.Map)
               {
                 {
-                  var _map39 = await iprot.ReadMapBeginAsync(cancellationToken);
-                  Metadata = new Dictionary<string, global::QueryCat.Plugins.Sdk.VariantValue>(_map39.Count);
-                  for(int _i40 = 0; _i40 < _map39.Count; ++_i40)
+                  var _map53 = await iprot.ReadMapBeginAsync(cancellationToken);
+                  Metadata = new Dictionary<string, global::QueryCat.Plugins.Sdk.VariantValue>(_map53.Count);
+                  for(int _i54 = 0; _i54 < _map53.Count; ++_i54)
                   {
-                    string _key41;
-                    global::QueryCat.Plugins.Sdk.VariantValue _val42;
-                    _key41 = await iprot.ReadStringAsync(cancellationToken);
-                    _val42 = new global::QueryCat.Plugins.Sdk.VariantValue();
-                    await _val42.ReadAsync(iprot, cancellationToken);
-                    Metadata[_key41] = _val42;
+                    string _key55;
+                    global::QueryCat.Plugins.Sdk.VariantValue _val56;
+                    _key55 = await iprot.ReadStringAsync(cancellationToken);
+                    _val56 = new global::QueryCat.Plugins.Sdk.VariantValue();
+                    await _val56.ReadAsync(iprot, cancellationToken);
+                    Metadata[_key55] = _val56;
                   }
                   await iprot.ReadMapEndAsync(cancellationToken);
                 }
@@ -193,53 +193,53 @@ namespace QueryCat.Plugins.Sdk
       oprot.IncrementRecursionDepth();
       try
       {
-        var tmp43 = new TStruct("PluginData");
-        await oprot.WriteStructBeginAsync(tmp43, cancellationToken);
+        var tmp57 = new TStruct("PluginData");
+        await oprot.WriteStructBeginAsync(tmp57, cancellationToken);
         #pragma warning disable IDE0017  // simplified init
-        var tmp44 = new TField();
+        var tmp58 = new TField();
         if((Functions != null))
         {
-          tmp44.Name = "functions";
-          tmp44.Type = TType.List;
-          tmp44.ID = 1;
-          await oprot.WriteFieldBeginAsync(tmp44, cancellationToken);
+          tmp58.Name = "functions";
+          tmp58.Type = TType.List;
+          tmp58.ID = 1;
+          await oprot.WriteFieldBeginAsync(tmp58, cancellationToken);
           await oprot.WriteListBeginAsync(new TList(TType.Struct, Functions.Count), cancellationToken);
-          foreach (global::QueryCat.Plugins.Sdk.Function _iter45 in Functions)
+          foreach (global::QueryCat.Plugins.Sdk.Function _iter59 in Functions)
           {
-            await _iter45.WriteAsync(oprot, cancellationToken);
+            await _iter59.WriteAsync(oprot, cancellationToken);
           }
           await oprot.WriteListEndAsync(cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
         if((Name != null))
         {
-          tmp44.Name = "name";
-          tmp44.Type = TType.String;
-          tmp44.ID = 2;
-          await oprot.WriteFieldBeginAsync(tmp44, cancellationToken);
+          tmp58.Name = "name";
+          tmp58.Type = TType.String;
+          tmp58.ID = 2;
+          await oprot.WriteFieldBeginAsync(tmp58, cancellationToken);
           await oprot.WriteStringAsync(Name, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
         if((Version != null))
         {
-          tmp44.Name = "version";
-          tmp44.Type = TType.String;
-          tmp44.ID = 3;
-          await oprot.WriteFieldBeginAsync(tmp44, cancellationToken);
+          tmp58.Name = "version";
+          tmp58.Type = TType.String;
+          tmp58.ID = 3;
+          await oprot.WriteFieldBeginAsync(tmp58, cancellationToken);
           await oprot.WriteStringAsync(Version, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
         if((Metadata != null) && __isset.@metadata)
         {
-          tmp44.Name = "metadata";
-          tmp44.Type = TType.Map;
-          tmp44.ID = 4;
-          await oprot.WriteFieldBeginAsync(tmp44, cancellationToken);
+          tmp58.Name = "metadata";
+          tmp58.Type = TType.Map;
+          tmp58.ID = 4;
+          await oprot.WriteFieldBeginAsync(tmp58, cancellationToken);
           await oprot.WriteMapBeginAsync(new TMap(TType.String, TType.Struct, Metadata.Count), cancellationToken);
-          foreach (string _iter46 in Metadata.Keys)
+          foreach (string _iter60 in Metadata.Keys)
           {
-            await oprot.WriteStringAsync(_iter46, cancellationToken);
-            await Metadata[_iter46].WriteAsync(oprot, cancellationToken);
+            await oprot.WriteStringAsync(_iter60, cancellationToken);
+            await Metadata[_iter60].WriteAsync(oprot, cancellationToken);
           }
           await oprot.WriteMapEndAsync(cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
@@ -289,29 +289,29 @@ namespace QueryCat.Plugins.Sdk
 
     public override string ToString()
     {
-      var tmp47 = new StringBuilder("PluginData(");
+      var tmp61 = new StringBuilder("PluginData(");
       if((Functions != null))
       {
-        tmp47.Append(", Functions: ");
-        Functions.ToString(tmp47);
+        tmp61.Append(", Functions: ");
+        Functions.ToString(tmp61);
       }
       if((Name != null))
       {
-        tmp47.Append(", Name: ");
-        Name.ToString(tmp47);
+        tmp61.Append(", Name: ");
+        Name.ToString(tmp61);
       }
       if((Version != null))
       {
-        tmp47.Append(", Version: ");
-        Version.ToString(tmp47);
+        tmp61.Append(", Version: ");
+        Version.ToString(tmp61);
       }
       if((Metadata != null) && __isset.@metadata)
       {
-        tmp47.Append(", Metadata: ");
-        Metadata.ToString(tmp47);
+        tmp61.Append(", Metadata: ");
+        Metadata.ToString(tmp61);
       }
-      tmp47.Append(')');
-      return tmp47.ToString();
+      tmp61.Append(')');
+      return tmp61.ToString();
     }
   }
 
