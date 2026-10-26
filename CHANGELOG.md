@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Column attributes.
-- Add function "array_to_string".
+- Add functions "array_to_string", "_function_args".
 - MCP server (`qcat mcp`) with stdio and HTTP transports.
 
 ### Changed
