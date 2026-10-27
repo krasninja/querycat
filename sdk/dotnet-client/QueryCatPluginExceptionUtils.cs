@@ -49,7 +49,7 @@ public static class QueryCatPluginExceptionUtils
             var data = GetExceptionData(ex);
             if (data != null)
             {
-                pluginException.Data = data;
+                pluginException.ErrorData = data;
             }
             return pluginException;
         }
@@ -118,7 +118,7 @@ public static class QueryCatPluginExceptionUtils
     public static QueryCatException Restore(QueryCatPluginException pluginException)
     {
         var message = pluginException.ErrorMessage ?? string.Empty;
-        var data = pluginException.Data;
+        var data = pluginException.ErrorData;
 
         string? GetString(string key)
             => data != null && data.TryGetValue(key, out var value) ? SdkConvert.Convert(value).AsString : null;

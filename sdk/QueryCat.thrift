@@ -155,7 +155,7 @@ exception QueryCatPluginException {
   5: optional string exception_stack_trace,
   6: optional QueryCatPluginException exception_nested,
   // Exception data, it can be used to construct the original exception.
-  7: optional map<string, VariantValue> data
+  7: optional map<string, VariantValue> error_data
 }
 
 /*

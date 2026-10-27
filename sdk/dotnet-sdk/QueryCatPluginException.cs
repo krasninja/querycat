@@ -38,7 +38,7 @@ namespace QueryCat.Plugins.Sdk
     private string? _exception_type;
     private string? _exception_stack_trace;
     private global::QueryCat.Plugins.Sdk.QueryCatPluginException? _exception_nested;
-    private Dictionary<string, global::QueryCat.Plugins.Sdk.VariantValue>? _data;
+    private Dictionary<string, global::QueryCat.Plugins.Sdk.VariantValue>? _error_data;
 
     /// <summary>
     /// 
@@ -100,16 +100,16 @@ namespace QueryCat.Plugins.Sdk
       }
     }
 
-    public Dictionary<string, global::QueryCat.Plugins.Sdk.VariantValue>? Data
+    public Dictionary<string, global::QueryCat.Plugins.Sdk.VariantValue>? ErrorData
     {
       get
       {
-        return _data;
+        return _error_data;
       }
       set
       {
-        __isset.@data = true;
-        this._data = value;
+        __isset.error_data = true;
+        this._error_data = value;
       }
     }
 
@@ -121,7 +121,7 @@ namespace QueryCat.Plugins.Sdk
       public bool exception_type;
       public bool exception_stack_trace;
       public bool exception_nested;
-      public bool @data;
+      public bool error_data;
     }
 
     public QueryCatPluginException()
@@ -221,7 +221,7 @@ namespace QueryCat.Plugins.Sdk
               {
                 {
                   var _map24 = await iprot.ReadMapBeginAsync(cancellationToken);
-                  Data = new Dictionary<string, global::QueryCat.Plugins.Sdk.VariantValue>(_map24.Count);
+                  ErrorData = new Dictionary<string, global::QueryCat.Plugins.Sdk.VariantValue>(_map24.Count);
                   for(int _i25 = 0; _i25 < _map24.Count; ++_i25)
                   {
                     string _key26;
@@ -229,7 +229,7 @@ namespace QueryCat.Plugins.Sdk
                     _key26 = await iprot.ReadStringAsync(cancellationToken);
                     _val27 = new global::QueryCat.Plugins.Sdk.VariantValue();
                     await _val27.ReadAsync(iprot, cancellationToken);
-                    Data[_key26] = _val27;
+                    ErrorData[_key26] = _val27;
                   }
                   await iprot.ReadMapEndAsync(cancellationToken);
                 }
@@ -323,17 +323,17 @@ namespace QueryCat.Plugins.Sdk
           await ExceptionNested.WriteAsync(oprot, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
-        if((Data != null) && __isset.@data)
+        if((ErrorData != null) && __isset.error_data)
         {
-          tmp29.Name = "data";
+          tmp29.Name = "error_data";
           tmp29.Type = TType.Map;
           tmp29.ID = 7;
           await oprot.WriteFieldBeginAsync(tmp29, cancellationToken);
-          await oprot.WriteMapBeginAsync(new TMap(TType.String, TType.Struct, Data.Count), cancellationToken);
-          foreach (string _iter30 in Data.Keys)
+          await oprot.WriteMapBeginAsync(new TMap(TType.String, TType.Struct, ErrorData.Count), cancellationToken);
+          foreach (string _iter30 in ErrorData.Keys)
           {
             await oprot.WriteStringAsync(_iter30, cancellationToken);
-            await Data[_iter30].WriteAsync(oprot, cancellationToken);
+            await ErrorData[_iter30].WriteAsync(oprot, cancellationToken);
           }
           await oprot.WriteMapEndAsync(cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
@@ -358,7 +358,7 @@ namespace QueryCat.Plugins.Sdk
         && ((__isset.exception_type == other.__isset.exception_type) && ((!__isset.exception_type) || (global::System.Object.Equals(ExceptionType, other.ExceptionType))))
         && ((__isset.exception_stack_trace == other.__isset.exception_stack_trace) && ((!__isset.exception_stack_trace) || (global::System.Object.Equals(ExceptionStackTrace, other.ExceptionStackTrace))))
         && ((__isset.exception_nested == other.__isset.exception_nested) && ((!__isset.exception_nested) || (global::System.Object.Equals(ExceptionNested, other.ExceptionNested))))
-        && ((__isset.@data == other.__isset.@data) && ((!__isset.@data) || (TCollections.Equals(Data, other.Data))));
+        && ((__isset.error_data == other.__isset.error_data) && ((!__isset.error_data) || (TCollections.Equals(ErrorData, other.ErrorData))));
     }
 
     public override int GetHashCode() {
@@ -385,9 +385,9 @@ namespace QueryCat.Plugins.Sdk
         {
           hashcode = (hashcode * 397) + ExceptionNested.GetHashCode();
         }
-        if((Data != null) && __isset.@data)
+        if((ErrorData != null) && __isset.error_data)
         {
-          hashcode = (hashcode * 397) + TCollections.GetHashCode(Data);
+          hashcode = (hashcode * 397) + TCollections.GetHashCode(ErrorData);
         }
       }
       return hashcode;
@@ -423,10 +423,10 @@ namespace QueryCat.Plugins.Sdk
         tmp31.Append(", ExceptionNested: ");
         ExceptionNested.ToString(tmp31);
       }
-      if((Data != null) && __isset.@data)
+      if((ErrorData != null) && __isset.error_data)
       {
-        tmp31.Append(", Data: ");
-        Data.ToString(tmp31);
+        tmp31.Append(", ErrorData: ");
+        ErrorData.ToString(tmp31);
       }
       tmp31.Append(')');
       return tmp31.ToString();
