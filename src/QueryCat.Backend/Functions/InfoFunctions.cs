@@ -107,6 +107,7 @@ public static class InfoFunctions
             builder => builder
 #if DEBUG
                 .AddProperty("id", f => f.Id, description: "Column internal identifier.")
+                .SetAttribute("id", Column.AttributeId)
 #endif
                 .AddProperty("name", f => f.FullName, defaultLength: 45, description: "Column name.")
                 .AddProperty("type", f => f.DataType, description: "Column data type.")
@@ -175,6 +176,7 @@ public static class InfoFunctions
         var input = EnumerableRowsInput<TimeZoneInfo>.FromSource(TimeZoneInfo.GetSystemTimeZones(),
             builder => builder
                 .AddProperty("id", p => p.Id, "Time zone code.")
+                .SetAttribute("id", Column.AttributeId)
                 .AddProperty("name", p => p.StandardName, "Time zone name.")
                 .AddProperty("utc_offset", p => p.BaseUtcOffset, "Offset from UTC (positive means east of Greenwich).")
                 .AddProperty("is_dst", p => p.SupportsDaylightSavingTime, "True if currently observing daylight savings")

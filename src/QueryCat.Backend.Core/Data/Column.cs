@@ -24,22 +24,10 @@ public class Column : ICloneable, IModelDescription
     public const string AttributeId = "@id";
 
     /// <summary>
-    /// The attribute should be used to mark unique identifier columns.
-    /// No value required.
-    /// </summary>
-    public static ColumnAttribute ColumnAttributeId { get; } = new(AttributeId);
-
-    /// <summary>
     /// The attribute should be used to mark timestamp fields that identifies
     /// of event or log creation date and time.
     /// </summary>
     public const string AttributeTimestamp = "@ts";
-
-    /// <summary>
-    /// The attribute should be used to mark timestamp fields that identifies
-    /// of event or log creation date and time.
-    /// </summary>
-    public static ColumnAttribute ColumnAttributeTimestamp { get; } = new(AttributeTimestamp);
 
     /// <summary>
     /// The attribute should be used to mark currency numeric fields.
@@ -47,31 +35,15 @@ public class Column : ICloneable, IModelDescription
     public const string AttributeCurrency = "@currency";
 
     /// <summary>
-    /// The attribute should be used to mark currency numeric fields.
-    /// </summary>
-    public static ColumnAttribute ColumnAttributeCurrency { get; } = new(AttributeCurrency);
-
-    /// <summary>
     /// The attribute should be used to mark raw data (JSON, string) representation fields.
     /// </summary>
     public const string AttributeRawData = "@raw";
-
-    /// <summary>
-    /// The attribute should be used to mark raw data (JSON, string) representation fields.
-    /// </summary>
-    public static ColumnAttribute ColumnAttributeRawData { get; } = new(AttributeRawData);
 
     /// <summary>
     /// The attribute should be used to mark string fields that contain
     /// error message or exception.
     /// </summary>
     public const string AttributeError = "@error";
-
-    /// <summary>
-    /// The attribute should be used to mark string fields that contain
-    /// error message or exception.
-    /// </summary>
-    public static ColumnAttribute ColumnAttributeError { get; } = new(AttributeError);
 
     /// <summary>
     /// The attribute should be used to mark string columns which have a specific format
@@ -91,6 +63,18 @@ public class Column : ICloneable, IModelDescription
     public const string AttributeFormatPassword = "password";
     public const string AttributeFormatType = "type";
     public const string AttributeFormatIpAddress = "ip_address";
+
+    /// <summary>
+    /// The attribute should be used to mark string fields that contain
+    /// HTTP status code (20x, 40x, 50x, etc.).
+    /// </summary>
+    public const string AttributeHttpCode = "@http_code";
+
+    /// <summary>
+    /// The attribute should be used to mark string fields that contain
+    /// HTTP method (GET, POST, etc.).
+    /// </summary>
+    public const string AttributeHttpMethod = "@http_method";
 
     #endregion
 

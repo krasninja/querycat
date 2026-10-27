@@ -670,9 +670,9 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
     /// </summary>
     /// <param name="columnName">Column name.</param>
     /// <param name="attributeName">Attribute name.</param>
-    /// <param name="value">Attribute value.</param>
+    /// <param name="value">Attribute value. Optional.</param>
     /// <returns>Instance of <see cref="ClassRowsFrameBuilder{TClass}" />.</returns>
-    public ClassRowsFrameBuilder<TClass> SetAttribute(string columnName, string attributeName, VariantValue value)
+    public ClassRowsFrameBuilder<TClass> SetAttribute(string columnName, string attributeName, VariantValue value = default)
     {
         var columnIndex = GetColumnIndexByName(columnName);
         _columns[columnIndex].Column.SetAttribute(attributeName, value);
