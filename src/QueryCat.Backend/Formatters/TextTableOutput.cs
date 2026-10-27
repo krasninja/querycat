@@ -231,28 +231,23 @@ public sealed class TextTableOutput : RowsOutput, IDisposable, IAsyncDisposable
 
         if (!_hasHeader || _isSingleValue)
         {
-            for (var i = 0; i < columns.Length; i++)
+            foreach (var (i, _, column) in GetColumns(columns))
             {
-                currentMaxLength += _separatorWithSpace.Length + columns[i].Length + 1;
+                currentMaxLength += _separatorWithSpace.Length + column.Length + 1;
                 _totalMaxLineLength[i] = currentMaxLength;
             }
             return;
         }
 
         // Header.
-        for (var i = 0; i < columns.Length; i++)
+        foreach (var (i, _, column) in GetColumns(columns, visibleOnly: true))
         {
-            if (columns[i].IsHidden)
-            {
-                continue;
-            }
-
-            _columnsLengths[i] = columns[i].Length;
+            _columnsLengths[i] = column.Length;
 
             _streamWriter.Write(_separatorWithSpace);
-            _streamWriter.Write(columns[i].FullName.PadRight(_columnsLengths[i]));
+            _streamWriter.Write(column.FullName.PadRight(_columnsLengths[i]));
             _streamWriter.Write(' ');
-            currentMaxLength += _separatorWithSpace.Length + columns[i].Length + 1;
+            currentMaxLength += _separatorWithSpace.Length + column.Length + 1;
             _totalMaxLineLength[i] = currentMaxLength;
         }
         if (currentMaxLength > 0)
@@ -263,14 +258,9 @@ public sealed class TextTableOutput : RowsOutput, IDisposable, IAsyncDisposable
         _streamWriter.Flush();
 
         // Append header separator.
-        for (var i = 0; i < columns.Length; i++)
+        foreach (var (i, _, column) in GetColumns(columns, visibleOnly: true))
         {
-            if (columns[i].IsHidden)
-            {
-                continue;
-            }
-
-            _columnsLengths[i] = columns[i].Length;
+            _columnsLengths[i] = column.Length;
             _streamWriter.Write(_separatorWithSpace);
             _streamWriter.Write(new string('-', _columnsLengths[i]));
             _streamWriter.Write(' ');
@@ -286,12 +276,8 @@ public sealed class TextTableOutput : RowsOutput, IDisposable, IAsyncDisposable
     {
         int writeCount = 0;
         var columns = QueryContext.QueryInfo.Columns;
-        for (var i = 0; i < columns.Length; i++)
+        foreach (var (i, _, _) in GetColumns(columns, visibleOnly: true))
         {
-            if (columns[i].IsHidden)
-            {
-                continue;
-            }
             if (!_isSingleValue)
             {
                 _streamWriter.Write(_separatorWithSpace);
@@ -333,55 +319,45 @@ public sealed class TextTableOutput : RowsOutput, IDisposable, IAsyncDisposable
 
         if (!_hasHeader || _isSingleValue)
         {
-            for (var i = 0; i < columns.Length; i++)
+            foreach (var (i, visibleIndex, column) in GetColumns(columns))
             {
                 var separatorLength = 0;
-                if (i > 0)
+                if (visibleIndex > 0)
                 {
                     _streamWriter.Write(_separatorWithSpace);
                     separatorLength = _separatorWithSpace.Length;
                 }
-                currentMaxLength += separatorLength + columns[i].Length + 1;
+                currentMaxLength += separatorLength + column.Length + 1;
                 _totalMaxLineLength[i] = currentMaxLength;
             }
             return;
         }
 
         // Header.
-        for (var i = 0; i < columns.Length; i++)
+        foreach (var (i, visibleIndex, column) in GetColumns(columns, visibleOnly: true))
         {
-            if (columns[i].IsHidden)
-            {
-                continue;
-            }
-
-            _columnsLengths[i] = columns[i].Length;
+            _columnsLengths[i] = column.Length;
 
             var separatorLength = 0;
-            if (i > 0)
+            if (visibleIndex > 0)
             {
                 _streamWriter.Write(_separatorWithSpace);
                 separatorLength = _separatorWithSpace.Length;
             }
-            _streamWriter.Write(columns[i].FullName.PadRight(_columnsLengths[i]));
+            _streamWriter.Write(column.FullName.PadRight(_columnsLengths[i]));
             _streamWriter.Write(' ');
-            currentMaxLength += separatorLength + columns[i].Length + 1;
+            currentMaxLength += separatorLength + column.Length + 1;
             _totalMaxLineLength[i] = currentMaxLength;
         }
         _streamWriter.WriteLine();
         _streamWriter.Flush();
 
         // Append header separator.
-        for (var i = 0; i < columns.Length; i++)
+        foreach (var (i, visibleIndex, column) in GetColumns(columns, visibleOnly: true))
         {
-            if (columns[i].IsHidden)
-            {
-                continue;
-            }
+            _columnsLengths[i] = column.Length;
 
-            _columnsLengths[i] = columns[i].Length;
-
-            if (i > 0)
+            if (visibleIndex > 0)
             {
                 _streamWriter.Write("+-");
             }
@@ -394,13 +370,9 @@ public sealed class TextTableOutput : RowsOutput, IDisposable, IAsyncDisposable
     {
         int writeCount = 0;
         var columns = QueryContext.QueryInfo.Columns;
-        for (var i = 0; i < columns.Length; i++)
+        foreach (var (i, visibleIndex, _) in GetColumns(columns, visibleOnly: true))
         {
-            if (columns[i].IsHidden)
-            {
-                continue;
-            }
-            if (!_isSingleValue && i > 0)
+            if (!_isSingleValue && visibleIndex > 0)
             {
                 _streamWriter.Write(_separatorWithSpace);
                 writeCount += _separatorWithSpace.Length;
@@ -438,16 +410,11 @@ public sealed class TextTableOutput : RowsOutput, IDisposable, IAsyncDisposable
         }
 
         // Header.
-        for (var i = 0; i < columns.Length; i++)
+        foreach (var (i, _, column) in GetColumns(columns, visibleOnly: true))
         {
-            if (columns[i].IsHidden)
-            {
-                continue;
-            }
-
             _streamWriter.Write(_separator);
-            _streamWriter.Write(columns[i].FullName);
-            _columnsLengths[i] = columns[i].Length;
+            _streamWriter.Write(column.FullName);
+            _columnsLengths[i] = column.Length;
         }
         _streamWriter.Write(_separator);
         _streamWriter.WriteLine();
@@ -457,12 +424,8 @@ public sealed class TextTableOutput : RowsOutput, IDisposable, IAsyncDisposable
     private void OnNoSpaceTableWrite(VariantValue[] values)
     {
         var columns = QueryContext.QueryInfo.Columns;
-        for (var i = 0; i < columns.Length; i++)
+        foreach (var (i, _, _) in GetColumns(columns, visibleOnly: true))
         {
-            if (columns[i].IsHidden)
-            {
-                continue;
-            }
             var valueString = ToStringWithFormat(values[i]);
             _streamWriter.Write(_separator);
             _streamWriter.Write(valueString);
@@ -493,14 +456,10 @@ public sealed class TextTableOutput : RowsOutput, IDisposable, IAsyncDisposable
     private void OnCardWrite(VariantValue[] values)
     {
         var columns = QueryContext.QueryInfo.Columns;
-        for (var i = 0; i < columns.Length; i++)
+        foreach (var (i, _, column) in GetColumns(columns, visibleOnly: true))
         {
-            if (columns[i].IsHidden)
-            {
-                continue;
-            }
             var valueString = ToStringWithFormat(values[i]);
-            _streamWriter.Write(columns[i].FullName.PadLeft(_maxColumnNameWidth));
+            _streamWriter.Write(column.FullName.PadLeft(_maxColumnNameWidth));
             _streamWriter.Write($" {_separator} {valueString}\n");
         }
         _streamWriter.WriteLine();
@@ -522,15 +481,15 @@ public sealed class TextTableOutput : RowsOutput, IDisposable, IAsyncDisposable
 
         if (!_hasHeader || _isSingleValue)
         {
-            for (var i = 0; i < columns.Length; i++)
+            foreach (var (i, visibleIndex, column) in GetColumns(columns))
             {
                 var separatorLength = 0;
-                if (i > 0)
+                if (visibleIndex > 0)
                 {
                     _streamWriter.Write(_separatorWithSpace);
                     separatorLength = _separatorWithSpace.Length;
                 }
-                currentMaxLength += separatorLength + columns[i].Length + 1;
+                currentMaxLength += separatorLength + column.Length + 1;
                 _totalMaxLineLength[i] = currentMaxLength;
             }
             return;
@@ -538,16 +497,11 @@ public sealed class TextTableOutput : RowsOutput, IDisposable, IAsyncDisposable
 
         // Append header separator.
         _streamWriter.Write(BoxBottomRight);
-        for (var i = 0; i < columns.Length; i++)
+        foreach (var (i, visibleIndex, column) in GetColumns(columns, visibleOnly: true))
         {
-            if (columns[i].IsHidden)
-            {
-                continue;
-            }
+            _columnsLengths[i] = column.Length;
 
-            _columnsLengths[i] = columns[i].Length;
-
-            if (i > 0)
+            if (visibleIndex > 0)
             {
                 _streamWriter.Write(BoxLeftBottomRight);
             }
@@ -559,24 +513,19 @@ public sealed class TextTableOutput : RowsOutput, IDisposable, IAsyncDisposable
 
         // Header.
         _streamWriter.Write(_separatorWithSpace);
-        for (var i = 0; i < columns.Length; i++)
+        foreach (var (i, visibleIndex, column) in GetColumns(columns, visibleOnly: true))
         {
-            if (columns[i].IsHidden)
-            {
-                continue;
-            }
-
-            _columnsLengths[i] = columns[i].Length;
+            _columnsLengths[i] = column.Length;
 
             var separatorLength = 0;
-            if (i > 0)
+            if (visibleIndex > 0)
             {
                 _streamWriter.Write(_separatorWithSpace);
                 separatorLength = _separatorWithSpace.Length;
             }
-            _streamWriter.Write(columns[i].FullName.PadRight(_columnsLengths[i]));
+            _streamWriter.Write(column.FullName.PadRight(_columnsLengths[i]));
             _streamWriter.Write(' ');
-            currentMaxLength += separatorLength + columns[i].Length + 1;
+            currentMaxLength += separatorLength + column.Length + 1;
             _totalMaxLineLength[i] = currentMaxLength;
         }
         _streamWriter.Write(_separator);
@@ -585,16 +534,11 @@ public sealed class TextTableOutput : RowsOutput, IDisposable, IAsyncDisposable
 
         // Append header separator.
         _streamWriter.Write(BoxBottomRightTop);
-        for (var i = 0; i < columns.Length; i++)
+        foreach (var (i, visibleIndex, column) in GetColumns(columns, visibleOnly: true))
         {
-            if (columns[i].IsHidden)
-            {
-                continue;
-            }
+            _columnsLengths[i] = column.Length;
 
-            _columnsLengths[i] = columns[i].Length;
-
-            if (i > 0)
+            if (visibleIndex > 0)
             {
                 _streamWriter.Write(BoxLeftBottomRightTop);
             }
@@ -609,13 +553,9 @@ public sealed class TextTableOutput : RowsOutput, IDisposable, IAsyncDisposable
         int writeCount = 0;
         var columns = QueryContext.QueryInfo.Columns;
         _streamWriter.Write(_separatorWithSpace);
-        for (var i = 0; i < columns.Length; i++)
+        foreach (var (i, visibleIndex, _) in GetColumns(columns, visibleOnly: true))
         {
-            if (columns[i].IsHidden)
-            {
-                continue;
-            }
-            if (!_isSingleValue && i > 0)
+            if (!_isSingleValue && visibleIndex > 0)
             {
                 _streamWriter.Write(_separatorWithSpace);
                 writeCount += _separatorWithSpace.Length;
@@ -642,16 +582,11 @@ public sealed class TextTableOutput : RowsOutput, IDisposable, IAsyncDisposable
         var columns = QueryContext.QueryInfo.Columns;
 
         _streamWriter.Write(BoxRightTop);
-        for (var i = 0; i < columns.Length; i++)
+        foreach (var (i, visibleIndex, column) in GetColumns(columns, visibleOnly: true))
         {
-            if (columns[i].IsHidden)
-            {
-                continue;
-            }
+            _columnsLengths[i] = column.Length;
 
-            _columnsLengths[i] = columns[i].Length;
-
-            if (i > 0)
+            if (visibleIndex > 0)
             {
                 _streamWriter.Write(BoxLeftTopRight);
             }
@@ -672,6 +607,22 @@ public sealed class TextTableOutput : RowsOutput, IDisposable, IAsyncDisposable
             return value.ToString(_floatNumberFormat);
         }
         return value.ToString(CultureInfo.InvariantCulture);
+    }
+
+    private static IEnumerable<(int Index, int VisibleIndex, Column Column)> GetColumns(
+        Column[] columns,
+        bool visibleOnly = false)
+    {
+        var visibleIndex = 0;
+        for (var i = 0; i < columns.Length; i++)
+        {
+            var column = columns[i];
+            if (visibleOnly && column.IsHidden)
+            {
+                continue;
+            }
+            yield return (i, visibleIndex++, column);
+        }
     }
 
     /// <inheritdoc />
