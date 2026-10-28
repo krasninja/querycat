@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Globalization;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
@@ -65,6 +66,7 @@ internal static class DateTimeFunctions
                 "YEAR" or "Y" => source.AsTimestampUnsafe.Year,
                 "DAYOFYEAR" or "DOY" => source.AsTimestampUnsafe.DayOfYear,
                 "MONTH" or "MM" => source.AsTimestampUnsafe.Month,
+                "WEEK" or "W" => ISOWeek.GetWeekOfYear(source.AsTimestampUnsafe),
                 "WEEKDAY" or "DOW" => (int)source.AsTimestampUnsafe.DayOfWeek,
                 "DAY" or "D" => source.AsTimestampUnsafe.Day,
                 "HOUR" or "H" => source.AsTimestampUnsafe.Hour,
@@ -75,6 +77,7 @@ internal static class DateTimeFunctions
             },
             DataType.Interval => field switch
             {
+                "WEEK" or "W" => source.AsIntervalUnsafe.Days / 7,
                 "DAY" or "D" => source.AsIntervalUnsafe.Days,
                 "HOUR" or "H" => source.AsIntervalUnsafe.Hours,
                 "MINUTE" or "MIN" or "M" => source.AsIntervalUnsafe.Minutes,
@@ -107,6 +110,7 @@ internal static class DateTimeFunctions
             {
                 "YEAR" or "Y" => new DateTime(target.Year, 1, 1, 0, 0, 0, target.Kind),
                 "MONTH" or "MM" => new DateTime(target.Year, target.Month, 1, 0, 0, 0, target.Kind),
+                "WEEK" or "W" => target.AddDays(-(((int)target.DayOfWeek + 6) % 7)).Date,
                 "DAY" or "D" => new DateTime(target.Year, target.Month, target.Day, 0, 0, 0, target.Kind),
                 "HOUR" or "H" => new DateTime(target.Year, target.Month, target.Day, target.Hour, 0, 0, target.Kind),
                 "MINUTE" or "MIN" or "M" =>
@@ -124,6 +128,7 @@ internal static class DateTimeFunctions
             var target = source.AsIntervalUnsafe;
             var interval = field switch
             {
+                "WEEK" or "W" => new TimeSpan((target.Days / 7) * 7, 0, 0, 0),
                 "DAY" or "D" => new TimeSpan(target.Days, 0, 0, 0),
                 "HOUR" or "H" => new TimeSpan(target.Days, target.Hours, 0, 0),
                 "MINUTE" or "MIN" or "M" => new TimeSpan(target.Days, target.Hours, target.Minutes, 0),
