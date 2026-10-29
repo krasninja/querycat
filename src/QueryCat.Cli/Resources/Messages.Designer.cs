@@ -410,5 +410,107 @@ namespace QueryCat.Cli.Resources {
                 return ResourceManager.GetString("McpCommand_UnsafeDescription", resourceCulture);
             }
         }
+        
+        internal static string PluginAuthCommand_Description {
+            get {
+                return ResourceManager.GetString("PluginAuthCommand_Description", resourceCulture);
+            }
+        }
+        
+        internal static string PluginAuthCommand_ProviderDescription {
+            get {
+                return ResourceManager.GetString("PluginAuthCommand_ProviderDescription", resourceCulture);
+            }
+        }
+        
+        internal static string PluginAuthListCommand_Description {
+            get {
+                return ResourceManager.GetString("PluginAuthListCommand_Description", resourceCulture);
+            }
+        }
+        
+        internal static string PluginAuthLoginCommand_Description {
+            get {
+                return ResourceManager.GetString("PluginAuthLoginCommand_Description", resourceCulture);
+            }
+        }
+        
+        internal static string PluginAuthLoginCommand_DeviceDescription {
+            get {
+                return ResourceManager.GetString("PluginAuthLoginCommand_DeviceDescription", resourceCulture);
+            }
+        }
+        
+        internal static string PluginAuthLoginCommand_NoBrowserDescription {
+            get {
+                return ResourceManager.GetString("PluginAuthLoginCommand_NoBrowserDescription", resourceCulture);
+            }
+        }
+        
+        internal static string PluginAuthLoginCommand_ApiKeyDescription {
+            get {
+                return ResourceManager.GetString("PluginAuthLoginCommand_ApiKeyDescription", resourceCulture);
+            }
+        }
+        
+        internal static string PluginAuthLoginCommand_ClientIdDescription {
+            get {
+                return ResourceManager.GetString("PluginAuthLoginCommand_ClientIdDescription", resourceCulture);
+            }
+        }
+        
+        internal static string PluginAuthLoginCommand_ClientSecretDescription {
+            get {
+                return ResourceManager.GetString("PluginAuthLoginCommand_ClientSecretDescription", resourceCulture);
+            }
+        }
+        
+        internal static string PluginAuthLogoutCommand_Description {
+            get {
+                return ResourceManager.GetString("PluginAuthLogoutCommand_Description", resourceCulture);
+            }
+        }
+        
+        internal static string PluginAuthLogin_OpenUrl {
+            get {
+                return ResourceManager.GetString("PluginAuthLogin_OpenUrl", resourceCulture);
+            }
+        }
+        
+        internal static string PluginAuthLogin_DeviceCode {
+            get {
+                return ResourceManager.GetString("PluginAuthLogin_DeviceCode", resourceCulture);
+            }
+        }
+        
+        internal static string PluginAuthLogin_Waiting {
+            get {
+                return ResourceManager.GetString("PluginAuthLogin_Waiting", resourceCulture);
+            }
+        }
+        
+        internal static string PluginAuthLogin_EnterApiKey {
+            get {
+                return ResourceManager.GetString("PluginAuthLogin_EnterApiKey", resourceCulture);
+            }
+        }
+        
+        internal static string PluginAuthLogin_Success {
+            get {
+                return ResourceManager.GetString("PluginAuthLogin_Success", resourceCulture);
+            }
+        }
+        
+        internal static string PluginAuthLogout_Success {
+            get {
+                return ResourceManager.GetString("PluginAuthLogout_Success", resourceCulture);
+            }
+        }
+        
+        internal static string PluginAuthLogout_NotFound {
+            get {
+                return ResourceManager.GetString("PluginAuthLogout_NotFound", resourceCulture);
+            }
+        }
     }
 }

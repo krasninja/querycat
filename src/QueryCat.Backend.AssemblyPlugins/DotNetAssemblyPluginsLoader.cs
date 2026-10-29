@@ -6,6 +6,7 @@ using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Plugins;
+using QueryCat.Backend.Core.Plugins.Auth;
 
 namespace QueryCat.Backend.AssemblyPlugins;
 
@@ -19,8 +20,29 @@ public class DotNetAssemblyPluginsLoader : PluginsLoader, IDisposable
 
     private const string RegistrationClassName = "Registration";
     private const string RegistrationMethodName = "RegisterFunctions";
+    private const string RegisterAuthProvidersMethodName = "RegisterAuthProviders";
     private const string OnLoadMethodName = "OnLoadAsync";
     private const string OnUnloadMethodName = "OnUnloadAsync";
+
+    /// <summary>
+    /// Sets the plugin name for every registered provider.
+    /// </summary>
+    private sealed class PluginAuthProvidersRegistry(IAuthProvidersRegistry registry, string pluginName)
+        : IAuthProvidersRegistry
+    {
+        /// <inheritdoc />
+        public void Register(AuthProviderInfo provider)
+        {
+            provider.PluginName = pluginName;
+            registry.Register(provider);
+        }
+
+        /// <inheritdoc />
+        public AuthProviderInfo? Find(string id) => registry.Find(id);
+
+        /// <inheritdoc />
+        public IReadOnlyList<AuthProviderInfo> GetProviders() => registry.GetProviders();
+    }
 
     private sealed record AssemblyContext(
         Stream Stream,
@@ -442,6 +464,18 @@ public class DotNetAssemblyPluginsLoader : PluginsLoader, IDisposable
             {
                 _logger.LogDebug("Register using '{ClassName}' class.", RegistrationClassName);
                 registerMethod.Invoke(null, [_functionsManager]);
+            }
+
+            // static void RegisterAuthProviders(IAuthProvidersRegistry registry).
+            var registerAuthProvidersMethod = registerType.GetMethod(
+                RegisterAuthProvidersMethodName,
+                BindingFlags.Public | BindingFlags.Static,
+                [typeof(IAuthProvidersRegistry)]);
+            if (registerAuthProvidersMethod != null)
+            {
+                var registry = new PluginAuthProvidersRegistry(_executionThread.AuthTokensManager.Providers,
+                    assembly.GetName().Name ?? string.Empty);
+                registerAuthProvidersMethod.Invoke(null, [registry]);
             }
 
             // static Task OnLoadAsync(IExecutionThread executionThread, CancellationToken cancellationToken).

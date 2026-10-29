@@ -32,6 +32,7 @@
     <ProjectReference Include="..\QueryCat.Backend\QueryCat.Backend.csproj" />
     <ProjectReference Include="..\QueryCat.Backend.Addons\QueryCat.Backend.Addons.csproj" />
     <ProjectReference Include="..\QueryCat.Mcp\QueryCat.Mcp.csproj" />
+    <ProjectReference Include="..\QueryCat.OAuth\QueryCat.OAuth.csproj" />
     <ProjectReference Include="..\QueryCat.WebServer\QueryCat.WebServer.csproj" />
     <ProjectReference Condition="$(DefineConstants.Contains('PLUGIN_THRIFT'))"
                       Include="..\QueryCat.Backend.ThriftPlugins\QueryCat.Backend.ThriftPlugins.csproj" />

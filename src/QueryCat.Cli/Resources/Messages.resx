@@ -208,4 +208,56 @@
   <data name="McpCommand_UnsafeDescription" xml:space="preserve">
     <value>Allow to call unsafe functions and modification commands (INSERT, UPDATE, DELETE). By default, the MCP server runs in safe mode.</value>
   </data>
+  <data name="PluginAuthCommand_Description" xml:space="preserve">
+    <value>Manage plugins authentication.</value>
+  </data>
+  <data name="PluginAuthCommand_ProviderDescription" xml:space="preserve">
+    <value>Authentication provider identifier or plugin name.</value>
+  </data>
+  <data name="PluginAuthListCommand_Description" xml:space="preserve">
+    <value>List authentication providers declared by plugins and login status.</value>
+  </data>
+  <data name="PluginAuthLoginCommand_Description" xml:space="preserve">
+    <value>Log in to the plugin authentication provider.</value>
+  </data>
+  <data name="PluginAuthLoginCommand_DeviceDescription" xml:space="preserve">
+    <value>Use OAuth2 device authorization flow (for SSH and headless environments).</value>
+  </data>
+  <data name="PluginAuthLoginCommand_NoBrowserDescription" xml:space="preserve">
+    <value>Do not open browser, print the URL only.</value>
+  </data>
+  <data name="PluginAuthLoginCommand_ApiKeyDescription" xml:space="preserve">
+    <value>Enter API key or personal access token instead of OAuth2 login.</value>
+  </data>
+  <data name="PluginAuthLoginCommand_ClientIdDescription" xml:space="preserve">
+    <value>Override OAuth2 client identifier provided by plugin.</value>
+  </data>
+  <data name="PluginAuthLoginCommand_ClientSecretDescription" xml:space="preserve">
+    <value>Override OAuth2 client secret provided by plugin.</value>
+  </data>
+  <data name="PluginAuthLogoutCommand_Description" xml:space="preserve">
+    <value>Remove stored credentials of the authentication provider.</value>
+  </data>
+  <data name="PluginAuthLogin_OpenUrl" xml:space="preserve">
+    <value>Open the URL in browser to authorize:
+{0}</value>
+  </data>
+  <data name="PluginAuthLogin_DeviceCode" xml:space="preserve">
+    <value>Open {0} and enter the code: {1}</value>
+  </data>
+  <data name="PluginAuthLogin_Waiting" xml:space="preserve">
+    <value>Waiting for authorization...</value>
+  </data>
+  <data name="PluginAuthLogin_EnterApiKey" xml:space="preserve">
+    <value>Enter API key for '{0}': </value>
+  </data>
+  <data name="PluginAuthLogin_Success" xml:space="preserve">
+    <value>Logged in to '{0}'.</value>
+  </data>
+  <data name="PluginAuthLogout_Success" xml:space="preserve">
+    <value>Logged out from '{0}'.</value>
+  </data>
+  <data name="PluginAuthLogout_NotFound" xml:space="preserve">
+    <value>No stored credentials for '{0}'.</value>
+  </data>
 </root>

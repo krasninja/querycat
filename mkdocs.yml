@@ -66,6 +66,7 @@ nav:
     - 'Thrift': development/connector-thrift.md
     - 'Simple Plugin': development/plugin-simple.md
     - 'Advanced Plugin': development/plugin-advanced.md
+    - 'Plugin Authentication': development/plugin-auth.md
   - 'Misc':
     - 'Alternative Tools': misc/alternatives.md
 theme: readthedocs

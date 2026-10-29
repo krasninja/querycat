@@ -506,5 +506,23 @@ namespace QueryCat.Backend.Resources {
                 return ResourceManager.GetString("CannotRunFunctionInSafeMode", resourceCulture);
             }
         }
+        
+        internal static string OAuth2Error {
+            get {
+                return ResourceManager.GetString("OAuth2Error", resourceCulture);
+            }
+        }
+        
+        internal static string OAuth2InvalidResponse {
+            get {
+                return ResourceManager.GetString("OAuth2InvalidResponse", resourceCulture);
+            }
+        }
+        
+        internal static string OAuth2DeviceCodeExpired {
+            get {
+                return ResourceManager.GetString("OAuth2DeviceCodeExpired", resourceCulture);
+            }
+        }
     }
 }

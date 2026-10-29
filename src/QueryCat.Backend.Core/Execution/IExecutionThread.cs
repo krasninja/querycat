@@ -1,6 +1,7 @@
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Plugins;
+using QueryCat.Backend.Core.Plugins.Auth;
 using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Backend.Core.Execution;
@@ -27,6 +28,11 @@ public interface IExecutionThread : IDisposable
     /// Config storage.
     /// </summary>
     IConfigStorage ConfigStorage { get; }
+
+    /// <summary>
+    /// Authentication tokens provider.
+    /// </summary>
+    IAuthTokenManager AuthTokensManager => NullAuthTokenManager.Instance;
 
     /// <summary>
     /// Top execution scope.

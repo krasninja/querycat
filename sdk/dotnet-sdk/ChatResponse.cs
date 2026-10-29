@@ -123,14 +123,14 @@ namespace QueryCat.Plugins.Sdk
               if (field.Type == TType.List)
               {
                 {
-                  var _list136 = await iprot.ReadListBeginAsync(cancellationToken);
-                  Messages = new List<global::QueryCat.Plugins.Sdk.ChatMessage>(_list136.Count);
-                  for(int _i137 = 0; _i137 < _list136.Count; ++_i137)
+                  var _list161 = await iprot.ReadListBeginAsync(cancellationToken);
+                  Messages = new List<global::QueryCat.Plugins.Sdk.ChatMessage>(_list161.Count);
+                  for(int _i162 = 0; _i162 < _list161.Count; ++_i162)
                   {
-                    global::QueryCat.Plugins.Sdk.ChatMessage _elem138;
-                    _elem138 = new global::QueryCat.Plugins.Sdk.ChatMessage();
-                    await _elem138.ReadAsync(iprot, cancellationToken);
-                    Messages.Add(_elem138);
+                    global::QueryCat.Plugins.Sdk.ChatMessage _elem163;
+                    _elem163 = new global::QueryCat.Plugins.Sdk.ChatMessage();
+                    await _elem163.ReadAsync(iprot, cancellationToken);
+                    Messages.Add(_elem163);
                   }
                   await iprot.ReadListEndAsync(cancellationToken);
                 }
@@ -176,16 +176,16 @@ namespace QueryCat.Plugins.Sdk
               if (field.Type == TType.Map)
               {
                 {
-                  var _map139 = await iprot.ReadMapBeginAsync(cancellationToken);
-                  Metadata = new Dictionary<string, global::QueryCat.Plugins.Sdk.VariantValue>(_map139.Count);
-                  for(int _i140 = 0; _i140 < _map139.Count; ++_i140)
+                  var _map164 = await iprot.ReadMapBeginAsync(cancellationToken);
+                  Metadata = new Dictionary<string, global::QueryCat.Plugins.Sdk.VariantValue>(_map164.Count);
+                  for(int _i165 = 0; _i165 < _map164.Count; ++_i165)
                   {
-                    string _key141;
-                    global::QueryCat.Plugins.Sdk.VariantValue _val142;
-                    _key141 = await iprot.ReadStringAsync(cancellationToken);
-                    _val142 = new global::QueryCat.Plugins.Sdk.VariantValue();
-                    await _val142.ReadAsync(iprot, cancellationToken);
-                    Metadata[_key141] = _val142;
+                    string _key166;
+                    global::QueryCat.Plugins.Sdk.VariantValue _val167;
+                    _key166 = await iprot.ReadStringAsync(cancellationToken);
+                    _val167 = new global::QueryCat.Plugins.Sdk.VariantValue();
+                    await _val167.ReadAsync(iprot, cancellationToken);
+                    Metadata[_key166] = _val167;
                   }
                   await iprot.ReadMapEndAsync(cancellationToken);
                 }
@@ -224,62 +224,62 @@ namespace QueryCat.Plugins.Sdk
       oprot.IncrementRecursionDepth();
       try
       {
-        var tmp143 = new TStruct("ChatResponse");
-        await oprot.WriteStructBeginAsync(tmp143, cancellationToken);
+        var tmp168 = new TStruct("ChatResponse");
+        await oprot.WriteStructBeginAsync(tmp168, cancellationToken);
         #pragma warning disable IDE0017  // simplified init
-        var tmp144 = new TField();
+        var tmp169 = new TField();
         if((Messages != null))
         {
-          tmp144.Name = "messages";
-          tmp144.Type = TType.List;
-          tmp144.ID = 1;
-          await oprot.WriteFieldBeginAsync(tmp144, cancellationToken);
+          tmp169.Name = "messages";
+          tmp169.Type = TType.List;
+          tmp169.ID = 1;
+          await oprot.WriteFieldBeginAsync(tmp169, cancellationToken);
           await oprot.WriteListBeginAsync(new TList(TType.Struct, Messages.Count), cancellationToken);
-          foreach (global::QueryCat.Plugins.Sdk.ChatMessage _iter145 in Messages)
+          foreach (global::QueryCat.Plugins.Sdk.ChatMessage _iter170 in Messages)
           {
-            await _iter145.WriteAsync(oprot, cancellationToken);
+            await _iter170.WriteAsync(oprot, cancellationToken);
           }
           await oprot.WriteListEndAsync(cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
         if((MessageId != null))
         {
-          tmp144.Name = "message_id";
-          tmp144.Type = TType.String;
-          tmp144.ID = 2;
-          await oprot.WriteFieldBeginAsync(tmp144, cancellationToken);
+          tmp169.Name = "message_id";
+          tmp169.Type = TType.String;
+          tmp169.ID = 2;
+          await oprot.WriteFieldBeginAsync(tmp169, cancellationToken);
           await oprot.WriteStringAsync(MessageId, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
         if((Model != null) && __isset.@model)
         {
-          tmp144.Name = "model";
-          tmp144.Type = TType.String;
-          tmp144.ID = 3;
-          await oprot.WriteFieldBeginAsync(tmp144, cancellationToken);
+          tmp169.Name = "model";
+          tmp169.Type = TType.String;
+          tmp169.ID = 3;
+          await oprot.WriteFieldBeginAsync(tmp169, cancellationToken);
           await oprot.WriteStringAsync(Model, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
         if((StopReason != null) && __isset.stop_reason)
         {
-          tmp144.Name = "stop_reason";
-          tmp144.Type = TType.String;
-          tmp144.ID = 4;
-          await oprot.WriteFieldBeginAsync(tmp144, cancellationToken);
+          tmp169.Name = "stop_reason";
+          tmp169.Type = TType.String;
+          tmp169.ID = 4;
+          await oprot.WriteFieldBeginAsync(tmp169, cancellationToken);
           await oprot.WriteStringAsync(StopReason, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
         if((Metadata != null) && __isset.@metadata)
         {
-          tmp144.Name = "metadata";
-          tmp144.Type = TType.Map;
-          tmp144.ID = 5;
-          await oprot.WriteFieldBeginAsync(tmp144, cancellationToken);
+          tmp169.Name = "metadata";
+          tmp169.Type = TType.Map;
+          tmp169.ID = 5;
+          await oprot.WriteFieldBeginAsync(tmp169, cancellationToken);
           await oprot.WriteMapBeginAsync(new TMap(TType.String, TType.Struct, Metadata.Count), cancellationToken);
-          foreach (string _iter146 in Metadata.Keys)
+          foreach (string _iter171 in Metadata.Keys)
           {
-            await oprot.WriteStringAsync(_iter146, cancellationToken);
-            await Metadata[_iter146].WriteAsync(oprot, cancellationToken);
+            await oprot.WriteStringAsync(_iter171, cancellationToken);
+            await Metadata[_iter171].WriteAsync(oprot, cancellationToken);
           }
           await oprot.WriteMapEndAsync(cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
@@ -334,34 +334,34 @@ namespace QueryCat.Plugins.Sdk
 
     public override string ToString()
     {
-      var tmp147 = new StringBuilder("ChatResponse(");
+      var tmp172 = new StringBuilder("ChatResponse(");
       if((Messages != null))
       {
-        tmp147.Append(", Messages: ");
-        Messages.ToString(tmp147);
+        tmp172.Append(", Messages: ");
+        Messages.ToString(tmp172);
       }
       if((MessageId != null))
       {
-        tmp147.Append(", MessageId: ");
-        MessageId.ToString(tmp147);
+        tmp172.Append(", MessageId: ");
+        MessageId.ToString(tmp172);
       }
       if((Model != null) && __isset.@model)
       {
-        tmp147.Append(", Model: ");
-        Model.ToString(tmp147);
+        tmp172.Append(", Model: ");
+        Model.ToString(tmp172);
       }
       if((StopReason != null) && __isset.stop_reason)
       {
-        tmp147.Append(", StopReason: ");
-        StopReason.ToString(tmp147);
+        tmp172.Append(", StopReason: ");
+        StopReason.ToString(tmp172);
       }
       if((Metadata != null) && __isset.@metadata)
       {
-        tmp147.Append(", Metadata: ");
-        Metadata.ToString(tmp147);
+        tmp172.Append(", Metadata: ");
+        Metadata.ToString(tmp172);
       }
-      tmp147.Append(')');
-      return tmp147.ToString();
+      tmp172.Append(')');
+      return tmp172.ToString();
     }
   }
 

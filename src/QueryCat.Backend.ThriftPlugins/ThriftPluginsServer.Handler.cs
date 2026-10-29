@@ -83,15 +83,42 @@ public partial class ThriftPluginsServer
                     context.AddFunction(
                         new PluginContextFunction(
                             function.Signature,
-                            function.Description,
-                            function.IsSafe,
-                            function.IsAggregate,
-                            (function.FormatterIds ?? []).ToArray(),
-                            function.ArgumentsDescriptions,
-                            function.Examples?.ToArray()
+                            !string.IsNullOrEmpty(function.Description) ? function.Description : null,
+                            function.IsSafe ? true : null,
+                            function.IsAggregate ? true : null,
+                            function.FormatterIds != null && function.FormatterIds.Count > 0 ? function.FormatterIds.ToArray() : null,
+                            function.ArgumentsDescriptions != null && function.ArgumentsDescriptions.Any() ? function.ArgumentsDescriptions : null,
+                            function.Examples != null && function.Examples.Count > 0 ? function.Examples.ToArray() : null
                         )
                     );
                 }
+            }
+            if (plugin_data.AuthProviders != null)
+            {
+                context.AuthProviders = plugin_data.AuthProviders
+                    .Select(SdkConvert.Convert)
+                    .Select(p =>
+                    {
+                        p.PluginName = context.PluginName;
+                        return p;
+                    })
+                    .Select(p => new PluginContextAuth(
+                        p.Id,
+                        p.Type,
+                        p.DisplayName,
+                        p.AuthorizationUrl,
+                        p.TokenUrl,
+                        p.DeviceAuthorizationUrl,
+                        p.ClientId,
+                        p.ClientSecret,
+                        p.Scopes.Count > 0 ? p.Scopes.ToArray() : null,
+                        p.ExtraParams.Count > 0 ? p.ExtraParams.ToDictionary(k => k.Key, v => v.Value) : null,
+                        p.RedirectPort,
+                        p.PreferDeviceFlow,
+                        p.AllowApiKey,
+                        p.PluginName
+                    ))
+                    .ToList();
             }
             var token = _thriftPluginsServer.GenerateToken();
             _thriftPluginsServer.RegisterPluginContext(context, registration_token, token);
@@ -346,15 +373,41 @@ public partial class ThriftPluginsServer
                 context.AddFunction(
                     new PluginContextFunction(
                         function.Signature,
-                        function.Description,
-                        function.IsSafe,
-                        function.IsAggregate,
-                        (function.FormatterIds ?? []).ToArray(),
-                        function.ArgumentsDescriptions,
-                        function.Examples?.ToArray()
+                        !string.IsNullOrEmpty(function.Description) ? function.Description : null,
+                        function.IsSafe ? true : null,
+                        function.IsAggregate ? true : null,
+                        function.FormatterIds != null && function.FormatterIds.Count > 0 ? function.FormatterIds.ToArray() : null,
+                        function.ArgumentsDescriptions != null && function.ArgumentsDescriptions.Any() ? function.ArgumentsDescriptions : null,
+                        function.Examples != null && function.Examples.Count > 0 ? function.Examples.ToArray() : null
                     )
                 );
             }
+        }
+
+        /// <inheritdoc />
+        public async Task<AuthToken> GetAuthTokenAsync(long token, string provider_id, bool force_refresh,
+            CancellationToken cancellationToken = default)
+        {
+            await BeforeCallAsync(token, nameof(GetAuthTokenAsync), cancellationToken);
+            var context = _thriftPluginsServer.GetPluginContextByToken(token);
+
+            // The plugin can only get tokens of providers it declared.
+            var owner = _thriftPluginsServer._executionThread.AuthTokensManager.Providers.Find(provider_id);
+            if (owner == null || !owner.PluginName.Equals(context.PluginName, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new AuthorizationException(string.Format(Resources.Errors.AuthProviderNotDeclared,
+                    context.PluginName, provider_id));
+            }
+            if (!context.AuthProviders
+                    .Any(p => p.Id.Equals(provider_id, StringComparison.OrdinalIgnoreCase)))
+            {
+                throw new AuthorizationException(string.Format(Resources.Errors.AuthProviderNotDeclared,
+                    context.PluginName, provider_id));
+            }
+
+            var authToken = await _thriftPluginsServer._executionThread.AuthTokensManager.GetTokenOrDefaultAsync(
+                provider_id, force_refresh, cancellationToken);
+            return authToken != null ? SdkConvert.Convert(authToken) : new AuthToken(string.Empty);
         }
 
         /// <inheritdoc />
@@ -1058,6 +1111,21 @@ public partial class ThriftPluginsServer
             try
             {
                 await _handler.RegisterFunctionsAsync(token, functions, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, Resources.Errors.HandlerInternalError);
+                throw QueryCatPluginExceptionUtils.Create(ex);
+            }
+        }
+
+        /// <inheritdoc />
+        public async Task<AuthToken> GetAuthTokenAsync(long token, string provider_id, bool force_refresh,
+            CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                return await _handler.GetAuthTokenAsync(token, provider_id, force_refresh, cancellationToken);
             }
             catch (Exception ex)
             {

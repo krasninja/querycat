@@ -5,6 +5,7 @@ using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Plugins;
+using QueryCat.Backend.Core.Plugins.Auth;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Execution;
@@ -43,6 +44,8 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
     private Func<PluginsLoader, IPluginsManager> _pluginsManagerFactory = pluginLoader => new NullPluginsManager(pluginLoader);
 
     private Func<VariantValue, CancellationToken, ValueTask>? _commandsResultOutput;
+
+    private IAuthTokenManager _authTokenManager = NullAuthTokenManager.Instance;
 
     private readonly List<IUriResolver> _uriResolvers = new();
 
@@ -150,6 +153,17 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
     public ExecutionThreadBootstrapper WithPluginsManager(Func<PluginsLoader, IPluginsManager> pluginsManagerFactory)
     {
         _pluginsManagerFactory = pluginsManagerFactory;
+        return this;
+    }
+
+    /// <summary>
+    /// Use the authentication tokens manager for plugins.
+    /// </summary>
+    /// <param name="authTokenManager">Instance of <see cref="IAuthTokenManager" />.</param>
+    /// <returns>The instance of <see cref="ExecutionThreadBootstrapper" />.</returns>
+    public ExecutionThreadBootstrapper WithAuthTokenManager(IAuthTokenManager authTokenManager)
+    {
+        _authTokenManager = authTokenManager;
         return this;
     }
 
@@ -277,6 +291,7 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
             executionScopeFactory: _executionScopeFactory
         );
         thread.Tag = _tag;
+        thread.AuthTokensManager = _authTokenManager;
 
         if (_commandsResultOutput != null)
         {

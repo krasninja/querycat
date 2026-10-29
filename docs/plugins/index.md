@@ -7,6 +7,9 @@ You can easily extend QueryCat functionality by installing plugins. Plugins allo
 - `plugin remove <name>`. Remove the plugin.
 - `plugin update <name>`. Update the plugin. If you provide `*` as name all plugins will be updated.
 - `plugin install-proxy`. Download plugin proxy executable from GitHub.
+- `plugin auth list`. List authentication providers declared by plugins and login status.
+- `plugin auth login <provider>`. Log in to the plugin authentication provider.
+- `plugin auth logout <provider>`. Remove stored credentials.
 
 **Note**: Before use, you should install the special plugin proxy using `plugin install-proxy` command. It is the special software needed to run plugin `.dll` files.
 
@@ -22,6 +25,23 @@ The plugin files are DLLs or NuGet packages that must contain "Plugin" within na
 - With `--plugin-dirs` application argument.
 
 The official (and default) plugin storage can be found here: https://storage.yandexcloud.net/querycat/.
+
+## Authentication
+
+Some plugins need credentials to access remote services (for example, GitHub). Such plugins declare authentication providers, and QueryCat performs login and keeps tokens up to date:
+
+```bash
+qcat plugin auth list                        # Show providers and login status.
+qcat plugin auth login github                # OAuth2 login, opens browser.
+qcat plugin auth login github --device       # OAuth2 device flow, for SSH and headless machines.
+qcat plugin auth login github --no-browser   # Print the URL instead of opening browser.
+qcat plugin auth login github --api-key      # Enter API key or personal access token instead.
+qcat plugin auth logout github
+```
+
+The provider can be specified by its identifier or by the plugin name if the plugin declares only one provider. Use `--client-id` and `--client-secret` options to log in with your own registered OAuth2 application.
+
+Tokens are stored in the `auth.json` file within the local application data directory (for example, `/home/user/.local/share/qcat/auth.json`). On Unix the file is readable only by the current user. Expired OAuth2 tokens are refreshed automatically when a plugin requests them. A plugin can only get tokens of the providers it declared.
 
 ## Proxy
 

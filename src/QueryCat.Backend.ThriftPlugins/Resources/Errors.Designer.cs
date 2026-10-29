@@ -122,5 +122,11 @@ namespace QueryCat.Backend.ThriftPlugins.Resources {
                 return ResourceManager.GetString("PluginReadyTimeout", resourceCulture);
             }
         }
+        
+        internal static string AuthProviderNotDeclared {
+            get {
+                return ResourceManager.GetString("AuthProviderNotDeclared", resourceCulture);
+            }
+        }
     }
 }

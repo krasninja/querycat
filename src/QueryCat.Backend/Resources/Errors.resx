@@ -249,4 +249,13 @@
   <data name="CannotRunFunctionInSafeMode" xml:space="preserve">
     <value>Cannot run the function '{0}' in safe mode.</value>
   </data>
+  <data name="OAuth2Error" xml:space="preserve">
+    <value>Authentication failed: {0}. {1}</value>
+  </data>
+  <data name="OAuth2InvalidResponse" xml:space="preserve">
+    <value>Invalid OAuth2 response from '{0}' (HTTP {1}).</value>
+  </data>
+  <data name="OAuth2DeviceCodeExpired" xml:space="preserve">
+    <value>Device code has expired, please try again.</value>
+  </data>
 </root>

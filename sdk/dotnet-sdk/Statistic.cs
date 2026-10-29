@@ -113,14 +113,14 @@ namespace QueryCat.Plugins.Sdk
               if (field.Type == TType.List)
               {
                 {
-                  var _list91 = await iprot.ReadListBeginAsync(cancellationToken);
-                  Errors = new List<global::QueryCat.Plugins.Sdk.StatisticRowError>(_list91.Count);
-                  for(int _i92 = 0; _i92 < _list91.Count; ++_i92)
+                  var _list116 = await iprot.ReadListBeginAsync(cancellationToken);
+                  Errors = new List<global::QueryCat.Plugins.Sdk.StatisticRowError>(_list116.Count);
+                  for(int _i117 = 0; _i117 < _list116.Count; ++_i117)
                   {
-                    global::QueryCat.Plugins.Sdk.StatisticRowError _elem93;
-                    _elem93 = new global::QueryCat.Plugins.Sdk.StatisticRowError();
-                    await _elem93.ReadAsync(iprot, cancellationToken);
-                    Errors.Add(_elem93);
+                    global::QueryCat.Plugins.Sdk.StatisticRowError _elem118;
+                    _elem118 = new global::QueryCat.Plugins.Sdk.StatisticRowError();
+                    await _elem118.ReadAsync(iprot, cancellationToken);
+                    Errors.Add(_elem118);
                   }
                   await iprot.ReadListEndAsync(cancellationToken);
                 }
@@ -168,38 +168,38 @@ namespace QueryCat.Plugins.Sdk
       oprot.IncrementRecursionDepth();
       try
       {
-        var tmp94 = new TStruct("Statistic");
-        await oprot.WriteStructBeginAsync(tmp94, cancellationToken);
+        var tmp119 = new TStruct("Statistic");
+        await oprot.WriteStructBeginAsync(tmp119, cancellationToken);
         #pragma warning disable IDE0017  // simplified init
-        var tmp95 = new TField();
-        tmp95.Name = "execution_time_ms";
-        tmp95.Type = TType.I64;
-        tmp95.ID = 1;
-        await oprot.WriteFieldBeginAsync(tmp95, cancellationToken);
+        var tmp120 = new TField();
+        tmp120.Name = "execution_time_ms";
+        tmp120.Type = TType.I64;
+        tmp120.ID = 1;
+        await oprot.WriteFieldBeginAsync(tmp120, cancellationToken);
         await oprot.WriteI64Async(ExecutionTimeMs, cancellationToken);
         await oprot.WriteFieldEndAsync(cancellationToken);
-        tmp95.Name = "processed_count";
-        tmp95.Type = TType.I64;
-        tmp95.ID = 2;
-        await oprot.WriteFieldBeginAsync(tmp95, cancellationToken);
+        tmp120.Name = "processed_count";
+        tmp120.Type = TType.I64;
+        tmp120.ID = 2;
+        await oprot.WriteFieldBeginAsync(tmp120, cancellationToken);
         await oprot.WriteI64Async(ProcessedCount, cancellationToken);
         await oprot.WriteFieldEndAsync(cancellationToken);
-        tmp95.Name = "errors_count";
-        tmp95.Type = TType.I64;
-        tmp95.ID = 3;
-        await oprot.WriteFieldBeginAsync(tmp95, cancellationToken);
+        tmp120.Name = "errors_count";
+        tmp120.Type = TType.I64;
+        tmp120.ID = 3;
+        await oprot.WriteFieldBeginAsync(tmp120, cancellationToken);
         await oprot.WriteI64Async(ErrorsCount, cancellationToken);
         await oprot.WriteFieldEndAsync(cancellationToken);
         if((Errors != null))
         {
-          tmp95.Name = "errors";
-          tmp95.Type = TType.List;
-          tmp95.ID = 4;
-          await oprot.WriteFieldBeginAsync(tmp95, cancellationToken);
+          tmp120.Name = "errors";
+          tmp120.Type = TType.List;
+          tmp120.ID = 4;
+          await oprot.WriteFieldBeginAsync(tmp120, cancellationToken);
           await oprot.WriteListBeginAsync(new TList(TType.Struct, Errors.Count), cancellationToken);
-          foreach (global::QueryCat.Plugins.Sdk.StatisticRowError _iter96 in Errors)
+          foreach (global::QueryCat.Plugins.Sdk.StatisticRowError _iter121 in Errors)
           {
-            await _iter96.WriteAsync(oprot, cancellationToken);
+            await _iter121.WriteAsync(oprot, cancellationToken);
           }
           await oprot.WriteListEndAsync(cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
@@ -240,20 +240,20 @@ namespace QueryCat.Plugins.Sdk
 
     public override string ToString()
     {
-      var tmp97 = new StringBuilder("Statistic(");
-      tmp97.Append(", ExecutionTimeMs: ");
-      ExecutionTimeMs.ToString(tmp97);
-      tmp97.Append(", ProcessedCount: ");
-      ProcessedCount.ToString(tmp97);
-      tmp97.Append(", ErrorsCount: ");
-      ErrorsCount.ToString(tmp97);
+      var tmp122 = new StringBuilder("Statistic(");
+      tmp122.Append(", ExecutionTimeMs: ");
+      ExecutionTimeMs.ToString(tmp122);
+      tmp122.Append(", ProcessedCount: ");
+      ProcessedCount.ToString(tmp122);
+      tmp122.Append(", ErrorsCount: ");
+      ErrorsCount.ToString(tmp122);
       if((Errors != null))
       {
-        tmp97.Append(", Errors: ");
-        Errors.ToString(tmp97);
+        tmp122.Append(", Errors: ");
+        Errors.ToString(tmp122);
       }
-      tmp97.Append(')');
-      return tmp97.ToString();
+      tmp122.Append(')');
+      return tmp122.ToString();
     }
   }
 

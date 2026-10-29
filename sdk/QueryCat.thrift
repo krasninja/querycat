@@ -163,6 +163,40 @@ exception QueryCatPluginException {
  * ---------------
  */
 
+enum AuthType {
+  OAUTH2 = 0,
+  API_KEY = 1
+}
+
+// Authentication provider declared by plugin. QueryCat host performs login and token refresh.
+struct AuthProvider {
+  // Provider identifier (f.e. "github"). Must be unique across all plugins.
+  1: required string id,
+  2: required AuthType type,
+  3: optional string display_name,
+  4: optional string authorization_url,
+  5: optional string token_url,
+  6: optional string device_authorization_url,
+  7: optional string client_id,
+  8: optional string client_secret,
+  9: optional list<string> scopes,
+  10: optional map<string, string> extra_params, // Audience, prompt, access_type=offline...
+  // Fixed loopback redirect port. Random port is used if not set.
+  11: optional i32 redirect_port,
+  // Use device authorization flow by default.
+  12: optional bool prefer_device_flow,
+  // Allow user to provide API key/personal token instead of OAuth2 login.
+  13: optional bool allow_api_key
+}
+
+// Authentication token. Empty access token means the user is not logged in.
+struct AuthToken {
+  1: required string access_token,
+  2: optional string token_type,
+  3: optional i64 expires_at, // Unix seconds.
+  4: optional list<string> scopes
+}
+
 struct Function {
   // Function call signature.
   1: required string signature,
@@ -189,7 +223,9 @@ struct PluginData {
   // Plugin version. Format is MAJOR.MINOR.PATCH.
   3: required string version,
   // Metadata.
-  4: optional map<string, VariantValue> metadata
+  4: optional map<string, VariantValue> metadata,
+  // Authentication providers.
+  5: optional list<AuthProvider> auth_providers
 }
 
 struct RegistrationResult {
@@ -647,6 +683,13 @@ service PluginsManager extends QueryCatIO {
   void RegisterFunctions(
     1: required i64 token, // Authorization token.
     2: required list<Function> functions
+  ) throws (1: QueryCatPluginException e),
+
+  // Get authentication token for the provider declared by the plugin. The host refreshes it if needed.
+  AuthToken GetAuthToken(
+    1: required i64 token, // Authorization token.
+    2: required string provider_id,
+    3: required bool force_refresh
   ) throws (1: QueryCatPluginException e),
 }
 

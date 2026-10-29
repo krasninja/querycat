@@ -138,34 +138,34 @@ namespace QueryCat.Plugins.Sdk
       oprot.IncrementRecursionDepth();
       try
       {
-        var tmp103 = new TStruct("ChatToolCall");
-        await oprot.WriteStructBeginAsync(tmp103, cancellationToken);
+        var tmp128 = new TStruct("ChatToolCall");
+        await oprot.WriteStructBeginAsync(tmp128, cancellationToken);
         #pragma warning disable IDE0017  // simplified init
-        var tmp104 = new TField();
+        var tmp129 = new TField();
         if((Id != null))
         {
-          tmp104.Name = "id";
-          tmp104.Type = TType.String;
-          tmp104.ID = 1;
-          await oprot.WriteFieldBeginAsync(tmp104, cancellationToken);
+          tmp129.Name = "id";
+          tmp129.Type = TType.String;
+          tmp129.ID = 1;
+          await oprot.WriteFieldBeginAsync(tmp129, cancellationToken);
           await oprot.WriteStringAsync(Id, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
         if((Name != null))
         {
-          tmp104.Name = "name";
-          tmp104.Type = TType.String;
-          tmp104.ID = 2;
-          await oprot.WriteFieldBeginAsync(tmp104, cancellationToken);
+          tmp129.Name = "name";
+          tmp129.Type = TType.String;
+          tmp129.ID = 2;
+          await oprot.WriteFieldBeginAsync(tmp129, cancellationToken);
           await oprot.WriteStringAsync(Name, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
         if((Arguments != null))
         {
-          tmp104.Name = "arguments";
-          tmp104.Type = TType.String;
-          tmp104.ID = 3;
-          await oprot.WriteFieldBeginAsync(tmp104, cancellationToken);
+          tmp129.Name = "arguments";
+          tmp129.Type = TType.String;
+          tmp129.ID = 3;
+          await oprot.WriteFieldBeginAsync(tmp129, cancellationToken);
           await oprot.WriteStringAsync(Arguments, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
@@ -209,24 +209,24 @@ namespace QueryCat.Plugins.Sdk
 
     public override string ToString()
     {
-      var tmp105 = new StringBuilder("ChatToolCall(");
+      var tmp130 = new StringBuilder("ChatToolCall(");
       if((Id != null))
       {
-        tmp105.Append(", Id: ");
-        Id.ToString(tmp105);
+        tmp130.Append(", Id: ");
+        Id.ToString(tmp130);
       }
       if((Name != null))
       {
-        tmp105.Append(", Name: ");
-        Name.ToString(tmp105);
+        tmp130.Append(", Name: ");
+        Name.ToString(tmp130);
       }
       if((Arguments != null))
       {
-        tmp105.Append(", Arguments: ");
-        Arguments.ToString(tmp105);
+        tmp130.Append(", Arguments: ");
+        Arguments.ToString(tmp130);
       }
-      tmp105.Append(')');
-      return tmp105.ToString();
+      tmp130.Append(')');
+      return tmp130.ToString();
     }
   }
 

@@ -7,6 +7,7 @@ using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Plugins;
+using QueryCat.Backend.Core.Plugins.Auth;
 using QueryCat.Backend.Core.Types;
 #if NET8_0 || NET9_0
 using QueryCat.Backend.Core.Utils;
@@ -143,6 +144,9 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IExecu
     /// <inheritdoc />
     public IPluginsManager PluginsManager { get; internal set; } = NullPluginsManager.Instance;
 
+    /// <inheritdoc />
+    public IAuthTokenManager AuthTokensManager { get; internal set; } = NullAuthTokenManager.Instance;
+
     /// <summary>
     /// The event to be called before any statement execution.
     /// </summary>
@@ -192,6 +196,7 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IExecu
 #if ENABLE_PLUGINS
         PluginsManager = executionThread.PluginsManager;
 #endif
+        AuthTokensManager = executionThread.AuthTokensManager;
         _ownsPluginsManager = false;
     }
 

@@ -119,25 +119,25 @@ namespace QueryCat.Plugins.Sdk
       oprot.IncrementRecursionDepth();
       try
       {
-        var tmp99 = new TStruct("ModelDescription");
-        await oprot.WriteStructBeginAsync(tmp99, cancellationToken);
+        var tmp124 = new TStruct("ModelDescription");
+        await oprot.WriteStructBeginAsync(tmp124, cancellationToken);
         #pragma warning disable IDE0017  // simplified init
-        var tmp100 = new TField();
+        var tmp125 = new TField();
         if((Name != null))
         {
-          tmp100.Name = "name";
-          tmp100.Type = TType.String;
-          tmp100.ID = 1;
-          await oprot.WriteFieldBeginAsync(tmp100, cancellationToken);
+          tmp125.Name = "name";
+          tmp125.Type = TType.String;
+          tmp125.ID = 1;
+          await oprot.WriteFieldBeginAsync(tmp125, cancellationToken);
           await oprot.WriteStringAsync(Name, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
         if((Description != null))
         {
-          tmp100.Name = "description";
-          tmp100.Type = TType.String;
-          tmp100.ID = 2;
-          await oprot.WriteFieldBeginAsync(tmp100, cancellationToken);
+          tmp125.Name = "description";
+          tmp125.Type = TType.String;
+          tmp125.ID = 2;
+          await oprot.WriteFieldBeginAsync(tmp125, cancellationToken);
           await oprot.WriteStringAsync(Description, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
@@ -176,19 +176,19 @@ namespace QueryCat.Plugins.Sdk
 
     public override string ToString()
     {
-      var tmp101 = new StringBuilder("ModelDescription(");
+      var tmp126 = new StringBuilder("ModelDescription(");
       if((Name != null))
       {
-        tmp101.Append(", Name: ");
-        Name.ToString(tmp101);
+        tmp126.Append(", Name: ");
+        Name.ToString(tmp126);
       }
       if((Description != null))
       {
-        tmp101.Append(", Description: ");
-        Description.ToString(tmp101);
+        tmp126.Append(", Description: ");
+        Description.ToString(tmp126);
       }
-      tmp101.Append(')');
-      return tmp101.ToString();
+      tmp126.Append(')');
+      return tmp126.ToString();
     }
   }
 

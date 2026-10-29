@@ -83,14 +83,14 @@ namespace QueryCat.Plugins.Sdk
               if (field.Type == TType.List)
               {
                 {
-                  var _list158 = await iprot.ReadListBeginAsync(cancellationToken);
-                  Values = new List<global::QueryCat.Plugins.Sdk.VariantValue>(_list158.Count);
-                  for(int _i159 = 0; _i159 < _list158.Count; ++_i159)
+                  var _list183 = await iprot.ReadListBeginAsync(cancellationToken);
+                  Values = new List<global::QueryCat.Plugins.Sdk.VariantValue>(_list183.Count);
+                  for(int _i184 = 0; _i184 < _list183.Count; ++_i184)
                   {
-                    global::QueryCat.Plugins.Sdk.VariantValue _elem160;
-                    _elem160 = new global::QueryCat.Plugins.Sdk.VariantValue();
-                    await _elem160.ReadAsync(iprot, cancellationToken);
-                    Values.Add(_elem160);
+                    global::QueryCat.Plugins.Sdk.VariantValue _elem185;
+                    _elem185 = new global::QueryCat.Plugins.Sdk.VariantValue();
+                    await _elem185.ReadAsync(iprot, cancellationToken);
+                    Values.Add(_elem185);
                   }
                   await iprot.ReadListEndAsync(cancellationToken);
                 }
@@ -130,26 +130,26 @@ namespace QueryCat.Plugins.Sdk
       oprot.IncrementRecursionDepth();
       try
       {
-        var tmp161 = new TStruct("RowsList");
-        await oprot.WriteStructBeginAsync(tmp161, cancellationToken);
+        var tmp186 = new TStruct("RowsList");
+        await oprot.WriteStructBeginAsync(tmp186, cancellationToken);
         #pragma warning disable IDE0017  // simplified init
-        var tmp162 = new TField();
-        tmp162.Name = "has_more";
-        tmp162.Type = TType.Bool;
-        tmp162.ID = 1;
-        await oprot.WriteFieldBeginAsync(tmp162, cancellationToken);
+        var tmp187 = new TField();
+        tmp187.Name = "has_more";
+        tmp187.Type = TType.Bool;
+        tmp187.ID = 1;
+        await oprot.WriteFieldBeginAsync(tmp187, cancellationToken);
         await oprot.WriteBoolAsync(HasMore, cancellationToken);
         await oprot.WriteFieldEndAsync(cancellationToken);
         if((Values != null))
         {
-          tmp162.Name = "values";
-          tmp162.Type = TType.List;
-          tmp162.ID = 2;
-          await oprot.WriteFieldBeginAsync(tmp162, cancellationToken);
+          tmp187.Name = "values";
+          tmp187.Type = TType.List;
+          tmp187.ID = 2;
+          await oprot.WriteFieldBeginAsync(tmp187, cancellationToken);
           await oprot.WriteListBeginAsync(new TList(TType.Struct, Values.Count), cancellationToken);
-          foreach (global::QueryCat.Plugins.Sdk.VariantValue _iter163 in Values)
+          foreach (global::QueryCat.Plugins.Sdk.VariantValue _iter188 in Values)
           {
-            await _iter163.WriteAsync(oprot, cancellationToken);
+            await _iter188.WriteAsync(oprot, cancellationToken);
           }
           await oprot.WriteListEndAsync(cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
@@ -186,16 +186,16 @@ namespace QueryCat.Plugins.Sdk
 
     public override string ToString()
     {
-      var tmp164 = new StringBuilder("RowsList(");
-      tmp164.Append(", HasMore: ");
-      HasMore.ToString(tmp164);
+      var tmp189 = new StringBuilder("RowsList(");
+      tmp189.Append(", HasMore: ");
+      HasMore.ToString(tmp189);
       if((Values != null))
       {
-        tmp164.Append(", Values: ");
-        Values.ToString(tmp164);
+        tmp189.Append(", Values: ");
+        Values.ToString(tmp189);
       }
-      tmp164.Append(')');
-      return tmp164.ToString();
+      tmp189.Append(')');
+      return tmp189.ToString();
     }
   }
 

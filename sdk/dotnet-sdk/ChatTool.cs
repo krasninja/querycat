@@ -138,34 +138,34 @@ namespace QueryCat.Plugins.Sdk
       oprot.IncrementRecursionDepth();
       try
       {
-        var tmp107 = new TStruct("ChatTool");
-        await oprot.WriteStructBeginAsync(tmp107, cancellationToken);
+        var tmp132 = new TStruct("ChatTool");
+        await oprot.WriteStructBeginAsync(tmp132, cancellationToken);
         #pragma warning disable IDE0017  // simplified init
-        var tmp108 = new TField();
+        var tmp133 = new TField();
         if((Name != null))
         {
-          tmp108.Name = "name";
-          tmp108.Type = TType.String;
-          tmp108.ID = 1;
-          await oprot.WriteFieldBeginAsync(tmp108, cancellationToken);
+          tmp133.Name = "name";
+          tmp133.Type = TType.String;
+          tmp133.ID = 1;
+          await oprot.WriteFieldBeginAsync(tmp133, cancellationToken);
           await oprot.WriteStringAsync(Name, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
         if((Description != null))
         {
-          tmp108.Name = "description";
-          tmp108.Type = TType.String;
-          tmp108.ID = 2;
-          await oprot.WriteFieldBeginAsync(tmp108, cancellationToken);
+          tmp133.Name = "description";
+          tmp133.Type = TType.String;
+          tmp133.ID = 2;
+          await oprot.WriteFieldBeginAsync(tmp133, cancellationToken);
           await oprot.WriteStringAsync(Description, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
         if((ParametersSchema != null))
         {
-          tmp108.Name = "parameters_schema";
-          tmp108.Type = TType.String;
-          tmp108.ID = 3;
-          await oprot.WriteFieldBeginAsync(tmp108, cancellationToken);
+          tmp133.Name = "parameters_schema";
+          tmp133.Type = TType.String;
+          tmp133.ID = 3;
+          await oprot.WriteFieldBeginAsync(tmp133, cancellationToken);
           await oprot.WriteStringAsync(ParametersSchema, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
@@ -209,24 +209,24 @@ namespace QueryCat.Plugins.Sdk
 
     public override string ToString()
     {
-      var tmp109 = new StringBuilder("ChatTool(");
+      var tmp134 = new StringBuilder("ChatTool(");
       if((Name != null))
       {
-        tmp109.Append(", Name: ");
-        Name.ToString(tmp109);
+        tmp134.Append(", Name: ");
+        Name.ToString(tmp134);
       }
       if((Description != null))
       {
-        tmp109.Append(", Description: ");
-        Description.ToString(tmp109);
+        tmp134.Append(", Description: ");
+        Description.ToString(tmp134);
       }
       if((ParametersSchema != null))
       {
-        tmp109.Append(", ParametersSchema: ");
-        ParametersSchema.ToString(tmp109);
+        tmp134.Append(", ParametersSchema: ");
+        ParametersSchema.ToString(tmp134);
       }
-      tmp109.Append(')');
-      return tmp109.ToString();
+      tmp134.Append(')');
+      return tmp134.ToString();
     }
   }
 

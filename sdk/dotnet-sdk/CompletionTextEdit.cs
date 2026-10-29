@@ -138,28 +138,28 @@ namespace QueryCat.Plugins.Sdk
       oprot.IncrementRecursionDepth();
       try
       {
-        var tmp75 = new TStruct("CompletionTextEdit");
-        await oprot.WriteStructBeginAsync(tmp75, cancellationToken);
+        var tmp100 = new TStruct("CompletionTextEdit");
+        await oprot.WriteStructBeginAsync(tmp100, cancellationToken);
         #pragma warning disable IDE0017  // simplified init
-        var tmp76 = new TField();
-        tmp76.Name = "start";
-        tmp76.Type = TType.I32;
-        tmp76.ID = 1;
-        await oprot.WriteFieldBeginAsync(tmp76, cancellationToken);
+        var tmp101 = new TField();
+        tmp101.Name = "start";
+        tmp101.Type = TType.I32;
+        tmp101.ID = 1;
+        await oprot.WriteFieldBeginAsync(tmp101, cancellationToken);
         await oprot.WriteI32Async(Start, cancellationToken);
         await oprot.WriteFieldEndAsync(cancellationToken);
-        tmp76.Name = "end";
-        tmp76.Type = TType.I32;
-        tmp76.ID = 2;
-        await oprot.WriteFieldBeginAsync(tmp76, cancellationToken);
+        tmp101.Name = "end";
+        tmp101.Type = TType.I32;
+        tmp101.ID = 2;
+        await oprot.WriteFieldBeginAsync(tmp101, cancellationToken);
         await oprot.WriteI32Async(End, cancellationToken);
         await oprot.WriteFieldEndAsync(cancellationToken);
         if((NewText != null))
         {
-          tmp76.Name = "new_text";
-          tmp76.Type = TType.String;
-          tmp76.ID = 3;
-          await oprot.WriteFieldBeginAsync(tmp76, cancellationToken);
+          tmp101.Name = "new_text";
+          tmp101.Type = TType.String;
+          tmp101.ID = 3;
+          await oprot.WriteFieldBeginAsync(tmp101, cancellationToken);
           await oprot.WriteStringAsync(NewText, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
@@ -197,18 +197,18 @@ namespace QueryCat.Plugins.Sdk
 
     public override string ToString()
     {
-      var tmp77 = new StringBuilder("CompletionTextEdit(");
-      tmp77.Append(", Start: ");
-      Start.ToString(tmp77);
-      tmp77.Append(", End: ");
-      End.ToString(tmp77);
+      var tmp102 = new StringBuilder("CompletionTextEdit(");
+      tmp102.Append(", Start: ");
+      Start.ToString(tmp102);
+      tmp102.Append(", End: ");
+      End.ToString(tmp102);
       if((NewText != null))
       {
-        tmp77.Append(", NewText: ");
-        NewText.ToString(tmp77);
+        tmp102.Append(", NewText: ");
+        NewText.ToString(tmp102);
       }
-      tmp77.Append(')');
-      return tmp77.ToString();
+      tmp102.Append(')');
+      return tmp102.ToString();
     }
   }
 

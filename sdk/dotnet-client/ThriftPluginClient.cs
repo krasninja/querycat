@@ -16,6 +16,7 @@ using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Plugins;
+using QueryCat.Backend.Core.Plugins.Auth;
 using QueryCat.Plugins.Client.Logging;
 using QueryCat.Plugins.Sdk;
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
@@ -79,6 +80,11 @@ public partial class ThriftPluginClient : IDisposable
     /// Execution thread.
     /// </summary>
     public IExecutionThread ExecutionThread => _executionThread;
+
+    /// <summary>
+    /// Authentication providers declared by the plugin. Register them before <see cref="StartAsync" /> call.
+    /// </summary>
+    public IAuthProvidersRegistry AuthProviders => _executionThread.AuthTokensManager.Providers;
 
     /// <summary>
     /// Registration result. It is filled after connection to QueryCat host.
@@ -293,6 +299,11 @@ public partial class ThriftPluginClient : IDisposable
             }).ToList();
         pluginData ??= SdkConvert.Convert(Assembly.GetEntryAssembly());
         pluginData.Functions = functions;
+        var authProviders = AuthProviders.GetProviders();
+        if (authProviders.Count > 0)
+        {
+            pluginData.AuthProviders = authProviders.Select(SdkConvert.Convert).ToList();
+        }
 
         RegistrationResult = await _thriftClient.RegisterPluginAsync(
             _registrationToken,

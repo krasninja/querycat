@@ -2,12 +2,12 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using Microsoft.Extensions.Logging;
+using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 using Thrift.Protocol;
 using Thrift.Transport;
 using QueryCat.Backend.Core;
 using QueryCat.Plugins.Client;
 using QueryCat.Plugins.Sdk;
-using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 
 namespace QueryCat.Backend.ThriftPlugins;
 
@@ -33,6 +33,11 @@ internal sealed class ThriftPluginContext : IDisposable, IAsyncDisposable
     public long Token { get; set; } = -1;
 
     public IReadOnlyList<PluginContextFunction> Functions => _functions;
+
+    /// <summary>
+    /// Authentication providers declared by the plugin.
+    /// </summary>
+    public IReadOnlyList<PluginContextAuth> AuthProviders { get; set; } = [];
 
     public ObjectsStorage ObjectsStorage { get; }
 

@@ -701,6 +701,21 @@ internal sealed class ThreadSafePluginsManagerClient : PluginsManager.IAsync, ID
     }
 
     /// <inheritdoc />
+    public async Task<AuthToken> GetAuthTokenAsync(long token, string provider_id, bool force_refresh,
+        CancellationToken cancellationToken = default)
+    {
+        await _semaphore.WaitAsync(cancellationToken);
+        try
+        {
+            return await _client.GetAuthTokenAsync(token, provider_id, force_refresh, cancellationToken);
+        }
+        finally
+        {
+            _semaphore.Release();
+        }
+    }
+
+    /// <inheritdoc />
     public void Dispose()
     {
         if (_isDisposed)

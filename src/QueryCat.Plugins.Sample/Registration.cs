@@ -1,6 +1,7 @@
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
+using QueryCat.Backend.Core.Plugins.Auth;
 using QueryCat.Plugins.Sample.Functions;
 using QueryCat.Plugins.Sample.Inputs;
 
@@ -23,6 +24,16 @@ internal static class Registration
         functionsManager.RegisterFunction(TestSimpleNonStandard.TestSimpleNonStandardFunction);
         functionsManager.RegisterFunction(TestSimple.TestSimpleFunction);
         functionsManager.RegisterFunction(TestBlob.TestBlobFunction);
+        functionsManager.RegisterFunction(TestAuth.TestAuthFunction);
+    }
+
+    /// <summary>
+    /// Register authentication providers. QueryCat host performs login and token refresh.
+    /// </summary>
+    /// <param name="registry">Authentication providers registry.</param>
+    public static void RegisterAuthProviders(IAuthProvidersRegistry registry)
+    {
+        registry.Register(TestAuth.Provider);
     }
 
     /// <summary>

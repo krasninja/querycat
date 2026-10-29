@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend;
 using QueryCat.Backend.Addons.Formatters;
+using QueryCat.Backend.Auth;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Plugins;
 using QueryCat.Backend.Execution;
@@ -16,10 +17,14 @@ namespace QueryCat.Cli.Commands.Options;
 internal sealed class ApplicationOptions
 {
     internal const string ConfigFileName = "config.json";
+    internal const string AuthFileName = "auth.json";
     internal const string ApplicationPluginsDirectory = "plugins";
     internal const string ApplicationPluginsFunctionsCacheDirectory = "func-cache";
 
     public LogLevel LogLevel { get; init; }
+
+    private static readonly FileAuthTokenStore _authTokenStore = new(
+        Path.Combine(Application.GetApplicationDirectory(), AuthFileName));
 
 #if ENABLE_PLUGINS
     public string[] PluginDirectories { get; init; } = [];
@@ -102,6 +107,7 @@ internal sealed class ApplicationOptions
             .WithConfigStorage(new PersistentConfigStorage(
                 Path.Combine(Application.GetApplicationDirectory(), ConfigFileName))
             )
+            .WithAuthTokenManager(new DefaultAuthTokenManager(_authTokenStore))
             .WithStandardFunctions()
             .WithRegistrations(Backend.Addons.Functions.JsonFunctions.RegisterFunctions)
             .WithStandardUriResolvers()
@@ -137,7 +143,7 @@ internal sealed class ApplicationOptions
         var thread = bootstrapper.Create();
         await thread.PluginsManager.PluginsLoader.LoadAsync(new PluginsLoadingOptions(), cancellationToken);
 
-        return new ApplicationRoot(thread, thread.PluginsManager);
+        return new ApplicationRoot(thread, thread.PluginsManager, _authTokenStore);
     }
 
     /// <summary>

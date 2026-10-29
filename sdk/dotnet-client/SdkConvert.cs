@@ -301,6 +301,90 @@ public static class SdkConvert
         };
     }
 
+    public static AuthProvider Convert(Backend.Core.Plugins.Auth.AuthProviderInfo provider)
+        => new(provider.Id, Convert(provider.Type))
+        {
+            DisplayName = provider.DisplayName,
+            AuthorizationUrl = provider.AuthorizationUrl,
+            TokenUrl = provider.TokenUrl,
+            DeviceAuthorizationUrl = provider.DeviceAuthorizationUrl,
+            ClientId = provider.ClientId,
+            ClientSecret = provider.ClientSecret,
+            Scopes = provider.Scopes.ToList(),
+            ExtraParams = provider.ExtraParams.ToDictionary(p => p.Key, p => p.Value),
+            RedirectPort = provider.RedirectPort,
+            PreferDeviceFlow = provider.PreferDeviceFlow,
+            AllowApiKey = provider.AllowApiKey,
+        };
+
+    public static Backend.Core.Plugins.Auth.AuthProviderInfo Convert(Sdk.AuthProvider provider)
+        => new()
+        {
+            Id = provider.Id,
+            Type = Convert(provider.Type),
+            DisplayName = provider.DisplayName ?? string.Empty,
+            AuthorizationUrl = provider.AuthorizationUrl ?? string.Empty,
+            TokenUrl = provider.TokenUrl ?? string.Empty,
+            DeviceAuthorizationUrl = provider.DeviceAuthorizationUrl ?? string.Empty,
+            ClientId = provider.ClientId ?? string.Empty,
+            ClientSecret = provider.ClientSecret ?? string.Empty,
+            Scopes = provider.Scopes ?? [],
+            ExtraParams = provider.ExtraParams ?? new Dictionary<string, string>(),
+            RedirectPort = provider.RedirectPort,
+            PreferDeviceFlow = provider.PreferDeviceFlow,
+            AllowApiKey = provider.AllowApiKey,
+        };
+
+    public static Sdk.AuthType Convert(Backend.Core.Plugins.Auth.AuthType type)
+        => type switch
+        {
+            Backend.Core.Plugins.Auth.AuthType.OAuth2 => Sdk.AuthType.OAUTH2,
+            Backend.Core.Plugins.Auth.AuthType.ApiKey => Sdk.AuthType.API_KEY,
+            _ => throw new ArgumentOutOfRangeException(nameof(type), type, null),
+        };
+
+    public static Backend.Core.Plugins.Auth.AuthType Convert(Sdk.AuthType type)
+        => type switch
+        {
+            Sdk.AuthType.OAUTH2 => Backend.Core.Plugins.Auth.AuthType.OAuth2,
+            Sdk.AuthType.API_KEY => Backend.Core.Plugins.Auth.AuthType.ApiKey,
+            _ => throw new ArgumentOutOfRangeException(nameof(type), type, null),
+        };
+
+    public static Sdk.AuthToken Convert(Backend.Core.Plugins.Auth.AuthToken token)
+    {
+        var result = new AuthToken(token.AccessToken)
+        {
+            TokenType = token.TokenType,
+            Scopes = token.Scopes.ToList(),
+        };
+        if (token.ExpiresAt.HasValue)
+        {
+            result.ExpiresAt = token.ExpiresAt.Value.ToUnixTimeSeconds();
+        }
+        return result;
+    }
+
+    /// <summary>
+    /// Convert SDK token. Empty access token means the user is not logged in.
+    /// </summary>
+    /// <param name="token">SDK token.</param>
+    /// <returns>Token or null.</returns>
+    public static Backend.Core.Plugins.Auth.AuthToken? Convert(Sdk.AuthToken? token)
+    {
+        if (token == null || string.IsNullOrEmpty(token.AccessToken))
+        {
+            return null;
+        }
+        return new Backend.Core.Plugins.Auth.AuthToken
+        {
+            AccessToken = token.AccessToken,
+            TokenType = string.IsNullOrEmpty(token.TokenType) ? "Bearer" : token.TokenType,
+            ExpiresAt = token.__isset.expires_at ? DateTimeOffset.FromUnixTimeSeconds(token.ExpiresAt) : null,
+            Scopes = token.Scopes ?? [],
+        };
+    }
+
     public static PluginData Convert(Assembly? assembly)
     {
         if (assembly == null)

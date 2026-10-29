@@ -16,6 +16,7 @@ public class Program
         {
             using var client = new ThriftPluginClient(args);
             Registration.RegisterFunctions(client.FunctionsManager);
+            Registration.RegisterAuthProviders(client.AuthProviders);
             await client.StartAsync(cancellationToken: ct);
             await Registration.OnLoadAsync(client.ExecutionThread, ct);
             await client.ReadyAsync(cancellationToken: ct);

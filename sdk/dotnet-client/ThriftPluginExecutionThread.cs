@@ -1,13 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Plugins;
+using QueryCat.Backend.Core.Plugins.Auth;
 using QueryCat.Backend.Core.Utils;
 using QueryCat.Plugins.Client.Remote;
 using CompletionResult = QueryCat.Backend.Core.Execution.CompletionResult;
@@ -38,6 +38,9 @@ public sealed class ThriftPluginExecutionThread : IExecutionThread
 
     /// <inheritdoc />
     public IConfigStorage ConfigStorage { get; }
+
+    /// <inheritdoc />
+    public IAuthTokenManager AuthTokensManager { get; }
 
     /// <inheritdoc />
     public IExecutionScope TopScope
@@ -85,6 +88,7 @@ public sealed class ThriftPluginExecutionThread : IExecutionThread
         PluginsManager = NullPluginsManager.Instance;
         FunctionsManager = new ThriftPluginFunctionsManager(_client);
         ConfigStorage = new ThriftConfigStorage(_client);
+        AuthTokensManager = new ThriftAuthTokenManager(_client);
         Stack = new ListExecutionStack();
     }
 
