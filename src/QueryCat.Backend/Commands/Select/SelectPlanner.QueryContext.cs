@@ -119,20 +119,23 @@ internal sealed partial class SelectPlanner
 
             // Left and Right must be id and expression.
             if (binaryOperationExpressionNode.MatchType(out IdentifierExpressionNode? identifierNode, out ExpressionNode? expressionNode)
-                && await TryFindAndAddIdConditionAsync(identifierNode, expressionNode, ct))
+                && await TryFindAndAddIdConditionAsync(identifierNode, expressionNode, binaryOperationExpressionNode, ct))
             {
                 return true;
             }
             if (binaryOperationExpressionNode.MatchType(out expressionNode, out identifierNode)
-                && await TryFindAndAddIdConditionAsync(identifierNode, expressionNode, ct))
+                && await TryFindAndAddIdConditionAsync(identifierNode, expressionNode, binaryOperationExpressionNode, ct))
             {
                 return true;
             }
 
             return false;
 
-            async ValueTask<bool> TryFindAndAddIdConditionAsync(IdentifierExpressionNode? localIdentifierNode,
-                ExpressionNode? localExpressionNode, CancellationToken localCancellationToken)
+            async ValueTask<bool> TryFindAndAddIdConditionAsync(
+                IdentifierExpressionNode? localIdentifierNode,
+                ExpressionNode? localExpressionNode,
+                BinaryOperationExpressionNode localBinaryOperationExpressionNode,
+                CancellationToken localCancellationToken)
             {
                 if (localIdentifierNode == null)
                 {
@@ -146,8 +149,12 @@ internal sealed partial class SelectPlanner
                     return false;
                 }
                 var valueFunc = await makeDelegateVisitor.RunAndReturnAsync(localExpressionNode!, localCancellationToken);
-                commandContext.Conditions.TryAddCondition(column, binaryOperationExpressionNode.Operation,
-                    new KeyConditionSingleValueGeneratorFunc(valueFunc));
+                var op = binaryOperationExpressionNode.Operation;
+                if (ReferenceEquals(localIdentifierNode, binaryOperationExpressionNode.RightNode))
+                {
+                    op = BinaryOperationExpressionNode.GetReverseOperation(op) ?? op;
+                }
+                commandContext.Conditions.TryAddCondition(column, op, new KeyConditionSingleValueGeneratorFunc(valueFunc));
                 return true;
             }
         }

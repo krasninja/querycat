@@ -66,7 +66,7 @@ internal sealed class BinaryOperationExpressionNode : ExpressionNode
         return false;
     }
 
-    private static VariantValue.Operation? GetReverseOperation(VariantValue.Operation operation)
+    internal static VariantValue.Operation? GetReverseOperation(VariantValue.Operation operation)
         => operation switch
         {
             VariantValue.Operation.Greater => VariantValue.Operation.Less,
