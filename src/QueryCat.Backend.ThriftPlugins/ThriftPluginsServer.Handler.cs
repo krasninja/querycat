@@ -80,17 +80,7 @@ public partial class ThriftPluginsServer
             {
                 foreach (var function in plugin_data.Functions)
                 {
-                    context.AddFunction(
-                        new PluginContextFunction(
-                            function.Signature,
-                            !string.IsNullOrEmpty(function.Description) ? function.Description : null,
-                            function.IsSafe ? true : null,
-                            function.IsAggregate ? true : null,
-                            function.FormatterIds != null && function.FormatterIds.Count > 0 ? function.FormatterIds.ToArray() : null,
-                            function.ArgumentsDescriptions != null && function.ArgumentsDescriptions.Any() ? function.ArgumentsDescriptions : null,
-                            function.Examples != null && function.Examples.Count > 0 ? function.Examples.ToArray() : null
-                        )
-                    );
+                    context.AddFunction(CreatePluginContextFunction(function));
                 }
             }
             if (plugin_data.AuthProviders != null)
@@ -370,18 +360,21 @@ public partial class ThriftPluginsServer
             }
             foreach (var function in functions)
             {
-                context.AddFunction(
-                    new PluginContextFunction(
-                        function.Signature,
-                        !string.IsNullOrEmpty(function.Description) ? function.Description : null,
-                        function.IsSafe ? true : null,
-                        function.IsAggregate ? true : null,
-                        function.FormatterIds != null && function.FormatterIds.Count > 0 ? function.FormatterIds.ToArray() : null,
-                        function.ArgumentsDescriptions != null && function.ArgumentsDescriptions.Any() ? function.ArgumentsDescriptions : null,
-                        function.Examples != null && function.Examples.Count > 0 ? function.Examples.ToArray() : null
-                    )
-                );
+                context.AddFunction(CreatePluginContextFunction(function));
             }
+        }
+
+        private static PluginContextFunction CreatePluginContextFunction(Function function)
+        {
+            return new PluginContextFunction(
+                function.Signature,
+                !string.IsNullOrEmpty(function.Description) ? function.Description : null,
+                function.IsSafe ? true : null,
+                function.IsAggregate ? true : null,
+                function.FormatterIds != null && function.FormatterIds.Count > 0 ? function.FormatterIds.ToArray() : null,
+                function.ArgumentsDescriptions != null && function.ArgumentsDescriptions.Count > 0 ? function.ArgumentsDescriptions : null,
+                function.Examples != null && function.Examples.Count > 0 ? function.Examples.ToArray() : null
+            );
         }
 
         /// <inheritdoc />
