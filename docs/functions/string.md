@@ -13,6 +13,7 @@
 | `regexp_replace(target: string, pattern: string, replacement: string, start?: integer = 1, flags?: string := null): string`<br /><br /> Provides substitution of new text for substrings that match regular expression patterns. |
 | `regexp_split_to_table(target: string, pattern: string, flags?: string := null): object<IRowsIterator>`<br /><br /> Splits string using a regular expression as the delimiter, producing a set of results. |
 | `regexp_substr(target: string, pattern: string, start?: integer = 1, n?: integer = 1, subexpr?: integer = 1, flags?: string := null): string`<br /><br /> Returns the substring within string that matches the N'th occurrence of the regular expression pattern, or NULL. |
+| `repeat(target: string, count: integer): string`<br /><br /> Repeats the string the specified number of times. |
 | `replace(target: string, old: string, new: string): string`<br /><br /> Replaces all occurrences in string of substring from with substring to. |
 | `reverse(target: string): string`<br /><br /> Reverses the order of the characters in the string. |
 | `rtrim(target: string, characters: string = ' '): string`<br /><br /> Removes the longest string containing only characters in characters from the end of string. |

@@ -524,5 +524,11 @@ namespace QueryCat.Backend.Resources {
                 return ResourceManager.GetString("OAuth2DeviceCodeExpired", resourceCulture);
             }
         }
+        
+        internal static string StringTooLarge {
+            get {
+                return ResourceManager.GetString("StringTooLarge", resourceCulture);
+            }
+        }
     }
 }

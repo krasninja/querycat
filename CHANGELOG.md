@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Column attributes.
 - Add functions "array_to_string", "_function_args".
+- Add function "repeat".
 - MCP server (`qcat mcp`) with stdio and HTTP transports.
 - "date_trunc" and "date_part" support week interval.
 - Initial plugin authentication infrastructure.

@@ -258,4 +258,7 @@
   <data name="OAuth2DeviceCodeExpired" xml:space="preserve">
     <value>Device code has expired, please try again.</value>
   </data>
+  <data name="StringTooLarge" xml:space="preserve">
+    <value>The resulting string is too long, maximum length is {0} characters.</value>
+  </data>
 </root>

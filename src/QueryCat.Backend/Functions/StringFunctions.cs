@@ -178,6 +178,47 @@ internal static class StringFunctions
     }
 
     [SafeFunction]
+    [Description("Repeats the string the specified number of times.")]
+    [FunctionSignature("repeat(target: string, count: integer): string")]
+    public static VariantValue Repeat(IExecutionThread thread)
+    {
+        var target = thread.Stack[0];
+        var count = thread.Stack[1].AsInteger;
+        if (target.IsNull || !count.HasValue)
+        {
+            return VariantValue.Null;
+        }
+
+        // Negative and zero counts give an empty string, it is how PostgreSQL behaves.
+        if (count.Value < 1)
+        {
+            return new VariantValue(string.Empty);
+        }
+
+        var value = target.AsString;
+        if (value.Length < 1)
+        {
+            return new VariantValue(string.Empty);
+        }
+
+        // Avoid the overflow of the resulting length, .NET strings are limited by the maximum array size.
+        if (count.Value > int.MaxValue / value.Length)
+        {
+            throw new QueryCatException(string.Format(Resources.Errors.StringTooLarge, int.MaxValue));
+        }
+
+        var totalLength = value.Length * (int)count.Value;
+        var result = string.Create(totalLength, (value, Count: (int)count.Value), static (span, state) =>
+        {
+            for (var i = 0; i < state.Count; i++)
+            {
+                state.value.AsSpan().CopyTo(span.Slice(i * state.value.Length));
+            }
+        });
+        return new VariantValue(result);
+    }
+
+    [SafeFunction]
     [Description("Reverses the order of the characters in the string.")]
     [FunctionSignature("reverse(target: string): string")]
     public static VariantValue Reverse(IExecutionThread thread)
@@ -474,6 +515,7 @@ internal static class StringFunctions
         functionsManager.RegisterFunction(ToChar);
         functionsManager.RegisterFunction(Position);
         functionsManager.RegisterFunction(Replace);
+        functionsManager.RegisterFunction(Repeat);
         functionsManager.RegisterFunction(Reverse);
         functionsManager.RegisterFunction(Chr);
         functionsManager.RegisterFunction(StartsWith);
