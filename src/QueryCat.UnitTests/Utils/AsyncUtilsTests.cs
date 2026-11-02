@@ -1,5 +1,4 @@
 using Xunit;
-using Xunit.Abstractions;
 using QueryCat.Backend.Core.Utils;
 
 namespace QueryCat.UnitTests.Utils;
@@ -31,14 +30,14 @@ public class AsyncUtilsTests
             {
                 AsyncUtils.RunSync(async () =>
                 {
-                    await Task.Delay(Random.Shared.Next(20, 60));
+                    await Task.Delay(Random.Shared.Next(20, 60), TestContext.Current.CancellationToken);
                     Interlocked.Increment(ref counter);
                 });
-            });
+            }, TestContext.Current.CancellationToken);
             tasks.Add(task);
         }
 #pragma warning disable xUnit1031
-        Task.WaitAll(tasks);
+        Task.WaitAll(tasks, TestContext.Current.CancellationToken);
 #pragma warning restore xUnit1031
 
         // Assert.
@@ -53,15 +52,15 @@ public class AsyncUtilsTests
         AsyncUtils.RunSync(async () =>
         {
             a++;
-            await Task.Delay(10);
+            await Task.Delay(10, TestContext.Current.CancellationToken);
             AsyncUtils.RunSync(async () =>
             {
                 a++;
-                await Task.Delay(10);
+                await Task.Delay(10, TestContext.Current.CancellationToken);
                 AsyncUtils.RunSync(async () =>
                 {
                     a++;
-                    await Task.Delay(10);
+                    await Task.Delay(10, TestContext.Current.CancellationToken);
                 });
             });
         });
@@ -78,11 +77,11 @@ public class AsyncUtilsTests
         AsyncUtils.RunSync(async () =>
         {
             a++;
-            await Task.Delay(10);
+            await Task.Delay(10, TestContext.Current.CancellationToken);
             AsyncUtils.RunSync(async () =>
             {
                 a++;
-                await Task.Delay(10);
+                await Task.Delay(10, TestContext.Current.CancellationToken);
                 try
                 {
                     AsyncUtils.RunSync(async () =>
@@ -108,11 +107,11 @@ public class AsyncUtilsTests
         async Task FireAndForgetAsync()
         {
             var synchronizationContext = SynchronizationContext.Current;
-            await Task.Delay(500);
+            await Task.Delay(500, TestContext.Current.CancellationToken);
             synchronizationContext!.Post(async _ =>
             {
                 // It can run after RunSync scope.
-                await Task.Delay(50);
+                await Task.Delay(50, TestContext.Current.CancellationToken);
                 a++;
             }, null);
         }
@@ -121,12 +120,12 @@ public class AsyncUtilsTests
         AsyncUtils.RunSync(async () =>
         {
             a++;
-            await Task.Delay(10);
+            await Task.Delay(10, TestContext.Current.CancellationToken);
 #pragma warning disable CS4014
             FireAndForgetAsync();
 #pragma warning restore CS4014
         });
-        await Task.Delay(1000);
+        await Task.Delay(1000, TestContext.Current.CancellationToken);
 
         // Assert.
         Assert.Equal(2, a);
@@ -164,7 +163,7 @@ public class AsyncUtilsTests
             return 42;
         });
 
-        abandonedRan.Wait(TimeSpan.FromSeconds(5));
+        abandonedRan.Wait(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
 
         Assert.Equal(42, value);
         Assert.NotEqual(secondRunThread, abandonedRanOnThread);

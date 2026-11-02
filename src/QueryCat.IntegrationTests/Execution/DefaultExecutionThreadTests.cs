@@ -28,7 +28,7 @@ public class DefaultExecutionThreadTests
         };
 
         // Act.
-        var result = await thread.RunAsync("param1 + param2 + param3;", @params);
+        var result = await thread.RunAsync("param1 + param2 + param3;", @params, TestContext.Current.CancellationToken);
 
         // Assert.
         Assert.Equal(77, result.AsInteger);
@@ -47,7 +47,7 @@ public class DefaultExecutionThreadTests
         };
 
         // Act.
-        var result = await thread.RunAsync("param1;", @params);
+        var result = await thread.RunAsync("param1;", @params, TestContext.Current.CancellationToken);
 
         // Assert.
         Assert.Equal(2024, result.AsInteger);

@@ -22,7 +22,7 @@ public class RowsIteratorUtilsTests
         rowsFrame.AddRow("Elena", 45000);
 
         // Act.
-        var hasHeader = await RowsIteratorUtils.DetermineIfHasHeaderAsync(rowsFrame.GetIterator());
+        var hasHeader = await RowsIteratorUtils.DetermineIfHasHeaderAsync(rowsFrame.GetIterator(), cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert.
         Assert.True(hasHeader);
@@ -39,7 +39,7 @@ public class RowsIteratorUtilsTests
         rowsFrame.AddRow(3);
 
         // Act.
-        var hasHeader = await RowsIteratorUtils.DetermineIfHasHeaderAsync(rowsFrame.GetIterator());
+        var hasHeader = await RowsIteratorUtils.DetermineIfHasHeaderAsync(rowsFrame.GetIterator(), cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert.
         Assert.False(hasHeader);

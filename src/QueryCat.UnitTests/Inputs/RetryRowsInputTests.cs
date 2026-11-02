@@ -87,11 +87,11 @@ public class RetryRowsInputTests
         // Arrange.
         var inputWithException = new InputWithException();
         var inputWithRetry = new RetryRowsInput(inputWithException, 3, TimeSpan.FromMilliseconds(20));
-        await inputWithRetry.OpenAsync();
+        await inputWithRetry.OpenAsync(TestContext.Current.CancellationToken);
         var rowsIterator = new RowsInputIterator(inputWithRetry);
 
         // Act.
-        var frame = await rowsIterator.ToFrameAsync();
+        var frame = await rowsIterator.ToFrameAsync(cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert.
         Assert.Equal(2, inputWithException.ExceptionsCount);

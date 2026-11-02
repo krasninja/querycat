@@ -1,6 +1,5 @@
 using System.Globalization;
 using Xunit;
-using Xunit.Abstractions;
 using Xunit.Sdk;
 using QueryCat.Backend;
 using QueryCat.Backend.Core.Execution;
@@ -55,7 +54,7 @@ public sealed class Tests
             SkipException.ForSkip(data.Comment);
             return;
         }
-        var value = await thread.RunAsync(data.Query);
+        var value = await thread.RunAsync(data.Query, cancellationToken: TestContext.Current.CancellationToken);
 
         // Get query plan.
         if (value.Type == DataType.Object
@@ -67,7 +66,7 @@ public sealed class Tests
         }
 
         // Act.
-        var result = await TestThread.GetQueryResultAsync(value);
+        var result = await TestThread.GetQueryResultAsync(value, TestContext.Current.CancellationToken);
         value.Close();
 
         // Assert.

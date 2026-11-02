@@ -42,7 +42,7 @@ public class StreamWrapperTests
         // Act.
         wrapper.Seek(-2, SeekOrigin.End);
         stream.Position = 0;
-        await wrapper.ReadExactlyAsync(buffer);
+        await wrapper.ReadExactlyAsync(buffer, TestContext.Current.CancellationToken);
 
         // Assert.
         Assert.Equal(new byte[] { 4, 5 }, buffer);

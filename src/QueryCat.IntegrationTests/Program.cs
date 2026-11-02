@@ -14,7 +14,9 @@ namespace QueryCat.IntegrationTests;
 /// </summary>
 public class Program
 {
+#pragma warning disable CS8892 // Asynchronous 'Main' method will not be used as an entry point because a synchronous entry point was found.
     public static async Task<int> Main(string[] args)
+#pragma warning restore CS8892 // Asynchronous 'Main' method will not be used as an entry point because a synchronous entry point was found.
     {
         if (args.Length < 2)
         {

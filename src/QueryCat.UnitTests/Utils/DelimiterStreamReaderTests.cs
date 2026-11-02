@@ -21,8 +21,8 @@ public class DelimiterStreamReaderTests
 
         // Act.
         var streamRowsInput = new DelimiterStreamReader(StringToStream(sb.ToString()));
-        await streamRowsInput.ReadAsync();
-        await streamRowsInput.ReadAsync();
+        await streamRowsInput.ReadAsync(TestContext.Current.CancellationToken);
+        await streamRowsInput.ReadAsync(TestContext.Current.CancellationToken);
 
         // Assert.
         Assert.Equal("10", streamRowsInput.GetField(0).ToString());
@@ -39,8 +39,8 @@ public class DelimiterStreamReaderTests
 
         // Act.
         var streamRowsInput = new DelimiterStreamReader(StringToStream(sb.ToString()));
-        await streamRowsInput.ReadAsync();
-        await streamRowsInput.ReadAsync();
+        await streamRowsInput.ReadAsync(TestContext.Current.CancellationToken);
+        await streamRowsInput.ReadAsync(TestContext.Current.CancellationToken);
 
         // Assert.
         Assert.Equal("10", streamRowsInput.GetField(0).ToString());
@@ -58,8 +58,8 @@ public class DelimiterStreamReaderTests
 
         // Act.
         var streamRowsInput = new DelimiterStreamReader(StringToStream(sb.ToString()));
-        await streamRowsInput.ReadAsync();
-        await streamRowsInput.ReadLineAsync();
+        await streamRowsInput.ReadAsync(TestContext.Current.CancellationToken);
+        await streamRowsInput.ReadLineAsync(TestContext.Current.CancellationToken);
 
         // Assert.
         Assert.Equal("//comment", streamRowsInput.GetField(0).ToString());
@@ -80,7 +80,7 @@ public class DelimiterStreamReaderTests
                 QuoteChars = ['"', '\''],
                 Culture = CultureInfo.InvariantCulture,
             });
-        await streamRowsInput.ReadAsync();
+        await streamRowsInput.ReadAsync(TestContext.Current.CancellationToken);
 
         // Assert.
         Assert.Equal("no quotes", streamRowsInput.GetField(0).ToString());
@@ -106,7 +106,7 @@ public class DelimiterStreamReaderTests
                 QuoteChars = ['"'],
                 Culture = CultureInfo.InvariantCulture,
             });
-        await streamRowsInput.ReadAsync();
+        await streamRowsInput.ReadAsync(TestContext.Current.CancellationToken);
 
         // Assert.
         Assert.Equal(2, streamRowsInput.GetFieldsCount());
@@ -129,7 +129,7 @@ public class DelimiterStreamReaderTests
                 QuoteChars = ['"'],
                 Culture = CultureInfo.InvariantCulture,
             });
-        await streamRowsInput.ReadAsync();
+        await streamRowsInput.ReadAsync(TestContext.Current.CancellationToken);
 
         // Assert.
         Assert.Equal(2, streamRowsInput.GetFieldsCount());
@@ -151,11 +151,11 @@ public class DelimiterStreamReaderTests
             {
                 Delimiters = [','],
             });
-        await streamRowsInput.ReadAsync();
+        await streamRowsInput.ReadAsync(TestContext.Current.CancellationToken);
         var field1 = streamRowsInput.GetField(0).ToString();
         var field2 = streamRowsInput.GetField(1).ToString();
         var fieldCount1 = streamRowsInput.GetFieldsCount();
-        await streamRowsInput.ReadAsync();
+        await streamRowsInput.ReadAsync(TestContext.Current.CancellationToken);
         var field3 = streamRowsInput.GetField(0).ToString();
         var field4 = streamRowsInput.GetField(1).ToString();
         var fieldCount2 = streamRowsInput.GetFieldsCount();
@@ -184,8 +184,8 @@ public class DelimiterStreamReaderTests
                 Delimiters = [','],
                 Culture = CultureInfo.InvariantCulture,
             });
-        await streamRowsInput.ReadAsync();
-        await streamRowsInput.ReadAsync();
+        await streamRowsInput.ReadAsync(TestContext.Current.CancellationToken);
+        await streamRowsInput.ReadAsync(TestContext.Current.CancellationToken);
 
         // Assert.
         Assert.Equal(1, streamRowsInput.GetFieldsCount());
@@ -206,7 +206,7 @@ public class DelimiterStreamReaderTests
                 QuoteChars = ['"'],
                 Culture = CultureInfo.InvariantCulture,
             });
-        await streamRowsInput.ReadAsync();
+        await streamRowsInput.ReadAsync(TestContext.Current.CancellationToken);
 
         // Assert.
         Assert.Equal(3, streamRowsInput.GetFieldsCount());
@@ -232,10 +232,10 @@ public class DelimiterStreamReaderTests
                 SkipRepeatedDelimiters = true,
                 Culture = CultureInfo.InvariantCulture,
             });
-        await streamRowsInput.ReadAsync();
+        await streamRowsInput.ReadAsync(TestContext.Current.CancellationToken);
         var id1 = streamRowsInput.GetField(0).ToString();
         var name1 = streamRowsInput.GetField(1).ToString();
-        await streamRowsInput.ReadAsync();
+        await streamRowsInput.ReadAsync(TestContext.Current.CancellationToken);
         var id2 = streamRowsInput.GetField(0).ToString();
         var name2 = streamRowsInput.GetField(1).ToString();
 
@@ -263,9 +263,9 @@ public class DelimiterStreamReaderTests
                 SkipRepeatedDelimiters = true,
                 Culture = CultureInfo.InvariantCulture,
             });
-        await streamRowsInput.ReadAsync();
+        await streamRowsInput.ReadAsync(TestContext.Current.CancellationToken);
         var name1 = streamRowsInput.GetField(0).ToString();
-        await streamRowsInput.ReadAsync();
+        await streamRowsInput.ReadAsync(TestContext.Current.CancellationToken);
         var name2 = streamRowsInput.GetField(0).ToString();
 
         // Assert.
@@ -289,8 +289,8 @@ public class DelimiterStreamReaderTests
             Delimiters = [','],
             Culture = CultureInfo.InvariantCulture,
         });
-        await streamRowsInput.ReadAsync();
-        await streamRowsInput.ReadAsync();
+        await streamRowsInput.ReadAsync(TestContext.Current.CancellationToken);
+        await streamRowsInput.ReadAsync(TestContext.Current.CancellationToken);
 
         // Assert.
         Assert.Equal("10", streamRowsInput.GetField(0).ToString());
@@ -313,9 +313,9 @@ public class DelimiterStreamReaderTests
             Delimiters = [','],
             Culture = CultureInfo.InvariantCulture,
         });
-        await streamRowsInput.ReadAsync();
-        await streamRowsInput.ReadAsync();
-        await streamRowsInput.ReadAsync();
+        await streamRowsInput.ReadAsync(TestContext.Current.CancellationToken);
+        await streamRowsInput.ReadAsync(TestContext.Current.CancellationToken);
+        await streamRowsInput.ReadAsync(TestContext.Current.CancellationToken);
 
         // Assert.
         Assert.Equal("999", streamRowsInput.GetField(0).ToString());
@@ -347,7 +347,7 @@ public class DelimiterStreamReaderTests
 
             for (var i = 0; i < 4; i++)
             {
-                await streamRowsInput.ReadAsync();
+                await streamRowsInput.ReadAsync(TestContext.Current.CancellationToken);
 
                 // Assert.
                 Assert.Equal(4, streamRowsInput.GetField(0).ToString().Length);
@@ -370,10 +370,10 @@ public class DelimiterStreamReaderTests
         });
 
         // Act.
-        var b1 = await streamRowsInput.ReadAsync();
-        var b2 = await streamRowsInput.ReadAsync();
-        var b3 = await streamRowsInput.ReadAsync();
-        var b4 = await streamRowsInput.ReadAsync();
+        var b1 = await streamRowsInput.ReadAsync(TestContext.Current.CancellationToken);
+        var b2 = await streamRowsInput.ReadAsync(TestContext.Current.CancellationToken);
+        var b3 = await streamRowsInput.ReadAsync(TestContext.Current.CancellationToken);
+        var b4 = await streamRowsInput.ReadAsync(TestContext.Current.CancellationToken);
 
         // Assert.
         Assert.True(b1);
@@ -392,8 +392,8 @@ public class DelimiterStreamReaderTests
         });
 
         // Act.
-        var b1 = await streamRowsInput.ReadAsync();
-        var b2 = await streamRowsInput.ReadLineAsync();
+        var b1 = await streamRowsInput.ReadAsync(TestContext.Current.CancellationToken);
+        var b2 = await streamRowsInput.ReadLineAsync(TestContext.Current.CancellationToken);
 
         // Assert.
         Assert.True(b1);
@@ -412,7 +412,7 @@ public class DelimiterStreamReaderTests
             });
 
         // Act.
-        var b1 = await streamRowsInput.ReadAsync();
+        var b1 = await streamRowsInput.ReadAsync(TestContext.Current.CancellationToken);
 
         // Assert.
         Assert.True(b1);
@@ -431,7 +431,7 @@ public class DelimiterStreamReaderTests
             });
 
         // Act.
-        var b1 = await streamRowsInput.ReadAsync();
+        var b1 = await streamRowsInput.ReadAsync(TestContext.Current.CancellationToken);
 
         // Assert.
         Assert.True(b1);
@@ -449,7 +449,7 @@ public class DelimiterStreamReaderTests
             });
 
         // Act.
-        await streamRowsInput.ReadAsync();
+        await streamRowsInput.ReadAsync(TestContext.Current.CancellationToken);
 
         // Assert.
         Assert.Equal("bc", streamRowsInput.GetField(1));
@@ -468,7 +468,7 @@ public class DelimiterStreamReaderTests
         });
 
         // Act.
-        var b1 = await streamRowsInput.ReadAsync();
+        var b1 = await streamRowsInput.ReadAsync(TestContext.Current.CancellationToken);
 
         // Assert.
         Assert.True(b1);
@@ -486,7 +486,7 @@ public class DelimiterStreamReaderTests
     {
         // Act.
         var result1 = DelimiterStreamReader.UnquoteDoubleQuotes(
-            new ReadOnlySequence<char>(target.AsMemory())).ToString();
+            new ReadOnlySequence<char>(target.AsMemory()));
 
         // Assert.
         Assert.Equal(expected, result1);
@@ -500,7 +500,7 @@ public class DelimiterStreamReaderTests
     {
         // Act.
         var result1 = DelimiterStreamReader.UnquoteBackslash(
-            new ReadOnlySequence<char>(target.AsMemory())).ToString();
+            new ReadOnlySequence<char>(target.AsMemory()));
 
         // Assert.
         Assert.Equal(expected, result1);

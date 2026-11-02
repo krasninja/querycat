@@ -26,11 +26,11 @@ public class CacheRowsInputTests
         var iterator = cacheRowsInput.AsIterable(autoFetch: true);
 
         // Act.
-        await iterator.MoveNextAsync(); // 2 total and 1 cache read.
-        await iterator.MoveNextAsync(); // 2 total and 1 cache read.
-        await iterator.ResetAsync();
-        await iterator.MoveNextAsync(); // 1 total and 1 cache read.
-        await iterator.MoveNextAsync(); // 1 total and 1 cache read.
+        await iterator.MoveNextAsync(TestContext.Current.CancellationToken); // 2 total and 1 cache read.
+        await iterator.MoveNextAsync(TestContext.Current.CancellationToken); // 2 total and 1 cache read.
+        await iterator.ResetAsync(TestContext.Current.CancellationToken);
+        await iterator.MoveNextAsync(TestContext.Current.CancellationToken); // 1 total and 1 cache read.
+        await iterator.MoveNextAsync(TestContext.Current.CancellationToken); // 1 total and 1 cache read.
 
         // Assert.
         Assert.Equal(2, cacheRowsInput.InputReads);
@@ -50,12 +50,12 @@ public class CacheRowsInputTests
         var iterator = cacheRowsInput.AsIterable(autoFetch: true);
 
         // Act.
-        await iterator.MoveNextAsync(); // 2 total and 1 cache read.
-        await iterator.MoveNextAsync(); // 2 total and 1 cache read.
-        await iterator.ResetAsync();
-        await iterator.MoveNextAsync(); // 2 total and 1 cache read.
-        await iterator.MoveNextAsync(); // 1 total and 1 cache read.
-        await iterator.MoveNextAsync(); // 1 total and 1 cache read.
+        await iterator.MoveNextAsync(TestContext.Current.CancellationToken); // 2 total and 1 cache read.
+        await iterator.MoveNextAsync(TestContext.Current.CancellationToken); // 2 total and 1 cache read.
+        await iterator.ResetAsync(TestContext.Current.CancellationToken);
+        await iterator.MoveNextAsync(TestContext.Current.CancellationToken); // 2 total and 1 cache read.
+        await iterator.MoveNextAsync(TestContext.Current.CancellationToken); // 1 total and 1 cache read.
+        await iterator.MoveNextAsync(TestContext.Current.CancellationToken); // 1 total and 1 cache read.
 
         // Assert.
         Assert.Equal(3, cacheRowsInput.InputReads);
@@ -79,18 +79,18 @@ public class CacheRowsInputTests
 
         // Act.
         proxyInput.SetInput(input1);
-        await cacheRowsInput.ResetAsync();
-        await iterator.MoveNextAsync(); // Read.
-        await iterator.MoveNextAsync(); // Read EOF.
+        await cacheRowsInput.ResetAsync(TestContext.Current.CancellationToken);
+        await iterator.MoveNextAsync(TestContext.Current.CancellationToken); // Read.
+        await iterator.MoveNextAsync(TestContext.Current.CancellationToken); // Read EOF.
 
         proxyInput.SetInput(input2);
-        await cacheRowsInput.ResetAsync();
-        await iterator.MoveNextAsync(); // Read.
-        await iterator.MoveNextAsync(); // Read EOF.
+        await cacheRowsInput.ResetAsync(TestContext.Current.CancellationToken);
+        await iterator.MoveNextAsync(TestContext.Current.CancellationToken); // Read.
+        await iterator.MoveNextAsync(TestContext.Current.CancellationToken); // Read EOF.
 
         proxyInput.SetInput(input1);
-        await cacheRowsInput.ResetAsync();
-        await iterator.MoveNextAsync(); // Read cache.
+        await cacheRowsInput.ResetAsync(TestContext.Current.CancellationToken);
+        await iterator.MoveNextAsync(TestContext.Current.CancellationToken); // Read cache.
 
         // Assert.
         Assert.Equal(2, cacheRowsInput.InputReads);
@@ -116,21 +116,21 @@ public class CacheRowsInputTests
 
         // Act.
         proxyInput.SetInput(input1);
-        await cacheRowsInput.ResetAsync();
-        await iterator.MoveNextAsync(); // Read.
+        await cacheRowsInput.ResetAsync(TestContext.Current.CancellationToken);
+        await iterator.MoveNextAsync(TestContext.Current.CancellationToken); // Read.
 
         proxyInput.SetInput(input2);
-        await cacheRowsInput.ResetAsync();
-        await iterator.MoveNextAsync(); // Read.
-        await iterator.MoveNextAsync(); // Read EOF.
+        await cacheRowsInput.ResetAsync(TestContext.Current.CancellationToken);
+        await iterator.MoveNextAsync(TestContext.Current.CancellationToken); // Read.
+        await iterator.MoveNextAsync(TestContext.Current.CancellationToken); // Read EOF.
 
         proxyInput.SetInput(input1);
-        await cacheRowsInput.ResetAsync();
-        await iterator.MoveNextAsync(); // Read.
+        await cacheRowsInput.ResetAsync(TestContext.Current.CancellationToken);
+        await iterator.MoveNextAsync(TestContext.Current.CancellationToken); // Read.
 
         proxyInput.SetInput(input2);
-        await cacheRowsInput.ResetAsync();
-        await iterator.MoveNextAsync(); // Read cache.
+        await cacheRowsInput.ResetAsync(TestContext.Current.CancellationToken);
+        await iterator.MoveNextAsync(TestContext.Current.CancellationToken); // Read cache.
 
         // Assert.
         Assert.Equal(3, cacheRowsInput.InputReads);

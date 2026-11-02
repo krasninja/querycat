@@ -20,8 +20,8 @@ public sealed class PluginsTests
         thread.FunctionsManager.RegisterFunction(SamplePluginRowsInput.SamplePlugin);
 
         // Act.
-        var value = await thread.RunAsync(@"SELECT * FROM plugin();");
-        var result = await TestThread.GetQueryResultAsync(value);
+        var value = await thread.RunAsync(@"SELECT * FROM plugin();", cancellationToken: TestContext.Current.CancellationToken);
+        var result = await TestThread.GetQueryResultAsync(value, TestContext.Current.CancellationToken);
         result = PrepareResult(result);
 
         // Assert.
@@ -36,8 +36,8 @@ public sealed class PluginsTests
         thread.FunctionsManager.RegisterFunction(SamplePluginRowsIterator.SamplePlugin);
 
         // Act.
-        var value = await thread.RunAsync(@"SELECT * FROM plugin();");
-        var result = await TestThread.GetQueryResultAsync(value);
+        var value = await thread.RunAsync(@"SELECT * FROM plugin();", cancellationToken: TestContext.Current.CancellationToken);
+        var result = await TestThread.GetQueryResultAsync(value, TestContext.Current.CancellationToken);
         result = PrepareResult(result);
 
         // Assert.
@@ -52,8 +52,8 @@ public sealed class PluginsTests
         thread.FunctionsManager.RegisterFunction(SamplePluginInput.SamplePlugin);
 
         // Act.
-        var value = await thread.RunAsync(@"SELECT * FROM plugin();");
-        var result = await TestThread.GetQueryResultAsync(value);
+        var value = await thread.RunAsync(@"SELECT * FROM plugin();", cancellationToken: TestContext.Current.CancellationToken);
+        var result = await TestThread.GetQueryResultAsync(value, TestContext.Current.CancellationToken);
         result = PrepareResult(result);
 
         // Assert.

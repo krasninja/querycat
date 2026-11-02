@@ -145,31 +145,33 @@ public class CsvParseBenchmarks
         var row = new Row(rowsFrame);
 
         await using var file = UsersCsvFile.OpenTestUsersFile();
-        using var csv = new CsvHelper.CsvReader(new StreamReader(file), new CsvHelper.Configuration.CsvConfiguration(CultureInfo.CurrentCulture));
+        await using var csv = CsvHelper.CsvReader.Create(
+            new StreamReader(file),
+            new CsvHelper.CsvReaderOptions { FormatProvider = CultureInfo.CurrentCulture });
         await csv.ReadAsync();
-        csv.ReadHeader();
+        await csv.ReadHeaderAsync();
 
         while (await csv.ReadAsync())
         {
-            row[0] = new VariantValue(csv.GetField<int>(0)); // Id.
-            row[1] = new VariantValue(csv.GetField(1)); // Email.
-            row[2] = new VariantValue(csv.GetField(2)); // FirstName.
-            row[3] = new VariantValue(csv.GetField(3)); // LastName.
-            var emailVerified = csv.GetField(4);
+            row[0] = new VariantValue(csv.Parse<int>(0)); // Id.
+            row[1] = new VariantValue(csv.GetString(1)); // Email.
+            row[2] = new VariantValue(csv.GetString(2)); // FirstName.
+            row[3] = new VariantValue(csv.GetString(3)); // LastName.
+            var emailVerified = csv.GetString(4);
             row[4] = !string.IsNullOrEmpty(emailVerified) ? new VariantValue(DateTime.Parse(emailVerified))
                 : VariantValue.Null; // EmailVerifiedAt.
-            row[5] = new VariantValue(csv.GetField(5)); // Address.
-            row[6] = new VariantValue(csv.GetField(6)); // State.
-            row[7] = new VariantValue(csv.GetField(7)); // Zip.
-            row[8] = new VariantValue(csv.GetField(8)); // Phone.
-            row[9] = new VariantValue(csv.GetField(9)); // Gender.
-            row[10] = new VariantValue(csv.GetField(10)); // DateOfBirth.
-            row[11] = new VariantValue(csv.GetField<decimal>(11)); // Balance.
-            row[12] = new VariantValue(csv.GetField<DateTime>(12)); // CreatedAt.
-            var removedAt = csv.GetField(13);
+            row[5] = new VariantValue(csv.GetString(5)); // Address.
+            row[6] = new VariantValue(csv.GetString(6)); // State.
+            row[7] = new VariantValue(csv.GetString(7)); // Zip.
+            row[8] = new VariantValue(csv.GetString(8)); // Phone.
+            row[9] = new VariantValue(csv.GetString(9)); // Gender.
+            row[10] = new VariantValue(csv.GetString(10)); // DateOfBirth.
+            row[11] = new VariantValue(csv.Parse<decimal>(11)); // Balance.
+            row[12] = new VariantValue(csv.Parse<DateTime>(12)); // CreatedAt.
+            var removedAt = csv.GetString(13);
             row[13] = !string.IsNullOrEmpty(removedAt) ? new VariantValue(DateTime.Parse(removedAt))
                 : VariantValue.Null; // RemovedAt.
-            row[14] = new VariantValue(csv.GetField(14)); // Phrase.
+            row[14] = new VariantValue(csv.GetString(14)); // Phrase.
             rowsFrame.AddRow(row);
         }
 

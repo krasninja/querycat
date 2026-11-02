@@ -16,16 +16,16 @@ public class AsyncLockTests
         var resource = 10;
 
         // Act.
-        await using (await asyncLock.LockAsync())
+        await using (await asyncLock.LockAsync(TestContext.Current.CancellationToken))
         {
-            await using (await asyncLock.LockAsync())
+            await using (await asyncLock.LockAsync(TestContext.Current.CancellationToken))
             {
-                await Task.Delay(20);
-                await using (await asyncLock.LockAsync())
+                await Task.Delay(20, TestContext.Current.CancellationToken);
+                await using (await asyncLock.LockAsync(TestContext.Current.CancellationToken))
                 {
                     resource = 20;
                 }
-                await using (await asyncLock.LockAsync())
+                await using (await asyncLock.LockAsync(TestContext.Current.CancellationToken))
                 {
                     resource = 30;
                 }
@@ -44,16 +44,16 @@ public class AsyncLockTests
         var resource = 10;
 
         // Act.
-        await using (await asyncLock.LockAsync())
+        await using (await asyncLock.LockAsync(TestContext.Current.CancellationToken))
         {
-            using (asyncLock.Lock())
+            using (asyncLock.Lock(TestContext.Current.CancellationToken))
             {
-                await Task.Delay(20);
-                await using (await asyncLock.LockAsync())
+                await Task.Delay(20, TestContext.Current.CancellationToken);
+                await using (await asyncLock.LockAsync(TestContext.Current.CancellationToken))
                 {
                     resource = 20;
                 }
-                using (asyncLock.Lock())
+                using (asyncLock.Lock(TestContext.Current.CancellationToken))
                 {
                     resource = 30;
                 }
@@ -79,15 +79,15 @@ public class AsyncLockTests
                 Thread.Sleep(1000);
                 resource = 20;
             }
-        });
-        await Task.Delay(100);
+        }, TestContext.Current.CancellationToken);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
         var task2 = Task.Run(async () =>
         {
             await using (await asyncLock.LockAsync())
             {
                 resource = 30;
             }
-        });
+        }, TestContext.Current.CancellationToken);
         await task1;
         await task2;
 
@@ -114,7 +114,7 @@ public class AsyncLockTests
                         resource++;
                     }
                 }
-            });
+            }, TestContext.Current.CancellationToken);
             tasks.Add(task);
         }
         await Task.WhenAll(tasks);
@@ -143,7 +143,7 @@ public class AsyncLockTests
                     await Task.Yield(); // Return to the task pool.
                     guard = false;
                 }
-            });
+            }, TestContext.Current.CancellationToken);
             tasks.Add(task);
         }
         await Task.WhenAll(tasks);
@@ -179,7 +179,7 @@ public class AsyncLockTests
             task2.Wait();
             cancellationTokenSource.Cancel();
             task1.Wait();
-        });
+        }, TestContext.Current.CancellationToken);
     }
 
     [Fact]
@@ -199,9 +199,9 @@ public class AsyncLockTests
                     await Task.Delay(50);
                 }
             }
-        });
+        }, TestContext.Current.CancellationToken);
 
-        await Task.Delay(100);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
         var task2 = Task.Run(async () =>
         {
             try
@@ -215,9 +215,9 @@ public class AsyncLockTests
             {
                 endLoopIndicator = false;
             }
-        });
+        }, TestContext.Current.CancellationToken);
 
-        await Task.Delay(100);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
         await cts.CancelAsync();
         await task1;
         await task2;
@@ -250,19 +250,19 @@ public class AsyncLockTests
             var scope = await asyncLock.LockAsync();
             @event.Wait();
             await scope.DisposeAsync();
-        });
-        await Task.Delay(100);
+        }, TestContext.Current.CancellationToken);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
 
-        var task1 = Task.Run(async () => await LockAndAdd(1));
-        await Task.Delay(100);
-        var task2 = Task.Run(async () => await LockAndAdd(2));
-        await Task.Delay(100);
-        var task3 = Task.Run(async () => await LockAndAdd(3));
-        await Task.Delay(100);
-        var task4 = Task.Run(async () => await LockAndAdd(4));
-        await Task.Delay(100);
-        var task5 = Task.Run(async () => await LockAndAdd(5));
-        await Task.Delay(100);
+        var task1 = Task.Run(async () => await LockAndAdd(1), TestContext.Current.CancellationToken);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
+        var task2 = Task.Run(async () => await LockAndAdd(2), TestContext.Current.CancellationToken);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
+        var task3 = Task.Run(async () => await LockAndAdd(3), TestContext.Current.CancellationToken);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
+        var task4 = Task.Run(async () => await LockAndAdd(4), TestContext.Current.CancellationToken);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
+        var task5 = Task.Run(async () => await LockAndAdd(5), TestContext.Current.CancellationToken);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
 
         @event.Set();
         await task1;
@@ -292,8 +292,8 @@ public class AsyncLockTests
                 holderEntered.Release();
                 await releaseHolder.WaitAsync();
             }
-        });
-        await holderEntered.WaitAsync();
+        }, TestContext.Current.CancellationToken);
+        await holderEntered.WaitAsync(TestContext.Current.CancellationToken);
 
         // The first attempt gets canceled while queued, the second one runs within the very
         // same execution flow and must still observe the lock as taken by the holder.
@@ -318,7 +318,7 @@ public class AsyncLockTests
             return acquiredWhileHeld;
         });
 
-        await Task.Delay(100);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
         await cts.CancelAsync();
 
         Assert.False(await secondFlowTask, "The lock was granted while another flow was holding it.");
@@ -330,12 +330,12 @@ public class AsyncLockTests
     {
         var asyncLock = new AsyncLock();
 
-        var scope = await asyncLock.LockAsync();
+        var scope = await asyncLock.LockAsync(TestContext.Current.CancellationToken);
         await scope.DisposeAsync();
         await scope.DisposeAsync();
 
         Assert.False(asyncLock.IsTaken);
-        await using (await asyncLock.LockAsync())
+        await using (await asyncLock.LockAsync(TestContext.Current.CancellationToken))
         {
             Assert.True(asyncLock.IsTaken);
         }
