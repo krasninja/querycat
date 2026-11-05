@@ -92,5 +92,11 @@ namespace QueryCat.OAuth.Resources {
                 return ResourceManager.GetString("AuthEmptyApiKey", resourceCulture);
             }
         }
+        
+        internal static string AuthNoClientIdUseApiKey {
+            get {
+                return ResourceManager.GetString("AuthNoClientIdUseApiKey", resourceCulture);
+            }
+        }
     }
 }

@@ -87,7 +87,11 @@ public sealed class AuthService
         var clientSecret = options.ClientSecret ?? provider.ClientSecret;
         if (string.IsNullOrEmpty(clientId))
         {
-            throw new QueryCatException(string.Format(Resources.Errors.AuthNoClientId, provider.Id));
+            throw new QueryCatException(
+                string.Format(
+                    provider.AllowApiKey ? Resources.Errors.AuthNoClientIdUseApiKey : Resources.Errors.AuthNoClientId,
+                    provider.Id)
+                );
         }
         var useDeviceFlow = options.UseDeviceFlow
             || (provider.PreferDeviceFlow && provider.SupportsDeviceFlow)

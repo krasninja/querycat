@@ -42,4 +42,7 @@
   <data name="AuthEmptyApiKey" xml:space="preserve">
     <value>API key cannot be empty.</value>
   </data>
+  <data name="AuthNoClientIdUseApiKey" xml:space="preserve">
+    <value>OAuth2 client identifier is not set for provider '{0}', use --client-id option or use API key.</value>
+  </data>
 </root>
