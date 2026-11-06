@@ -220,6 +220,21 @@ public abstract class KeysRowsInput : RowsInput, IDisposable
             return false;
         }
 
+        return TryGetKeyColumnValueAnyOperation(columnIndex, operations, out value);
+    }
+
+    /// <summary>
+    /// Try to get key column value by column index.
+    /// </summary>
+    /// <param name="columnIndex">Column index.</param>
+    /// <param name="operations">Operations.</param>
+    /// <param name="value">Out value or null.</param>
+    /// <returns><c>True</c> if found, <c>false</c> otherwise.</returns>
+    public bool TryGetKeyColumnValueAnyOperation(
+        int columnIndex,
+        ReadOnlySpan<VariantValue.Operation> operations,
+        out VariantValue value)
+    {
         var keyValue = FindKeyColumnValue(columnIndex, operations);
         if (keyValue == null || !keyValue.IsSet)
         {

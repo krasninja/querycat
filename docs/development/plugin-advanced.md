@@ -115,3 +115,5 @@ public class SamplePluginInput : EnumerableRowsInput<TestClass>
     }
 }
 ```
+
+- `AddKeyColumn` registers the column as a key (index) column. If the column was not added before (there is no such property in the class), it is added automatically. Such column has no getter, so the current key value from the query condition is returned to the user.

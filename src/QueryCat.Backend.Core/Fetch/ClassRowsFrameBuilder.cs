@@ -19,11 +19,13 @@ namespace QueryCat.Backend.Core.Fetch;
 public class ClassRowsFrameBuilder<TClass> where TClass : class
 {
     private const string DataColumn = "__data";
+    private const string KeyColumnDescription = "The key column, the value is taken from the query condition.";
 
     private readonly record struct ColumnGetter(Column Column, Func<TClass, VariantValue> ValueGetter);
 
     private readonly List<ColumnGetter> _columns = new();
     private readonly List<KeyColumn> _keyColumns = new();
+    private readonly List<int> _keyNoGetterColumns = new();
 
     /// <summary>
     /// Columns count.
@@ -509,7 +511,10 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
     /// <param name="columnIndex">Column index.</param>
     /// <param name="obj">Object.</param>
     /// <returns>Value.</returns>
-    public VariantValue GetValue(int columnIndex, TClass obj) => _columns[columnIndex].ValueGetter(obj);
+    public VariantValue GetValue(int columnIndex, TClass obj)
+    {
+        return _columns[columnIndex].ValueGetter(obj);
+    }
 
     private bool AddOrReplaceColumn(Column column, Func<TClass, VariantValue> valueGetter)
     {
@@ -517,6 +522,9 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
         if (existingColumnIndex > -1)
         {
             _columns[existingColumnIndex] = new ColumnGetter(column, valueGetter);
+
+            // The column was created by AddKeyColumn without getter, now we have one.
+            _keyNoGetterColumns.Remove(existingColumnIndex);
             return false;
         }
         else
@@ -572,7 +580,8 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
     #region Keys
 
     /// <summary>
-    /// Add key column information.
+    /// Add key column information. If the column was not added before it is created
+    /// without value getter, so the current key value is returned to the user.
     /// </summary>
     /// <param name="columnName">Column name.</param>
     /// <param name="isRequired">Is this the required condition.</param>
@@ -581,14 +590,15 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
         string columnName,
         bool isRequired = false)
     {
-        var columnIndex = GetColumnIndexByName(columnName);
+        var columnIndex = GetOrAddKeyColumnIndex(columnName);
         var keyColumn = new KeyColumn(columnIndex, isRequired);
         _keyColumns.Add(keyColumn);
         return this;
     }
 
     /// <summary>
-    /// Add key column information.
+    /// Add key column information. If the column was not added before it is created
+    /// without value getter, so the current key value is returned to the user.
     /// </summary>
     /// <param name="valueGetterExpression">Column expression.</param>
     /// <param name="isRequired">Is this the required condition.</param>
@@ -598,14 +608,15 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
         bool isRequired = false)
     {
         var columnName = GetNameFromProperty(valueGetterExpression);
-        var columnIndex = GetColumnIndexByName(columnName);
+        var columnIndex = GetOrAddKeyColumnIndex(columnName, Converter.ConvertFromSystem(typeof(T)));
         var keyColumn = new KeyColumn(columnIndex, isRequired);
         _keyColumns.Add(keyColumn);
         return this;
     }
 
     /// <summary>
-    /// Add key column information.
+    /// Add key column information. If the column was not added before it is created
+    /// without value getter, so the current key value is returned to the user.
     /// </summary>
     /// <param name="columnName">Column name.</param>
     /// <param name="operation">Key operation.</param>
@@ -616,14 +627,15 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
         VariantValue.Operation operation,
         bool isRequired = false)
     {
-        var columnIndex = GetColumnIndexByName(columnName);
+        var columnIndex = GetOrAddKeyColumnIndex(columnName);
         var keyColumn = new KeyColumn(columnIndex, isRequired, operation);
         _keyColumns.Add(keyColumn);
         return this;
     }
 
     /// <summary>
-    /// Add key column information.
+    /// Add key column information. If the column was not added before it is created
+    /// without value getter, so the current key value is returned to the user.
     /// </summary>
     /// <param name="valueGetterExpression">Column expression.</param>
     /// <param name="operation">Key operation.</param>
@@ -635,14 +647,15 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
         bool isRequired = false)
     {
         var columnName = GetNameFromProperty(valueGetterExpression);
-        var columnIndex = GetColumnIndexByName(columnName);
+        var columnIndex = GetOrAddKeyColumnIndex(columnName, Converter.ConvertFromSystem(typeof(T)));
         var keyColumn = new KeyColumn(columnIndex, isRequired, operation);
         _keyColumns.Add(keyColumn);
         return this;
     }
 
     /// <summary>
-    /// Add key column information.
+    /// Add key column information. If the column was not added before it is created
+    /// without value getter, so the current key value is returned to the user.
     /// </summary>
     /// <param name="columnName">Column name.</param>
     /// <param name="operation">Key operation.</param>
@@ -655,10 +668,39 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
         VariantValue.Operation orOperation,
         bool isRequired = false)
     {
-        var columnIndex = GetColumnIndexByName(columnName);
+        var columnIndex = GetOrAddKeyColumnIndex(columnName);
         var keyColumn = new KeyColumn(columnIndex, isRequired, operation, orOperation);
         _keyColumns.Add(keyColumn);
         return this;
+    }
+
+    /// <summary>
+    /// The column is added as key column, and it has no getter. It means that we should
+    /// show user current key value.
+    /// </summary>
+    /// <param name="columnIndex">Column index.</param>
+    /// <returns><c>True</c> if the column has no getter, <c>false</c> otherwise.</returns>
+    internal bool IsNoGetterColumns(int columnIndex) => _keyNoGetterColumns.Contains(columnIndex);
+
+    /// <summary>
+    /// Get the key column index by column name. If the column was not added before it is
+    /// created without value getter, so the current key value is returned to the user.
+    /// </summary>
+    /// <param name="columnName">Column name.</param>
+    /// <param name="dataType">Column data type.</param>
+    /// <returns>Column index.</returns>
+    private int GetOrAddKeyColumnIndex(string columnName, DataType dataType = DataType.String)
+    {
+        var columnIndex = GetColumnIndexByName(columnName, throwIfNotFound: false);
+        if (columnIndex > -1)
+        {
+            return columnIndex;
+        }
+
+        AddOrReplaceColumn(new Column(columnName, dataType, KeyColumnDescription), _ => VariantValue.Null);
+        columnIndex = _columns.Count - 1;
+        _keyNoGetterColumns.Add(columnIndex);
+        return columnIndex;
     }
 
     #endregion
@@ -725,10 +767,10 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
 
     #endregion
 
-    private int GetColumnIndexByName(string columnName)
+    private int GetColumnIndexByName(string columnName, bool throwIfNotFound = true)
     {
         var columnIndex = _columns.FindIndex(c => Column.NameEquals(c.Column, columnName));
-        if (columnIndex < 0)
+        if (throwIfNotFound && columnIndex < 0)
         {
             throw new QueryCatException(string.Format(Resources.Errors.CannotFindColumn, columnName));
         }
