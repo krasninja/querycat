@@ -23,7 +23,7 @@ public sealed class NullPluginsManager : IPluginsManager
     }
 
     /// <inheritdoc />
-    public Task<IEnumerable<PluginInfo>> ListAsync(bool localOnly = false, CancellationToken cancellationToken = default)
+    public Task<IEnumerable<PluginInfo>> ListAsync(PluginListOptions? options = null, CancellationToken cancellationToken = default)
     {
         return Task.FromResult(Array.Empty<PluginInfo>().AsEnumerable());
     }

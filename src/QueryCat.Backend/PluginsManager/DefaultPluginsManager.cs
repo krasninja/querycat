@@ -63,15 +63,25 @@ public sealed class DefaultPluginsManager : IPluginsManager
 
     /// <inheritdoc />
     public async Task<IEnumerable<PluginInfo>> ListAsync(
-        bool localOnly = false,
+        PluginListOptions? options = null,
         CancellationToken cancellationToken = default)
     {
-        var remote = !localOnly
+        options ??= new PluginListOptions();
+        var remote = !options.LocalOnly
             ? await GetRemotePluginsAsync(cancellationToken).ConfigureAwait(false)
             : [];
         var local = GetLocalPlugins();
 
-        return remote.Concat(local).OrderBy(p => p.Name);
+        var plugins = remote.Concat(local);
+        if (!string.IsNullOrEmpty(options.Pattern))
+        {
+            plugins = plugins.Where(p => p.Name.Contains(options.Pattern, StringComparison.OrdinalIgnoreCase));
+        }
+        if (!string.IsNullOrEmpty(options.Name))
+        {
+            plugins = plugins.Where(p => IsNameMatch(options.Name, p.Name));
+        }
+        return plugins.OrderBy(p => p.Name);
     }
 
     private static readonly string[] _prefixes = [string.Empty, "QueryCat.Plugins.", "qcat-plugins-", "qcat.plugins.", "plugins-", "plugins."];

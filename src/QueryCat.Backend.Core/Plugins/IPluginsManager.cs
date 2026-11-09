@@ -13,11 +13,11 @@ public interface IPluginsManager
     /// <summary>
     /// List all local and remote plugins.
     /// </summary>
-    /// <param name="localOnly">List local plugins only.</param>
+    /// <param name="options">List options.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>List of plugins info.</returns>
     Task<IEnumerable<PluginInfo>> ListAsync(
-        bool localOnly = false,
+        PluginListOptions? options = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>

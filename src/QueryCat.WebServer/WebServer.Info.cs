@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text.Json;
 using QueryCat.Backend.Core;
+using QueryCat.Backend.Core.Plugins;
 
 namespace QueryCat.WebServer;
 
@@ -8,7 +9,12 @@ public partial class WebServer
 {
     private async Task Info_HandleInfoApiActionAsync(HttpListenerRequest request, HttpListenerResponse response, CancellationToken cancellationToken)
     {
-        var localPlugins = (await _executionThread.PluginsManager.ListAsync(localOnly: true, cancellationToken)).ToList();
+        var localPlugins = (await _executionThread.PluginsManager.ListAsync(
+            new PluginListOptions
+            {
+                LocalOnly = true
+            }, cancellationToken))
+            .ToList();
         var dict = new WebServerReply
         {
             ["installedPlugins"] = localPlugins,

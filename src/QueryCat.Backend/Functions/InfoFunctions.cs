@@ -132,7 +132,7 @@ public static class InfoFunctions
     [FunctionSignature("_plugins(): object<IRowsInput>")]
     public static async ValueTask<VariantValue> Plugins(IExecutionThread thread, CancellationToken cancellationToken)
     {
-        var plugins = await thread.PluginsManager.ListAsync(localOnly: false, cancellationToken);
+        var plugins = await thread.PluginsManager.ListAsync(cancellationToken: cancellationToken);
         var input = EnumerableRowsInput<PluginInfo>.FromSource(plugins,
             builder => builder
                 .AddProperty("name", p => p.Name)

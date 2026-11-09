@@ -81,24 +81,12 @@ internal abstract class BasePluginOptionCommand : BaseCommand
             throw new QueryCatException(string.Format(Resources.Errors.PluginOptionNotFound, optionName, pluginName));
         }
         var fullPluginName = options.FirstOrDefault()?.PluginName
-            ?? await FindLocalPluginNameAsync(thread, pluginName, cancellationToken)
+            ?? (await thread.PluginsManager.ListAsync(
+                    new PluginListOptions { LocalOnly = true, Name = pluginName }, cancellationToken))
+                .FirstOrDefault()?.Name
             ?? throw new QueryCatException(string.Format(Resources.Errors.PluginNotFound, pluginName));
         return new PluginOptionTarget(optionName, null,
             new PluginConfigStorage(thread.ConfigStorage, fullPluginName, registry));
-    }
-
-    private static async Task<string?> FindLocalPluginNameAsync(
-        IExecutionThread thread,
-        string pluginName,
-        CancellationToken cancellationToken)
-    {
-        // Match full name or the short name without prefix ("github" -> "QueryCat.Plugins.Github").
-        var plugins = await thread.PluginsManager.ListAsync(localOnly: true, cancellationToken);
-        return plugins
-            .Select(p => p.Name)
-            .FirstOrDefault(name => name.Equals(pluginName, StringComparison.OrdinalIgnoreCase)
-                || name.EndsWith('.' + pluginName, StringComparison.OrdinalIgnoreCase)
-                || name.EndsWith('-' + pluginName, StringComparison.OrdinalIgnoreCase));
     }
 }
 #endif
