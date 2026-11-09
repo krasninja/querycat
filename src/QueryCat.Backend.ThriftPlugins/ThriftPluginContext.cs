@@ -39,6 +39,11 @@ internal sealed class ThriftPluginContext : IDisposable, IAsyncDisposable
     /// </summary>
     public IReadOnlyList<PluginContextAuth> AuthProviders { get; set; } = [];
 
+    /// <summary>
+    /// Configuration options declared by the plugin.
+    /// </summary>
+    public IReadOnlyList<PluginContextConfigOption> ConfigOptions { get; set; } = [];
+
     public ObjectsStorage ObjectsStorage { get; }
 
     public IntPtr? LibraryHandle { get; set; }

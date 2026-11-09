@@ -197,6 +197,14 @@ struct AuthToken {
   4: optional list<string> scopes
 }
 
+// Configuration value.
+struct ConfigOption {
+  1: required string name,
+  2: required DataType type,
+  3: required string description,
+  4: optional VariantValue default_value
+}
+
 struct Function {
   // Function call signature.
   1: required string signature,
@@ -225,7 +233,9 @@ struct PluginData {
   // Metadata.
   4: optional map<string, VariantValue> metadata,
   // Authentication providers.
-  5: optional list<AuthProvider> auth_providers
+  5: optional list<AuthProvider> auth_providers,
+  // Configuration options for plugin.
+  6: optional list<ConfigOption> config_options
 }
 
 struct RegistrationResult {

@@ -43,4 +43,12 @@ public interface IPluginsManager
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Awaitable task.</returns>
     Task RemoveAsync(string name, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Get configuration options declared by the loaded plugin.
+    /// </summary>
+    /// <param name="name">Plugin name. Returns options of all loaded plugins if empty.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Configuration options.</returns>
+    Task<IReadOnlyCollection<PluginConfigOption>> GetOptionsAsync(string name, CancellationToken cancellationToken = default);
 }

@@ -423,6 +423,18 @@ namespace QueryCat.Cli.Resources {
             }
         }
         
+        internal static string PluginOptionsCommand_Description {
+            get {
+                return ResourceManager.GetString("PluginOptionsCommand_Description", resourceCulture);
+            }
+        }
+        
+        internal static string PluginOptionsCommand_PluginDescription {
+            get {
+                return ResourceManager.GetString("PluginOptionsCommand_PluginDescription", resourceCulture);
+            }
+        }
+        
         internal static string PluginAuthListCommand_Description {
             get {
                 return ResourceManager.GetString("PluginAuthListCommand_Description", resourceCulture);

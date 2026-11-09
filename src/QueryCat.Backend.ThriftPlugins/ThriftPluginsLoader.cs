@@ -58,7 +58,8 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
     internal sealed record PluginsFunctionsCache(
         [property: JsonPropertyName("createdAt")] long CreatedAt,
         [property: JsonPropertyName("functions")] IReadOnlyList<PluginContextFunction> Functions,
-        [property: JsonPropertyName("auth")] IReadOnlyList<PluginContextAuth>? AuthProviders = null);
+        [property: JsonPropertyName("auth")] IReadOnlyList<PluginContextAuth>? AuthProviders = null,
+        [property: JsonPropertyName("options")] IReadOnlyList<PluginContextConfigOption>? ConfigOptions = null);
 
     private class FunctionCallPluginBase
     {
@@ -150,7 +151,8 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
         {
             ServerPipeName = endpoint.NamedPipe;
         }
-        _server = new ThriftPluginsServer(thread, endpoint, maxConnectionsToClient: maxConnectionsToPlugin);
+        _server = new ThriftPluginsServer(thread, endpoint, maxConnectionsToClient: maxConnectionsToPlugin,
+            configOptions: ConfigOptions);
         if (_debugMode)
         {
             _server.PluginRegistrationTimeoutSeconds = -1;
@@ -176,6 +178,7 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
             _filesWithLoadedFunctions.Add(file);
         }
         RegisterAuthProviders(e.PluginContext.AuthProviders);
+        RegisterConfigOptions(e.PluginContext.ConfigOptions);
 
         try
         {
@@ -350,6 +353,7 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
             {
                 RegisterFunctions(_thread.FunctionsManager, file, cache.Functions);
                 RegisterAuthProviders(cache.AuthProviders ?? []);
+                RegisterConfigOptions(cache.ConfigOptions ?? []);
                 _filesWithLoadedFunctions.Add(file);
                 return;
             }
@@ -707,6 +711,14 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
         }
     }
 
+    private void RegisterConfigOptions(IReadOnlyList<PluginContextConfigOption> options)
+    {
+        foreach (var option in options)
+        {
+            ConfigOptions.Register(option.ToPluginConfigOption());
+        }
+    }
+
     #region Cache
 
     private void CacheFunctions(ThriftPluginContext context, string fileName)
@@ -720,7 +732,8 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
         var cacheEntry = new PluginsFunctionsCache(
             fileInfo.CreationTimeUtc.Ticks,
             context.Functions,
-            context.AuthProviders);
+            context.AuthProviders,
+            context.ConfigOptions);
         var pluginName = PluginInfo.CreateFromUniversalName(fileName).Name;
         var cacheFile = Path.Combine(_functionsCacheDirectory, pluginName + FunctionsCacheFileExtension);
         Directory.CreateDirectory(_functionsCacheDirectory);
@@ -754,8 +767,9 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
         }
 
         // If plugin file has changed - invalidate the cache. Also invalidate cache created
-        // before authentication providers support.
-        if (cacheEntry.CreatedAt != fileInfo.CreationTimeUtc.Ticks || cacheEntry.AuthProviders == null)
+        // before authentication providers or configuration options support.
+        if (cacheEntry.CreatedAt != fileInfo.CreationTimeUtc.Ticks || cacheEntry.AuthProviders == null
+            || cacheEntry.ConfigOptions == null)
         {
             _logger.LogDebug("Update plugin cache '{PluginName}'.", pluginName);
             File.Delete(cacheFile);

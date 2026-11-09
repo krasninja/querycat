@@ -87,6 +87,11 @@ public partial class ThriftPluginClient : IDisposable
     public IAuthProvidersRegistry AuthProviders => _executionThread.AuthTokensManager.Providers;
 
     /// <summary>
+    /// Configuration options declared by the plugin. Register them before <see cref="StartAsync" /> call.
+    /// </summary>
+    public IPluginConfigOptionsRegistry ConfigOptions { get; } = new PluginConfigOptionsRegistry();
+
+    /// <summary>
     /// Registration result. It is filled after connection to QueryCat host.
     /// </summary>
     public RegistrationResult? RegistrationResult { get; private set; }
@@ -303,6 +308,11 @@ public partial class ThriftPluginClient : IDisposable
         if (authProviders.Count > 0)
         {
             pluginData.AuthProviders = authProviders.Select(SdkConvert.Convert).ToList();
+        }
+        var configOptions = ConfigOptions.GetOptions();
+        if (configOptions.Count > 0)
+        {
+            pluginData.ConfigOptions = configOptions.Select(SdkConvert.Convert).ToList();
         }
 
         RegistrationResult = await _thriftClient.RegisterPluginAsync(

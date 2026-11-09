@@ -252,6 +252,7 @@ public static class SdkConvert
             Backend.Core.Types.DataType.Array => DataType.ARRAY,
             Backend.Core.Types.DataType.Map => DataType.MAP,
             Backend.Core.Types.DataType.Void => DataType.VOID,
+            Backend.Core.Types.DataType.Dynamic => DataType.DYNAMIC,
             _ => throw new ArgumentOutOfRangeException(nameof(type), type, null)
         };
     }
@@ -300,6 +301,19 @@ public static class SdkConvert
             Nanos = nanos
         };
     }
+
+    public static ConfigOption Convert(Backend.Core.Plugins.PluginConfigOption option)
+    {
+        var configOption = new ConfigOption(option.Name, Convert(option.Type), option.Description);
+        if (!option.DefaultValue.IsNull)
+        {
+            configOption.DefaultValue = Convert(option.DefaultValue);
+        }
+        return configOption;
+    }
+
+    public static Backend.Core.Plugins.PluginConfigOption Convert(ConfigOption option)
+        => new(option.Name, Convert(option.Type), option.Description, Convert(option.DefaultValue));
 
     public static AuthProvider Convert(Backend.Core.Plugins.Auth.AuthProviderInfo provider)
         => new(provider.Id, Convert(provider.Type))

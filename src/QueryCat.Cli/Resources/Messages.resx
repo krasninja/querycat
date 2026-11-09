@@ -214,6 +214,12 @@
   <data name="PluginAuthCommand_ProviderDescription" xml:space="preserve">
     <value>Authentication provider identifier or plugin name.</value>
   </data>
+  <data name="PluginOptionsCommand_Description" xml:space="preserve">
+    <value>List configuration options declared by plugins and their current values.</value>
+  </data>
+  <data name="PluginOptionsCommand_PluginDescription" xml:space="preserve">
+    <value>Plugin name. List options of all plugins if not specified.</value>
+  </data>
   <data name="PluginAuthListCommand_Description" xml:space="preserve">
     <value>List authentication providers declared by plugins and login status.</value>
   </data>

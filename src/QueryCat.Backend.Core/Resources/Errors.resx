@@ -96,4 +96,7 @@
   <data name="AuthProviderAlreadyRegistered" xml:space="preserve">
     <value>Authentication provider '{0}' is already registered by plugin '{1}'.</value>
   </data>
+  <data name="ConfigOptionInvalidType" xml:space="preserve">
+    <value>Cannot set option '{0}' of plugin '{1}': the value cannot be converted to type '{2}'.</value>
+  </data>
 </root>

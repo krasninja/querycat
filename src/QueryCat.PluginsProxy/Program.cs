@@ -17,7 +17,8 @@ public class Program
         ThriftPluginClient.SetupApplicationLogging(logLevel: args.LogLevel);
 
         using var client = new ThriftPluginClient(args);
-        using var assemblyLoader = new DotNetAssemblyPluginsLoader(client.FunctionsManager, client.ExecutionThread, assemblyFiles);
+        using var assemblyLoader = new DotNetAssemblyPluginsLoader(client.FunctionsManager, client.ExecutionThread, assemblyFiles,
+            client.ConfigOptions);
         await assemblyLoader.LoadAsync(new PluginsLoadingOptions
         {
             SkipLoadingCallbackCall = true,

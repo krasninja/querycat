@@ -15,11 +15,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - MCP server (`qcat mcp`) with stdio and HTTP transports.
 - "date_trunc" and "date_part" support week interval.
 - Initial plugin authentication infrastructure.
+- Plugin configuration options (`RegisterConfigOptions`) and `qcat plugin options` command.
 
 ### Changed
 
 - Improve "to_json" function.
 - ClassRowsFrameBuilder.AddKeyColumn now adds the new column if it was not previously added.
+- Plugin config storage keys are prefixed with the plugin name.
 
 ## [0.19.0] - 2026-10-10
 

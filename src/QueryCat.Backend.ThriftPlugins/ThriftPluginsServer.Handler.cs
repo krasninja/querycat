@@ -13,6 +13,7 @@ using LogLevel = QueryCat.Plugins.Sdk.LogLevel;
 using ChatRequest = QueryCat.Plugins.Sdk.ChatRequest;
 using ChatResponse = QueryCat.Plugins.Sdk.ChatResponse;
 using VariantValue = QueryCat.Plugins.Sdk.VariantValue;
+using PluginConfigStorage = QueryCat.Backend.Core.Plugins.PluginConfigStorage;
 
 namespace QueryCat.Backend.ThriftPlugins;
 
@@ -110,6 +111,17 @@ public partial class ThriftPluginsServer
                     ))
                     .ToList();
             }
+            if (plugin_data.ConfigOptions != null)
+            {
+                context.ConfigOptions = plugin_data.ConfigOptions
+                    .Select(SdkConvert.Convert)
+                    .Select(o =>
+                    {
+                        o.PluginName = context.PluginName;
+                        return PluginContextConfigOption.Create(o);
+                    })
+                    .ToList();
+            }
             var token = _thriftPluginsServer.GenerateToken();
             _thriftPluginsServer.RegisterPluginContext(context, registration_token, token);
 
@@ -163,15 +175,29 @@ public partial class ThriftPluginsServer
         {
             await BeforeCallAsync(token, nameof(SetConfigValueAsync), cancellationToken);
             var internalValue = value != null ? SdkConvert.Convert(value) : Core.Types.VariantValue.Null;
-            await _thriftPluginsServer._configStorage.SetAsync(key, internalValue, cancellationToken);
+            await GetPluginConfigStorage(token).SetAsync(key, internalValue, cancellationToken);
         }
 
         /// <inheritdoc />
         public async Task<VariantValue> GetConfigValueAsync(long token, string key, CancellationToken cancellationToken = default)
         {
             await BeforeCallAsync(token, nameof(GetConfigValueAsync), cancellationToken);
-            var value = await _thriftPluginsServer._configStorage.GetAsync(key, cancellationToken);
+            var value = await GetPluginConfigStorage(token).GetAsync(key, cancellationToken);
             return SdkConvert.Convert(value);
+        }
+
+        /// <summary>
+        /// Get config storage that is scoped to the plugin, so every plugin has its own keys.
+        /// </summary>
+        /// <param name="token">Plugin token.</param>
+        /// <returns>Config storage.</returns>
+        private PluginConfigStorage GetPluginConfigStorage(long token)
+        {
+            var context = _thriftPluginsServer.GetPluginContextByToken(token);
+            return new PluginConfigStorage(
+                _thriftPluginsServer._configStorage,
+                context.PluginName,
+                _thriftPluginsServer._configOptions);
         }
 
         /// <inheritdoc />

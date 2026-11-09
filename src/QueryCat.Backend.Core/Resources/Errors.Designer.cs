@@ -200,5 +200,11 @@ namespace QueryCat.Backend.Core.Resources {
                 return ResourceManager.GetString("AuthProviderAlreadyRegistered", resourceCulture);
             }
         }
+        
+        internal static string ConfigOptionInvalidType {
+            get {
+                return ResourceManager.GetString("ConfigOptionInvalidType", resourceCulture);
+            }
+        }
     }
 }

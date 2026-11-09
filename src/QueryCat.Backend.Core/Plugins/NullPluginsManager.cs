@@ -45,4 +45,11 @@ public sealed class NullPluginsManager : IPluginsManager
     {
         return Task.CompletedTask;
     }
+
+    /// <inheritdoc />
+    public Task<IReadOnlyCollection<PluginConfigOption>> GetOptionsAsync(string name, CancellationToken cancellationToken = default)
+    {
+        IReadOnlyCollection<PluginConfigOption> options = PluginsLoader.ConfigOptions.GetOptions(name);
+        return Task.FromResult(options);
+    }
 }

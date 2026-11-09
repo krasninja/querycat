@@ -222,6 +222,15 @@ public sealed class DefaultPluginsManager : IPluginsManager
         return Task.CompletedTask;
     }
 
+    /// <inheritdoc />
+    public Task<IReadOnlyCollection<PluginConfigOption>> GetOptionsAsync(string name, CancellationToken cancellationToken = default)
+    {
+        IReadOnlyCollection<PluginConfigOption> options = _pluginsLoader.ConfigOptions.GetOptions()
+            .Where(o => string.IsNullOrEmpty(name) || IsNameMatch(name, o.PluginName))
+            .ToList();
+        return Task.FromResult(options);
+    }
+
     private void CleanupPlugins()
     {
         var mainDirectory = Path.GetFullPath(GetMainPluginDirectory());
