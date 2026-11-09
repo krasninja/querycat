@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - MCP server (`qcat mcp`) with stdio and HTTP transports.
 - "date_trunc" and "date_part" support week interval.
 - Initial plugin authentication infrastructure.
-- Plugin configuration options (`RegisterConfigOptions`) and `qcat plugin options` command.
+- Plugin configuration options `qcat plugin options list|get|set|unset` commands.
 
 ### Changed
 

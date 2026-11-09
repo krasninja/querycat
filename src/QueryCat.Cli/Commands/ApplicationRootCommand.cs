@@ -25,7 +25,13 @@ internal sealed class ApplicationRootCommand : RootCommand
                 new PluginRemoveCommand(),
                 new PluginUpdateCommand(),
                 new PluginDebugCommand(),
-                new PluginOptionsCommand(),
+                new Command("options", Resources.Messages.PluginOptionsCommand_Description)
+                {
+                    new PluginOptionsListCommand(),
+                    new PluginOptionsGetCommand(),
+                    new PluginOptionsSetCommand(),
+                    new PluginOptionsUnsetCommand(),
+                },
                 new Command("auth", Resources.Messages.PluginAuthCommand_Description)
                 {
                     new PluginAuthListCommand(),

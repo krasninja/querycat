@@ -6,7 +6,7 @@ using QueryCat.Backend.Core.Types;
 namespace QueryCat.Cli.Commands;
 
 #if ENABLE_PLUGINS
-internal sealed class PluginOptionsCommand : BaseCommand
+internal sealed class PluginOptionsListCommand : BaseCommand
 {
     private sealed record PluginOptionStatus(
         string Plugin,
@@ -18,11 +18,11 @@ internal sealed class PluginOptionsCommand : BaseCommand
         string Description);
 
     /// <inheritdoc />
-    public PluginOptionsCommand() : base("options", Resources.Messages.PluginOptionsCommand_Description)
+    public PluginOptionsListCommand() : base("list", Resources.Messages.PluginOptionsListCommand_Description)
     {
         var pluginArgument = new Argument<string>("plugin")
         {
-            Description = Resources.Messages.PluginOptionsCommand_PluginDescription,
+            Description = Resources.Messages.PluginOptionsListCommand_PluginDescription,
             Arity = ArgumentArity.ZeroOrOne,
         };
 
@@ -38,6 +38,8 @@ internal sealed class PluginOptionsCommand : BaseCommand
                 outputStyle: parseResult.GetValue(OutputStyleOption),
                 cancellationToken: cancellationToken);
 
+            // The config is loaded lazily on the first query run, so load it explicitly.
+            await root.Thread.ConfigStorage.LoadAsync(cancellationToken);
             var options = await root.Thread.PluginsManager.GetOptionsAsync(
                 parseResult.GetValue(pluginArgument) ?? string.Empty, cancellationToken);
             var items = new List<PluginOptionStatus>(options.Count);

@@ -33,4 +33,10 @@
   <data name="InvalidInputData" xml:space="preserve">
     <value>Invalid input data: {0}.</value>
   </data>
+  <data name="PluginOptionNotFound" xml:space="preserve">
+    <value>Cannot find option '{0}' of plugin '{1}'.</value>
+  </data>
+  <data name="PluginNotFound" xml:space="preserve">
+    <value>Cannot find plugin '{0}'.</value>
+  </data>
 </root>

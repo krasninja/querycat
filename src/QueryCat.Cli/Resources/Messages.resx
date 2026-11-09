@@ -214,10 +214,10 @@
   <data name="PluginAuthCommand_ProviderDescription" xml:space="preserve">
     <value>Authentication provider identifier or plugin name.</value>
   </data>
-  <data name="PluginOptionsCommand_Description" xml:space="preserve">
+  <data name="PluginOptionsListCommand_Description" xml:space="preserve">
     <value>List configuration options declared by plugins and their current values.</value>
   </data>
-  <data name="PluginOptionsCommand_PluginDescription" xml:space="preserve">
+  <data name="PluginOptionsListCommand_PluginDescription" xml:space="preserve">
     <value>Plugin name. List options of all plugins if not specified.</value>
   </data>
   <data name="PluginAuthListCommand_Description" xml:space="preserve">
@@ -265,5 +265,32 @@
   </data>
   <data name="PluginAuthLogout_NotFound" xml:space="preserve">
     <value>No stored credentials for '{0}'.</value>
+  </data>
+  <data name="PluginOptionsCommand_Description" xml:space="preserve">
+    <value>Manage configuration options declared by plugins.</value>
+  </data>
+  <data name="PluginOptionsCommand_PluginDescription" xml:space="preserve">
+    <value>Plugin name.</value>
+  </data>
+  <data name="PluginOptionsCommand_NameDescription" xml:space="preserve">
+    <value>Option name.</value>
+  </data>
+  <data name="PluginOptionsGetCommand_Description" xml:space="preserve">
+    <value>Get the current value of the plugin option. The default value is returned if the option is not set.</value>
+  </data>
+  <data name="PluginOptionsSetCommand_Description" xml:space="preserve">
+    <value>Set the plugin option value.</value>
+  </data>
+  <data name="PluginOptionsSetCommand_ValueDescription" xml:space="preserve">
+    <value>Option value. It is converted to the option type.</value>
+  </data>
+  <data name="PluginOptionsUnsetCommand_Description" xml:space="preserve">
+    <value>Remove the plugin option value, so the default value is used.</value>
+  </data>
+  <data name="PluginOptionsSet_Success" xml:space="preserve">
+    <value>Option '{0}' is set to '{1}'.</value>
+  </data>
+  <data name="PluginOptionsUnset_Success" xml:space="preserve">
+    <value>Option '{0}' is unset.</value>
   </data>
 </root>

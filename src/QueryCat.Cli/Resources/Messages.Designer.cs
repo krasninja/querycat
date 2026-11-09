@@ -423,15 +423,15 @@ namespace QueryCat.Cli.Resources {
             }
         }
         
-        internal static string PluginOptionsCommand_Description {
+        internal static string PluginOptionsListCommand_Description {
             get {
-                return ResourceManager.GetString("PluginOptionsCommand_Description", resourceCulture);
+                return ResourceManager.GetString("PluginOptionsListCommand_Description", resourceCulture);
             }
         }
         
-        internal static string PluginOptionsCommand_PluginDescription {
+        internal static string PluginOptionsListCommand_PluginDescription {
             get {
-                return ResourceManager.GetString("PluginOptionsCommand_PluginDescription", resourceCulture);
+                return ResourceManager.GetString("PluginOptionsListCommand_PluginDescription", resourceCulture);
             }
         }
         
@@ -522,6 +522,60 @@ namespace QueryCat.Cli.Resources {
         internal static string PluginAuthLogout_NotFound {
             get {
                 return ResourceManager.GetString("PluginAuthLogout_NotFound", resourceCulture);
+            }
+        }
+        
+        internal static string PluginOptionsCommand_Description {
+            get {
+                return ResourceManager.GetString("PluginOptionsCommand_Description", resourceCulture);
+            }
+        }
+        
+        internal static string PluginOptionsCommand_PluginDescription {
+            get {
+                return ResourceManager.GetString("PluginOptionsCommand_PluginDescription", resourceCulture);
+            }
+        }
+        
+        internal static string PluginOptionsCommand_NameDescription {
+            get {
+                return ResourceManager.GetString("PluginOptionsCommand_NameDescription", resourceCulture);
+            }
+        }
+        
+        internal static string PluginOptionsGetCommand_Description {
+            get {
+                return ResourceManager.GetString("PluginOptionsGetCommand_Description", resourceCulture);
+            }
+        }
+        
+        internal static string PluginOptionsSetCommand_Description {
+            get {
+                return ResourceManager.GetString("PluginOptionsSetCommand_Description", resourceCulture);
+            }
+        }
+        
+        internal static string PluginOptionsSetCommand_ValueDescription {
+            get {
+                return ResourceManager.GetString("PluginOptionsSetCommand_ValueDescription", resourceCulture);
+            }
+        }
+        
+        internal static string PluginOptionsUnsetCommand_Description {
+            get {
+                return ResourceManager.GetString("PluginOptionsUnsetCommand_Description", resourceCulture);
+            }
+        }
+        
+        internal static string PluginOptionsSet_Success {
+            get {
+                return ResourceManager.GetString("PluginOptionsSet_Success", resourceCulture);
+            }
+        }
+        
+        internal static string PluginOptionsUnset_Success {
+            get {
+                return ResourceManager.GetString("PluginOptionsUnset_Success", resourceCulture);
             }
         }
     }

@@ -10,6 +10,10 @@ You can easily extend QueryCat functionality by installing plugins. Plugins allo
 - `plugin auth list`. List authentication providers declared by plugins and login status.
 - `plugin auth login <provider>`. Log in to the plugin authentication provider.
 - `plugin auth logout <provider>`. Remove stored credentials.
+- `plugin options list [plugin]`. List configuration options declared by plugins and their values.
+- `plugin options get <plugin> <name>`. Get the plugin option value.
+- `plugin options set <plugin> <name> <value>`. Set the plugin option value.
+- `plugin options unset <plugin> <name>`. Remove the plugin option value, so the default value is used.
 
 **Note**: Before use, you should install the special plugin proxy using `plugin install-proxy` command. It is the special software needed to run plugin `.dll` files.
 
@@ -50,3 +54,17 @@ Proxy contains the full version of .NET platform. Here is the schema how plugins
 ```
 QueryCat <-> (Thrift protocol) <-> Proxy <-> (.NET Reflection) <-> Plugin Assembly
 ```
+
+## Configuration
+
+Plugins can declare configuration options (for example, the remote service URL). Options have a type and a default value. Use `plugin options` commands to manage them:
+
+```bash
+qcat plugin options list                     # Show options of all plugins.
+qcat plugin options list github              # Show options of the specific plugin.
+qcat plugin options get github page_size     # Get the current value (or default one if not set).
+qcat plugin options set github page_size 50  # The value is converted to the option type.
+qcat plugin options unset github page_size   # Use the default value.
+```
+
+The values are stored in the `config.json` file within the local application data directory.

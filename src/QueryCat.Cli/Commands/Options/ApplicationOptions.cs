@@ -105,7 +105,7 @@ internal sealed class ApplicationOptions
 
         var bootstrapper = new ExecutionThreadBootstrapper(executionOptions)
             .WithConfigStorage(new PersistentConfigStorage(
-                Path.Combine(Application.GetApplicationDirectory(), ConfigFileName))
+                Path.Combine(Application.GetConfigDirectory(), ConfigFileName))
             )
             .WithAuthTokenManager(new DefaultAuthTokenManager(_authTokenStore))
             .WithStandardFunctions()

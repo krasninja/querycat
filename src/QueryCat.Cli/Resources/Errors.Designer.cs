@@ -74,5 +74,17 @@ namespace QueryCat.Cli.Resources {
                 return ResourceManager.GetString("InvalidInputData", resourceCulture);
             }
         }
+        
+        internal static string PluginOptionNotFound {
+            get {
+                return ResourceManager.GetString("PluginOptionNotFound", resourceCulture);
+            }
+        }
+        
+        internal static string PluginNotFound {
+            get {
+                return ResourceManager.GetString("PluginNotFound", resourceCulture);
+            }
+        }
     }
 }
