@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - "date_trunc" and "date_part" support week interval.
 - Initial plugin authentication infrastructure.
 - Plugin configuration options `qcat plugin options list|get|set|unset` commands.
+- Install scripts: `scripts/install.sh` for Linux/macOS and `scripts/install.ps1` for Windows, see the README installation section.
 
 ### Changed
 

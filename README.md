@@ -52,6 +52,22 @@ QueryCat is a command line tool that lets you use SQL to query CSV, JSON, XML an
 
 ## Installation
 
+### Install Script
+
+Linux and macOS:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/krasninja/querycat/main/scripts/install.sh | bash
+```
+
+Windows:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/krasninja/querycat/main/scripts/install.ps1 | iex"
+```
+
+Installs `qcat` and `qcat-plugins-proxy` from the [latest release](https://github.com/krasninja/querycat/releases/latest): on Linux/macOS to `/usr/local/bin` when run as root, otherwise to `~/.local/bin`; on Windows to `%ProgramFiles%\QueryCat` when elevated, otherwise to `%LOCALAPPDATA%\Programs\QueryCat`. Set `QCAT_INSTALL_DIR` to choose another directory; re-running upgrades in place.
+
 ### Prebuilt Binary
 
 Grab the single binary for your platform from the [latest release](https://github.com/krasninja/querycat/releases/latest), unpack it and run - no runtime or dependencies required. Builds are published for Linux (x64/arm64), macOS (x64/arm64) and Windows (x64).
