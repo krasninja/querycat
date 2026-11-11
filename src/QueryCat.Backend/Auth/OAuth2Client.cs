@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Security.Cryptography;
@@ -365,7 +366,7 @@ public sealed class OAuth2Client
     /// <summary>
     /// OAuth2 token endpoint response (RFC 6749, section 5).
     /// </summary>
-    public sealed class OAuth2TokenResponse
+    public sealed class OAuth2TokenResponse : IJsonOnDeserialized
     {
         [JsonPropertyName("access_token")]
         public string AccessToken { get; set; } = string.Empty;
@@ -389,8 +390,57 @@ public sealed class OAuth2Client
         [JsonPropertyName("error_description")]
         public string ErrorDescription { get; set; } = string.Empty;
 
+        [JsonExtensionData]
+        public Dictionary<string, JsonElement> AdditionalProperties { get; set; } = [];
+
         [JsonIgnore]
         public bool IsEmpty => string.IsNullOrEmpty(AccessToken) && string.IsNullOrEmpty(Error);
+
+        /// <inheritdoc />
+        public void OnDeserialized()
+        {
+            AccessToken = GetPrefixedString("access", AccessToken);
+            RefreshToken = GetPrefixedString("refresh", RefreshToken);
+            ExpiresIn ??= GetPrefixedExpiresIn();
+        }
+
+        private string GetPrefixedString(string prefix, string value)
+        {
+            if (!string.IsNullOrEmpty(value))
+            {
+                return value;
+            }
+            foreach (var property in AdditionalProperties)
+            {
+                if (property.Key.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)
+                    && property.Value.ValueKind == JsonValueKind.String)
+                {
+                    return property.Value.GetString() ?? string.Empty;
+                }
+            }
+            return value;
+        }
+
+        private long? GetPrefixedExpiresIn()
+        {
+            foreach (var property in AdditionalProperties)
+            {
+                if (!property.Key.StartsWith("expires", StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+                if (property.Value.ValueKind == JsonValueKind.Number && property.Value.TryGetInt64(out var number))
+                {
+                    return number;
+                }
+                if (property.Value.ValueKind == JsonValueKind.String
+                    && long.TryParse(property.Value.GetString(), NumberStyles.Integer, CultureInfo.InvariantCulture, out number))
+                {
+                    return number;
+                }
+            }
+            return null;
+        }
     }
 
     /// <summary>
