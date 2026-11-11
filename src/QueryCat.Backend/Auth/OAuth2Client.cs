@@ -132,11 +132,14 @@ public sealed class OAuth2Client
         string refreshToken,
         CancellationToken cancellationToken = default)
     {
+        var refreshTokenParamName = string.IsNullOrEmpty(provider.RefreshTokenParamName)
+            ? "refresh_token"
+            : provider.RefreshTokenParamName;
         var response = await PostTokenAsync(provider, clientId, clientSecret,
         [
             new("grant_type", "refresh_token"),
-            new("refresh_token", refreshToken),
-        ], cancellationToken);
+            new(refreshTokenParamName, refreshToken),
+        ], cancellationToken, provider.RefreshTokenUrl);
         return EnsureSuccess(response);
     }
 
@@ -221,19 +224,24 @@ public sealed class OAuth2Client
         string clientId,
         string? clientSecret,
         List<KeyValuePair<string, string>> parameters,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        string? tokenUrl = null)
     {
         parameters.Add(new("client_id", clientId));
         if (!string.IsNullOrEmpty(clientSecret))
         {
             parameters.Add(new("client_secret", clientSecret));
         }
-        var (response, statusCode) = await PostAsync(provider.TokenUrl, parameters,
+        var url = string.IsNullOrEmpty(tokenUrl) ? provider.TokenUrl : tokenUrl;
+        var (response, statusCode) = await PostAsync(url, parameters,
             SourceGenerationContext.Default.OAuth2TokenResponse, cancellationToken);
         if (response == null)
         {
-            throw new QueryCatException(string.Format(Resources.Errors.OAuth2InvalidResponse, provider.TokenUrl, statusCode));
+            throw new QueryCatException(string.Format(Resources.Errors.OAuth2InvalidResponse, url, statusCode));
         }
+        response.Scope = string.IsNullOrEmpty(response.Scope) ? response.Scope : string.Empty;
+        response.Error = string.IsNullOrEmpty(response.Error) ? response.Error : string.Empty;
+        response.ErrorDescription = string.IsNullOrEmpty(response.ErrorDescription) ? response.ErrorDescription : string.Empty;
         return response;
     }
 
@@ -324,13 +332,13 @@ public sealed class OAuth2Client
         public string RefreshToken { get; set; } = string.Empty;
 
         [JsonPropertyName("scope")]
-        public string? Scope { get; set; }
+        public string Scope { get; set; } = string.Empty;
 
         [JsonPropertyName("error")]
-        public string? Error { get; set; }
+        public string Error { get; set; } = string.Empty;
 
         [JsonPropertyName("error_description")]
-        public string? ErrorDescription { get; set; }
+        public string ErrorDescription { get; set; } = string.Empty;
     }
 
     /// <summary>

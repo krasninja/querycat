@@ -190,7 +190,7 @@ public sealed class AuthService
         IAuthLoginInteraction interaction,
         CancellationToken cancellationToken)
     {
-        using var listener = new LoopbackRedirectListener(provider.RedirectPort);
+        using var listener = new LoopbackRedirectListener(provider.RedirectPort, provider.RedirectLoopback, provider.RedirectPath);
         var pkce = OAuth2Client.CreatePkce();
         var state = OAuth2Client.CreateState();
         var url = OAuth2Client.BuildAuthorizationUrl(provider, clientId, listener.RedirectUri, state, pkce);

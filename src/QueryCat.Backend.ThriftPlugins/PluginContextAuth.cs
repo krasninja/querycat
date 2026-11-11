@@ -15,6 +15,10 @@ internal sealed record PluginContextAuth(
     [property: JsonPropertyName("scopes")] string[]? Scopes,
     [property: JsonPropertyName("extra")] Dictionary<string, string>? ExtraParams,
     [property: JsonPropertyName("redirect_port")] int RedirectPort,
+    [property: JsonPropertyName("redirect_loopback")] string? RedirectLoopback,
+    [property: JsonPropertyName("redirect_path")] string? RedirectPath,
+    [property: JsonPropertyName("refresh_token_url")] string? RefreshTokenUrl,
+    [property: JsonPropertyName("refresh_token_param_name")] string? RefreshTokenParamName,
     [property: JsonPropertyName("device_flow")] bool PreferDeviceFlow,
     [property: JsonPropertyName("allow_api_key")] bool AllowApiKey,
     [property: JsonPropertyName("plugin_name")] string PluginName

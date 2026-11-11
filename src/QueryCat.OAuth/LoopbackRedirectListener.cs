@@ -14,6 +14,7 @@ public sealed class LoopbackRedirectListener : IDisposable
     private const int MaxRequestSize = 16 * 1024;
 
     private readonly TcpListener _listener;
+    private readonly string _callbackPath;
 
     /// <summary>
     /// Redirect URI to use in authorization request.
@@ -24,12 +25,20 @@ public sealed class LoopbackRedirectListener : IDisposable
     /// Constructor.
     /// </summary>
     /// <param name="port">Port to listen. Random free port is used if 0.</param>
-    public LoopbackRedirectListener(int port = 0)
+    /// <param name="loopback">Loopback host name for the redirect URI.</param>
+    /// <param name="callbackPath">Redirect URI path.</param>
+    public LoopbackRedirectListener(int port = 0, string? loopback = null, string? callbackPath = null)
     {
         _listener = new TcpListener(IPAddress.Loopback, port);
         _listener.Start();
         var actualPort = ((IPEndPoint)_listener.LocalEndpoint).Port;
-        RedirectUri = $"http://127.0.0.1:{actualPort}{CallbackPath}";
+        _callbackPath = string.IsNullOrEmpty(callbackPath) ? CallbackPath : callbackPath;
+        if (_callbackPath == "/")
+        {
+            _callbackPath = string.Empty;
+        }
+        var redirectLoopback = string.IsNullOrEmpty(loopback) ? "127.0.0.1" : loopback;
+        RedirectUri = $"http://{redirectLoopback}:{actualPort}{_callbackPath}";
     }
 
     /// <summary>
@@ -58,7 +67,7 @@ public sealed class LoopbackRedirectListener : IDisposable
             var target = parts[1];
             var queryIndex = target.IndexOf('?');
             var path = queryIndex > -1 ? target[..queryIndex] : target;
-            if (path != CallbackPath)
+            if (path != _callbackPath && path.TrimEnd('/') != _callbackPath)
             {
                 // Browsers can request favicon and other resources.
                 await WriteResponseAsync(stream, "404 Not Found", string.Empty, cancellationToken);

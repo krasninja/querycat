@@ -327,6 +327,10 @@ public static class SdkConvert
             Scopes = provider.Scopes.ToList(),
             ExtraParams = provider.ExtraParams.ToDictionary(p => p.Key, p => p.Value),
             RedirectPort = provider.RedirectPort,
+            RedirectLoopback = provider.RedirectLoopback,
+            RedirectPath = provider.RedirectPath,
+            RefreshTokenUrl = provider.RefreshTokenUrl,
+            RefreshTokenParamName = provider.RefreshTokenParamName,
             PreferDeviceFlow = provider.PreferDeviceFlow,
             AllowApiKey = provider.AllowApiKey,
         };
@@ -345,6 +349,10 @@ public static class SdkConvert
             Scopes = provider.Scopes ?? [],
             ExtraParams = provider.ExtraParams ?? new Dictionary<string, string>(),
             RedirectPort = provider.RedirectPort,
+            RedirectLoopback = provider.RedirectLoopback,
+            RedirectPath = provider.RedirectPath,
+            RefreshTokenUrl = provider.RefreshTokenUrl,
+            RefreshTokenParamName = provider.RefreshTokenParamName,
             PreferDeviceFlow = provider.PreferDeviceFlow,
             AllowApiKey = provider.AllowApiKey,
         };

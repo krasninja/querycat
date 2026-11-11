@@ -57,7 +57,9 @@ Provider properties:
 | `DeviceAuthorizationUrl`, `TokenUrl` | Enable device authorization flow (RFC 8628). |
 | `ClientId`, `ClientSecret` | OAuth2 client. Plugins are public clients, avoid shipping secrets. Users can override them with `--client-id` and `--client-secret`. |
 | `Scopes`, `ExtraParams` | Requested scopes and additional authorization parameters (`audience`, `access_type=offline`, etc). |
-| `RedirectPort` | Fixed loopback redirect port. Random port is used by default. The redirect URI is `http://127.0.0.1:<port>/callback`. |
+| `RedirectPort` | Fixed loopback redirect port. Random port is used by default. |
+| `RedirectLoopback`, `RedirectPath` | Loopback host name and path for the redirect URI. Defaults are `127.0.0.1` and `/callback`, producing `http://127.0.0.1:<port>/callback`. Set `RedirectLoopback = "localhost"` for providers that require it. |
+| `RefreshTokenUrl`, `RefreshTokenParamName` | Optional endpoint and request parameter name for refresh token grants. Defaults are `TokenUrl` and `refresh_token`. |
 | `PreferDeviceFlow` | Use device flow by default. |
 | `AllowApiKey` | Allow user to provide API key instead of OAuth2 login. |
 

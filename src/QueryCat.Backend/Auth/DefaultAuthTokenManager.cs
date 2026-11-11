@@ -64,8 +64,8 @@ public sealed class DefaultAuthTokenManager : IAuthTokenManager
         }
 
         var provider = Providers.Find(providerId);
-        if (stored.Type == AuthType.ApiKey || string.IsNullOrEmpty(stored.RefreshToken)
-            || provider == null || string.IsNullOrEmpty(provider.TokenUrl))
+        if (stored.Type == AuthType.ApiKey || string.IsNullOrEmpty(stored.RefreshToken) || provider == null
+            || (string.IsNullOrEmpty(provider.TokenUrl) && string.IsNullOrEmpty(provider.RefreshTokenUrl)))
         {
             // Cannot refresh. Return the token while it is still valid.
             return stored.IsExpired() ? null : stored.ToAuthToken();
@@ -100,8 +100,8 @@ public sealed class DefaultAuthTokenManager : IAuthTokenManager
         StoredAuthToken current,
         CancellationToken cancellationToken)
     {
-        var clientId = current.ClientId ?? provider.ClientId;
-        var clientSecret = current.ClientSecret ?? provider.ClientSecret;
+        var clientId = !string.IsNullOrEmpty(current.ClientId) ? current.ClientId : provider.ClientId;
+        var clientSecret = !string.IsNullOrEmpty(current.ClientSecret) ? current.ClientSecret : provider.ClientSecret;
         _logger.LogDebug("Refresh token for provider '{ProviderId}'.", providerId);
         try
         {

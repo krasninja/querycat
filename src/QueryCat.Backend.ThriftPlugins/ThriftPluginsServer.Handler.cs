@@ -105,6 +105,10 @@ public partial class ThriftPluginsServer
                         p.Scopes.Count > 0 ? p.Scopes.ToArray() : null,
                         p.ExtraParams.Count > 0 ? p.ExtraParams.ToDictionary(k => k.Key, v => v.Value) : null,
                         p.RedirectPort,
+                        p.RedirectLoopback,
+                        p.RedirectPath,
+                        p.RefreshTokenUrl,
+                        p.RefreshTokenParamName,
                         p.PreferDeviceFlow,
                         p.AllowApiKey,
                         p.PluginName

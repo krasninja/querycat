@@ -180,13 +180,22 @@ struct AuthProvider {
   7: optional string client_id,
   8: optional string client_secret,
   9: optional list<string> scopes,
-  10: optional map<string, string> extra_params, // Audience, prompt, access_type=offline...
+  // Audience, prompt, access_type=offline...
+  10: optional map<string, string> extra_params,
   // Fixed loopback redirect port. Random port is used if not set.
   11: optional i32 redirect_port,
+  // Some providers require "localhost" for redirect, "127.0.0.1" is used if not set.
+  12: optional string redirect_loopback,
+  // Redirect path, "/callback" is used if not set.
+  13: optional string redirect_path,
+  // Refresh token URL, if empty the token_url is used.
+  14: optional string refresh_token_url,
+  // Refresh token query parameter name, default is "refresh_token".
+  15: optional string refresh_token_param_name,
   // Use device authorization flow by default.
-  12: optional bool prefer_device_flow,
+  16: optional bool prefer_device_flow,
   // Allow user to provide API key/personal token instead of OAuth2 login.
-  13: optional bool allow_api_key
+  17: optional bool allow_api_key
 }
 
 // Authentication token. Empty access token means the user is not logged in.

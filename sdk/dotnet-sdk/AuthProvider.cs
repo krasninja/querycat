@@ -48,6 +48,10 @@ namespace QueryCat.Plugins.Sdk
     private List<string>? _scopes;
     private Dictionary<string, string>? _extra_params;
     private int _redirect_port;
+    private string? _redirect_loopback;
+    private string? _redirect_path;
+    private string? _refresh_token_url;
+    private string? _refresh_token_param_name;
     private bool _prefer_device_flow;
     private bool _allow_api_key;
 
@@ -176,6 +180,58 @@ namespace QueryCat.Plugins.Sdk
       }
     }
 
+    public string? RedirectLoopback
+    {
+      get
+      {
+        return _redirect_loopback;
+      }
+      set
+      {
+        __isset.redirect_loopback = true;
+        this._redirect_loopback = value;
+      }
+    }
+
+    public string? RedirectPath
+    {
+      get
+      {
+        return _redirect_path;
+      }
+      set
+      {
+        __isset.redirect_path = true;
+        this._redirect_path = value;
+      }
+    }
+
+    public string? RefreshTokenUrl
+    {
+      get
+      {
+        return _refresh_token_url;
+      }
+      set
+      {
+        __isset.refresh_token_url = true;
+        this._refresh_token_url = value;
+      }
+    }
+
+    public string? RefreshTokenParamName
+    {
+      get
+      {
+        return _refresh_token_param_name;
+      }
+      set
+      {
+        __isset.refresh_token_param_name = true;
+        this._refresh_token_param_name = value;
+      }
+    }
+
     public bool PreferDeviceFlow
     {
       get
@@ -215,6 +271,10 @@ namespace QueryCat.Plugins.Sdk
       public bool @scopes;
       public bool extra_params;
       public bool redirect_port;
+      public bool redirect_loopback;
+      public bool redirect_path;
+      public bool refresh_token_url;
+      public bool refresh_token_param_name;
       public bool prefer_device_flow;
       public bool allow_api_key;
     }
@@ -383,6 +443,46 @@ namespace QueryCat.Plugins.Sdk
               }
               break;
             case 12:
+              if (field.Type == TType.String)
+              {
+                RedirectLoopback = await iprot.ReadStringAsync(cancellationToken);
+              }
+              else
+              {
+                await TProtocolUtil.SkipAsync(iprot, field.Type, cancellationToken);
+              }
+              break;
+            case 13:
+              if (field.Type == TType.String)
+              {
+                RedirectPath = await iprot.ReadStringAsync(cancellationToken);
+              }
+              else
+              {
+                await TProtocolUtil.SkipAsync(iprot, field.Type, cancellationToken);
+              }
+              break;
+            case 14:
+              if (field.Type == TType.String)
+              {
+                RefreshTokenUrl = await iprot.ReadStringAsync(cancellationToken);
+              }
+              else
+              {
+                await TProtocolUtil.SkipAsync(iprot, field.Type, cancellationToken);
+              }
+              break;
+            case 15:
+              if (field.Type == TType.String)
+              {
+                RefreshTokenParamName = await iprot.ReadStringAsync(cancellationToken);
+              }
+              else
+              {
+                await TProtocolUtil.SkipAsync(iprot, field.Type, cancellationToken);
+              }
+              break;
+            case 16:
               if (field.Type == TType.Bool)
               {
                 PreferDeviceFlow = await iprot.ReadBoolAsync(cancellationToken);
@@ -392,7 +492,7 @@ namespace QueryCat.Plugins.Sdk
                 await TProtocolUtil.SkipAsync(iprot, field.Type, cancellationToken);
               }
               break;
-            case 13:
+            case 17:
               if (field.Type == TType.Bool)
               {
                 AllowApiKey = await iprot.ReadBoolAsync(cancellationToken);
@@ -542,11 +642,47 @@ namespace QueryCat.Plugins.Sdk
           await oprot.WriteI32Async(RedirectPort, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
+        if((RedirectLoopback != null) && __isset.redirect_loopback)
+        {
+          tmp41.Name = "redirect_loopback";
+          tmp41.Type = TType.String;
+          tmp41.ID = 12;
+          await oprot.WriteFieldBeginAsync(tmp41, cancellationToken);
+          await oprot.WriteStringAsync(RedirectLoopback, cancellationToken);
+          await oprot.WriteFieldEndAsync(cancellationToken);
+        }
+        if((RedirectPath != null) && __isset.redirect_path)
+        {
+          tmp41.Name = "redirect_path";
+          tmp41.Type = TType.String;
+          tmp41.ID = 13;
+          await oprot.WriteFieldBeginAsync(tmp41, cancellationToken);
+          await oprot.WriteStringAsync(RedirectPath, cancellationToken);
+          await oprot.WriteFieldEndAsync(cancellationToken);
+        }
+        if((RefreshTokenUrl != null) && __isset.refresh_token_url)
+        {
+          tmp41.Name = "refresh_token_url";
+          tmp41.Type = TType.String;
+          tmp41.ID = 14;
+          await oprot.WriteFieldBeginAsync(tmp41, cancellationToken);
+          await oprot.WriteStringAsync(RefreshTokenUrl, cancellationToken);
+          await oprot.WriteFieldEndAsync(cancellationToken);
+        }
+        if((RefreshTokenParamName != null) && __isset.refresh_token_param_name)
+        {
+          tmp41.Name = "refresh_token_param_name";
+          tmp41.Type = TType.String;
+          tmp41.ID = 15;
+          await oprot.WriteFieldBeginAsync(tmp41, cancellationToken);
+          await oprot.WriteStringAsync(RefreshTokenParamName, cancellationToken);
+          await oprot.WriteFieldEndAsync(cancellationToken);
+        }
         if(__isset.prefer_device_flow)
         {
           tmp41.Name = "prefer_device_flow";
           tmp41.Type = TType.Bool;
-          tmp41.ID = 12;
+          tmp41.ID = 16;
           await oprot.WriteFieldBeginAsync(tmp41, cancellationToken);
           await oprot.WriteBoolAsync(PreferDeviceFlow, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
@@ -555,7 +691,7 @@ namespace QueryCat.Plugins.Sdk
         {
           tmp41.Name = "allow_api_key";
           tmp41.Type = TType.Bool;
-          tmp41.ID = 13;
+          tmp41.ID = 17;
           await oprot.WriteFieldBeginAsync(tmp41, cancellationToken);
           await oprot.WriteBoolAsync(AllowApiKey, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
@@ -585,6 +721,10 @@ namespace QueryCat.Plugins.Sdk
         && ((__isset.@scopes == other.__isset.@scopes) && ((!__isset.@scopes) || (TCollections.Equals(Scopes, other.Scopes))))
         && ((__isset.extra_params == other.__isset.extra_params) && ((!__isset.extra_params) || (TCollections.Equals(ExtraParams, other.ExtraParams))))
         && ((__isset.redirect_port == other.__isset.redirect_port) && ((!__isset.redirect_port) || (global::System.Object.Equals(RedirectPort, other.RedirectPort))))
+        && ((__isset.redirect_loopback == other.__isset.redirect_loopback) && ((!__isset.redirect_loopback) || (global::System.Object.Equals(RedirectLoopback, other.RedirectLoopback))))
+        && ((__isset.redirect_path == other.__isset.redirect_path) && ((!__isset.redirect_path) || (global::System.Object.Equals(RedirectPath, other.RedirectPath))))
+        && ((__isset.refresh_token_url == other.__isset.refresh_token_url) && ((!__isset.refresh_token_url) || (global::System.Object.Equals(RefreshTokenUrl, other.RefreshTokenUrl))))
+        && ((__isset.refresh_token_param_name == other.__isset.refresh_token_param_name) && ((!__isset.refresh_token_param_name) || (global::System.Object.Equals(RefreshTokenParamName, other.RefreshTokenParamName))))
         && ((__isset.prefer_device_flow == other.__isset.prefer_device_flow) && ((!__isset.prefer_device_flow) || (global::System.Object.Equals(PreferDeviceFlow, other.PreferDeviceFlow))))
         && ((__isset.allow_api_key == other.__isset.allow_api_key) && ((!__isset.allow_api_key) || (global::System.Object.Equals(AllowApiKey, other.AllowApiKey))));
     }
@@ -632,6 +772,22 @@ namespace QueryCat.Plugins.Sdk
         if(__isset.redirect_port)
         {
           hashcode = (hashcode * 397) + RedirectPort.GetHashCode();
+        }
+        if((RedirectLoopback != null) && __isset.redirect_loopback)
+        {
+          hashcode = (hashcode * 397) + RedirectLoopback.GetHashCode();
+        }
+        if((RedirectPath != null) && __isset.redirect_path)
+        {
+          hashcode = (hashcode * 397) + RedirectPath.GetHashCode();
+        }
+        if((RefreshTokenUrl != null) && __isset.refresh_token_url)
+        {
+          hashcode = (hashcode * 397) + RefreshTokenUrl.GetHashCode();
+        }
+        if((RefreshTokenParamName != null) && __isset.refresh_token_param_name)
+        {
+          hashcode = (hashcode * 397) + RefreshTokenParamName.GetHashCode();
         }
         if(__isset.prefer_device_flow)
         {
@@ -699,6 +855,26 @@ namespace QueryCat.Plugins.Sdk
       {
         tmp44.Append(", RedirectPort: ");
         RedirectPort.ToString(tmp44);
+      }
+      if((RedirectLoopback != null) && __isset.redirect_loopback)
+      {
+        tmp44.Append(", RedirectLoopback: ");
+        RedirectLoopback.ToString(tmp44);
+      }
+      if((RedirectPath != null) && __isset.redirect_path)
+      {
+        tmp44.Append(", RedirectPath: ");
+        RedirectPath.ToString(tmp44);
+      }
+      if((RefreshTokenUrl != null) && __isset.refresh_token_url)
+      {
+        tmp44.Append(", RefreshTokenUrl: ");
+        RefreshTokenUrl.ToString(tmp44);
+      }
+      if((RefreshTokenParamName != null) && __isset.refresh_token_param_name)
+      {
+        tmp44.Append(", RefreshTokenParamName: ");
+        RefreshTokenParamName.ToString(tmp44);
       }
       if(__isset.prefer_device_flow)
       {

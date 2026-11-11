@@ -27,7 +27,7 @@ public sealed class AuthProviderInfo
     public string AuthorizationUrl { get; init; } = string.Empty;
 
     /// <summary>
-    /// OAuth2 token endpoint.
+    /// OAuth2 token endpoint. It is used to get access and refresh tokens and refresh it with refresh token.
     /// </summary>
     public string TokenUrl { get; init; } = string.Empty;
 
@@ -60,6 +60,26 @@ public sealed class AuthProviderInfo
     /// Fixed loopback redirect port. Random port is used if 0.
     /// </summary>
     public int RedirectPort { get; init; }
+
+    /// <summary>
+    /// Loopback host name for the redirect URI. "127.0.0.1" is used if not set.
+    /// </summary>
+    public string? RedirectLoopback { get; init; }
+
+    /// <summary>
+    /// Redirect URI path. "/callback" is used if not set.
+    /// </summary>
+    public string? RedirectPath { get; init; }
+
+    /// <summary>
+    /// OAuth2 refresh token endpoint. <see cref="TokenUrl" /> is used if not set.
+    /// </summary>
+    public string? RefreshTokenUrl { get; init; }
+
+    /// <summary>
+    /// Refresh token request parameter name. "refresh_token" is used if not set.
+    /// </summary>
+    public string? RefreshTokenParamName { get; init; }
 
     /// <summary>
     /// Use device authorization flow by default.
