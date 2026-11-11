@@ -195,7 +195,9 @@ struct AuthProvider {
   // Use device authorization flow by default.
   16: optional bool prefer_device_flow,
   // Allow user to provide API key/personal token instead of OAuth2 login.
-  17: optional bool allow_api_key
+  17: optional bool allow_api_key,
+  // Disable PKCE validation (code_challenge/code_verifier).
+  18: optional bool disable_pkce
 }
 
 // Authentication token. Empty access token means the user is not logged in.

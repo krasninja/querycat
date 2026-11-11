@@ -111,6 +111,7 @@ public partial class ThriftPluginsServer
                         p.RefreshTokenParamName,
                         p.PreferDeviceFlow,
                         p.AllowApiKey,
+                        p.DisablePkce,
                         p.PluginName
                     ))
                     .ToList();

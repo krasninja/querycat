@@ -333,6 +333,7 @@ public static class SdkConvert
             RefreshTokenParamName = provider.RefreshTokenParamName,
             PreferDeviceFlow = provider.PreferDeviceFlow,
             AllowApiKey = provider.AllowApiKey,
+            DisablePkce = provider.DisablePkce,
         };
 
     public static Backend.Core.Plugins.Auth.AuthProviderInfo Convert(Sdk.AuthProvider provider)
@@ -355,6 +356,7 @@ public static class SdkConvert
             RefreshTokenParamName = provider.RefreshTokenParamName,
             PreferDeviceFlow = provider.PreferDeviceFlow,
             AllowApiKey = provider.AllowApiKey,
+            DisablePkce = provider.DisablePkce,
         };
 
     public static Sdk.AuthType Convert(Backend.Core.Plugins.Auth.AuthType type)

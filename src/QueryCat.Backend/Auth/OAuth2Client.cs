@@ -74,14 +74,14 @@ public sealed class OAuth2Client
     /// <param name="clientId">Client identifier.</param>
     /// <param name="redirectUri">Redirect URI.</param>
     /// <param name="state">State.</param>
-    /// <param name="pkce">PKCE.</param>
+    /// <param name="pkce">PKCE, null to not use PKCE.</param>
     /// <returns>URL to open in browser.</returns>
     public static string BuildAuthorizationUrl(
         AuthProviderInfo provider,
         string clientId,
         string redirectUri,
         string state,
-        OAuth2Pkce pkce)
+        OAuth2Pkce? pkce)
     {
         var parameters = new List<KeyValuePair<string, string>>
         {
@@ -89,9 +89,12 @@ public sealed class OAuth2Client
             new("client_id", clientId),
             new("redirect_uri", redirectUri),
             new("state", state),
-            new("code_challenge", pkce.Challenge),
-            new("code_challenge_method", "S256"),
         };
+        if (pkce != null)
+        {
+            parameters.Add(new("code_challenge", pkce.Challenge));
+            parameters.Add(new("code_challenge_method", "S256"));
+        }
         if (provider.Scopes.Count > 0)
         {
             parameters.Add(new("scope", string.Join(' ', provider.Scopes)));
@@ -111,7 +114,7 @@ public sealed class OAuth2Client
     /// <param name="clientSecret">Client secret, optional.</param>
     /// <param name="code">Authorization code.</param>
     /// <param name="redirectUri">Redirect URI used in authorization request.</param>
-    /// <param name="pkce">PKCE used in authorization request.</param>
+    /// <param name="pkce">PKCE used in authorization request, null if PKCE is not used.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Token response.</returns>
     public async Task<OAuth2TokenResponse> ExchangeCodeAsync(
@@ -120,16 +123,20 @@ public sealed class OAuth2Client
         string? clientSecret,
         string code,
         string redirectUri,
-        OAuth2Pkce pkce,
+        OAuth2Pkce? pkce,
         CancellationToken cancellationToken = default)
     {
-        var response = await PostTokenAsync(provider, clientId, clientSecret,
+        List<KeyValuePair<string, string>> parameters =
         [
             new("grant_type", "authorization_code"),
             new("code", code),
             new("redirect_uri", redirectUri),
-            new("code_verifier", pkce.Verifier),
-        ], cancellationToken);
+        ];
+        if (pkce != null)
+        {
+            parameters.Add(new("code_verifier", pkce.Verifier));
+        }
+        var response = await PostTokenAsync(provider, clientId, clientSecret, parameters, cancellationToken);
         return EnsureSuccess(response);
     }
 
@@ -291,6 +298,7 @@ public sealed class OAuth2Client
                     Encoding.UTF8,
                     ApplicationJsonMime);
                 response = await _httpClient.SendAsync(jsonRequest, cancellationToken);
+                statusCode = (int)response.StatusCode;
             }
 
             var content = await response.Content.ReadAsStringAsync(cancellationToken);

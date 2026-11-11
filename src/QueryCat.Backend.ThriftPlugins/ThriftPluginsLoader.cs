@@ -717,6 +717,7 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
                     RefreshTokenParamName = provider.RefreshTokenParamName,
                     PreferDeviceFlow = provider.PreferDeviceFlow,
                     AllowApiKey = provider.AllowApiKey,
+                    DisablePkce = provider.DisablePkce,
                     PluginName = provider.PluginName,
                 });
             }

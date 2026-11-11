@@ -191,7 +191,7 @@ public sealed class AuthService
         CancellationToken cancellationToken)
     {
         using var listener = new LoopbackRedirectListener(provider.RedirectPort, provider.RedirectLoopback, provider.RedirectPath);
-        var pkce = OAuth2Client.CreatePkce();
+        var pkce = provider.DisablePkce ? null : OAuth2Client.CreatePkce();
         var state = OAuth2Client.CreateState();
         var url = OAuth2Client.BuildAuthorizationUrl(provider, clientId, listener.RedirectUri, state, pkce);
 

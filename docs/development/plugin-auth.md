@@ -62,6 +62,7 @@ Provider properties:
 | `RefreshTokenUrl`, `RefreshTokenParamName` | Optional endpoint and request parameter name for refresh token grants. Defaults are `TokenUrl` and `refresh_token`. |
 | `PreferDeviceFlow` | Use device flow by default. |
 | `AllowApiKey` | Allow user to provide API key instead of OAuth2 login. |
+| `DisablePkce` | Do not send PKCE `code_challenge`/`code_verifier` in authorization code flow. Use it for token endpoints that do not support PKCE, f.e. a backend that exchanges the code with the identity provider itself and does not forward the verifier. |
 
 ## Get Token
 

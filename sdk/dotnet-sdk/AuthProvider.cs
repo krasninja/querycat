@@ -54,6 +54,7 @@ namespace QueryCat.Plugins.Sdk
     private string? _refresh_token_param_name;
     private bool _prefer_device_flow;
     private bool _allow_api_key;
+    private bool _disable_pkce;
 
     public string Id { get; set; } = string.Empty;
 
@@ -258,6 +259,19 @@ namespace QueryCat.Plugins.Sdk
       }
     }
 
+    public bool DisablePkce
+    {
+      get
+      {
+        return _disable_pkce;
+      }
+      set
+      {
+        __isset.disable_pkce = true;
+        this._disable_pkce = value;
+      }
+    }
+
 
     public Isset __isset;
     public struct Isset
@@ -277,6 +291,7 @@ namespace QueryCat.Plugins.Sdk
       public bool refresh_token_param_name;
       public bool prefer_device_flow;
       public bool allow_api_key;
+      public bool disable_pkce;
     }
 
     public AuthProvider()
@@ -502,6 +517,16 @@ namespace QueryCat.Plugins.Sdk
                 await TProtocolUtil.SkipAsync(iprot, field.Type, cancellationToken);
               }
               break;
+            case 18:
+              if (field.Type == TType.Bool)
+              {
+                DisablePkce = await iprot.ReadBoolAsync(cancellationToken);
+              }
+              else
+              {
+                await TProtocolUtil.SkipAsync(iprot, field.Type, cancellationToken);
+              }
+              break;
             default: 
               await TProtocolUtil.SkipAsync(iprot, field.Type, cancellationToken);
               break;
@@ -696,6 +721,15 @@ namespace QueryCat.Plugins.Sdk
           await oprot.WriteBoolAsync(AllowApiKey, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
+        if(__isset.disable_pkce)
+        {
+          tmp41.Name = "disable_pkce";
+          tmp41.Type = TType.Bool;
+          tmp41.ID = 18;
+          await oprot.WriteFieldBeginAsync(tmp41, cancellationToken);
+          await oprot.WriteBoolAsync(DisablePkce, cancellationToken);
+          await oprot.WriteFieldEndAsync(cancellationToken);
+        }
         #pragma warning restore IDE0017  // simplified init
         await oprot.WriteFieldStopAsync(cancellationToken);
         await oprot.WriteStructEndAsync(cancellationToken);
@@ -726,7 +760,8 @@ namespace QueryCat.Plugins.Sdk
         && ((__isset.refresh_token_url == other.__isset.refresh_token_url) && ((!__isset.refresh_token_url) || (global::System.Object.Equals(RefreshTokenUrl, other.RefreshTokenUrl))))
         && ((__isset.refresh_token_param_name == other.__isset.refresh_token_param_name) && ((!__isset.refresh_token_param_name) || (global::System.Object.Equals(RefreshTokenParamName, other.RefreshTokenParamName))))
         && ((__isset.prefer_device_flow == other.__isset.prefer_device_flow) && ((!__isset.prefer_device_flow) || (global::System.Object.Equals(PreferDeviceFlow, other.PreferDeviceFlow))))
-        && ((__isset.allow_api_key == other.__isset.allow_api_key) && ((!__isset.allow_api_key) || (global::System.Object.Equals(AllowApiKey, other.AllowApiKey))));
+        && ((__isset.allow_api_key == other.__isset.allow_api_key) && ((!__isset.allow_api_key) || (global::System.Object.Equals(AllowApiKey, other.AllowApiKey))))
+        && ((__isset.disable_pkce == other.__isset.disable_pkce) && ((!__isset.disable_pkce) || (global::System.Object.Equals(DisablePkce, other.DisablePkce))));
     }
 
     public override int GetHashCode() {
@@ -796,6 +831,10 @@ namespace QueryCat.Plugins.Sdk
         if(__isset.allow_api_key)
         {
           hashcode = (hashcode * 397) + AllowApiKey.GetHashCode();
+        }
+        if(__isset.disable_pkce)
+        {
+          hashcode = (hashcode * 397) + DisablePkce.GetHashCode();
         }
       }
       return hashcode;
@@ -885,6 +924,11 @@ namespace QueryCat.Plugins.Sdk
       {
         tmp44.Append(", AllowApiKey: ");
         AllowApiKey.ToString(tmp44);
+      }
+      if(__isset.disable_pkce)
+      {
+        tmp44.Append(", DisablePkce: ");
+        DisablePkce.ToString(tmp44);
       }
       tmp44.Append(')');
       return tmp44.ToString();

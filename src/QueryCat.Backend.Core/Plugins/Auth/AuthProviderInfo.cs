@@ -92,6 +92,13 @@ public sealed class AuthProviderInfo
     public bool AllowApiKey { get; init; }
 
     /// <summary>
+    /// Do not use PKCE (code_challenge/code_verifier) in authorization code flow.
+    /// Set it for token endpoints that do not support PKCE or do not forward the code verifier
+    /// to the identity provider.
+    /// </summary>
+    public bool DisablePkce { get; init; }
+
+    /// <summary>
     /// Name of the plugin that declared the provider. It is set by the host.
     /// </summary>
     public string PluginName { get; set; } = string.Empty;
