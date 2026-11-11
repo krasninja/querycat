@@ -171,7 +171,7 @@ public sealed class McpHttpTransport : IMcpTransport, IAsyncDisposable
     private async Task<JsonRpcRequest?> GetRequestAsync(HttpListenerContext context, CancellationToken cancellationToken)
     {
         var response = context.Response;
-        response.Headers["Server"] = Application.GetProductFullName();
+        response.Headers["Server"] = Application.GetProductFullNameForWeb();
 
         if (context.Request.HttpMethod != HttpMethod.Post.Method)
         {

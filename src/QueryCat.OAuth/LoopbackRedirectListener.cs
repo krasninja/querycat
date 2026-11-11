@@ -32,11 +32,7 @@ public sealed class LoopbackRedirectListener : IDisposable
         _listener = new TcpListener(IPAddress.Loopback, port);
         _listener.Start();
         var actualPort = ((IPEndPoint)_listener.LocalEndpoint).Port;
-        _callbackPath = string.IsNullOrEmpty(callbackPath) ? CallbackPath : callbackPath;
-        if (_callbackPath == "/")
-        {
-            _callbackPath = string.Empty;
-        }
+        _callbackPath = callbackPath ?? CallbackPath;
         var redirectLoopback = string.IsNullOrEmpty(loopback) ? "127.0.0.1" : loopback;
         RedirectUri = $"http://{redirectLoopback}:{actualPort}{_callbackPath}";
     }
@@ -67,7 +63,7 @@ public sealed class LoopbackRedirectListener : IDisposable
             var target = parts[1];
             var queryIndex = target.IndexOf('?');
             var path = queryIndex > -1 ? target[..queryIndex] : target;
-            if (path != _callbackPath && path.TrimEnd('/') != _callbackPath)
+            if (path.TrimEnd('/') != _callbackPath.TrimEnd('/'))
             {
                 // Browsers can request favicon and other resources.
                 await WriteResponseAsync(stream, "404 Not Found", string.Empty, cancellationToken);

@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using System.Text;
@@ -14,15 +15,31 @@ namespace QueryCat.Backend.Auth;
 public sealed class OAuth2Client
 {
     private const string DeviceCodeGrantType = "urn:ietf:params:oauth:grant-type:device_code";
+    private const string ApplicationJsonMime = "application/json";
 
     private static readonly TimeSpan _slowDownIncrement = TimeSpan.FromSeconds(5);
 
-    private static readonly HttpClient _sharedHttpClient = new()
-    {
-        Timeout = TimeSpan.FromSeconds(30),
-    };
+    private static readonly HttpClient _sharedHttpClient;
 
     private readonly HttpClient _httpClient;
+
+    static OAuth2Client()
+    {
+        var handler = HttpClient.DefaultProxy is WebProxy webProxy
+            ? new HttpClientHandler
+            {
+                Proxy = HttpClient.DefaultProxy,
+                UseProxy = true,
+                UseDefaultCredentials = webProxy.Credentials == null,
+            }
+            : new HttpClientHandler();
+        _sharedHttpClient = new(handler)
+        {
+            Timeout = TimeSpan.FromSeconds(30),
+        };
+        _sharedHttpClient.DefaultRequestHeaders.UserAgent.Add(
+            new ProductInfoHeaderValue(Application.ProductName, Application.GetShortVersion()));
+    }
 
     /// <summary>
     /// Constructor.
@@ -235,7 +252,7 @@ public sealed class OAuth2Client
         var url = string.IsNullOrEmpty(tokenUrl) ? provider.TokenUrl : tokenUrl;
         var (response, statusCode) = await PostAsync(url, parameters,
             SourceGenerationContext.Default.OAuth2TokenResponse, cancellationToken);
-        if (response == null)
+        if (response == null || response.IsEmpty)
         {
             throw new QueryCatException(string.Format(Resources.Errors.OAuth2InvalidResponse, url, statusCode));
         }
@@ -247,24 +264,48 @@ public sealed class OAuth2Client
 
     private async Task<(T? Response, int StatusCode)> PostAsync<T>(
         string url,
-        IEnumerable<KeyValuePair<string, string>> parameters,
+        IReadOnlyCollection<KeyValuePair<string, string>> parameters,
         System.Text.Json.Serialization.Metadata.JsonTypeInfo<T> typeInfo,
         CancellationToken cancellationToken) where T : class
     {
-        using var request = new HttpRequestMessage(HttpMethod.Post, url);
-        request.Content = new FormUrlEncodedContent(parameters);
+        using var formRequest = new HttpRequestMessage(HttpMethod.Post, url);
+        formRequest.Content = new FormUrlEncodedContent(parameters);
         // Some providers (GitHub) return form-encoded response unless JSON is requested explicitly.
-        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-        using var response = await _httpClient.SendAsync(request, cancellationToken);
-        var statusCode = (int)response.StatusCode;
-        var content = await response.Content.ReadAsStringAsync(cancellationToken);
+        formRequest.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(ApplicationJsonMime));
+
+        HttpResponseMessage? response = null;
         try
         {
-            return (JsonSerializer.Deserialize(content, typeInfo), statusCode);
+            response = await _httpClient.SendAsync(formRequest, cancellationToken);
+            var statusCode = (int)response.StatusCode;
+
+            // Form URL is not supported? Try again with "application/json".
+            if (response.StatusCode == HttpStatusCode.UnsupportedMediaType)
+            {
+                response.Dispose();
+                using var jsonRequest = new HttpRequestMessage(HttpMethod.Post, url);
+                jsonRequest.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(ApplicationJsonMime));
+                jsonRequest.Content = new StringContent(
+                    JsonSerializer.Serialize(
+                        parameters.ToDictionary(k => k.Key, v => v.Value), SourceGenerationContext.Default.DictionaryStringString),
+                    Encoding.UTF8,
+                    ApplicationJsonMime);
+                response = await _httpClient.SendAsync(jsonRequest, cancellationToken);
+            }
+
+            var content = await response.Content.ReadAsStringAsync(cancellationToken);
+            try
+            {
+                return (JsonSerializer.Deserialize(content, typeInfo), statusCode);
+            }
+            catch (JsonException)
+            {
+                return (null, statusCode);
+            }
         }
-        catch (JsonException)
+        finally
         {
-            return (null, statusCode);
+            response?.Dispose();
         }
     }
 
@@ -339,6 +380,9 @@ public sealed class OAuth2Client
 
         [JsonPropertyName("error_description")]
         public string ErrorDescription { get; set; } = string.Empty;
+
+        [JsonIgnore]
+        public bool IsEmpty => string.IsNullOrEmpty(AccessToken) && string.IsNullOrEmpty(Error);
     }
 
     /// <summary>

@@ -113,7 +113,7 @@ public sealed partial class WebServer
     private async Task HandleRequestAsync(HttpListenerContext context, CancellationToken cancellationToken)
     {
         var response = context.Response;
-        response.Headers["Server"] = Application.GetProductFullName();
+        response.Headers["Server"] = Application.GetProductFullNameForWeb();
         response.StatusCode = (int)HttpStatusCode.OK;
 
         // Large request protection.

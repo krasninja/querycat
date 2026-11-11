@@ -12,6 +12,7 @@ namespace QueryCat.Backend;
 [JsonSerializable(typeof(PluginsManager.NginxPluginsStorage.NginxObjectDto))]
 [JsonSerializable(typeof(IList<PluginsManager.NginxPluginsStorage.NginxObjectDto>))]
 [JsonSerializable(typeof(Dictionary<string, StoredAuthToken>))]
+[JsonSerializable(typeof(Dictionary<string, string>))]
 [JsonSerializable(typeof(OAuth2Client.OAuth2TokenResponse))]
 [JsonSerializable(typeof(OAuth2Client.OAuth2DeviceAuthorizationResponse))]
 internal partial class SourceGenerationContext : JsonSerializerContext;
