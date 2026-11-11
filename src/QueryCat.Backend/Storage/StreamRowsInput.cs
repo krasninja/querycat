@@ -84,6 +84,11 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable, IModelDescripti
     internal bool DetectColumnsTypes { get; set; } = true;
 
     /// <summary>
+    /// Allow columns attributes heuristics detection.
+    /// </summary>
+    internal bool DetectColumnsAttributes { get; set; } = true;
+
+    /// <summary>
     /// Skip read if columns cannot be detected.
     /// </summary>
     internal bool SkipIfNoColumns { get; set; }
@@ -404,6 +409,19 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable, IModelDescripti
     }
 
     /// <summary>
+    /// The method is called to detect columns attributes.
+    /// </summary>
+    /// <param name="iterator">Data iterator.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    protected virtual async Task InitializeColumnsAttributesAsync(IRowsIterator iterator, CancellationToken cancellationToken = default)
+    {
+        if (DetectColumnsAttributes)
+        {
+            await RowsIteratorUtils.ResolveColumnsAttributesAsync(iterator, QueryContext.PrereadRowsCount, cancellationToken);
+        }
+    }
+
+    /// <summary>
     /// The method is called when initial read frame is initialized and schema is prepared.
     /// </summary>
     /// <param name="iterator">Rows iterator.</param>
@@ -438,8 +456,10 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable, IModelDescripti
         await InitializeHeadDataAsync(cacheIterator, cancellationToken);
         cacheIterator.SeekCacheCursorToHead();
 
-        // Types detection, or they would be strings by default.
+        // Types, attributes detection, or they would be strings by default.
         await InitializeColumnsTypesAsync(cacheIterator, cancellationToken);
+        cacheIterator.SeekCacheCursorToHead();
+        await InitializeColumnsAttributesAsync(cacheIterator, cancellationToken);
         cacheIterator.SeekCacheCursorToHead();
 
         // Prepare cache iterator. Analyze might read data which we cache and

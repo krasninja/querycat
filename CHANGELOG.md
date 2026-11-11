@@ -23,6 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improve "to_json" function.
 - ClassRowsFrameBuilder.AddKeyColumn now adds the new column if it was not previously added.
 - Plugin config storage keys are prefixed with the plugin name.
+- Extended column attributes detection: more identifier column names are recognized ("uuid", "guid", "pk", "event_id", etc.) and more timestamp column names ("time", "date", "datetime", "ts", "@timestamp", "event_time", "occurred_at", "logged_at", etc.). Names are matched ignoring case and separators ("createdAt", "created-at", "created_at"). The "@id" attribute is set only if sample values are unique, "@ts" is set on a single, most specific column, and attributes already provided by the input are kept.
+- New "@trace" column attribute for correlation columns ("trace_id", "span_id", "request_id", "correlation_id", "session_id", etc.).
 
 ## [0.19.0] - 2026-10-10
 

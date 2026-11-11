@@ -74,6 +74,20 @@ public class Column : ICloneable, IModelDescription
     public static ColumnAttribute ColumnAttributeError { get; } = new(AttributeError);
 
     /// <summary>
+    /// The attribute should be used to mark columns that correlate related records
+    /// (trace, span, request, session identifiers). Unlike <see cref="AttributeId" />
+    /// the values are not unique. No value required.
+    /// </summary>
+    public const string AttributeTrace = "@trace";
+
+    /// <summary>
+    /// The attribute should be used to mark columns that correlate related records
+    /// (trace, span, request, session identifiers). Unlike <see cref="AttributeId" />
+    /// the values are not unique. No value required.
+    /// </summary>
+    public static ColumnAttribute ColumnAttributeTrace { get; } = new(AttributeTrace);
+
+    /// <summary>
     /// The attribute should be used to mark string columns which have a specific format
     /// (file names, URI, JSON, etc.).
     /// </summary>
@@ -302,6 +316,15 @@ public class Column : ICloneable, IModelDescription
                 SetAttribute(attribute.Key, attribute.Value);
             }
         }
+    }
+
+    /// <summary>
+    /// Set column metadata attribute. The existing value will be overridden.
+    /// </summary>
+    /// <param name="attribute">Attribute.</param>
+    public void SetAttribute(ColumnAttribute attribute)
+    {
+        SetAttribute(attribute.Key, attribute.Value);
     }
 
     /// <summary>

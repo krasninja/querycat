@@ -166,6 +166,13 @@ public sealed class IISW3CInput : StreamRowsInput
     }
 
     /// <inheritdoc />
+    protected override Task InitializeColumnsAttributesAsync(IRowsIterator iterator, CancellationToken cancellationToken = default)
+    {
+        // Columns attributes are predefined.
+        return Task.CompletedTask;
+    }
+
+    /// <inheritdoc />
     protected override Task InitializeCompleteAsync(CacheRowsIterator iterator, CancellationToken cancellationToken = default)
     {
         _isInitialized = true;
