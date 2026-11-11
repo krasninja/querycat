@@ -1,6 +1,7 @@
 ﻿using QueryCat.Backend.AssemblyPlugins;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Plugins;
+using QueryCat.Backend.Core.Utils;
 using QueryCat.Plugins.Client;
 
 namespace QueryCat.PluginsProxy;
@@ -14,6 +15,7 @@ public class Program
 
     public static async Task QueryCatMainAsync(ThriftPluginClientArguments args, string[] assemblyFiles)
     {
+        WebProxyUtils.SetDefaultProxy(args.WebProxy);
         ThriftPluginClient.SetupApplicationLogging(logLevel: args.LogLevel);
 
         using var client = new ThriftPluginClient(args);

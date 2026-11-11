@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Configurable OAuth2 redirect loopback host/path and refresh token endpoint/parameter for plugins.
 - Plugin configuration options `qcat plugin options list|get|set|unset` commands.
 - Install scripts: `scripts/install.sh` for Linux/macOS and `scripts/install.ps1` for Windows, see the README installation section.
+- `--web-proxy` option for HTTP, HTTPS and SOCKS proxies, with authentication and plugin proxy support.
 
 ### Changed
 

@@ -293,4 +293,7 @@
   <data name="PluginOptionsUnset_Success" xml:space="preserve">
     <value>Option '{0}' is unset.</value>
   </data>
+  <data name="QueryCommand_WebProxyCommand" xml:space="preserve">
+    <value>Configure proxy for web requests.</value>
+  </data>
 </root>

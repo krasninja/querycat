@@ -23,6 +23,8 @@ internal sealed class ApplicationOptions
 
     public LogLevel LogLevel { get; init; }
 
+    public string? WebProxy { get; init; }
+
     private static readonly FileAuthTokenStore _authTokenStore = new(
         Path.Combine(Application.GetApplicationDirectory(), AuthFileName));
 
@@ -119,6 +121,7 @@ internal sealed class ApplicationOptions
             endpoint: QueryCat.Plugins.Client.ThriftEndpoint.CreateNamedPipe(
                 QueryCat.Plugins.Client.ThriftEndpoint.GenerateIdentifier("qcath")),
             Application.GetApplicationDirectory(),
+            webProxy: WebProxy,
             functionsCacheDirectory: Path.Combine(Application.GetApplicationDirectory(),
                 ApplicationPluginsFunctionsCacheDirectory),
             minLogLevel: LogLevel,

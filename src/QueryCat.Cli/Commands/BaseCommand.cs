@@ -4,6 +4,7 @@ using QueryCat.Backend;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Formatters;
 using QueryCat.Backend.Relational.Iterators;
 using QueryCat.Backend.Storage;
@@ -35,6 +36,11 @@ internal abstract class BaseCommand : Command
 #endif
     };
 
+    private static Option<string> WebProxy { get; } = new("--web-proxy")
+    {
+        Description = Resources.Messages.QueryCommand_WebProxyCommand,
+    };
+
     protected Option<TextTableOutput.Style> OutputStyleOption { get; } = new("--output-style")
     {
         Description = Resources.Messages.QueryCommand_OutputStyleDescription,
@@ -53,15 +59,19 @@ internal abstract class BaseCommand : Command
 #if ENABLE_PLUGINS
         Add(PluginDirectoriesOption);
 #endif
+        Add(WebProxy);
         Add(OutputStyleOption);
         Add(ColumnsSeparatorOption);
     }
 
     protected static ApplicationOptions GetApplicationOptions(ParseResult parseResult)
     {
+        var webProxy = parseResult.GetValue(WebProxy);
+        WebProxyUtils.SetDefaultProxy(webProxy);
         return new ApplicationOptions
         {
             LogLevel = parseResult.GetValue(LogLevelOption),
+            WebProxy = webProxy,
 #if ENABLE_PLUGINS
             PluginDirectories = (parseResult.GetValue(PluginDirectoriesOption) ?? [])
                 .SelectMany(d => d.Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries))

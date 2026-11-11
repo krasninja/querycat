@@ -35,6 +35,7 @@ public partial class ThriftPluginClient : IDisposable
     public const string PluginTokenParameter = "token";
     public const string PluginParentPidParameter = "parent-pid";
     public const string PluginLogLevelParameter = "log-level";
+    public const string PluginWebProxyParameter = "web-proxy";
     public const string PluginDebugServerParameter = "debug-server";
     public const string PluginDebugServerQueryParameter = "debug-server-query";
     public const string PluginDebugServerFileParameter = "debug-server-file";
@@ -204,6 +205,9 @@ public partial class ThriftPluginClient : IDisposable
                     break;
                 case PluginLogLevelParameter:
                     appArgs.LogLevel = Enum.Parse<LogLevel>(value, ignoreCase: true);
+                    break;
+                case PluginWebProxyParameter:
+                    appArgs.WebProxy = value;
                     break;
                 case PluginDebugServerParameter:
                     appArgs.DebugServerPath = value;

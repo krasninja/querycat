@@ -29,6 +29,7 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
     private readonly string? _applicationDirectory;
     private readonly bool _debugMode;
     private readonly LogLevel _minLogLevel;
+    private readonly string _webProxy;
     private readonly ThriftPluginsServer _server;
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(ThriftPluginsLoader));
     private readonly HashSet<string> _loadedPlugins = new();
@@ -141,12 +142,14 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
         string? functionsCacheDirectory = null,
         bool debugMode = false,
         LogLevel minLogLevel = LogLevel.Information,
-        int maxConnectionsToPlugin = 1) : base(pluginDirectories)
+        int maxConnectionsToPlugin = 1,
+        string? webProxy = null) : base(pluginDirectories)
     {
         _thread = thread;
         _applicationDirectory = applicationDirectory;
         _debugMode = debugMode;
         _minLogLevel = minLogLevel;
+        _webProxy = webProxy ?? string.Empty;
         if (!string.IsNullOrEmpty(endpoint.NamedPipe))
         {
             ServerPipeName = endpoint.NamedPipe;
@@ -440,11 +443,20 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
             throw new ProxyNotFoundException(file);
         }
 
+        var additionalArguments = new List<string>
+        {
+            "--assembly=" + file,
+        };
+        if (!string.IsNullOrEmpty(_webProxy))
+        {
+            additionalArguments.Add($"--{ThriftPluginClient.PluginWebProxyParameter}={_webProxy}");
+        }
+
         _logger.LogDebug("Loading '{Assembly}' with proxy. Location: '{Location}'.", file, proxyExecutable);
         return LoadPluginExecutable(
             proxyExecutable,
             registrationToken,
-            ["--assembly=" + file],
+            additionalArguments.ToArray(),
             file,
             cancellationToken);
     }
