@@ -63,6 +63,7 @@ Provider properties:
 | `PreferDeviceFlow` | Use device flow by default. |
 | `AllowApiKey` | Allow user to provide API key instead of OAuth2 login. |
 | `DisablePkce` | Do not send PKCE `code_challenge`/`code_verifier` in authorization code flow. Use it for token endpoints that do not support PKCE, f.e. a backend that exchanges the code with the identity provider itself and does not forward the verifier. |
+| `TokenValidateUrl` | Optional URL to check the stored token the first time it is requested in the session. The host sends `GET` with the `Authorization` header: 2xx means valid, 401/403 means invalid, so the host tries to refresh the token and returns no token if it cannot. Other responses and network errors are ignored and the token is returned as is. Use a cheap endpoint, f.e. `https://api.github.com/user`. |
 
 ## Get Token
 
@@ -82,6 +83,8 @@ public static async ValueTask<VariantValue> GitHubBranchesFunction(IExecutionThr
 ```
 
 The host refreshes OAuth2 token if it expires within 60 seconds. If the remote service responds with HTTP 401, request the token again once with `forceRefresh: true`.
+
+If the provider has `TokenValidateUrl`, the host also validates the token once per access token before returning it. This detects revoked tokens and invalid API keys before the plugin calls the remote service.
 
 Notes:
 

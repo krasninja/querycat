@@ -169,6 +169,43 @@ public sealed class OAuth2Client
     }
 
     /// <summary>
+    /// Validate the access token by sending GET request to the provider validation URL.
+    /// </summary>
+    /// <param name="url">Validation URL.</param>
+    /// <param name="token">Token to validate.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>True if the token is valid, false if the server rejected it (HTTP 401/403),
+    /// null if the result cannot be determined (network error, unexpected status code).</returns>
+    public async Task<bool?> ValidateTokenAsync(
+        string url,
+        AuthToken token,
+        CancellationToken cancellationToken = default)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Get, url);
+        request.Headers.Authorization = new AuthenticationHeaderValue(
+            string.IsNullOrEmpty(token.TokenType) ? "Bearer" : token.TokenType, token.AccessToken);
+        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(ApplicationJsonMime));
+        try
+        {
+            using var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead,
+                cancellationToken);
+            if (response.IsSuccessStatusCode)
+            {
+                return true;
+            }
+            if (response.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
+            {
+                return false;
+            }
+            return null;
+        }
+        catch (Exception e) when (e is HttpRequestException or TaskCanceledException && !cancellationToken.IsCancellationRequested)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
     /// Start device authorization flow.
     /// </summary>
     /// <param name="provider">Provider.</param>
@@ -264,8 +301,8 @@ public sealed class OAuth2Client
         {
             throw new QueryCatException(string.Format(Resources.Errors.OAuth2InvalidResponse, url, statusCode));
         }
-        response.Scope = string.IsNullOrEmpty(response.Scope) ? response.Scope : string.Empty;
-        response.Error = string.IsNullOrEmpty(response.Error) ? response.Error : string.Empty;
+        response.Scope = !string.IsNullOrEmpty(response.Scope) ? response.Scope : string.Empty;
+        response.Error = !string.IsNullOrEmpty(response.Error) ? response.Error : string.Empty;
         response.ErrorDescription = string.IsNullOrEmpty(response.ErrorDescription) ? response.ErrorDescription : string.Empty;
         return response;
     }

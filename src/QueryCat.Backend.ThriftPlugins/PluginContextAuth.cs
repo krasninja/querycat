@@ -22,5 +22,6 @@ internal sealed record PluginContextAuth(
     [property: JsonPropertyName("device_flow")] bool PreferDeviceFlow,
     [property: JsonPropertyName("allow_api_key")] bool AllowApiKey,
     [property: JsonPropertyName("disable_pkce")] bool DisablePkce,
+    [property: JsonPropertyName("token_validate_url")] string? TokenValidateUrl,
     [property: JsonPropertyName("plugin_name")] string PluginName
 );

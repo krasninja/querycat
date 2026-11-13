@@ -197,7 +197,9 @@ struct AuthProvider {
   // Allow user to provide API key/personal token instead of OAuth2 login.
   17: optional bool allow_api_key,
   // Disable PKCE validation (code_challenge/code_verifier).
-  18: optional bool disable_pkce
+  18: optional bool disable_pkce,
+  // Validate token before getting it to user first time.
+  19: optional string token_validate_url
 }
 
 // Authentication token. Empty access token means the user is not logged in.

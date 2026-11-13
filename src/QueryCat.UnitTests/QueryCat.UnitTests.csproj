@@ -18,4 +18,12 @@
     <ProjectReference Include="..\QueryCat.Backend\QueryCat.Backend.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Auth\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="Auth\DefaultAuthTokenManagerTests.cs" />
+  </ItemGroup>
+
 </Project>

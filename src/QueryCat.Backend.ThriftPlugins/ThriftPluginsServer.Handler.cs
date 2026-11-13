@@ -112,6 +112,7 @@ public partial class ThriftPluginsServer
                         p.PreferDeviceFlow,
                         p.AllowApiKey,
                         p.DisablePkce,
+                        p.TokenValidateUrl,
                         p.PluginName
                     ))
                     .ToList();
@@ -423,7 +424,7 @@ public partial class ThriftPluginsServer
                     context.PluginName, provider_id));
             }
             if (!context.AuthProviders
-                    .Any(p => p.Id.Equals(provider_id, StringComparison.OrdinalIgnoreCase)))
+                .Any(p => p.Id.Equals(provider_id, StringComparison.OrdinalIgnoreCase)))
             {
                 throw new AuthorizationException(string.Format(Resources.Errors.AuthProviderNotDeclared,
                     context.PluginName, provider_id));

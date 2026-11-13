@@ -718,6 +718,7 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
                     PreferDeviceFlow = provider.PreferDeviceFlow,
                     AllowApiKey = provider.AllowApiKey,
                     DisablePkce = provider.DisablePkce,
+                    TokenValidateUrl = provider.TokenValidateUrl,
                     PluginName = provider.PluginName,
                 });
             }

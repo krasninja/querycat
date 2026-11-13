@@ -99,6 +99,13 @@ public sealed class AuthProviderInfo
     public bool DisablePkce { get; init; }
 
     /// <summary>
+    /// URL to validate the stored token before it is used the first time. The host sends GET request
+    /// with the token in the Authorization header: 2xx response means the token is valid, 401 or 403 means
+    /// it is not (the host tries to refresh it). Other responses and network errors are ignored.
+    /// </summary>
+    public string? TokenValidateUrl { get; init; }
+
+    /// <summary>
     /// Name of the plugin that declared the provider. It is set by the host.
     /// </summary>
     public string PluginName { get; set; } = string.Empty;

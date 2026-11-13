@@ -55,6 +55,7 @@ namespace QueryCat.Plugins.Sdk
     private bool _prefer_device_flow;
     private bool _allow_api_key;
     private bool _disable_pkce;
+    private string? _token_validate_url;
 
     public string Id { get; set; } = string.Empty;
 
@@ -272,6 +273,19 @@ namespace QueryCat.Plugins.Sdk
       }
     }
 
+    public string? TokenValidateUrl
+    {
+      get
+      {
+        return _token_validate_url;
+      }
+      set
+      {
+        __isset.token_validate_url = true;
+        this._token_validate_url = value;
+      }
+    }
+
 
     public Isset __isset;
     public struct Isset
@@ -292,6 +306,7 @@ namespace QueryCat.Plugins.Sdk
       public bool prefer_device_flow;
       public bool allow_api_key;
       public bool disable_pkce;
+      public bool token_validate_url;
     }
 
     public AuthProvider()
@@ -527,6 +542,16 @@ namespace QueryCat.Plugins.Sdk
                 await TProtocolUtil.SkipAsync(iprot, field.Type, cancellationToken);
               }
               break;
+            case 19:
+              if (field.Type == TType.String)
+              {
+                TokenValidateUrl = await iprot.ReadStringAsync(cancellationToken);
+              }
+              else
+              {
+                await TProtocolUtil.SkipAsync(iprot, field.Type, cancellationToken);
+              }
+              break;
             default: 
               await TProtocolUtil.SkipAsync(iprot, field.Type, cancellationToken);
               break;
@@ -730,6 +755,15 @@ namespace QueryCat.Plugins.Sdk
           await oprot.WriteBoolAsync(DisablePkce, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
+        if((TokenValidateUrl != null) && __isset.token_validate_url)
+        {
+          tmp41.Name = "token_validate_url";
+          tmp41.Type = TType.String;
+          tmp41.ID = 19;
+          await oprot.WriteFieldBeginAsync(tmp41, cancellationToken);
+          await oprot.WriteStringAsync(TokenValidateUrl, cancellationToken);
+          await oprot.WriteFieldEndAsync(cancellationToken);
+        }
         #pragma warning restore IDE0017  // simplified init
         await oprot.WriteFieldStopAsync(cancellationToken);
         await oprot.WriteStructEndAsync(cancellationToken);
@@ -761,7 +795,8 @@ namespace QueryCat.Plugins.Sdk
         && ((__isset.refresh_token_param_name == other.__isset.refresh_token_param_name) && ((!__isset.refresh_token_param_name) || (global::System.Object.Equals(RefreshTokenParamName, other.RefreshTokenParamName))))
         && ((__isset.prefer_device_flow == other.__isset.prefer_device_flow) && ((!__isset.prefer_device_flow) || (global::System.Object.Equals(PreferDeviceFlow, other.PreferDeviceFlow))))
         && ((__isset.allow_api_key == other.__isset.allow_api_key) && ((!__isset.allow_api_key) || (global::System.Object.Equals(AllowApiKey, other.AllowApiKey))))
-        && ((__isset.disable_pkce == other.__isset.disable_pkce) && ((!__isset.disable_pkce) || (global::System.Object.Equals(DisablePkce, other.DisablePkce))));
+        && ((__isset.disable_pkce == other.__isset.disable_pkce) && ((!__isset.disable_pkce) || (global::System.Object.Equals(DisablePkce, other.DisablePkce))))
+        && ((__isset.token_validate_url == other.__isset.token_validate_url) && ((!__isset.token_validate_url) || (global::System.Object.Equals(TokenValidateUrl, other.TokenValidateUrl))));
     }
 
     public override int GetHashCode() {
@@ -835,6 +870,10 @@ namespace QueryCat.Plugins.Sdk
         if(__isset.disable_pkce)
         {
           hashcode = (hashcode * 397) + DisablePkce.GetHashCode();
+        }
+        if((TokenValidateUrl != null) && __isset.token_validate_url)
+        {
+          hashcode = (hashcode * 397) + TokenValidateUrl.GetHashCode();
         }
       }
       return hashcode;
@@ -929,6 +968,11 @@ namespace QueryCat.Plugins.Sdk
       {
         tmp44.Append(", DisablePkce: ");
         DisablePkce.ToString(tmp44);
+      }
+      if((TokenValidateUrl != null) && __isset.token_validate_url)
+      {
+        tmp44.Append(", TokenValidateUrl: ");
+        TokenValidateUrl.ToString(tmp44);
       }
       tmp44.Append(')');
       return tmp44.ToString();

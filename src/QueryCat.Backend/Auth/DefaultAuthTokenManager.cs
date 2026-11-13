@@ -20,6 +20,13 @@ public sealed class DefaultAuthTokenManager : IAuthTokenManager
     private readonly OAuth2Client _oauth2Client;
     private readonly ConcurrentDictionary<string, SemaphoreSlim> _refreshLocks = new(StringComparer.OrdinalIgnoreCase);
 
+    /// <summary>
+    /// Validation results by provider. The key is provider id, the value is the validated access token
+    /// and the result. The token is validated again if the access token changes.
+    /// </summary>
+    private readonly ConcurrentDictionary<string, (string AccessToken, bool IsValid)> _validatedTokens
+        = new(StringComparer.OrdinalIgnoreCase);
+
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(DefaultAuthTokenManager));
 
     /// <inheritdoc />
@@ -57,21 +64,29 @@ public sealed class DefaultAuthTokenManager : IAuthTokenManager
         {
             return null;
         }
+        var provider = Providers.Find(providerId);
         var isExpired = stored.IsExpired(ExpirationSkew);
         if (!isExpired && !forceRefresh)
         {
+            if (provider != null && !string.IsNullOrEmpty(provider.TokenValidateUrl))
+            {
+                if (_validatedTokens.TryGetValue(providerId, out var validated)
+                    && validated.AccessToken == stored.AccessToken)
+                {
+                    return validated.IsValid ? stored.ToAuthToken() : null;
+                }
+                return await ValidateAsync(providerId, provider, cancellationToken);
+            }
             return stored.ToAuthToken();
         }
 
-        var provider = Providers.Find(providerId);
-        if (stored.Type == AuthType.ApiKey || string.IsNullOrEmpty(stored.RefreshToken) || provider == null
-            || (string.IsNullOrEmpty(provider.TokenUrl) && string.IsNullOrEmpty(provider.RefreshTokenUrl)))
+        if (provider == null || !CanRefresh(stored, provider))
         {
             // Cannot refresh. Return the token while it is still valid.
             return stored.IsExpired() ? null : stored.ToAuthToken();
         }
 
-        var refreshLock = _refreshLocks.GetOrAdd(providerId, _ => new SemaphoreSlim(1, 1));
+        var refreshLock = GetRefreshLock(providerId);
         await refreshLock.WaitAsync(cancellationToken);
         try
         {
@@ -86,7 +101,12 @@ public sealed class DefaultAuthTokenManager : IAuthTokenManager
                 return current.ToAuthToken();
             }
 
-            return await RefreshAsync(providerId, provider, current, cancellationToken);
+            var updated = await RefreshAsync(providerId, provider, current, cancellationToken);
+            if (updated != null)
+            {
+                return updated.ToAuthToken();
+            }
+            return current.IsExpired() ? null : current.ToAuthToken();
         }
         finally
         {
@@ -94,7 +114,61 @@ public sealed class DefaultAuthTokenManager : IAuthTokenManager
         }
     }
 
-    private async Task<AuthToken?> RefreshAsync(
+    private async Task<AuthToken?> ValidateAsync(
+        string providerId,
+        AuthProviderInfo provider,
+        CancellationToken cancellationToken)
+    {
+        var refreshLock = GetRefreshLock(providerId);
+        await refreshLock.WaitAsync(cancellationToken);
+        try
+        {
+            // Re-read the token, another caller might validate or refresh it while we were waiting.
+            var current = await _store.GetAsync(providerId, cancellationToken);
+            if (current == null || string.IsNullOrEmpty(current.AccessToken))
+            {
+                return null;
+            }
+            if (_validatedTokens.TryGetValue(providerId, out var validated)
+                && validated.AccessToken == current.AccessToken)
+            {
+                return validated.IsValid ? current.ToAuthToken() : null;
+            }
+
+            _logger.LogDebug("Validate token for provider '{ProviderId}'.", providerId);
+            var token = current.ToAuthToken();
+            var isValid = await _oauth2Client.ValidateTokenAsync(provider.TokenValidateUrl!, token, cancellationToken);
+            if (isValid == true)
+            {
+                _validatedTokens[providerId] = (current.AccessToken, true);
+                return token;
+            }
+            if (isValid == null)
+            {
+                // Cannot determine, do not cache the result to try again next time.
+                _logger.LogDebug("Cannot validate token for provider '{ProviderId}'.", providerId);
+                return token;
+            }
+
+            _logger.LogWarning("Token for provider '{ProviderId}' is rejected by the server.", providerId);
+            if (CanRefresh(current, provider))
+            {
+                var updated = await RefreshAsync(providerId, provider, current, cancellationToken);
+                if (updated != null)
+                {
+                    return updated.ToAuthToken();
+                }
+            }
+            _validatedTokens[providerId] = (current.AccessToken, false);
+            return null;
+        }
+        finally
+        {
+            refreshLock.Release();
+        }
+    }
+
+    private async Task<StoredAuthToken?> RefreshAsync(
         string providerId,
         AuthProviderInfo provider,
         StoredAuthToken current,
@@ -105,16 +179,26 @@ public sealed class DefaultAuthTokenManager : IAuthTokenManager
         _logger.LogDebug("Refresh token for provider '{ProviderId}'.", providerId);
         try
         {
-            var response = await _oauth2Client.RefreshAsync(provider, clientId, clientSecret, current.RefreshToken!,
+            var response = await _oauth2Client.RefreshAsync(provider, clientId, clientSecret, current.RefreshToken,
                 cancellationToken);
             var updated = OAuth2Client.CreateStoredToken(response, current);
             await _store.SetAsync(providerId, updated, cancellationToken);
-            return updated.ToAuthToken();
+            // The token has just been issued by the server, no need to validate it.
+            _validatedTokens[providerId] = (updated.AccessToken, true);
+            return updated;
         }
         catch (Exception e) when (e is QueryCatException or HttpRequestException or TaskCanceledException && !cancellationToken.IsCancellationRequested)
         {
             _logger.LogWarning("Cannot refresh token for provider '{ProviderId}': {Error}", providerId, e.Message);
-            return current.IsExpired() ? null : current.ToAuthToken();
+            return null;
         }
     }
+
+    private static bool CanRefresh(StoredAuthToken token, AuthProviderInfo provider)
+        => token.Type != AuthType.ApiKey
+            && !string.IsNullOrEmpty(token.RefreshToken)
+            && (!string.IsNullOrEmpty(provider.TokenUrl) || !string.IsNullOrEmpty(provider.RefreshTokenUrl));
+
+    private SemaphoreSlim GetRefreshLock(string providerId)
+        => _refreshLocks.GetOrAdd(providerId, _ => new SemaphoreSlim(1, 1));
 }
