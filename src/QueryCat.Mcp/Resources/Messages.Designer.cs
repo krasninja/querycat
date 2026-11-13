@@ -56,5 +56,23 @@ namespace QueryCat.Mcp.Resources {
                 return ResourceManager.GetString("McpInstructions", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Local file '{0}'..
+        /// </summary>
+        internal static string McpFileResourceDescription {
+            get {
+                return ResourceManager.GetString("McpFileResourceDescription", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Web resource '{0}'..
+        /// </summary>
+        internal static string McpHttpResourceDescription {
+            get {
+                return ResourceManager.GetString("McpHttpResourceDescription", resourceCulture);
+            }
+        }
     }
 }

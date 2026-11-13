@@ -39,4 +39,10 @@ Notes:
 - Float NaN and infinity values are returned as strings.
 </value>
   </data>
+  <data name="McpFileResourceDescription" xml:space="preserve">
+    <value>Local file '{0}'.</value>
+  </data>
+  <data name="McpHttpResourceDescription" xml:space="preserve">
+    <value>Web resource '{0}'.</value>
+  </data>
 </root>

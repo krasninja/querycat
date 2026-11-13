@@ -66,4 +66,25 @@
   <data name="McpRequestTooLarge" xml:space="preserve">
     <value>The request is too large.</value>
   </data>
+  <data name="McpResourceUriRequired" xml:space="preserve">
+    <value>Resource URI is required.</value>
+  </data>
+  <data name="McpResourceNotFound" xml:space="preserve">
+    <value>Resource '{0}' not found.</value>
+  </data>
+  <data name="McpResourceReadError" xml:space="preserve">
+    <value>Cannot read resource '{0}': {1}</value>
+  </data>
+  <data name="McpResourceTooLarge" xml:space="preserve">
+    <value>The resource is too large, max size is {0} bytes.</value>
+  </data>
+  <data name="McpResourceFileNotFound" xml:space="preserve">
+    <value>Resource file '{0}' not found.</value>
+  </data>
+  <data name="McpInvalidResourceDefinition" xml:space="preserve">
+    <value>Invalid resource definition '{0}', expected format is 'name=value'.</value>
+  </data>
+  <data name="McpUnsupportedResourceScheme" xml:space="preserve">
+    <value>Unsupported resource scheme '{0}', only file, http and https are supported.</value>
+  </data>
 </root>

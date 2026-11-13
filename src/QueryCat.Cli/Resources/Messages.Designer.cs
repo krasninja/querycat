@@ -411,6 +411,12 @@ namespace QueryCat.Cli.Resources {
             }
         }
         
+        internal static string McpCommand_ResourceDescription {
+            get {
+                return ResourceManager.GetString("McpCommand_ResourceDescription", resourceCulture);
+            }
+        }
+        
         internal static string PluginAuthCommand_Description {
             get {
                 return ResourceManager.GetString("PluginAuthCommand_Description", resourceCulture);

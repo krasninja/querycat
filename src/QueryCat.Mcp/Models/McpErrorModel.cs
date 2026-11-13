@@ -35,6 +35,11 @@ public sealed class McpErrorModel
     // https://modelcontextprotocol.io/specification/2026-07-28/basic#error-codes
 
     /// <summary>
+    /// The requested resource was not found.
+    /// </summary>
+    public const int ErrorCodeResourceNotFound = -32002;
+
+    /// <summary>
     /// HTTP headers do not match the request body.
     /// </summary>
     public const int ErrorCodeHeaderMismatch = -32020;

@@ -164,5 +164,68 @@ namespace QueryCat.Mcp.Resources {
                 return ResourceManager.GetString("McpRequestTooLarge", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Resource URI is required..
+        /// </summary>
+        internal static string McpResourceUriRequired {
+            get {
+                return ResourceManager.GetString("McpResourceUriRequired", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Resource '{0}' not found..
+        /// </summary>
+        internal static string McpResourceNotFound {
+            get {
+                return ResourceManager.GetString("McpResourceNotFound", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot read resource '{0}': {1}.
+        /// </summary>
+        internal static string McpResourceReadError {
+            get {
+                return ResourceManager.GetString("McpResourceReadError", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The resource is too large, max size is {0} bytes..
+        /// </summary>
+        internal static string McpResourceTooLarge {
+            get {
+                return ResourceManager.GetString("McpResourceTooLarge", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Resource file '{0}' not found..
+        /// </summary>
+        internal static string McpResourceFileNotFound {
+            get {
+                return ResourceManager.GetString("McpResourceFileNotFound", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Invalid resource definition '{0}', expected format is 'name=value'..
+        /// </summary>
+        internal static string McpInvalidResourceDefinition {
+            get {
+                return ResourceManager.GetString("McpInvalidResourceDefinition", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Unsupported resource scheme '{0}', only file, http and https are supported..
+        /// </summary>
+        internal static string McpUnsupportedResourceScheme {
+            get {
+                return ResourceManager.GetString("McpUnsupportedResourceScheme", resourceCulture);
+            }
+        }
     }
 }

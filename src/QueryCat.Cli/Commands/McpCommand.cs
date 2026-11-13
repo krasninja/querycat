@@ -1,6 +1,7 @@
 using System.CommandLine;
 using QueryCat.Cli.Infrastructure;
 using QueryCat.Mcp;
+using QueryCat.Mcp.McpResources;
 using QueryCat.Mcp.Transports;
 
 namespace QueryCat.Cli.Commands;
@@ -33,11 +34,17 @@ internal sealed class McpCommand : BaseCommand
         {
             Description = Resources.Messages.McpCommand_UnsafeDescription,
         };
+        var resourceOption = new Option<string[]>("--resource", "-r")
+        {
+            Description = Resources.Messages.McpCommand_ResourceDescription,
+            AllowMultipleArgumentsPerToken = false,
+        };
 
         Add(urlOption);
         Add(allowOriginOption);
         Add(transportOption);
         Add(unsafeOption);
+        Add(resourceOption);
         this.SetAction(async (parseResult, cancellationToken) =>
         {
             parseResult.InvocationConfiguration.EnableDefaultExceptionHandler = false;
@@ -47,6 +54,7 @@ internal sealed class McpCommand : BaseCommand
             var allowOrigin = parseResult.GetValue(allowOriginOption);
             var transport = parseResult.GetValue(transportOption);
             var unsafeMode = parseResult.GetValue(unsafeOption);
+            var resources = parseResult.GetValue(resourceOption) ?? [];
 
             applicationOptions.InitializeLogger(useErrorOut: transport == McpTransport.Stdio);
             await using var root = await applicationOptions.CreateApplicationRootAsync(new AppExecutionOptions
@@ -62,6 +70,10 @@ internal sealed class McpCommand : BaseCommand
             }, transport);
             var mcpServer = new McpServer(root.Thread, mcpTransport);
             McpServerInitializer.AddDefaultTools(mcpServer);
+            foreach (var resourceDefinition in resources)
+            {
+                mcpServer.AddResource(McpResourceFactory.CreateFromDefinition(resourceDefinition));
+            }
             await mcpTransport.StartAsync(cancellationToken: cancellationToken);
 
             // Loop.

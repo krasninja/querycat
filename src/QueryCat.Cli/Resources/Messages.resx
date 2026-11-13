@@ -208,6 +208,9 @@
   <data name="McpCommand_UnsafeDescription" xml:space="preserve">
     <value>Allow to call unsafe functions and modification commands (INSERT, UPDATE, DELETE). By default, the MCP server runs in safe mode.</value>
   </data>
+  <data name="McpCommand_ResourceDescription" xml:space="preserve">
+    <value>Add MCP resource in format 'name=value', where value is a file path, file:// URI or http(s):// URL. Can be specified multiple times.</value>
+  </data>
   <data name="PluginAuthCommand_Description" xml:space="preserve">
     <value>Manage plugins authentication.</value>
   </data>

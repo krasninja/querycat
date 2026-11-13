@@ -1,3 +1,4 @@
+using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
@@ -19,9 +20,17 @@ public sealed class McpServer
     // The 2025-03-26 version is not supported because it requires JSON-RPC batching.
     private static readonly string[] _supportedProtocolVersions = [ProtocolVersion, "2025-06-18"];
 
+    /// <summary>
+    /// Max resource content size in bytes that can be returned to the client.
+    /// </summary>
+    public const long MaxResourceSize = 10 * 1024 * 1024;
+
+    private static readonly UTF8Encoding _strictUtf8Encoding = new(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true);
+
     private readonly IExecutionThread _executionThread;
     private readonly IMcpTransport _mcpTransport;
     private readonly Dictionary<string, IMcpTool> _tools = new();
+    private readonly Dictionary<string, IMcpResource> _resources = new();
 
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(McpServer));
 
@@ -46,6 +55,15 @@ public sealed class McpServer
     }
 
     /// <summary>
+    /// Register a resource with the server. The resource is identified by its URI.
+    /// </summary>
+    /// <param name="resource">The resource.</param>
+    public void AddResource(IMcpResource resource)
+    {
+        _resources[resource.Metadata.Uri] = resource;
+    }
+
+    /// <summary>
     /// Process a single JSON-RPC message and return the response.
     /// </summary>
     /// <param name="rpcRequest">The JSON-RPC request.</param>
@@ -66,6 +84,9 @@ public sealed class McpServer
             "ping" => new JsonRpcResponse(rpcRequest.Id, new McpEmptyResultModel()),
             "tools/list" => await ProcessListToolsAsync(rpcRequest, cancellationToken),
             "tools/call" => await ProcessCallToolAsync(rpcRequest, cancellationToken),
+            "resources/list" => await ProcessListResourcesAsync(rpcRequest, cancellationToken),
+            "resources/templates/list" => new JsonRpcResponse(rpcRequest.Id, new McpListResourceTemplatesResultModel()),
+            "resources/read" => await ProcessReadResourceAsync(rpcRequest, cancellationToken),
             _ => CreateError(
                 rpcRequest,
                 McpErrorModel.ErrorCodeMethodNotFound,
@@ -128,6 +149,13 @@ public sealed class McpServer
                 {
                     ListChanged = false,
                 },
+                Resources = _resources.Count > 0
+                    ? new McpServerResourcesCapabilityModel
+                    {
+                        Subscribe = false,
+                        ListChanged = false,
+                    }
+                    : null,
             },
             ServerInfo = new McpImplementationModel
             {
@@ -210,6 +238,140 @@ public sealed class McpServer
             Id = rpcRequest.Id,
             Result = result,
         };
+    }
+
+    private Task<JsonRpcFrame> ProcessListResourcesAsync(JsonRpcRequest rpcRequest, CancellationToken cancellationToken)
+    {
+        var result = new McpListResourcesResultModel
+        {
+            Resources = _resources.Values.Select(r => r.Metadata).ToList(),
+        };
+        var response = new JsonRpcResponse
+        {
+            Id = rpcRequest.Id,
+            Result = result,
+        };
+        _logger.LogTrace("List resources request, {Count} resource(s).", _resources.Count);
+        return Task.FromResult<JsonRpcFrame>(response);
+    }
+
+    private async Task<JsonRpcFrame> ProcessReadResourceAsync(JsonRpcRequest rpcRequest, CancellationToken cancellationToken)
+    {
+        if (rpcRequest.Params == null
+            || !rpcRequest.Params.TryGetValue("uri", out var uriElement)
+            || uriElement.ValueKind != JsonValueKind.String)
+        {
+            return CreateError(
+                rpcRequest,
+                McpErrorModel.ErrorCodeInvalidParams,
+                Resources.Errors.McpResourceUriRequired
+            );
+        }
+
+        var uri = uriElement.GetString()!;
+        if (!_resources.TryGetValue(uri, out var resource))
+        {
+            return CreateError(
+                rpcRequest,
+                McpErrorModel.ErrorCodeResourceNotFound,
+                string.Format(Resources.Errors.McpResourceNotFound, uri)
+            );
+        }
+
+        _logger.LogTrace("Read resource '{Uri}'.", uri);
+        byte[] data;
+        try
+        {
+            data = await ReadResourceDataAsync(resource, cancellationToken);
+        }
+        catch (Exception e) when (e is not OperationCanceledException)
+        {
+            _logger.LogDebug(e, "Error reading resource '{Uri}'.", uri);
+            return CreateError(
+                rpcRequest,
+                McpErrorModel.ErrorCodeInternalError,
+                string.Format(Resources.Errors.McpResourceReadError, uri, e.Message)
+            );
+        }
+
+        return new JsonRpcResponse
+        {
+            Id = rpcRequest.Id,
+            Result = new McpReadResourceResultModel
+            {
+                Contents = [CreateResourceContents(uri, resource.Metadata.MimeType, data)],
+            },
+        };
+    }
+
+    private static async Task<byte[]> ReadResourceDataAsync(IMcpResource resource, CancellationToken cancellationToken)
+    {
+        await using var stream = await resource.OpenAsync(cancellationToken);
+        using var memoryStream = new MemoryStream();
+        var buffer = new byte[81920];
+        int bytesRead;
+        while ((bytesRead = await stream.ReadAsync(buffer, cancellationToken)) > 0)
+        {
+            if (memoryStream.Length + bytesRead > MaxResourceSize)
+            {
+                throw new QueryCatException(string.Format(Resources.Errors.McpResourceTooLarge, MaxResourceSize));
+            }
+            memoryStream.Write(buffer, 0, bytesRead);
+        }
+        return memoryStream.ToArray();
+    }
+
+    private static McpResourceContentsModel CreateResourceContents(string uri, string? mimeType, byte[] data)
+    {
+        var contents = new McpResourceContentsModel
+        {
+            Uri = uri,
+            MimeType = mimeType,
+        };
+        if (mimeType == null || IsTextMimeType(mimeType))
+        {
+            // Unknown MIME type: return as text if the content looks like a UTF-8 text.
+            if (TryDecodeText(data, out var text))
+            {
+                contents.Text = text;
+                contents.MimeType ??= "text/plain";
+                return contents;
+            }
+        }
+        contents.Blob = Convert.ToBase64String(data);
+        contents.MimeType ??= System.Net.Mime.MediaTypeNames.Application.Octet;
+        return contents;
+    }
+
+    private static bool IsTextMimeType(string mimeType)
+        => mimeType.StartsWith("text/", StringComparison.OrdinalIgnoreCase)
+           || mimeType.EndsWith("json", StringComparison.OrdinalIgnoreCase)
+           || mimeType.EndsWith("xml", StringComparison.OrdinalIgnoreCase)
+           || mimeType.EndsWith("yaml", StringComparison.OrdinalIgnoreCase)
+           || mimeType.Equals("application/javascript", StringComparison.OrdinalIgnoreCase);
+
+    private static bool TryDecodeText(byte[] data, out string text)
+    {
+        try
+        {
+            text = _strictUtf8Encoding.GetString(data);
+        }
+        catch (DecoderFallbackException)
+        {
+            text = string.Empty;
+            return false;
+        }
+        if (text.Contains('\0'))
+        {
+            text = string.Empty;
+            return false;
+        }
+        // Remove BOM.
+        if (text.Length > 0 && text[0] == '\uFEFF')
+        {
+            text = text[1..];
+        }
+        return true;
     }
 
     private static JsonRpcErrorResponse CreateError(JsonRpcRequest rpcRequest, int code, string message)
