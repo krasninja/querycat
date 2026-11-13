@@ -27,6 +27,9 @@
   <data name="Plugins_CannotFind" xml:space="preserve">
     <value>Cannot find plugin '{0}' in repository.</value>
   </data>
+  <data name="Plugins_InvalidUrl" xml:space="preserve">
+    <value>Invalid plugin URL '{0}'. The URL must point to the plugin file.</value>
+  </data>
   <data name="InvalidRowIndex" xml:space="preserve">
     <value>Invalid row index {0}.</value>
   </data>

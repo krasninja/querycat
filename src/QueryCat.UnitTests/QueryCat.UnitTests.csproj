@@ -20,10 +20,12 @@
 
   <ItemGroup>
     <Folder Include="Auth\" />
+    <Folder Include="Plugins\" />
   </ItemGroup>
 
   <ItemGroup>
     <Compile Remove="Auth\DefaultAuthTokenManagerTests.cs" />
+    <Compile Remove="Plugins\DefaultPluginsManagerTests.cs" />
   </ItemGroup>
 
 </Project>

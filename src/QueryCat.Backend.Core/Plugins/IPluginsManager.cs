@@ -21,9 +21,10 @@ public interface IPluginsManager
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Install the plugin from remote repository.
+    /// Install the plugin from remote repository. If the name is a web URL (HTTP or HTTPS),
+    /// the plugin file is downloaded directly from that URL.
     /// </summary>
-    /// <param name="name">Plugin name.</param>
+    /// <param name="name">Plugin name or URL of the plugin file.</param>
     /// <param name="overwrite">Force install if plugin already exist.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Number of created files.</returns>

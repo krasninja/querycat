@@ -63,6 +63,12 @@ namespace QueryCat.Backend.Resources {
             }
         }
         
+        internal static string Plugins_InvalidUrl {
+            get {
+                return ResourceManager.GetString("Plugins_InvalidUrl", resourceCulture);
+            }
+        }
+        
         internal static string InvalidRowIndex {
             get {
                 return ResourceManager.GetString("InvalidRowIndex", resourceCulture);

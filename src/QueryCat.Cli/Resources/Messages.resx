@@ -131,7 +131,7 @@
     <value>Install the plugin.</value>
   </data>
   <data name="PluginInstallCommand_NameDescription" xml:space="preserve">
-    <value>Plugin name.</value>
+    <value>Plugin name or URL of the plugin file.</value>
   </data>
   <data name="PluginInstallCommand_OverwriteDescription" xml:space="preserve">
     <value>Overwrite the plugin if it already exists.</value>

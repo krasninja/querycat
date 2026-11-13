@@ -3,7 +3,7 @@
 You can easily extend QueryCat functionality by installing plugins. Plugins allow to add more functions for data processing. There are commands you can use for plugins management:
 
 - `plugin list`. List all local and installed plugins.
-- `plugin install <name>`. Install the plugin.
+- `plugin install <name>`. Install the plugin. Instead of the name you can provide a web URL (HTTP or HTTPS) of the plugin file, then it will be downloaded and installed directly, for example `plugin install https://example.com/QueryCat.Plugins.Sample-1.0.0-linux-x64.so`.
 - `plugin remove <name>`. Remove the plugin.
 - `plugin update <name>`. Update the plugin. If you provide `*` as name all plugins will be updated.
 - `plugin install-proxy`. Download plugin proxy executable from GitHub.

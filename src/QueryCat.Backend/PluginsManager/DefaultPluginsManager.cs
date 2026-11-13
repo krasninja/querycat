@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Plugins;
@@ -14,6 +15,8 @@ public sealed class DefaultPluginsManager : IPluginsManager
     private readonly IPluginsStorage _pluginsStorage;
     private readonly string? _platform;
     private IReadOnlyList<PluginInfo>? _remotePluginsCache;
+
+    private static readonly Lazy<HttpClient> _httpClient = new(() => new HttpClient());
 
     public IEnumerable<string> PluginDirectories => _pluginDirectories;
 
@@ -81,7 +84,7 @@ public sealed class DefaultPluginsManager : IPluginsManager
         {
             plugins = plugins.Where(p => IsNameMatch(options.Name, p.Name));
         }
-        return plugins.OrderBy(p => p.Name);
+        return plugins.OrderBy(p => p.Name, StringComparer.OrdinalIgnoreCase);
     }
 
     private static readonly string[] _prefixes = [string.Empty, "QueryCat.Plugins.", "qcat-plugins-", "qcat.plugins.", "plugins-", "plugins."];
@@ -144,6 +147,12 @@ public sealed class DefaultPluginsManager : IPluginsManager
     /// <inheritdoc />
     public async Task<int> InstallAsync(string name, bool overwrite = true, CancellationToken cancellationToken = default)
     {
+        if (TryCreateWebUri(name, out var url))
+        {
+            return await InstallFromUrlAsync(url, overwrite, cancellationToken)
+                .ConfigureAwait(false);
+        }
+
         var plugins = await GetRemotePluginsAsync(cancellationToken).ConfigureAwait(false);
         var plugin = FindPlugin(name, plugins);
         if (plugin == null)
@@ -174,6 +183,80 @@ public sealed class DefaultPluginsManager : IPluginsManager
 
         CleanupPlugins();
         return 1;
+    }
+
+    /// <summary>
+    /// Install the plugin directly from the web URL. The plugin file is saved to the main plugin directory
+    /// using the file name from the URL.
+    /// </summary>
+    /// <param name="url">URL of the plugin file.</param>
+    /// <param name="overwrite">Force install if plugin already exist.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Number of created files.</returns>
+    private async Task<int> InstallFromUrlAsync(Uri url, bool overwrite, CancellationToken cancellationToken)
+    {
+        var fileName = GetFileNameFromUrl(url);
+        var plugin = PluginInfo.CreateFromUniversalName(fileName);
+
+        if (!overwrite)
+        {
+            var localPlugin = FindPlugin(plugin.Name, GetLocalPlugins());
+            if (localPlugin != null && localPlugin.Version >= plugin.Version)
+            {
+                _logger.LogInformation("Skip install because plugin '{Plugin}' already exists.", localPlugin);
+                return 0;
+            }
+        }
+
+        var mainPluginDirectory = GetMainPluginDirectory();
+        var fullFileName = Path.Combine(mainPluginDirectory, fileName);
+        _logger.LogInformation("Start downloading plugin file {PluginUri}.", url.AbsoluteUri);
+        var httpClient = _httpClient.Value;
+        await FilesUtils.DownloadFileAsync(
+                ct => httpClient.GetStreamAsync(url, ct),
+                fullFileName,
+                cancellationToken)
+            .ConfigureAwait(false);
+        FilesUtils.MakeUnixExecutable(fullFileName);
+        _logger.LogInformation("Saved plugin file {FullFileName}.", fullFileName);
+
+        CleanupPlugins();
+        return 1;
+    }
+
+    /// <summary>
+    /// Check if the plugin name is actually a web URL and create <see cref="Uri" /> from it.
+    /// </summary>
+    /// <param name="name">Plugin name or URL.</param>
+    /// <param name="url">Parsed URL.</param>
+    /// <returns><c>True</c> if the name is a HTTP or HTTPS URL, <c>false</c> otherwise.</returns>
+    internal static bool TryCreateWebUri(string name, [NotNullWhen(true)] out Uri? url)
+    {
+        url = null;
+        if (Uri.TryCreate(name, UriKind.Absolute, out var uri)
+            && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps))
+        {
+            url = uri;
+            return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Get the plugin file name from the URL.
+    /// </summary>
+    /// <param name="url">URL of the plugin file.</param>
+    /// <returns>File name.</returns>
+    internal static string GetFileNameFromUrl(Uri url)
+    {
+        var fileName = Path.GetFileName(Uri.UnescapeDataString(url.AbsolutePath));
+        if (string.IsNullOrEmpty(fileName))
+        {
+            throw new PluginException(string.Format(Resources.Errors.Plugins_InvalidUrl, url.AbsoluteUri));
+        }
+
+        return fileName;
     }
 
     /// <inheritdoc />
