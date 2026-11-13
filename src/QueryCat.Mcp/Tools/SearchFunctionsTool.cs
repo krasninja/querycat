@@ -19,12 +19,18 @@ internal sealed class SearchFunctionsTool : IMcpTool
         "search_functions",
         "Searches the existing function registry by term.")
     {
-        Description = "Searches the existing function in part of function name or description.",
+        Description = """
+            Searches existing functions by part of their name or description.
+            If useQueryInput is true, the function is a table source: get its columns with the "get_function_info" tool
+            and query it with the "execute_query" tool, for example "SELECT * FROM func() WHERE condition".
+            If useQueryOutput is true, the function is a table output (writer): use it as INTO target,
+            for example "SELECT * INTO func() FROM source()".
+            """,
         InputSchema = new McpToolInputSchemaModel
         {
             Properties = new Dictionary<string, McpToolSchemaPropertyModel>
             {
-                [TermKey] = new(McpToolSchemaPropertyModel.TypeString, "Search term")
+                [TermKey] = new(McpToolSchemaPropertyModel.TypeString, "Search term"),
             },
             Required = [TermKey],
         },
@@ -47,12 +53,18 @@ internal sealed class SearchFunctionsTool : IMcpTool
 
         public float Relevance { get; }
 
+        public bool UseQueryInput { get; }
+
+        public bool UseQueryOutput { get; }
+
         public SearchFunctionsToolFunctionResponse(IFunction function, float relevance)
         {
             Name = function.Name;
             Description = function.Description;
             Signature = FunctionFormatter.GetSignature(function, forceLowerCase: true);
             Relevance = relevance;
+            UseQueryInput = FunctionFormatter.IsRowsInputFunction(function);
+            UseQueryOutput = FunctionFormatter.IsRowsOutputFunction(function);
         }
     }
 

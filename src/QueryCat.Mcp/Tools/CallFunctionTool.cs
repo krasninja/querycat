@@ -22,8 +22,10 @@ internal sealed class CallFunctionTool : IMcpTool
         "call_function",
         "Calls the function from the registry.")
     {
-        Description = "Calls the function by name with the specified arguments and returns the result. "
-            + "Use search_functions to find the function and its signature first.",
+        Description = """
+            Calls the function by name with the specified arguments and returns the result.
+            Use search_functions to find the function and its signature first.
+            """,
         InputSchema = new McpToolInputSchemaModel
         {
             Properties = new Dictionary<string, McpToolSchemaPropertyModel>

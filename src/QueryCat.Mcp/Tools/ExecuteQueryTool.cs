@@ -20,8 +20,14 @@ internal sealed class ExecuteQueryTool : IMcpTool
         "execute_query",
         "Execute SQL query and returns data set.")
     {
-        Description = "Executes SQL query and returns data set. Use search_functions to find the function "
-            + "and its signature first. The return function type must be Object<IRowsInput> or Object<IRowsIterator>.",
+        Description = """
+            Executes a SQL query and returns the result rows. Use search_functions to find the function and its signature first.
+            When selecting FROM a function, it must return Object<IRowsInput> or Object<IRowsIterator> (useQueryInput is true).
+            The SQL dialect is close to PostgreSQL. On a syntax or function call error, check the function arguments
+            with get_function_info and simplify the query before retrying.
+
+            Columns with isKeyRequired: true (from get_function_info) must be filtered in the WHERE clause.
+            """,
         InputSchema = new McpToolInputSchemaModel
         {
             Properties = new Dictionary<string, McpToolSchemaPropertyModel>
