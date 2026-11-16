@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Diagnostics.CodeAnalysis;
 using QueryCat.Backend.Ast.Nodes.Function;
 using QueryCat.Backend.Commands.Select.Visitors;
 using QueryCat.Backend.Core.Data;
@@ -28,6 +29,8 @@ internal sealed class RowsInputFactory
         CancellationToken cancellationToken = default)
         => CreateRowsInputAsync(source, string.Empty, executionThread, null, resolveStringAsSource, cancellationToken);
 
+    [UnconditionalSuppressMessage("Trimming", "IL2072",
+        Justification = "Collection element type is discovered from a live runtime instance and cannot be statically annotated.")]
     public async ValueTask<SelectInputQueryContext?> CreateRowsInputAsync(
         VariantValue source,
         string alias,
@@ -86,11 +89,9 @@ internal sealed class RowsInputFactory
             }
             if (source.AsObjectUnsafe is IEnumerable enumerable && enumerable.GetType().IsGenericType)
             {
-#pragma warning disable IL2072
                 rowsInput = new CollectionInput(TypeUtils.GetUnderlyingType(enumerable), enumerable);
                 var context = new SelectInputQueryContext(rowsInput, executionThread.Options);
                 rowsInput.QueryContext = context;
-#pragma warning restore IL2072
                 return context;
             }
         }

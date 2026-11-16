@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- .NET 11 upgrade.
 - Improve "to_json" function.
  `_ANSWER_AGENT` variable, the default answer agent is now resolved from the config `__ai_agent` key.
 - ClassRowsFrameBuilder.AddKeyColumn now adds the new column if it was not previously added.

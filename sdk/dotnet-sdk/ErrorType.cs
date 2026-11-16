@@ -4,14 +4,15 @@
  */
 using System;
 
-// targeting net 8
-#if( NET9_0_OR_GREATER || !NET8_0_OR_GREATER)
+// targeting net 10
+#if( !NET10_0_OR_GREATER)
 #error Unexpected target platform. See 'thrift --help' for details.
 #endif
 
-// Thrift code generated for net8
+// Thrift code generated for net10
 #nullable enable                 // requires C# 8.0
 #pragma warning disable IDE0079  // remove unnecessary pragmas
+#pragma warning disable IDE0130  // unexpected folder structure
 #pragma warning disable IDE0290  // use primary CTOR
 #pragma warning disable IDE1006  // parts of the code use IDL spelling
 #pragma warning disable CA1822   // empty DeepCopy() methods still non-static

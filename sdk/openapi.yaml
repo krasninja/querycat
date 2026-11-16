@@ -450,7 +450,7 @@ components:
         platform:
           type: string
           description: .NET runtime version.
-          example: 10.0.0
+          example: 11.0.0
         date:
           type: string
           format: date-time

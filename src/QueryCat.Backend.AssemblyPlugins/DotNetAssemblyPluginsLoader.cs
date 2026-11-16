@@ -90,6 +90,12 @@ public class DotNetAssemblyPluginsLoader : PluginsLoader, IDisposable
 
     private static readonly string[] _monikerDirectories =
     [
+#if NET12_0_OR_GREATER
+        "net12.0",
+#endif
+#if NET11_0_OR_GREATER
+        "net11.0",
+#endif
 #if NET10_0_OR_GREATER
         "net10.0",
 #endif
