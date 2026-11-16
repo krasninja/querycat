@@ -217,4 +217,14 @@ internal static class FunctionFormatter
         => !function.IsAggregate
            && function.ReturnType == DataType.Object
            && function.ReturnObjectName.Equals(nameof(IRowsOutput), StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Is the function an AI answer agent factory.
+    /// </summary>
+    /// <param name="function">Function.</param>
+    /// <returns><c>True</c> if the function returns <see cref="IAnswerAgent" />.</returns>
+    internal static bool IsAnswerAgentFunction(IFunction function)
+        => !function.IsAggregate
+           && function.ReturnType == DataType.Object
+           && function.ReturnObjectName.Equals(nameof(IAnswerAgent), StringComparison.OrdinalIgnoreCase);
 }

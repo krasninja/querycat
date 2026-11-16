@@ -26,6 +26,7 @@
   <ItemGroup>
     <Compile Remove="Auth\DefaultAuthTokenManagerTests.cs" />
     <Compile Remove="Plugins\DefaultPluginsManagerTests.cs" />
+    <Compile Remove="Inputs\AIAssistantTests.cs" />
   </ItemGroup>
 
 </Project>

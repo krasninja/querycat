@@ -429,6 +429,12 @@ namespace QueryCat.Backend.Resources {
             }
         }
         
+        internal static string InvalidAnswerAgent {
+            get {
+                return ResourceManager.GetString("InvalidAnswerAgent", resourceCulture);
+            }
+        }
+        
         internal static string CannotOverrideWindowPartition {
             get {
                 return ResourceManager.GetString("CannotOverrideWindowPartition", resourceCulture);

@@ -86,5 +86,23 @@ namespace QueryCat.Cli.Resources {
                 return ResourceManager.GetString("PluginNotFound", resourceCulture);
             }
         }
+        
+        internal static string AgentInvalidFunctionCall {
+            get {
+                return ResourceManager.GetString("AgentInvalidFunctionCall", resourceCulture);
+            }
+        }
+        
+        internal static string AgentFunctionNotFound {
+            get {
+                return ResourceManager.GetString("AgentFunctionNotFound", resourceCulture);
+            }
+        }
+        
+        internal static string AgentFunctionInvalidType {
+            get {
+                return ResourceManager.GetString("AgentFunctionInvalidType", resourceCulture);
+            }
+        }
     }
 }

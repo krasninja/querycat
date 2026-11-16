@@ -208,7 +208,10 @@
     <value>Invalid agent response: {0}</value>
   </data>
   <data name="AnswerAgentNotFound" xml:space="preserve">
-    <value>Answer agent not found. Define or set '{0}' variable to object of type '{1}'.</value>
+    <value>Answer agent not found. Define or set '{0}' variable to object of type '{1}', or set the agent function call (for example, "ollama_agent('qwen3:8b')") in the config with the '{2}' key.</value>
+  </data>
+  <data name="InvalidAnswerAgent" xml:space="preserve">
+    <value>The configured answer agent '{0}' does not return an object of type '{1}'.</value>
   </data>
   <data name="CannotOverrideWindowPartition" xml:space="preserve">
     <value>Cannot override PARTITION BY clause of window '{0}'.</value>

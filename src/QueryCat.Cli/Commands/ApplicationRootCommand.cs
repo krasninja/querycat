@@ -17,6 +17,12 @@ internal sealed class ApplicationRootCommand : RootCommand
             new CallFunctionCommand(),
             new ServeCommand(),
             new McpCommand(),
+            new Command("agent", Resources.Messages.AgentCommand_Description)
+            {
+                new AgentListCommand(),
+                new AgentGetCommand(),
+                new AgentSetCommand(),
+            },
 #if ENABLE_PLUGINS
             new Command("plugin", Resources.Messages.PluginCommand_Description)
             {

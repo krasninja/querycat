@@ -299,4 +299,28 @@
   <data name="QueryCommand_WebProxyCommand" xml:space="preserve">
     <value>Configure proxy for web requests.</value>
   </data>
+  <data name="AgentCommand_Description" xml:space="preserve">
+    <value>AI answer agents management.</value>
+  </data>
+  <data name="AgentListCommand_Description" xml:space="preserve">
+    <value>List functions that create an AI answer agent.</value>
+  </data>
+  <data name="AgentGetCommand_Description" xml:space="preserve">
+    <value>Show the current AI answer agent function call.</value>
+  </data>
+  <data name="AgentSetCommand_Description" xml:space="preserve">
+    <value>Set the default AI answer agent.</value>
+  </data>
+  <data name="AgentSetCommand_AgentDescription" xml:space="preserve">
+    <value>The agent function call. Example: ollama_agent('qwen3:8b').</value>
+  </data>
+  <data name="AgentList_Current" xml:space="preserve">
+    <value>Current AI agent: {0}</value>
+  </data>
+  <data name="AgentGet_NotSet" xml:space="preserve">
+    <value>AI agent is not set. Use 'qcat agent set' command to set it.</value>
+  </data>
+  <data name="AgentSet_Success" xml:space="preserve">
+    <value>AI agent is set to '{0}'.</value>
+  </data>
 </root>

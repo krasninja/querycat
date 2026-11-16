@@ -39,4 +39,13 @@
   <data name="PluginNotFound" xml:space="preserve">
     <value>Cannot find plugin '{0}'.</value>
   </data>
+  <data name="AgentInvalidFunctionCall" xml:space="preserve">
+    <value>The AI agent must be a function call. Example: ollama_agent('qwen3:8b').</value>
+  </data>
+  <data name="AgentFunctionNotFound" xml:space="preserve">
+    <value>Cannot find the AI agent function '{0}'. Use 'qcat agent list' command to list the available agents.</value>
+  </data>
+  <data name="AgentFunctionInvalidType" xml:space="preserve">
+    <value>The function '{0}' does not return an object of type '{1}'.</value>
+  </data>
 </root>

@@ -590,5 +590,53 @@ namespace QueryCat.Cli.Resources {
                 return ResourceManager.GetString("QueryCommand_WebProxyCommand", resourceCulture);
             }
         }
+        
+        internal static string AgentCommand_Description {
+            get {
+                return ResourceManager.GetString("AgentCommand_Description", resourceCulture);
+            }
+        }
+        
+        internal static string AgentListCommand_Description {
+            get {
+                return ResourceManager.GetString("AgentListCommand_Description", resourceCulture);
+            }
+        }
+        
+        internal static string AgentSetCommand_Description {
+            get {
+                return ResourceManager.GetString("AgentSetCommand_Description", resourceCulture);
+            }
+        }
+        
+        internal static string AgentSetCommand_AgentDescription {
+            get {
+                return ResourceManager.GetString("AgentSetCommand_AgentDescription", resourceCulture);
+            }
+        }
+        
+        internal static string AgentList_Current {
+            get {
+                return ResourceManager.GetString("AgentList_Current", resourceCulture);
+            }
+        }
+        
+        internal static string AgentSet_Success {
+            get {
+                return ResourceManager.GetString("AgentSet_Success", resourceCulture);
+            }
+        }
+        
+        internal static string AgentGetCommand_Description {
+            get {
+                return ResourceManager.GetString("AgentGetCommand_Description", resourceCulture);
+            }
+        }
+        
+        internal static string AgentGet_NotSet {
+            get {
+                return ResourceManager.GetString("AgentGet_NotSet", resourceCulture);
+            }
+        }
     }
 }

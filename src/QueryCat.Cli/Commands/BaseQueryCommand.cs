@@ -104,12 +104,17 @@ internal abstract class BaseQueryCommand : BaseCommand
     {
         if (executionThread.Options.AIMode)
         {
-            var input = await AIAssistant.Default.RunQueryAsync(
-                new AIAssistant.AskAIRequest(query, AIAssistant.GetInputs(executionThread).ToArray()),
-                AIAssistant.GetDefaultAnswerAgent(executionThread),
+            // The config is loaded lazily on the first query run, so load it explicitly. Otherwise,
+            // the AI agent defined in the config cannot be resolved.
+            await executionThread.ConfigStorage.LoadAsync(cancellationToken);
+            var answerAgent = await AIAssistant.GetDefaultAnswerAgentAsync(executionThread, cancellationToken);
+            var inputs = await AIAssistantInput.ResolveInputsFromThread(executionThread, cancellationToken);
+            var result = await AIAssistant.Default.RunQueryAsync(
+                new AIAssistant.AskAIRequest(query, inputs.ToArray()),
+                answerAgent,
                 executionThread,
                 cancellationToken: cancellationToken);
-            return VariantValue.CreateFromObject(input);
+            return VariantValue.CreateFromObject(result);
         }
         else
         {

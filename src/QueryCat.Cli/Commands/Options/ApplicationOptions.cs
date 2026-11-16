@@ -33,6 +33,13 @@ internal sealed class ApplicationOptions
 #endif
 
     /// <summary>
+    /// Create the application persistent config storage.
+    /// </summary>
+    /// <returns>Instance of <see cref="PersistentConfigStorage" />.</returns>
+    internal static PersistentConfigStorage CreateConfigStorage()
+        => new(Path.Combine(Application.GetConfigDirectory(), ConfigFileName));
+
+    /// <summary>
     /// Creation application core object facade.
     /// </summary>
     /// <param name="executionOptions">Options.</param>
@@ -106,9 +113,7 @@ internal sealed class ApplicationOptions
 #endif
 
         var bootstrapper = new ExecutionThreadBootstrapper(executionOptions)
-            .WithConfigStorage(new PersistentConfigStorage(
-                Path.Combine(Application.GetConfigDirectory(), ConfigFileName))
-            )
+            .WithConfigStorage(CreateConfigStorage())
             .WithAuthTokenManager(new DefaultAuthTokenManager(_authTokenStore))
             .WithStandardFunctions()
             .WithRegistrations(Backend.Addons.Functions.JsonFunctions.RegisterFunctions)

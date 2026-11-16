@@ -7,7 +7,6 @@ using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Core.Utils;
-using QueryCat.Backend.Storage;
 
 namespace QueryCat.Backend.Inputs;
 
@@ -19,6 +18,13 @@ public class AIAssistant
 {
     // ReSharper disable once InconsistentNaming
     public const string DefaultAIAgentVariableName = "_ANSWER_AGENT";
+
+    /// <summary>
+    /// The config storage key that contains the default AI answer agent function call.
+    /// For example, "ollama_agent('qwen3:8b')".
+    /// </summary>
+    // ReSharper disable once InconsistentNaming
+    public const string DefaultAIAgentConfigKey = "__ai_agent";
 
     /// <summary>
     /// Default instance of AI assistant.
@@ -43,7 +49,7 @@ public class AIAssistant
         6. If the question cannot be answered from the given tables, do not guess; explain why in "Refusal".
 
         Respond with a single JSON object and nothing else (no markdown, no comments):
-        {"Query": "<sql or empty>", "Refusal": "<reason or empty>"}
+        {"Query": "<sql or empty>", "Refusal": "<reason or empty>", "Comment": "<query debug comment>"}
         Example: {"Query": "SELECT \"name\" FROM \"actors\" WHERE \"age\" >= 18", "Refusal": ""}
         """;
 
@@ -99,6 +105,8 @@ public class AIAssistant
 
         public string Refusal { get; set; } = string.Empty;
 
+        public string Comment { get; set; } = string.Empty;
+
         public bool IsSuccess => !string.IsNullOrEmpty(Query);
 
         internal static ChatResponse CreateSuccessMessage(string sql)
@@ -109,7 +117,7 @@ public class AIAssistant
                 }, SourceGenerationContext.Default.PromptResponseModel));
 
         /// <inheritdoc />
-        public override string ToString() => $"Q: {Query}, R: {Refusal}";
+        public override string ToString() => $"Q: {Query}, R: {Refusal}, C: {Comment}";
     }
 
     /// <summary>
@@ -146,43 +154,53 @@ public class AIAssistant
     }
 
     /// <summary>
-    /// Get the default answer agent from variables.
+    /// Get the default answer agent. First, the special variable is checked, then the agent
+    /// function call is resolved from the config storage.
     /// </summary>
     /// <param name="thread">Execution thread.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Instance of <see cref="IAnswerAgent" />.</returns>
-    public static IAnswerAgent GetDefaultAnswerAgent(IExecutionThread thread)
+    /// <remarks>
+    /// The config storage is loaded lazily on the first query run, so call
+    /// <see cref="IConfigStorage.LoadAsync" /> before to resolve the agent from the config.
+    /// </remarks>
+    public static async Task<IAnswerAgent> GetDefaultAnswerAgentAsync(
+        IExecutionThread thread,
+        CancellationToken cancellationToken = default)
     {
-        var answerAgentValue = thread.GetVariable(DefaultAIAgentVariableName);
-        if (!answerAgentValue.IsNull
-            && (answerAgentValue.Type == DataType.Object || answerAgentValue.Type == DataType.Dynamic)
-            && answerAgentValue.AsObjectUnsafe is IAnswerAgent agent)
+        var answerAgent = GetAnswerAgent(thread.GetVariable(DefaultAIAgentVariableName));
+        if (answerAgent != null)
         {
-            return agent;
+            return answerAgent;
         }
 
-        throw new QueryCatException(
-            string.Format(Resources.Errors.AnswerAgentNotFound, DefaultAIAgentVariableName, nameof(IAnswerAgent)));
-    }
-
-    /// <summary>
-    /// Get all input variables.
-    /// </summary>
-    /// <param name="thread">Execution thread.</param>
-    /// <returns>List of inputs.</returns>
-    public static IList<KeyValuePair<string, IRowsInput>> GetInputs(IExecutionThread thread)
-    {
-        var inputs = new List<KeyValuePair<string, IRowsInput>>();
-        foreach (var variable in thread.TopScope.Variables)
+        // The agent can be also defined in the config as a function call, for example, "ollama_agent('qwen3:8b')".
+        // Execute this call to get the agent instance.
+        var agentCallValue = await thread.ConfigStorage.GetOrDefaultAsync(
+            DefaultAIAgentConfigKey, cancellationToken: cancellationToken);
+        var agentCall = agentCallValue.Type == DataType.String ? agentCallValue.AsStringUnsafe.Trim() : string.Empty;
+        if (!string.IsNullOrEmpty(agentCall))
         {
-            var rowsInputNamePair = RowsInputConverter.Convert(variable.Value);
-            if (rowsInputNamePair.Value == null)
+            var value = await thread.RunAsync(agentCall, cancellationToken: cancellationToken);
+            answerAgent = GetAnswerAgent(value);
+            if (answerAgent == null)
             {
-                continue;
+                throw new QueryCatException(string.Format(
+                    Resources.Errors.InvalidAnswerAgent, agentCall, nameof(IAnswerAgent)));
             }
-            inputs.Add(new KeyValuePair<string, IRowsInput>(variable.Key, rowsInputNamePair.Value));
+            return answerAgent;
         }
-        return inputs;
+
+        throw new QueryCatException(string.Format(Resources.Errors.AnswerAgentNotFound,
+            DefaultAIAgentVariableName, nameof(IAnswerAgent), DefaultAIAgentConfigKey));
     }
+
+    private static IAnswerAgent? GetAnswerAgent(VariantValue value)
+        => !value.IsNull
+           && (value.Type == DataType.Object || value.Type == DataType.Dynamic)
+           && value.AsObjectUnsafe is IAnswerAgent agent
+            ? agent
+            : null;
 
     private async Task CloseInputsAsync(
         IReadOnlyDictionary<string, IRowsInput> inputs,
@@ -209,7 +227,8 @@ public class AIAssistant
         _logger.LogDebug("Prompt: {Prompt}.", currentAiRequest);
         while (!canProceedQuery)
         {
-            var response = await answerAgent.AskAsync(new ChatRequest(messages.ToArray(), ChatRequest.TypeSql), cancellationToken);
+            var response = await answerAgent.AskAsync(
+                new ChatRequest(messages.ToArray(), ChatRequest.TypeSql), cancellationToken);
             messages.AddRange(response.Messages);
             if (_logger.IsEnabled(LogLevel.Trace))
             {
