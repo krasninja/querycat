@@ -126,7 +126,6 @@ internal sealed class WindowFunctionsRowsIterator : IRowsIterator
                 if (WindowFunctionInfo.Orders.Length > 0)
                 {
                     var index = new OrderColumnsIndex(
-                        _thread,
                         subRowsFrame.GetIterator(),
                         WindowFunctionInfo.Orders
                             .Select(o => new OrderColumnData(o.Index + offset, o.Direction, o.NullOrder))

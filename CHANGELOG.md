@@ -38,6 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Inconsistent ordering when an `ORDER BY` column contains several null values.
 - Improve parser handling in ambiguity paths.
 - Fix WebServer bugger leaks, query processing improvements.
 - Reduce memory usage for GreaterOrEquals, LessOrEquals, NotEquals, Subtract operations.
