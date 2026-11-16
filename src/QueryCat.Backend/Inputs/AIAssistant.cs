@@ -39,18 +39,21 @@ public class AIAssistant
 
     public const string PromptGuidelines =
         """
-        == Rules
+        = Rules
         1. Generate exactly one read-only SELECT statement (CTEs allowed). Never INSERT, UPDATE, DELETE, SET or DECLARE.
         2. Use only the tables and columns listed below. Reference tables by their identifier.
         3. Quote identifiers with double quotes ("my col"); use single quotes only for string literals.
         4. Available types for CAST / ::: integer, string, float, timestamp, boolean, numeric, interval, blob.
         5. Supported: WITH [RECURSIVE], window functions, DISTINCT ON, LIMIT/OFFSET, FETCH FIRST n ROWS,
            LIKE, SIMILAR TO (uses .NET regex). Use only those functions listed in Functions section.
-        6. If the question cannot be answered from the given tables, do not guess; explain why in "Refusal".
+        6. If the question cannot be answered from the given tables or needs to be clarified by user, do NOT guess;
+           explain why in "Error" field.
+        7. If you cannot find function, table, column or input source that is needed for answer, note it in "Error" field.
 
-        Respond with a single JSON object and nothing else (no markdown, no comments):
-        {"Query": "<sql or empty>", "Refusal": "<reason or empty>", "Comment": "<query debug comment>"}
-        Example: {"Query": "SELECT \"name\" FROM \"actors\" WHERE \"age\" >= 18", "Refusal": ""}
+        Respond with a single JSON object and nothing else (no markdown, no extra text):
+        {"Query": "<sql or empty>", "Error": "<error reason or empty>", "Comment": "<query construction comments>"}
+        Success example: {"Query": "SELECT \"name\" FROM \"actors\" WHERE \"age\" >= 18", "Error": "", "Comment": ""}
+        Error example: {"Query": "", "Error": "Column 'age' cannot be found.", "Comment": ""}
         """;
 
     private const int MaxQueryFixAttempts = 3;
@@ -92,7 +95,7 @@ public class AIAssistant
         public AskAIRequest(string question, params KeyValuePair<string, IRowsInput>[] inputs)
         {
             Question = question;
-            Inputs = inputs.ToDictionary(k => k.Key, v => v.Value);
+            Inputs = inputs.DistinctBy(k => k.Key).ToDictionary(k => k.Key, v => v.Value);
         }
     }
 
@@ -103,11 +106,11 @@ public class AIAssistant
     {
         public string Query { get; set; } = string.Empty;
 
-        public string Refusal { get; set; } = string.Empty;
+        public string Error { get; set; } = string.Empty;
 
         public string Comment { get; set; } = string.Empty;
 
-        public bool IsSuccess => !string.IsNullOrEmpty(Query);
+        public bool IsSuccess => !string.IsNullOrEmpty(Query) && string.IsNullOrEmpty(Error);
 
         internal static ChatResponse CreateSuccessMessage(string sql)
             => new(
@@ -117,7 +120,7 @@ public class AIAssistant
                 }, SourceGenerationContext.Default.PromptResponseModel));
 
         /// <inheritdoc />
-        public override string ToString() => $"Q: {Query}, R: {Refusal}, C: {Comment}";
+        public override string ToString() => $"Q: {Query}, E: {Error}, C: {Comment}";
     }
 
     /// <summary>
@@ -234,17 +237,19 @@ public class AIAssistant
             {
                 _logger.LogTrace("Resolver response: {Response}", response.ToString());
             }
+
             var model = ConvertAnswerToSql(response.Answer);
             canProceedQuery = model.IsSuccess;
             if (!canProceedQuery)
             {
-                var userResponse = await ClarifyAsync(model.Refusal, cancellationToken);
+                var userResponse = await ClarifyAsync(model.Error, cancellationToken);
                 if (string.IsNullOrEmpty(userResponse))
                 {
-                    throw new QueryCatException(string.Format(Resources.Errors.AnswerAgentIssue, model.Refusal));
+                    throw new QueryCatException(string.Format(Resources.Errors.AnswerAgentIssue, model.Error));
                 }
                 currentAiRequest = new ChatRequest(userResponse);
                 messages.AddRange(currentAiRequest.Messages);
+                queryAttempts++;
                 continue;
             }
 
@@ -287,7 +292,7 @@ public class AIAssistant
         {
             new(PromptPreamble, ChatMessage.RoleSystem),
             new(PromptGuidelines, ChatMessage.RoleSystem),
-            new(GetFunctionsPreamble(functions), ChatMessage.RoleSystem),
+            new(GetFunctionsPreamble(functions), ChatMessage.RoleUser),
             new(GetPromptTablesInformation(inputs)),
             new(GetPromptQuestion(question))
         };
@@ -309,7 +314,7 @@ public class AIAssistant
         return functionSection.ToString();
     }
 
-    private PromptResponseModel ConvertAnswerToSql(string answer)
+    private static PromptResponseModel ConvertAnswerToSql(string answer)
     {
         var startOfJson = answer.IndexOf('{');
         var endOfJson = answer.LastIndexOf('}');
@@ -317,7 +322,7 @@ public class AIAssistant
             || startOfJson < 0
             || endOfJson < 0)
         {
-            throw new InvalidOperationException(string.Format(Resources.Errors.InvalidAgentResponse, answer));
+            throw new QueryCatException(string.Format(Resources.Errors.InvalidAgentResponse, answer));
         }
         var json = answer.Substring(startOfJson, endOfJson - startOfJson + 1);
         var model = JsonSerializer.Deserialize(
@@ -325,7 +330,7 @@ public class AIAssistant
             SourceGenerationContext.Default.PromptResponseModel);
         if (model == null)
         {
-            throw new InvalidOperationException(string.Format(Resources.Errors.InvalidAgentResponse, json));
+            throw new QueryCatException(string.Format(Resources.Errors.InvalidAgentResponse, json));
         }
         return model;
     }

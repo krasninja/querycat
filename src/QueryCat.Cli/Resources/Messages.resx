@@ -323,4 +323,7 @@
   <data name="AgentSet_Success" xml:space="preserve">
     <value>AI agent is set to '{0}'.</value>
   </data>
+  <data name="AgentGetUserResponse" xml:space="preserve">
+    <value>Provide your answer below.</value>
+  </data>
 </root>
