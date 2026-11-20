@@ -70,6 +70,7 @@ nav:
     - 'Plugin Configuration': development/plugin-config.md
   - 'Misc':
     - 'Alternative Tools': misc/alternatives.md
+    - 'Privacy Policy': misc/privacy.md
 theme: readthedocs
 exclude_docs: |
   internal

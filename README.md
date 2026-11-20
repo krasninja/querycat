@@ -173,6 +173,7 @@ dotnet add package QueryCat
 
 - [Documentation](https://querycat.readthedocs.io/) and [tutorial](https://querycat.readthedocs.io/en/latest/tutorial/)
 - [Playground](https://querycat.anti-soft.ru/playground/)
+- [Privacy Policy](PRIVACY.md)
 - [NuGet package](https://www.nuget.org/packages/QueryCat/)
 - [Changelog](CHANGELOG.md)
 - [Alternatives](https://querycat.readthedocs.io/en/latest/misc/alternatives/) - other tools that do similar things
