@@ -15,6 +15,9 @@ internal interface IAstBuilder
         public string Type { get; } = type;
 
         public int StartIndex { get; } = startIndex;
+
+        /// <inheritdoc />
+        public override string ToString() => $"{StartIndex} ({Type}): {Text}";
     }
 
     ProgramNode BuildProgramFromString(string program);
