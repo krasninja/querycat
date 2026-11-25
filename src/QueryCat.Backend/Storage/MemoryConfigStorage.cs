@@ -1,4 +1,5 @@
 using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Plugins;
 using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Backend.Storage;
@@ -24,7 +25,7 @@ public class MemoryConfigStorage : IConfigStorage
     /// <inheritdoc />
     public virtual ValueTask SetAsync(string key, VariantValue value, CancellationToken cancellationToken = default)
     {
-        key = FormatKey(key);
+        key = PluginConfigOption.GetKey(_pluginPrefix, key);
         if (value.IsNull)
         {
             Map.Remove(key);
@@ -39,22 +40,20 @@ public class MemoryConfigStorage : IConfigStorage
     /// <inheritdoc />
     public virtual ValueTask<bool> HasAsync(string key, CancellationToken cancellationToken = default)
     {
-        key = FormatKey(key);
+        key = PluginConfigOption.GetKey(_pluginPrefix, key);
         return ValueTask.FromResult(Map.ContainsKey(key));
     }
 
     /// <inheritdoc />
     public virtual ValueTask<VariantValue> GetAsync(string key, CancellationToken cancellationToken = default)
     {
-        key = FormatKey(key);
+        key = PluginConfigOption.GetKey(_pluginPrefix, key);
         if (Map.TryGetValue(key, out var value))
         {
             return ValueTask.FromResult(value);
         }
         return ValueTask.FromResult(VariantValue.Null);
     }
-
-    private string FormatKey(string key) => !string.IsNullOrEmpty(_pluginPrefix) ? $"{_pluginPrefix}:{key}" : key;
 
     /// <inheritdoc />
     public virtual Task SaveAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
