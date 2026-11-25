@@ -226,10 +226,15 @@ public sealed class AuthService
 
     private static string CreateCallbackHtml(IReadOnlyDictionary<string, string> query)
     {
-        var message = query.TryGetValue("error", out var error)
+        var isError = query.TryGetValue("error", out var error);
+        var message = isError
             ? string.Format(Resources.Messages.AuthLogin_CallbackError,
                 error + " " + query.GetValueOrDefault("error_description"))
             : Resources.Messages.AuthLogin_CallbackSuccess;
+        // Auto-close the tab on success; keep the error page open so user can read the details.
+        var autoCloseScript = isError
+            ? string.Empty
+            : "<script>setTimeout(function () { window.close(); }, 5000);</script>";
         return
             $"""
             <!DOCTYPE html>
@@ -241,6 +246,7 @@ public sealed class AuthService
             </head>
             <body style="font-family: sans-serif; margin: 1em;">
                 <p>{WebUtility.HtmlEncode(message)}</p>
+                {autoCloseScript}
             </body>
             </html>
             """;
