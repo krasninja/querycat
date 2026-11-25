@@ -42,6 +42,11 @@ public sealed class Program
         Description = "Variables for query.",
     };
 
+    private static readonly Option<string?> _pluginPrefixOption = new("--plugin-prefix")
+    {
+        Description = "Plugin prefix for config storage keys.",
+    };
+
     public static async Task<int> Main(string[] args)
     {
         var rootCommand = new RootCommand("QueryCat Tester");
@@ -50,6 +55,7 @@ public sealed class Program
         rootCommand.Add(_filesOption);
         rootCommand.Add(_queryArgument);
         rootCommand.Add(_variablesOption);
+        rootCommand.Add(_pluginPrefixOption);
 
         rootCommand.SetAction((parseResult, cancellationToken) =>
         {
@@ -58,6 +64,7 @@ public sealed class Program
                 parseResult.GetValue(_pluginFilesOption) ?? [],
                 parseResult.GetValue(_filesOption) ?? [],
                 parseResult.GetValue(_variablesOption) ?? [],
+                parseResult.GetValue(_pluginPrefixOption),
                 cancellationToken
             );
         });
@@ -70,6 +77,7 @@ public sealed class Program
         string[] pluginDirectories,
         string[] files,
         string[] variables,
+        string? pluginPrefix,
         CancellationToken cancellationToken = default)
     {
         InitializeLogger();
@@ -87,7 +95,8 @@ public sealed class Program
             .WithStandardFunctions()
             .WithStandardUriResolvers()
             .WithConfigStorage(new PersistentConfigStorage(
-                Path.Combine(Application.GetConfigDirectory(), "config.json"))
+                Path.Combine(Application.GetConfigDirectory(), "config.json"),
+                pluginPrefix)
             )
             .WithAuthTokenManager(new DefaultAuthTokenManager(authTokenStore))
             .WithPluginsLoader(thread => new SimplePluginsAssemblyLoader(
