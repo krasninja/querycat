@@ -60,9 +60,9 @@ public static class DataTypeUtils
     public static string SerializeVariantValue(VariantValue value)
         => value.Type switch
         {
-            DataType.Null => VariantValue.NullValueString,
-            DataType.Void => VariantValue.VoidValueString,
-            DataType.Dynamic => "dynamic",
+            DataType.Null => "sys:" + VariantValue.NullValueString,
+            DataType.Void => "sys:" + VariantValue.VoidValueString,
+            DataType.Dynamic => "sys:dynamic",
             DataType.Integer => "i:" + value.AsIntegerUnsafe.ToString(CultureInfo.InvariantCulture),
             DataType.String => "s:" + StringUtils.Quote(value.AsStringUnsafe, force: true),
             DataType.Boolean => "bl:" + value.AsBooleanUnsafe.ToString(CultureInfo.InvariantCulture),
@@ -128,49 +128,56 @@ public static class DataTypeUtils
             return VariantValue.Null;
         }
 
-        var type = source[..colonIndex].ToString();
+        var type = source[..colonIndex];
         var value = source[(colonIndex + 1)..];
-        if (type == "i")
+        if (type is "i")
         {
             return new VariantValue(long.Parse(value, CultureInfo.InvariantCulture));
         }
-        if (type == "s")
+        if (type is "s")
         {
             return new VariantValue(StringUtils.Unquote(value));
         }
-        if (type == "bl")
+        if (type is "bl")
         {
             return new VariantValue(bool.Parse(value));
         }
-        if (type == "fl")
+        if (type is "fl")
         {
             return new VariantValue(double.Parse(value, CultureInfo.InvariantCulture));
         }
-        if (type == "n")
+        if (type is "n")
         {
             return new VariantValue(decimal.Parse(value, CultureInfo.InvariantCulture));
         }
-        if (type == "ts")
+        if (type is "ts")
         {
             var ticks = long.Parse(value[..^2], CultureInfo.InvariantCulture);
             var kind = (DateTimeKind)int.Parse(value[^1..], CultureInfo.InvariantCulture);
             return new VariantValue(new DateTime(ticks, kind));
         }
-        if (type == "in")
+        if (type is "in")
         {
             var ticks = long.Parse(value, CultureInfo.InvariantCulture);
             return new VariantValue(new TimeSpan(ticks));
         }
-        if (type == "a")
+        if (type is "a")
         {
             return VariantValue.CreateFromObject(DeserializeArray(value));
         }
-        if (type == "m")
+        if (type is "m")
         {
             return VariantValue.CreateFromObject(DeserializeMap(value));
         }
+        if (type is "sys")
+        {
+            if (value is VariantValue.NullValueString || value is VariantValue.VoidValueString)
+            {
+                return VariantValue.Null;
+            }
+        }
 
-        throw new InvalidOperationException(string.Format(Resources.Errors.InvalidDeserializationType, type));
+        throw new InvalidOperationException(string.Format(Resources.Errors.InvalidDeserializationType, type.ToString()));
     }
 
     private static IReadOnlyList<VariantValue> DeserializeArray(ReadOnlySpan<char> source, bool strongDeserialization = true)
