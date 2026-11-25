@@ -54,7 +54,7 @@ public class MemoryConfigStorage : IConfigStorage
         return ValueTask.FromResult(VariantValue.Null);
     }
 
-    private string FormatKey(string key) => !string.IsNullOrEmpty(_pluginPrefix) ? $"{_pluginPrefix}-{key}" : key;
+    private string FormatKey(string key) => !string.IsNullOrEmpty(_pluginPrefix) ? $"{_pluginPrefix}:{key}" : key;
 
     /// <inheritdoc />
     public virtual Task SaveAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
