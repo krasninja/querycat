@@ -193,7 +193,8 @@ public partial class ThriftPluginsServer
         }
 
         /// <summary>
-        /// Get config storage that is scoped to the plugin, so every plugin has its own keys.
+        /// Get config storage for the plugin. It handles declared options types and default values.
+        /// Keys are not prefixed with the plugin name.
         /// </summary>
         /// <param name="token">Plugin token.</param>
         /// <returns>Config storage.</returns>
@@ -203,7 +204,8 @@ public partial class ThriftPluginsServer
             return new PluginConfigStorage(
                 _thriftPluginsServer._configStorage,
                 context.PluginName,
-                _thriftPluginsServer._configOptions);
+                _thriftPluginsServer._configOptions,
+                prefixKeys: false);
         }
 
         /// <inheritdoc />

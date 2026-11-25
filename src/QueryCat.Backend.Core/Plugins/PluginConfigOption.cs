@@ -40,11 +40,6 @@ public sealed class PluginConfigOption
     public string PluginName { get; set; } = string.Empty;
 
     /// <summary>
-    /// The config storage key.
-    /// </summary>
-    public string Key => GetKey(PluginName, Name);
-
-    /// <summary>
     /// Constructor.
     /// </summary>
     /// <param name="name">Option name.</param>
@@ -71,5 +66,5 @@ public sealed class PluginConfigOption
         => string.IsNullOrEmpty(pluginName) ? name : pluginName + KeySeparator + name;
 
     /// <inheritdoc />
-    public override string ToString() => Key;
+    public override string ToString() => Name;
 }

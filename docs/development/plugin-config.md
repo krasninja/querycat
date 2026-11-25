@@ -1,9 +1,9 @@
 # Plugin Configuration
 
-Plugins can store settings in the QueryCat host config storage (`config.json` in the application directory). Every plugin has its own namespace: the host prefixes all keys with the plugin name, so a plugin cannot read or overwrite keys of another plugin.
+Plugins can store settings in the QueryCat host config storage (`config.json` in the application directory). Keys are stored as is, without the plugin name prefix, so choose key names that do not clash with other plugins.
 
 ```
-plugin: ConfigStorage.SetAsync("url", "https://github.com")  ->  config.json: "QueryCat.Plugins.Github:url"
+plugin: ConfigStorage.SetAsync("url", "https://github.com")  ->  config.json: "url"
 ```
 
 ## Declare Options
@@ -41,7 +41,7 @@ For declared options the host:
 - Converts the value to the option type on set. If the value cannot be converted, an error is thrown. Use `DataType.Dynamic` to skip the conversion.
 - Returns the default value if the option is not set.
 
-Undeclared keys can still be used (f.e. to keep the plugin state). They are prefixed with the plugin name too.
+Undeclared keys can still be used (f.e. to keep the plugin state).
 
 ## Read Options
 
@@ -67,4 +67,4 @@ The value of the declared option is converted to the option type the same way as
 
 ## Limitations
 
-The keys prefixing is done by the host for plugins that run out-of-process (Thrift plugins and plugins loaded by the proxy). Plugins loaded in-process by `DotNetAssemblyPluginsLoader` (`Plugin=Assembly` build) share the host config storage directly, so their keys are not prefixed.
+Options type conversion and default values are applied by the host for plugins that run out-of-process (Thrift plugins and plugins loaded by the proxy). Plugins loaded in-process by `DotNetAssemblyPluginsLoader` (`Plugin=Assembly` build) share the host config storage directly.

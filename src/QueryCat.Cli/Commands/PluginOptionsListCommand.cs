@@ -12,7 +12,6 @@ internal sealed class PluginOptionsListCommand : BaseCommand
         string Plugin,
         string Name,
         string Type,
-        string Key,
         string DefaultValue,
         string Value,
         string Description);
@@ -45,12 +44,11 @@ internal sealed class PluginOptionsListCommand : BaseCommand
             var items = new List<PluginOptionStatus>(options.Count);
             foreach (var option in options)
             {
-                var value = await root.Thread.ConfigStorage.GetAsync(option.Key, cancellationToken);
+                var value = await root.Thread.ConfigStorage.GetAsync(option.Name, cancellationToken);
                 items.Add(new PluginOptionStatus(
                     option.PluginName,
                     option.Name,
                     option.Type.ToString(),
-                    option.Key,
                     option.DefaultValue.ToString(CultureInfo.InvariantCulture),
                     value.ToString(CultureInfo.InvariantCulture),
                     option.Description));
@@ -61,7 +59,6 @@ internal sealed class PluginOptionsListCommand : BaseCommand
                     .AddProperty("plugin", p => p.Plugin, "Plugin name.")
                     .AddProperty("name", p => p.Name, "Option name.")
                     .AddProperty("type", p => p.Type, "Option value type.")
-                    .AddProperty("key", p => p.Key, "Config storage key.")
                     .AddProperty("default", p => p.DefaultValue, "Default value.")
                     .AddProperty("value", p => p.Value, "Current value.")
                     .AddProperty("description", p => p.Description, "Option description.")

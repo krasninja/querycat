@@ -13,7 +13,7 @@ public sealed class PluginConfigOptionsRegistry : IPluginConfigOptionsRegistry
     public void Register(PluginConfigOption option)
     {
         ArgumentNullException.ThrowIfNull(option);
-        _options[option.Key] = option;
+        _options[option.Name] = option;
     }
 
     /// <inheritdoc />
