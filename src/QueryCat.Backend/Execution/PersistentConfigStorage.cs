@@ -20,7 +20,8 @@ public class PersistentConfigStorage : MemoryConfigStorage
     /// Constructor.
     /// </summary>
     /// <param name="configFile">Configuration file.</param>
-    public PersistentConfigStorage(string configFile)
+    /// <param name="pluginPrefix">Plugin prefix.</param>
+    public PersistentConfigStorage(string configFile, string? pluginPrefix = null) : base(pluginPrefix)
     {
         _configFile = configFile;
     }
