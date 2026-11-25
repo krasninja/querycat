@@ -270,7 +270,7 @@
     <value>No stored credentials for '{0}'.</value>
   </data>
   <data name="PluginOptionsCommand_Description" xml:space="preserve">
-    <value>Manage configuration options declared by plugins.</value>
+    <value>Manage configuration options.</value>
   </data>
   <data name="PluginOptionsCommand_PluginDescription" xml:space="preserve">
     <value>Plugin name.</value>
@@ -279,16 +279,16 @@
     <value>Option name.</value>
   </data>
   <data name="PluginOptionsGetCommand_Description" xml:space="preserve">
-    <value>Get the current value of the plugin option. The default value is returned if the option is not set.</value>
+    <value>Get the current value of the option. The default value is returned if the option is not set.</value>
   </data>
   <data name="PluginOptionsSetCommand_Description" xml:space="preserve">
-    <value>Set the plugin option value.</value>
+    <value>Set the option value.</value>
   </data>
   <data name="PluginOptionsSetCommand_ValueDescription" xml:space="preserve">
     <value>Option value. It is converted to the option type.</value>
   </data>
   <data name="PluginOptionsUnsetCommand_Description" xml:space="preserve">
-    <value>Remove the plugin option value, so the default value is used.</value>
+    <value>Remove the option value, so the default value is used.</value>
   </data>
   <data name="PluginOptionsSet_Success" xml:space="preserve">
     <value>Option '{0}' is set to '{1}'.</value>

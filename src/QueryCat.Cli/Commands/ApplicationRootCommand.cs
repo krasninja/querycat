@@ -23,7 +23,15 @@ internal sealed class ApplicationRootCommand : RootCommand
                 new AgentGetCommand(),
                 new AgentSetCommand(),
             },
+            new Command("options", Resources.Messages.PluginOptionsCommand_Description)
+            {
+                new OptionsGetCommand(),
+                new OptionsSetCommand(),
+                new OptionsUnsetCommand(),
+            }
+        );
 #if ENABLE_PLUGINS
+        Add(
             new Command("plugin", Resources.Messages.PluginCommand_Description)
             {
                 new PluginInstallCommand(),
@@ -31,13 +39,7 @@ internal sealed class ApplicationRootCommand : RootCommand
                 new PluginRemoveCommand(),
                 new PluginUpdateCommand(),
                 new PluginDebugCommand(),
-                new Command("options", Resources.Messages.PluginOptionsCommand_Description)
-                {
-                    new PluginOptionsListCommand(),
-                    new PluginOptionsGetCommand(),
-                    new PluginOptionsSetCommand(),
-                    new PluginOptionsUnsetCommand(),
-                },
+                new PluginOptionsCommand(),
                 new Command("auth", Resources.Messages.PluginAuthCommand_Description)
                 {
                     new PluginAuthListCommand(),

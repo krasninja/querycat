@@ -6,7 +6,7 @@ using QueryCat.Backend.Core.Types;
 namespace QueryCat.Cli.Commands;
 
 #if ENABLE_PLUGINS
-internal sealed class PluginOptionsListCommand : BaseCommand
+internal sealed class PluginOptionsCommand : BaseCommand
 {
     private sealed record PluginOptionStatus(
         string Plugin,
@@ -17,7 +17,7 @@ internal sealed class PluginOptionsListCommand : BaseCommand
         string Description);
 
     /// <inheritdoc />
-    public PluginOptionsListCommand() : base("list", Resources.Messages.PluginOptionsListCommand_Description)
+    public PluginOptionsCommand() : base("options", Resources.Messages.PluginOptionsListCommand_Description)
     {
         var pluginArgument = new Argument<string>("plugin")
         {

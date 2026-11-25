@@ -6,11 +6,10 @@ using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Cli.Commands;
 
-#if ENABLE_PLUGINS
-internal sealed class PluginOptionsSetCommand : BasePluginOptionCommand
+internal sealed class OptionsSetCommand : BaseOptionCommand
 {
     /// <inheritdoc />
-    public PluginOptionsSetCommand() : base("set", Resources.Messages.PluginOptionsSetCommand_Description)
+    public OptionsSetCommand() : base("set", Resources.Messages.PluginOptionsSetCommand_Description)
     {
         var valueArgument = new Argument<string>("value")
         {
@@ -29,18 +28,15 @@ internal sealed class PluginOptionsSetCommand : BasePluginOptionCommand
             var target = await GetOptionAsync(root.Thread, parseResult, allowUndeclared: true, cancellationToken);
             if (target.Option == null)
             {
-                var logger = Application.LoggerFactory.CreateLogger(nameof(PluginOptionsSetCommand));
-                logger.LogWarning("Option '{Option}' is not declared by plugin '{Plugin}'.",
-                    target.Name, target.Storage.PluginName);
+                var logger = Application.LoggerFactory.CreateLogger(nameof(OptionsSetCommand));
+                logger.LogWarning("Option '{Option}' is not declared by any plugin.", target.Name);
             }
-            await target.Storage.SetAsync(target.Name, new VariantValue(parseResult.GetRequiredValue(valueArgument)),
-                cancellationToken);
+            await target.SetAsync(new VariantValue(parseResult.GetRequiredValue(valueArgument)), cancellationToken);
             await target.Storage.SaveAsync(cancellationToken);
 
-            var value = await target.Storage.GetAsync(target.Name, cancellationToken);
-            Console.WriteLine(Resources.Messages.PluginOptionsSet_Success, target.Key,
+            var value = await target.GetAsync(cancellationToken);
+            Console.WriteLine(Resources.Messages.PluginOptionsSet_Success, target.Name,
                 value.ToString(CultureInfo.InvariantCulture));
         });
     }
 }
-#endif

@@ -2,11 +2,10 @@ using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Cli.Commands;
 
-#if ENABLE_PLUGINS
-internal sealed class PluginOptionsUnsetCommand : BasePluginOptionCommand
+internal sealed class OptionsUnsetCommand : BaseOptionCommand
 {
     /// <inheritdoc />
-    public PluginOptionsUnsetCommand() : base("unset", Resources.Messages.PluginOptionsUnsetCommand_Description)
+    public OptionsUnsetCommand() : base("unset", Resources.Messages.PluginOptionsUnsetCommand_Description)
     {
         this.SetAction(async (parseResult, cancellationToken) =>
         {
@@ -16,11 +15,10 @@ internal sealed class PluginOptionsUnsetCommand : BasePluginOptionCommand
             applicationOptions.InitializeLogger();
             await using var root = await applicationOptions.CreateApplicationRootAsync(cancellationToken: cancellationToken);
 
-            var target = await GetOptionAsync(root.Thread, parseResult, cancellationToken: cancellationToken);
-            await target.Storage.SetAsync(target.Name, VariantValue.Null, cancellationToken);
+            var target = await GetOptionAsync(root.Thread, parseResult, allowUndeclared: true, cancellationToken);
+            await target.SetAsync(VariantValue.Null, cancellationToken);
             await target.Storage.SaveAsync(cancellationToken);
-            Console.WriteLine(Resources.Messages.PluginOptionsUnset_Success, target.Key);
+            Console.WriteLine(Resources.Messages.PluginOptionsUnset_Success, target.Name);
         });
     }
 }
-#endif

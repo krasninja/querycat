@@ -53,17 +53,17 @@ var url = (await QueryContext.ConfigStorage.GetAsync("url", cancellationToken)).
 
 ## Manage Options
 
-Declared options are stored in the plugins cache, so they can be listed without starting the plugin. Users can manage option values with `qcat plugin options` commands. The plugin can be specified by its short name:
+Declared options are stored in the plugins cache, so they can be listed without starting the plugin. Users can list options with `qcat plugin options [plugin]` (the plugin can be specified by its short name) and manage option values with `qcat options` commands. Options are addressed by name only:
 
 ```
-qcat plugin options list
-qcat plugin options list github
-qcat plugin options get github url
-qcat plugin options set github url https://github.example.com/api
-qcat plugin options unset github url
+qcat plugin options
+qcat plugin options github
+qcat options get url
+qcat options set url https://github.example.com/api
+qcat options unset url
 ```
 
-The value of the declared option is converted to the option type the same way as it is done for the plugin. `set` also accepts undeclared options: the value is stored as a string and a warning is logged. `get` and `unset` work with declared options only.
+The value of the declared option is converted to the option type the same way as it is done for the plugin. `set` also accepts undeclared options: the value is stored as a string and a warning is logged. `unset` accepts undeclared options too, `get` works with declared options only.
 
 ## Limitations
 

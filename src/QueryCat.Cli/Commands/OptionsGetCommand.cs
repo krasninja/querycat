@@ -2,11 +2,10 @@ using System.Globalization;
 
 namespace QueryCat.Cli.Commands;
 
-#if ENABLE_PLUGINS
-internal sealed class PluginOptionsGetCommand : BasePluginOptionCommand
+internal sealed class OptionsGetCommand : BaseOptionCommand
 {
     /// <inheritdoc />
-    public PluginOptionsGetCommand() : base("get", Resources.Messages.PluginOptionsGetCommand_Description)
+    public OptionsGetCommand() : base("get", Resources.Messages.PluginOptionsGetCommand_Description)
     {
         this.SetAction(async (parseResult, cancellationToken) =>
         {
@@ -17,9 +16,8 @@ internal sealed class PluginOptionsGetCommand : BasePluginOptionCommand
             await using var root = await applicationOptions.CreateApplicationRootAsync(cancellationToken: cancellationToken);
 
             var target = await GetOptionAsync(root.Thread, parseResult, cancellationToken: cancellationToken);
-            var value = await target.Storage.GetAsync(target.Name, cancellationToken);
+            var value = await target.GetAsync(cancellationToken);
             Console.WriteLine(value.ToString(CultureInfo.InvariantCulture));
         });
     }
 }
-#endif
