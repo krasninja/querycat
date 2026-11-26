@@ -25,7 +25,12 @@ public sealed class McpServer
     /// </summary>
     public const long MaxResourceSize = 10 * 1024 * 1024;
 
+    private const string NotificationToolsListChanged = "notifications/tools/list_changed";
+    private const string NotificationResourcesListChanged = "notifications/resources/list_changed";
+
     private static readonly UTF8Encoding _strictUtf8Encoding = new(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true);
+
+    private bool _initialized;
 
     private readonly IExecutionThread _executionThread;
     private readonly IMcpTransport _mcpTransport;
@@ -46,21 +51,64 @@ public sealed class McpServer
     }
 
     /// <summary>
-    /// Register a tool with the server.
+    /// Register a tool with the server. If the tool list changes after the initialization,
+    /// the connected clients are notified with "notifications/tools/list_changed".
     /// </summary>
     /// <param name="tool">The tool model.</param>
     public void AddTool(IMcpTool tool)
     {
         _tools[tool.Metadata.Name] = tool;
+        _ = SendListChangedNotificationAsync(NotificationToolsListChanged);
+    }
+
+    /// <summary>
+    /// Remove tool.
+    /// </summary>
+    /// <param name="tool">The tool model.</param>
+    public void RemoveTool(IMcpTool tool)
+    {
+        _tools.Remove(tool.Metadata.Name);
+        _ = SendListChangedNotificationAsync(NotificationToolsListChanged);
     }
 
     /// <summary>
     /// Register a resource with the server. The resource is identified by its URI.
+    /// If the resource list changes after the initialization, the connected clients are
+    /// notified with "notifications/resources/list_changed".
     /// </summary>
     /// <param name="resource">The resource.</param>
     public void AddResource(IMcpResource resource)
     {
         _resources[resource.Metadata.Uri] = resource;
+        _ = SendListChangedNotificationAsync(NotificationResourcesListChanged);
+    }
+
+    /// <summary>
+    /// Remove resource.
+    /// </summary>
+    /// <param name="resource">The resource model.</param>
+    public void RemoveResource(IMcpResource resource)
+    {
+        _resources.Remove(resource.Metadata.Name);
+        _ = SendListChangedNotificationAsync(NotificationResourcesListChanged);
+    }
+
+    private async Task SendListChangedNotificationAsync(string method)
+    {
+        // Notifications are only allowed after the initialization handshake is complete.
+        if (!_initialized)
+        {
+            return;
+        }
+
+        try
+        {
+            await _mcpTransport.SendNotificationAsync(new JsonRpcNotification { Method = method });
+        }
+        catch (Exception e) when (e is not OperationCanceledException)
+        {
+            _logger.LogWarning(e, "Error sending '{Method}' notification.", method);
+        }
     }
 
     /// <summary>
@@ -74,6 +122,10 @@ public sealed class McpServer
     {
         if (rpcRequest.IsNotification)
         {
+            if (rpcRequest.Method == "notifications/initialized")
+            {
+                _initialized = true;
+            }
             _logger.LogTrace("Notification '{Method}'.", rpcRequest.Method);
             return new JsonRpcResponse();
         }
@@ -147,15 +199,13 @@ public sealed class McpServer
             {
                 Tools = new McpServerToolsCapabilityModel
                 {
-                    ListChanged = false,
+                    ListChanged = true,
                 },
-                Resources = _resources.Count > 0
-                    ? new McpServerResourcesCapabilityModel
-                    {
-                        Subscribe = false,
-                        ListChanged = false,
-                    }
-                    : null,
+                Resources = new McpServerResourcesCapabilityModel
+                {
+                    Subscribe = false,
+                    ListChanged = true,
+                },
             },
             ServerInfo = new McpImplementationModel
             {

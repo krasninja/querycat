@@ -13,6 +13,7 @@ namespace QueryCat.Mcp;
 [JsonSerializable(typeof(JsonRpcRequest))]
 [JsonSerializable(typeof(JsonRpcResponse))]
 [JsonSerializable(typeof(JsonRpcErrorResponse))]
+[JsonSerializable(typeof(JsonRpcNotification))]
 [JsonSerializable(typeof(McpInitializeResultModel))]
 [JsonSerializable(typeof(McpImplementationModel))]
 [JsonSerializable(typeof(McpServerCapabilitiesModel))]

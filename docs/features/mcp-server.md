@@ -33,6 +33,10 @@ $ qcat mcp -r nginx=file:///var/log/nginx/access.log -r users=/home/user/users.c
 
 Files must exist on server start. Text content (by MIME type or if the content is a valid UTF-8 text) is returned as text, other content as base64-encoded blob. The max resource size is 10 MB.
 
+## List Changed Notifications
+
+The server declares the `listChanged` capability for both tools and resources. When the tool or resource list changes at runtime (for example, a plugin registers a new tool), the server sends `notifications/tools/list_changed` or `notifications/resources/list_changed` to connected clients, so they can re-fetch the lists. With the stdio transport the notification is written to stdout; with the HTTP transport it is delivered on the standalone SSE stream that the client opens with a `GET` request (`Accept: text/event-stream`) to the endpoint.
+
 ## Client Configuration
 
 Example of the stdio server configuration for an MCP client:

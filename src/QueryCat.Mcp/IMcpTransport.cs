@@ -35,4 +35,12 @@ public interface IMcpTransport
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Awaitable task.</returns>
     Task SendResponseAsync(JsonRpcFrame response, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Send a server-initiated JSON RPC notification to an agent.
+    /// </summary>
+    /// <param name="notification">JSON RPC notification.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Awaitable task.</returns>
+    Task SendNotificationAsync(JsonRpcNotification notification, CancellationToken cancellationToken = default);
 }

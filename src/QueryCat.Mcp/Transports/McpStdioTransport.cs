@@ -109,6 +109,21 @@ public sealed class McpStdioTransport : IMcpTransport, IAsyncDisposable
         return Task.CompletedTask;
     }
 
+    /// <inheritdoc />
+    public Task SendNotificationAsync(JsonRpcNotification notification, CancellationToken cancellationToken = default)
+    {
+        EnsureStarted();
+
+        lock (_writeLock)
+        {
+            var json = JsonSerializer.Serialize(notification, SourceGenerationContext.Default.JsonRpcNotification);
+            Console.Out.WriteLine(json);
+            Console.Out.Flush();
+        }
+
+        return Task.CompletedTask;
+    }
+
     private void EnsureStarted()
     {
         if (!_started)

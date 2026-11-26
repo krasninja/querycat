@@ -1,5 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using System.Net;
+using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
@@ -21,6 +22,7 @@ public sealed class McpHttpTransport : IMcpTransport, IAsyncDisposable
     private HttpListener? _httpListener;
     private readonly string? _allowOrigin;
     private readonly ConcurrentDictionary<Guid, HttpListenerContext> _contexts = new();
+    private readonly ConcurrentDictionary<Guid, SseClient> _sseClients = new();
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(McpHttpTransport));
 
     /// <summary>
@@ -56,6 +58,7 @@ public sealed class McpHttpTransport : IMcpTransport, IAsyncDisposable
     /// <inheritdoc />
     public Task StopAsync(CancellationToken cancellationToken)
     {
+        CloseSseClients();
         if (_httpListener != null)
         {
             _httpListener.Close();
@@ -128,6 +131,40 @@ public sealed class McpHttpTransport : IMcpTransport, IAsyncDisposable
         await SendResponseInternalAsync(response, context, HttpStatusCode.OK, cancellationToken).ConfigureAwait(false);
     }
 
+    /// <inheritdoc />
+    public async Task SendNotificationAsync(JsonRpcNotification notification, CancellationToken cancellationToken = default)
+    {
+        _ = EnsureStarted();
+        if (_sseClients.IsEmpty)
+        {
+            // The client did not open a standalone SSE stream (GET), there is no channel to push to.
+            _logger.LogDebug("No open notification streams, skip '{Method}' notification.", notification.Method);
+            return;
+        }
+
+        var json = JsonSerializer.Serialize(notification, SourceGenerationContext.Default.JsonRpcNotification);
+        var payload = Encoding.UTF8.GetBytes($"event: message\ndata: {json}\n\n");
+        foreach (var (id, client) in _sseClients)
+        {
+            await client.WriteLock.WaitAsync(cancellationToken);
+            try
+            {
+                await client.Context.Response.OutputStream.WriteAsync(payload, cancellationToken);
+                await client.Context.Response.OutputStream.FlushAsync(cancellationToken);
+            }
+            catch (Exception e) when (e is HttpListenerException or ObjectDisposedException or IOException)
+            {
+                // The client disconnected, drop the stream.
+                _logger.LogDebug(e, "Notification stream {StreamId} is closed.", id);
+                RemoveSseClient(id);
+            }
+            finally
+            {
+                client.WriteLock.Release();
+            }
+        }
+    }
+
     private static async Task SendResponseInternalAsync(
         JsonRpcFrame response,
         HttpListenerContext context,
@@ -168,12 +205,87 @@ public sealed class McpHttpTransport : IMcpTransport, IAsyncDisposable
         return _httpListener;
     }
 
+    private static bool IsSseGetRequest(HttpListenerRequest request)
+        => request.HttpMethod == HttpMethod.Get.Method
+           && (request.Headers["Accept"]?.Contains("text/event-stream", StringComparison.OrdinalIgnoreCase) ?? false);
+
+    private async Task OpenSseStreamAsync(HttpListenerContext context, CancellationToken cancellationToken)
+    {
+        var response = context.Response;
+        response.StatusCode = (int)HttpStatusCode.OK;
+        response.ContentType = "text/event-stream";
+        response.Headers["Cache-Control"] = "no-cache";
+        response.SendChunked = true;
+
+        var client = new SseClient(context);
+        _sseClients[client.Id] = client;
+        _logger.LogDebug("[{Address}]: notification stream {StreamId} is open.",
+            context.Request.RemoteEndPoint.Address, client.Id);
+
+        // Send a comment line to flush the headers and establish the stream.
+        var payload = Encoding.UTF8.GetBytes(": connected\n\n");
+        try
+        {
+            await response.OutputStream.WriteAsync(payload, cancellationToken);
+            await response.OutputStream.FlushAsync(cancellationToken);
+        }
+        catch (Exception e) when (e is HttpListenerException or ObjectDisposedException or IOException)
+        {
+            RemoveSseClient(client.Id);
+        }
+    }
+
+    private void RemoveSseClient(Guid id)
+    {
+        if (_sseClients.TryRemove(id, out var client))
+        {
+            client.Close();
+        }
+    }
+
+    private void CloseSseClients()
+    {
+        foreach (var (id, _) in _sseClients)
+        {
+            RemoveSseClient(id);
+        }
+    }
+
+    /// <summary>
+    /// Client that listens for server-initiated messages on a standalone SSE stream.
+    /// </summary>
+    private sealed class SseClient
+    {
+        public Guid Id { get; } = Guid.NewGuid();
+
+        public HttpListenerContext Context { get; }
+
+        public SemaphoreSlim WriteLock { get; } = new(1, 1);
+
+        public SseClient(HttpListenerContext context)
+        {
+            Context = context;
+        }
+
+        public void Close()
+        {
+            try
+            {
+                Context.Response.Close();
+            }
+            catch (Exception e) when (e is HttpListenerException or ObjectDisposedException)
+            {
+                // The client may already be disconnected.
+            }
+        }
+    }
+
     private async Task<JsonRpcRequest?> GetRequestAsync(HttpListenerContext context, CancellationToken cancellationToken)
     {
         var response = context.Response;
         response.Headers["Server"] = Application.GetProductFullNameForWeb();
 
-        if (context.Request.HttpMethod != HttpMethod.Post.Method)
+        if (context.Request.HttpMethod != HttpMethod.Post.Method && !IsSseGetRequest(context.Request))
         {
             response.StatusCode = (int)HttpStatusCode.MethodNotAllowed;
             response.Close();
@@ -187,6 +299,13 @@ public sealed class McpHttpTransport : IMcpTransport, IAsyncDisposable
                 context.Request.RemoteEndPoint.Address, context.Request.Headers["Origin"]);
             response.StatusCode = (int)HttpStatusCode.Forbidden;
             response.Close();
+            return null;
+        }
+
+        // Standalone SSE stream for server-initiated messages (notifications).
+        if (context.Request.HttpMethod == HttpMethod.Get.Method)
+        {
+            await OpenSseStreamAsync(context, cancellationToken);
             return null;
         }
 
@@ -239,6 +358,7 @@ public sealed class McpHttpTransport : IMcpTransport, IAsyncDisposable
     /// <inheritdoc />
     public ValueTask DisposeAsync()
     {
+        CloseSseClients();
         _httpListener?.Close();
         _httpListener = null;
         return ValueTask.CompletedTask;
