@@ -133,6 +133,7 @@ internal sealed partial class SelectPlanner
             prefetch: false,
             cancellationToken);
         await QueryContext_FillQueryContextConditionsAsync(context, querySpecificationNode, cancellationToken);
+        QueryContext_SetModificationTarget(context);
         context.SetIterator(resultRowsIterator);
     }
 

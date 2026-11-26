@@ -16,7 +16,7 @@ namespace QueryCat.Plugins.Client.Remote;
 
 public sealed class ThriftRemoteRowsInput : IRowsInputUpdate, IRowsInputDelete, IAsyncDisposable
 {
-    private const int DefaultLoadCount = 1;
+    private const int DefaultLoadCount = 100;
 
     private readonly IThriftSessionProvider _sessionProvider;
     private readonly int _objectHandle;
@@ -26,6 +26,8 @@ public sealed class ThriftRemoteRowsInput : IRowsInputUpdate, IRowsInputDelete, 
     private readonly DynamicBuffer<VariantValue> _cache = new(chunkSize: 64);
 
     private IReadOnlyList<KeyColumn>? _cachedKeyColumns;
+    private long _requestedRowsCount;
+    private bool _noMoreRows;
 
     /// <inheritdoc />
     public string[] UniqueKey { get; private set; } = [];
@@ -120,6 +122,7 @@ public sealed class ThriftRemoteRowsInput : IRowsInputUpdate, IRowsInputDelete, 
         _cachedKeyColumns = null;
         using var session = await _sessionProvider.GetAsync(cancellationToken);
         await session.Client.RowsSet_CloseAsync(_token, _objectHandle, cancellationToken);
+        ClearReadState();
     }
 
     /// <inheritdoc />
@@ -128,7 +131,40 @@ public sealed class ThriftRemoteRowsInput : IRowsInputUpdate, IRowsInputDelete, 
         _cachedKeyColumns = null;
         using var session = await _sessionProvider.GetAsync(cancellationToken);
         await session.Client.RowsSet_ResetAsync(_token, _objectHandle, cancellationToken);
+        ClearReadState();
+    }
+
+    /// <summary>
+    /// Drop the rows read ahead. Must be called when the remote source position changes.
+    /// </summary>
+    private void ClearReadState()
+    {
         _cache.Clear();
+        _requestedRowsCount = 0;
+        _noMoreRows = false;
+    }
+
+    /// <summary>
+    /// Get the number of rows to request from the remote source.
+    /// </summary>
+    /// <returns>Rows count.</returns>
+    private int GetLoadCount()
+    {
+        // UPDATE and DELETE are applied to the current row of the remote source, so it must stay on the same row
+        // as we are. The same is true when there is no query context: the caller might modify rows directly.
+        if (_queryContext is NullQueryContext || _queryContext.IsModificationTarget)
+        {
+            return 1;
+        }
+
+        // Do not read more than the query needs.
+        var limit = _queryContext.QueryInfo.Limit;
+        if (limit.HasValue)
+        {
+            var remaining = limit.Value - _requestedRowsCount;
+            return (int)Math.Clamp(remaining, 1, _loadCount);
+        }
+        return _loadCount;
     }
 
     /// <inheritdoc />
@@ -159,12 +195,21 @@ public sealed class ThriftRemoteRowsInput : IRowsInputUpdate, IRowsInputDelete, 
             }
         }
 
-        using var session = await _sessionProvider.GetAsync(cancellationToken);
-        var result = await session.Client.RowsSet_GetRowsAsync(_token, _objectHandle, _loadCount, cancellationToken);
-        if (result.Values == null || result.Values.Count == 0)
+        if (_noMoreRows)
         {
             return false;
         }
+
+        var loadCount = GetLoadCount();
+        using var session = await _sessionProvider.GetAsync(cancellationToken);
+        var result = await session.Client.RowsSet_GetRowsAsync(_token, _objectHandle, loadCount, cancellationToken);
+        _requestedRowsCount += loadCount;
+        if (result.Values == null || result.Values.Count == 0)
+        {
+            _noMoreRows = true;
+            return false;
+        }
+        _noMoreRows = !result.HasMore;
 
         var values = result.Values.Select(SdkConvert.Convert).ToArray();
         _cache.Write(values);
@@ -201,6 +246,7 @@ public sealed class ThriftRemoteRowsInput : IRowsInputUpdate, IRowsInputDelete, 
             await session.Client.RowsSet_SetKeyColumnValueAsync(_token, _objectHandle, columnIndex, operation.ToString(),
                 SdkConvert.Convert(value), ct);
         });
+        ClearReadState();
     }
 
     /// <inheritdoc />
@@ -211,6 +257,7 @@ public sealed class ThriftRemoteRowsInput : IRowsInputUpdate, IRowsInputDelete, 
             using var session = await _sessionProvider.GetAsync(ct);
             await session.Client.RowsSet_UnsetKeyColumnValueAsync(_token, _objectHandle, columnIndex, operation.ToString(), ct);
         });
+        ClearReadState();
     }
 
     /// <inheritdoc />

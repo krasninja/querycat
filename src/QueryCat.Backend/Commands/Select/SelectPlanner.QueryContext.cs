@@ -76,6 +76,16 @@ internal sealed partial class SelectPlanner
         }
     }
 
+    private void QueryContext_SetModificationTarget(SelectCommandContext context)
+    {
+        var isModificationTarget = context.Parent == null
+            && _operationIntentionType is OperationIntentionType.Update or OperationIntentionType.Delete;
+        foreach (var inputContext in context.Inputs)
+        {
+            inputContext.IsModificationTarget = isModificationTarget;
+        }
+    }
+
     /// <summary>
     /// A condition is only a safe key condition under a pure AND chain.
     /// </summary>
