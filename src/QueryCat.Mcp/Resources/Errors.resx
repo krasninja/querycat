@@ -87,4 +87,22 @@
   <data name="McpUnsupportedResourceScheme" xml:space="preserve">
     <value>Unsupported resource scheme '{0}', only file, http and https are supported.</value>
   </data>
+  <data name="McpUnsupportedProtocolVersion" xml:space="preserve">
+    <value>Unsupported protocol version '{0}', supported versions: {1}.</value>
+  </data>
+  <data name="McpRequestMetaRequired" xml:space="preserve">
+    <value>The request '_meta' must contain '{0}' field.</value>
+  </data>
+  <data name="McpHeaderMissing" xml:space="preserve">
+    <value>Required header '{0}' is missing.</value>
+  </data>
+  <data name="McpHeaderMismatch" xml:space="preserve">
+    <value>Header mismatch: {0} header value '{1}' does not match body value '{2}'.</value>
+  </data>
+  <data name="McpHeaderInvalid" xml:space="preserve">
+    <value>Header '{0}' value is malformed.</value>
+  </data>
+  <data name="McpSubscriptionFilterRequired" xml:space="preserve">
+    <value>Subscription notifications filter is required.</value>
+  </data>
 </root>

@@ -4,9 +4,9 @@ namespace QueryCat.Mcp.Models;
 /// The server's response to a <c>resources/list</c> request.
 /// </summary>
 /// <remarks>
-/// https://modelcontextprotocol.io/specification/2025-11-25/server/resources#listing-resources.
+/// https://modelcontextprotocol.io/specification/2026-07-28/server/resources#listing-resources.
 /// </remarks>
-public class McpListResourcesResultModel
+public class McpListResourcesResultModel : McpCacheableResultModel
 {
     /// <summary>
     /// The list of resources offered by the server.

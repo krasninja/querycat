@@ -6,9 +6,9 @@ namespace QueryCat.Mcp.Models;
 /// The server's response to a <c>resources/templates/list</c> request.
 /// </summary>
 /// <remarks>
-/// https://modelcontextprotocol.io/specification/2025-11-25/server/resources#resource-templates.
+/// https://modelcontextprotocol.io/specification/2026-07-28/server/resources#resource-templates.
 /// </remarks>
-public class McpListResourceTemplatesResultModel
+public class McpListResourceTemplatesResultModel : McpCacheableResultModel
 {
     /// <summary>
     /// The list of resource templates. QueryCat does not provide templates yet.

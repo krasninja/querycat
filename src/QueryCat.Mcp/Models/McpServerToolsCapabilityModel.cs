@@ -5,7 +5,7 @@ namespace QueryCat.Mcp.Models;
 /// notifications for tool list changes.
 /// </summary>
 /// <remarks>
-/// https://modelcontextprotocol.io/specification/2025-11-25/server/tools#capabilities.
+/// https://modelcontextprotocol.io/specification/2026-07-28/server/tools#capabilities.
 /// </remarks>
 public class McpServerToolsCapabilityModel
 {

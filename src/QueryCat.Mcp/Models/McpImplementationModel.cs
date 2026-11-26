@@ -4,7 +4,7 @@ namespace QueryCat.Mcp.Models;
 /// Describes the name and version of a MCP implementation.
 /// </summary>
 /// <remarks>
-/// https://modelcontextprotocol.io/specification/2025-03-26/basic/utilities#implementation.
+/// https://modelcontextprotocol.io/specification/2026-07-28/schema#implementation.
 /// </remarks>
 public class McpImplementationModel
 {

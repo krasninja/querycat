@@ -4,7 +4,7 @@ namespace QueryCat.Mcp.Models;
 /// A link to a resource returned from a tool call.
 /// </summary>
 /// <remarks>
-/// https://modelcontextprotocol.io/specification/2025-11-25/server/tools#resourcelink.
+/// https://modelcontextprotocol.io/specification/2026-07-28/server/tools#resourcelink.
 /// </remarks>
 public class McpToolResourceLinkModel : McpToolContentModel
 {

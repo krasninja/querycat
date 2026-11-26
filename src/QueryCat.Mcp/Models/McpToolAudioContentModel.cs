@@ -4,7 +4,7 @@ namespace QueryCat.Mcp.Models;
 /// Audio content returned from a tool call.
 /// </summary>
 /// <remarks>
-/// https://modelcontextprotocol.io/specification/2025-11-25/server/tools#audiocontent.
+/// https://modelcontextprotocol.io/specification/2026-07-28/server/tools#audiocontent.
 /// </remarks>
 public sealed class McpToolAudioContentModel : McpToolContentModel
 {

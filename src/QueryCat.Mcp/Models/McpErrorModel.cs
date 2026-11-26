@@ -35,9 +35,9 @@ public sealed class McpErrorModel
     // https://modelcontextprotocol.io/specification/2026-07-28/basic#error-codes
 
     /// <summary>
-    /// The requested resource was not found.
+    /// The requested resource was not found (legacy protocol versions, 2025-11-25 and earlier).
     /// </summary>
-    public const int ErrorCodeResourceNotFound = -32002;
+    public const int ErrorCodeLegacyResourceNotFound = -32002;
 
     /// <summary>
     /// HTTP headers do not match the request body.

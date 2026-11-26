@@ -1,7 +1,7 @@
 namespace QueryCat.Mcp.Models;
 
 /// <summary>
-/// Result of the initialize request returned by the server.
+/// Result of the initialize request returned by the server (legacy protocol versions, 2025-11-25 and earlier).
 /// </summary>
 /// <remarks>
 /// https://modelcontextprotocol.io/specification/2025-11-25/basic/lifecycle#initialization.

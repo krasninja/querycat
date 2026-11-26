@@ -7,7 +7,7 @@ namespace QueryCat.Mcp.Models;
 /// <c>type</c> discriminator property.
 /// </summary>
 /// <remarks>
-/// https://modelcontextprotocol.io/specification/2025-11-25/server/tools#content.
+/// https://modelcontextprotocol.io/specification/2026-07-28/server/tools#content.
 /// </remarks>
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "type")]
 [JsonDerivedType(typeof(McpToolTextContentModel), "text")]

@@ -4,7 +4,7 @@ namespace QueryCat.Mcp.Models;
 /// Image content returned from a tool call.
 /// </summary>
 /// <remarks>
-/// https://modelcontextprotocol.io/specification/2025-11-25/server/tools#imagecontent.
+/// https://modelcontextprotocol.io/specification/2026-07-28/server/tools#imagecontent.
 /// </remarks>
 public sealed class McpToolImageContentModel : McpToolContentModel
 {

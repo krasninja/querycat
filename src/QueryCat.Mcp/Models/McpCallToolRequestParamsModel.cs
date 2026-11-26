@@ -6,7 +6,7 @@ namespace QueryCat.Mcp.Models;
 /// Parameters for a <c>tools/call</c> request sent by the client.
 /// </summary>
 /// <remarks>
-/// https://modelcontextprotocol.io/specification/2025-11-25/server/tools#calling-tools.
+/// https://modelcontextprotocol.io/specification/2026-07-28/server/tools#calling-tools.
 /// </remarks>
 public class McpCallToolRequestParamsModel
 {

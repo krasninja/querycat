@@ -227,5 +227,59 @@ namespace QueryCat.Mcp.Resources {
                 return ResourceManager.GetString("McpUnsupportedResourceScheme", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Unsupported protocol version '{0}', supported versions: {1}..
+        /// </summary>
+        internal static string McpUnsupportedProtocolVersion {
+            get {
+                return ResourceManager.GetString("McpUnsupportedProtocolVersion", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The request '_meta' must contain '{0}' field..
+        /// </summary>
+        internal static string McpRequestMetaRequired {
+            get {
+                return ResourceManager.GetString("McpRequestMetaRequired", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Required header '{0}' is missing..
+        /// </summary>
+        internal static string McpHeaderMissing {
+            get {
+                return ResourceManager.GetString("McpHeaderMissing", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Header mismatch: {0} header value '{1}' does not match body value '{2}'..
+        /// </summary>
+        internal static string McpHeaderMismatch {
+            get {
+                return ResourceManager.GetString("McpHeaderMismatch", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Header '{0}' value is malformed..
+        /// </summary>
+        internal static string McpHeaderInvalid {
+            get {
+                return ResourceManager.GetString("McpHeaderInvalid", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Subscription notifications filter is required..
+        /// </summary>
+        internal static string McpSubscriptionFilterRequired {
+            get {
+                return ResourceManager.GetString("McpSubscriptionFilterRequired", resourceCulture);
+            }
+        }
     }
 }

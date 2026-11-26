@@ -7,7 +7,7 @@ namespace QueryCat.Mcp.Models;
 /// such as files, database schemas, or application-specific information.
 /// </summary>
 /// <remarks>
-/// https://modelcontextprotocol.io/specification/2025-11-25/server/resources#resource.
+/// https://modelcontextprotocol.io/specification/2026-07-28/server/resources#resource.
 /// </remarks>
 public class McpResourceModel
 {

@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace QueryCat.Mcp.Models;
 
 /// <summary>
@@ -22,4 +24,10 @@ public class McpResultModel
     /// Indicates the type of the result, which allows the client to determine how to parse the result object.
     /// </summary>
     public string ResultType { get; set; } = ResultComplete;
+
+    /// <summary>
+    /// Protocol-level metadata.
+    /// </summary>
+    [JsonPropertyName("_meta")]
+    public McpMetaModel? Meta { get; set; }
 }

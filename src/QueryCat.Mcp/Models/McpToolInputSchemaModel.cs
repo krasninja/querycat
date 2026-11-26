@@ -6,7 +6,7 @@ namespace QueryCat.Mcp.Models;
 /// A JSON Schema object defining the expected parameters for a tool.
 /// </summary>
 /// <remarks>
-/// https://modelcontextprotocol.io/specification/2025-11-25/server/tools#tool.
+/// https://modelcontextprotocol.io/specification/2026-07-28/server/tools#tool.
 /// </remarks>
 public sealed class McpToolInputSchemaModel
 {

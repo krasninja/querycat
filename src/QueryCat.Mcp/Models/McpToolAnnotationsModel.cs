@@ -6,7 +6,7 @@ namespace QueryCat.Mcp.Models;
 /// required to do so.
 /// </summary>
 /// <remarks>
-/// https://modelcontextprotocol.io/specification/2025-11-25/server/tools#tool-annotations.
+/// https://modelcontextprotocol.io/specification/2026-07-28/server/tools#tool-annotations.
 /// </remarks>
 public class McpToolAnnotationsModel
 {

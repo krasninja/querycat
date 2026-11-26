@@ -4,7 +4,7 @@ namespace QueryCat.Mcp.Models;
 /// Server resources capability. Indicates whether the server offers resources.
 /// </summary>
 /// <remarks>
-/// https://modelcontextprotocol.io/specification/2025-11-25/server/resources#capabilities.
+/// https://modelcontextprotocol.io/specification/2026-07-28/server/resources#capabilities.
 /// </remarks>
 public class McpServerResourcesCapabilityModel
 {

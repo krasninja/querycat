@@ -6,7 +6,7 @@ namespace QueryCat.Mcp.Models;
 /// The contents of a resource, embedded into a tool call result.
 /// </summary>
 /// <remarks>
-/// https://modelcontextprotocol.io/specification/2025-11-25/server/tools#embeddedresource.
+/// https://modelcontextprotocol.io/specification/2026-07-28/server/tools#embeddedresource.
 /// </remarks>
 public sealed class McpToolEmbeddedResourceModel : McpToolContentModel
 {

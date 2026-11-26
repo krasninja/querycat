@@ -8,7 +8,7 @@ namespace QueryCat.Mcp.Models;
 /// a name and includes metadata describing its schema.
 /// </summary>
 /// <remarks>
-/// https://modelcontextprotocol.io/specification/2025-11-25/server/tools#tool.
+/// https://modelcontextprotocol.io/specification/2026-07-28/server/tools#tool.
 /// </remarks>
 public class McpToolModel
 {

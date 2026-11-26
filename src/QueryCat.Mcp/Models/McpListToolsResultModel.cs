@@ -4,9 +4,9 @@ namespace QueryCat.Mcp.Models;
 /// The server's response to a <c>tools/list</c> request.
 /// </summary>
 /// <remarks>
-/// https://modelcontextprotocol.io/specification/2025-11-25/server/tools#listing-tools.
+/// https://modelcontextprotocol.io/specification/2026-07-28/server/tools#listing-tools.
 /// </remarks>
-public class McpListToolsResultModel
+public class McpListToolsResultModel : McpCacheableResultModel
 {
     /// <summary>
     /// The list of tools offered by the server.

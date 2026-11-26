@@ -10,7 +10,7 @@ namespace QueryCat.Mcp.Transports;
 /// MCP transport over standard I/O (stdin/stdout) using newline-delimited JSON.
 /// </summary>
 /// <remarks>
-/// https://modelcontextprotocol.io/specification/2025-11-25/basic/transports#stdio.
+/// https://modelcontextprotocol.io/specification/2026-07-28/basic/transports/stdio.
 /// </remarks>
 public sealed class McpStdioTransport : IMcpTransport, IAsyncDisposable
 {
@@ -64,6 +64,7 @@ public sealed class McpStdioTransport : IMcpTransport, IAsyncDisposable
                 var request = JsonSerializer.Deserialize(line, SourceGenerationContext.Default.JsonRpcRequest);
                 if (request != null)
                 {
+                    request.SpanId = Guid.NewGuid();
                     return request;
                 }
             }
@@ -110,18 +111,27 @@ public sealed class McpStdioTransport : IMcpTransport, IAsyncDisposable
     }
 
     /// <inheritdoc />
-    public Task SendNotificationAsync(JsonRpcNotification notification, CancellationToken cancellationToken = default)
+    public Task<bool> SendNotificationAsync(JsonRpcNotification notification, Guid spanId, CancellationToken cancellationToken = default)
     {
         EnsureStarted();
 
-        lock (_writeLock)
+        // All messages share the single stdout channel, the client correlates them by "_meta".
+        var json = JsonSerializer.Serialize(notification, SourceGenerationContext.Default.JsonRpcNotification);
+        try
         {
-            var json = JsonSerializer.Serialize(notification, SourceGenerationContext.Default.JsonRpcNotification);
-            Console.Out.WriteLine(json);
-            Console.Out.Flush();
+            lock (_writeLock)
+            {
+                Console.Out.WriteLine(json);
+                Console.Out.Flush();
+            }
+        }
+        catch (IOException e)
+        {
+            _logger.LogDebug(e, "Cannot write '{Method}' notification.", notification.Method);
+            return Task.FromResult(false);
         }
 
-        return Task.CompletedTask;
+        return Task.FromResult(true);
     }
 
     private void EnsureStarted()

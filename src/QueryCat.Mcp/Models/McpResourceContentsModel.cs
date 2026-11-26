@@ -4,7 +4,7 @@ namespace QueryCat.Mcp.Models;
 /// The contents of a specific resource. Either <see cref="Text" /> or <see cref="Blob" /> is set.
 /// </summary>
 /// <remarks>
-/// https://modelcontextprotocol.io/specification/2025-11-25/server/resources#resource-contents.
+/// https://modelcontextprotocol.io/specification/2026-07-28/server/resources#resource-contents.
 /// </remarks>
 public class McpResourceContentsModel
 {

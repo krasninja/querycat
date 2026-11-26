@@ -4,7 +4,7 @@ namespace QueryCat.Mcp.Models;
 /// Server capabilities (what the server supports).
 /// </summary>
 /// <remarks>
-/// https://modelcontextprotocol.io/specification/2025-11-25/server/utilization#capabilities.
+/// https://modelcontextprotocol.io/specification/2026-07-28/schema#servercapabilities.
 /// </remarks>
 public class McpServerCapabilitiesModel
 {

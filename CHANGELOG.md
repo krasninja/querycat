@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Column attributes.
 - Add functions "array_to_string", "_function_args".
 - Add function "repeat".
-- MCP server (`qcat mcp`) with stdio and HTTP transports.
+- MCP server (`qcat mcp`) with stdio and HTTP transports, supports MCP protocol versions 2026-07-28, 2025-11-25 and 2025-06-18.
 - "date_trunc" and "date_part" support week interval.
 - Initial plugin authentication infrastructure.
 - Configurable OAuth2 redirect loopback host/path and refresh token endpoint/parameter for plugins.

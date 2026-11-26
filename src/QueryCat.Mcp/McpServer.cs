@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
@@ -8,36 +9,71 @@ using QueryCat.Mcp.Models;
 namespace QueryCat.Mcp;
 
 /// <summary>
-/// QueryCat MCP server.
+/// QueryCat MCP server. The server supports both the stateless protocol (2026-07-28), where every request
+/// carries the protocol version and the client capabilities in its metadata, and the legacy
+/// initialization-based protocol versions (2025-11-25 and 2025-06-18).
 /// </summary>
 public sealed class McpServer
 {
     /// <summary>
     /// The latest version of the Model Context Protocol that this server supports.
     /// </summary>
-    public const string ProtocolVersion = "2025-11-25";
+    public const string ProtocolVersion = "2026-07-28";
+
+    /// <summary>
+    /// The latest legacy (initialization-based) version of the Model Context Protocol that this server supports.
+    /// </summary>
+    public const string LegacyProtocolVersion = "2025-11-25";
+
+    private static readonly string[] _supportedProtocolVersions = [ProtocolVersion];
 
     // The 2025-03-26 version is not supported because it requires JSON-RPC batching.
-    private static readonly string[] _supportedProtocolVersions = [ProtocolVersion, "2025-06-18"];
+    private static readonly string[] _supportedLegacyProtocolVersions = [LegacyProtocolVersion, "2025-06-18"];
 
     /// <summary>
     /// Max resource content size in bytes that can be returned to the client.
     /// </summary>
     public const long MaxResourceSize = 10 * 1024 * 1024;
 
+    // Caching hints (milliseconds). The lists rarely change, and the change is also signaled with notifications.
+    private const long DiscoverTtlMs = 60 * 60 * 1000;
+    private const long ListTtlMs = 60 * 1000;
+    private const long ReadResourceTtlMs = 0;
+
     private const string NotificationToolsListChanged = "notifications/tools/list_changed";
     private const string NotificationResourcesListChanged = "notifications/resources/list_changed";
+    private const string NotificationSubscriptionsAcknowledged = "notifications/subscriptions/acknowledged";
+    private const string NotificationCancelled = "notifications/cancelled";
+    private const string NotificationInitialized = "notifications/initialized";
 
     private static readonly UTF8Encoding _strictUtf8Encoding = new(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true);
-
-    private bool _initialized;
 
     private readonly IExecutionThread _executionThread;
     private readonly IMcpTransport _mcpTransport;
     private readonly Dictionary<string, IMcpTool> _tools = new();
     private readonly Dictionary<string, IMcpResource> _resources = new();
+    private readonly ConcurrentDictionary<Guid, Subscription> _subscriptions = new();
+
+    // Legacy protocol state: the "initialize" request has been received, the "notifications/initialized"
+    // notification has been received (server notifications are allowed).
+    private volatile bool _legacyInitializeReceived;
+    private volatile bool _legacyInitialized;
+    private readonly McpImplementationModel _serverInfo = new()
+    {
+        Name = Application.ProductName,
+        Version = Application.GetShortVersion(),
+        WebsiteUrl = @"https://github.com/krasninja/querycat",
+    };
 
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(McpServer));
+
+    /// <summary>
+    /// Active "subscriptions/listen" request.
+    /// </summary>
+    /// <param name="Id">JSON-RPC id of the request, it is also the subscription id.</param>
+    /// <param name="SpanId">Transport request identifier.</param>
+    /// <param name="Filter">Notification types the server agreed to send.</param>
+    private sealed record Subscription(object? Id, Guid SpanId, McpSubscriptionFilterModel Filter);
 
     /// <summary>
     /// Constructor.
@@ -51,14 +87,22 @@ public sealed class McpServer
     }
 
     /// <summary>
-    /// Register a tool with the server. If the tool list changes after the initialization,
-    /// the connected clients are notified with "notifications/tools/list_changed".
+    /// Determines whether the protocol version is a supported legacy (initialization-based) one.
+    /// </summary>
+    /// <param name="protocolVersion">Protocol version.</param>
+    /// <returns><c>True</c> if it is the legacy version, <c>false</c> otherwise.</returns>
+    public static bool IsLegacyProtocolVersion(string protocolVersion)
+        => Array.IndexOf(_supportedLegacyProtocolVersions, protocolVersion) > -1;
+
+    /// <summary>
+    /// Register a tool with the server. If the tool list changes, the clients subscribed
+    /// with "subscriptions/listen" (and the legacy clients) are notified with "notifications/tools/list_changed".
     /// </summary>
     /// <param name="tool">The tool model.</param>
     public void AddTool(IMcpTool tool)
     {
         _tools[tool.Metadata.Name] = tool;
-        _ = SendListChangedNotificationAsync(NotificationToolsListChanged);
+        _ = SendListChangedNotificationAsync(NotificationToolsListChanged, f => f.ToolsListChanged == true);
     }
 
     /// <summary>
@@ -68,19 +112,19 @@ public sealed class McpServer
     public void RemoveTool(IMcpTool tool)
     {
         _tools.Remove(tool.Metadata.Name);
-        _ = SendListChangedNotificationAsync(NotificationToolsListChanged);
+        _ = SendListChangedNotificationAsync(NotificationToolsListChanged, f => f.ToolsListChanged == true);
     }
 
     /// <summary>
     /// Register a resource with the server. The resource is identified by its URI.
-    /// If the resource list changes after the initialization, the connected clients are
-    /// notified with "notifications/resources/list_changed".
+    /// If the resource list changes, the clients subscribed with "subscriptions/listen" are
+    /// notified with "notifications/resources/list_changed" (the legacy clients are notified as well).
     /// </summary>
     /// <param name="resource">The resource.</param>
     public void AddResource(IMcpResource resource)
     {
         _resources[resource.Metadata.Uri] = resource;
-        _ = SendListChangedNotificationAsync(NotificationResourcesListChanged);
+        _ = SendListChangedNotificationAsync(NotificationResourcesListChanged, f => f.ResourcesListChanged == true);
     }
 
     /// <summary>
@@ -89,25 +133,55 @@ public sealed class McpServer
     /// <param name="resource">The resource model.</param>
     public void RemoveResource(IMcpResource resource)
     {
-        _resources.Remove(resource.Metadata.Name);
-        _ = SendListChangedNotificationAsync(NotificationResourcesListChanged);
+        _resources.Remove(resource.Metadata.Uri);
+        _ = SendListChangedNotificationAsync(NotificationResourcesListChanged, f => f.ResourcesListChanged == true);
     }
 
-    private async Task SendListChangedNotificationAsync(string method)
+    private async Task SendListChangedNotificationAsync(string method, Func<McpSubscriptionFilterModel, bool> predicate)
     {
-        // Notifications are only allowed after the initialization handshake is complete.
-        if (!_initialized)
+        // Legacy clients get the notifications without subscription.
+        if (_legacyInitialized)
         {
-            return;
+            try
+            {
+                await _mcpTransport.SendNotificationAsync(new JsonRpcNotification { Method = method }, Guid.Empty);
+            }
+            catch (Exception e) when (e is not OperationCanceledException)
+            {
+                _logger.LogWarning(e, "Error sending '{Method}' notification.", method);
+            }
         }
 
-        try
+        foreach (var subscription in _subscriptions.Values)
         {
-            await _mcpTransport.SendNotificationAsync(new JsonRpcNotification { Method = method });
-        }
-        catch (Exception e) when (e is not OperationCanceledException)
-        {
-            _logger.LogWarning(e, "Error sending '{Method}' notification.", method);
+            if (!predicate.Invoke(subscription.Filter))
+            {
+                continue;
+            }
+
+            var notification = new JsonRpcNotification
+            {
+                Method = method,
+                Params = new McpNotificationParamsModel
+                {
+                    Meta = new McpMetaModel
+                    {
+                        SubscriptionId = subscription.Id,
+                    },
+                },
+            };
+            try
+            {
+                if (!await _mcpTransport.SendNotificationAsync(notification, subscription.SpanId))
+                {
+                    // The client has disconnected.
+                    _subscriptions.TryRemove(subscription.SpanId, out _);
+                }
+            }
+            catch (Exception e) when (e is not OperationCanceledException)
+            {
+                _logger.LogWarning(e, "Error sending '{Method}' notification.", method);
+            }
         }
     }
 
@@ -116,35 +190,63 @@ public sealed class McpServer
     /// </summary>
     /// <param name="rpcRequest">The JSON-RPC request.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>JSON-RPC response (success or error). For notifications, it is an empty <see cref="JsonRpcResponse" />
-    /// without result, the transport must not send it as a JSON-RPC message.</returns>
+    /// <returns>JSON-RPC response (success or error). For notifications and long-lived requests
+    /// ("subscriptions/listen"), it is an empty <see cref="JsonRpcResponse" /> without result,
+    /// the transport must not send it as a JSON-RPC message.</returns>
     public async Task<JsonRpcFrame> ProcessMessageAsync(JsonRpcRequest rpcRequest, CancellationToken cancellationToken = default)
     {
         if (rpcRequest.IsNotification)
         {
-            if (rpcRequest.Method == "notifications/initialized")
+            if (rpcRequest.Method == NotificationCancelled)
             {
-                _initialized = true;
+                CancelSubscription(rpcRequest);
+            }
+            else if (rpcRequest.Method == NotificationInitialized)
+            {
+                _legacyInitialized = true;
             }
             _logger.LogTrace("Notification '{Method}'.", rpcRequest.Method);
             return new JsonRpcResponse();
         }
 
-        return rpcRequest.Method switch
+        if (IsLegacyRequest(rpcRequest))
         {
-            "initialize" => await ProcessInitializeAsync(rpcRequest, cancellationToken),
-            "ping" => new JsonRpcResponse(rpcRequest.Id, new McpEmptyResultModel()),
-            "tools/list" => await ProcessListToolsAsync(rpcRequest, cancellationToken),
+            return await ProcessLegacyMessageAsync(rpcRequest, cancellationToken);
+        }
+
+        var metaError = ValidateRequestMeta(rpcRequest);
+        if (metaError != null)
+        {
+            return metaError;
+        }
+
+        var response = rpcRequest.Method switch
+        {
+            "server/discover" => ProcessDiscover(rpcRequest),
+            "tools/list" => ProcessListTools(rpcRequest),
             "tools/call" => await ProcessCallToolAsync(rpcRequest, cancellationToken),
-            "resources/list" => await ProcessListResourcesAsync(rpcRequest, cancellationToken),
-            "resources/templates/list" => new JsonRpcResponse(rpcRequest.Id, new McpListResourceTemplatesResultModel()),
-            "resources/read" => await ProcessReadResourceAsync(rpcRequest, cancellationToken),
+            "resources/list" => ProcessListResources(rpcRequest),
+            "resources/templates/list" => new JsonRpcResponse(rpcRequest.Id, new McpListResourceTemplatesResultModel
+            {
+                TtlMs = ListTtlMs,
+                CacheScope = McpCacheableResultModel.CacheScopePublic,
+            }),
+            "resources/read" => await ProcessReadResourceAsync(rpcRequest, legacy: false, cancellationToken),
+            "subscriptions/listen" => await ProcessSubscriptionsListenAsync(rpcRequest, cancellationToken),
             _ => CreateError(
                 rpcRequest,
                 McpErrorModel.ErrorCodeMethodNotFound,
                 string.Format(Resources.Errors.McpMethodNotFound, rpcRequest.Method)
             ),
         };
+
+        // Identify the server in every result.
+        if (response is JsonRpcResponse { Result: McpResultModel result })
+        {
+            result.Meta ??= new McpMetaModel();
+            result.Meta.ServerInfo = _serverInfo;
+        }
+        return response;
     }
 
     /// <summary>
@@ -154,89 +256,288 @@ public sealed class McpServer
     /// <returns>Awaitable task.</returns>
     public async Task LoopAsync(CancellationToken cancellationToken = default)
     {
-        var request = await _mcpTransport.GetNextRequestAsync(cancellationToken);
-        while (request != null)
+        try
         {
-            JsonRpcFrame response;
-            try
+            var request = await _mcpTransport.GetNextRequestAsync(cancellationToken);
+            while (request != null)
             {
-                response = await ProcessMessageAsync(request, cancellationToken);
+                JsonRpcFrame response;
+                try
+                {
+                    response = await ProcessMessageAsync(request, cancellationToken);
+                }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                    throw;
+                }
+                catch (Exception e)
+                {
+                    _logger.LogWarning(e, "Error processing '{Method}'.", request.Method);
+                    response = request.IsNotification
+                        ? new JsonRpcResponse()
+                        : CreateError(request, McpErrorModel.ErrorCodeInternalError, Resources.Errors.McpInternalError);
+                }
+                response.SpanId = request.SpanId;
+                await _mcpTransport.SendResponseAsync(response, cancellationToken);
+                request = await _mcpTransport.GetNextRequestAsync(cancellationToken);
             }
-            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-            {
-                throw;
-            }
-            catch (Exception e)
-            {
-                _logger.LogWarning(e, "Error processing '{Method}'.", request.Method);
-                response = request.IsNotification
-                    ? new JsonRpcResponse()
-                    : CreateError(request, McpErrorModel.ErrorCodeInternalError, Resources.Errors.McpInternalError);
-            }
-            response.SpanId = request.SpanId;
-            await _mcpTransport.SendResponseAsync(response, cancellationToken);
-            request = await _mcpTransport.GetNextRequestAsync(cancellationToken);
+        }
+        finally
+        {
+            await CloseSubscriptionsAsync();
         }
     }
 
-    private Task<JsonRpcFrame> ProcessInitializeAsync(JsonRpcRequest rpcRequest, CancellationToken cancellationToken)
+    /// <summary>
+    /// Determines whether the request uses a legacy (initialization-based) protocol version.
+    /// </summary>
+    /// <param name="rpcRequest">The JSON-RPC request.</param>
+    /// <returns><c>True</c> if it is a legacy request.</returns>
+    private bool IsLegacyRequest(JsonRpcRequest rpcRequest)
     {
+        // A request with the per-request protocol version is always modern.
+        if (rpcRequest.GetProtocolVersion() != null)
+        {
+            return false;
+        }
+        // The legacy handshake.
+        if (rpcRequest.Method == "initialize")
+        {
+            return true;
+        }
+        // Use the transport hint (HTTP header), otherwise the state (stdio process).
+        return rpcRequest.IsLegacy ?? _legacyInitializeReceived;
+    }
+
+    private async Task<JsonRpcFrame> ProcessLegacyMessageAsync(JsonRpcRequest rpcRequest, CancellationToken cancellationToken)
+    {
+        var response = rpcRequest.Method switch
+        {
+            "initialize" => ProcessLegacyInitialize(rpcRequest),
+            "ping" => new JsonRpcResponse(rpcRequest.Id, new McpResultModel()),
+            "tools/list" => ProcessListTools(rpcRequest),
+            "tools/call" => await ProcessCallToolAsync(rpcRequest, cancellationToken),
+            "resources/list" => ProcessListResources(rpcRequest),
+            "resources/templates/list" => new JsonRpcResponse(rpcRequest.Id, new McpListResourceTemplatesResultModel()),
+            "resources/read" => await ProcessReadResourceAsync(rpcRequest, legacy: true, cancellationToken),
+            _ => CreateError(
+                rpcRequest,
+                McpErrorModel.ErrorCodeMethodNotFound,
+                string.Format(Resources.Errors.McpMethodNotFound, rpcRequest.Method)
+            ),
+        };
+        return response;
+    }
+
+    private JsonRpcFrame ProcessLegacyInitialize(JsonRpcRequest rpcRequest)
+    {
+        _legacyInitializeReceived = true;
+
         // If the server supports the requested protocol version, it must respond with the same version.
         // Otherwise, it must respond with another version it supports (the latest one).
-        var protocolVersion = ProtocolVersion;
-        if (rpcRequest.Params != null
-            && rpcRequest.Params.TryGetValue("protocolVersion", out var requestedVersion)
-            && requestedVersion.ValueKind == JsonValueKind.String
-            && Array.IndexOf(_supportedProtocolVersions, requestedVersion.GetString()) > -1)
+        var protocolVersion = rpcRequest.GetStringParam("protocolVersion");
+        if (protocolVersion == null || !IsLegacyProtocolVersion(protocolVersion))
         {
-            protocolVersion = requestedVersion.GetString()!;
+            protocolVersion = LegacyProtocolVersion;
         }
 
         var result = new McpInitializeResultModel
         {
             ProtocolVersion = protocolVersion,
-            Capabilities = new McpServerCapabilitiesModel
-            {
-                Tools = new McpServerToolsCapabilityModel
-                {
-                    ListChanged = true,
-                },
-                Resources = new McpServerResourcesCapabilityModel
-                {
-                    Subscribe = false,
-                    ListChanged = true,
-                },
-            },
-            ServerInfo = new McpImplementationModel
-            {
-                Name = Application.ProductName,
-                Version = Application.GetShortVersion(),
-                WebsiteUrl = @"https://github.com/krasninja/querycat",
-            },
+            Capabilities = CreateCapabilities(),
+            ServerInfo = _serverInfo,
             Instructions = Resources.Messages.McpInstructions,
         };
-        var response = new JsonRpcResponse
-        {
-            Id = rpcRequest.Id,
-            Result = result,
-        };
         _logger.LogTrace("Initialize request, protocol version {ProtocolVersion}.", protocolVersion);
-        return Task.FromResult<JsonRpcFrame>(response);
+        return new JsonRpcResponse(rpcRequest.Id, result);
     }
 
-    private Task<JsonRpcFrame> ProcessListToolsAsync(JsonRpcRequest rpcRequest, CancellationToken cancellationToken)
+    private static McpServerCapabilitiesModel CreateCapabilities() => new()
+    {
+        Tools = new McpServerToolsCapabilityModel
+        {
+            ListChanged = true,
+        },
+        Resources = new McpServerResourcesCapabilityModel
+        {
+            Subscribe = false,
+            ListChanged = true,
+        },
+    };
+
+    /// <summary>
+    /// Validate the protocol fields of the request metadata.
+    /// </summary>
+    /// <param name="rpcRequest">The JSON-RPC request.</param>
+    /// <returns>Error response or <c>null</c> if the request is valid.</returns>
+    private JsonRpcErrorResponse? ValidateRequestMeta(JsonRpcRequest rpcRequest)
+    {
+        var protocolVersion = rpcRequest.GetProtocolVersion();
+        if (protocolVersion == null)
+        {
+            return CreateError(
+                rpcRequest,
+                McpErrorModel.ErrorCodeInvalidParams,
+                string.Format(Resources.Errors.McpRequestMetaRequired, JsonRpcRequest.MetaProtocolVersion));
+        }
+        if (Array.IndexOf(_supportedProtocolVersions, protocolVersion) < 0)
+        {
+            return CreateUnsupportedProtocolVersionError(rpcRequest, protocolVersion);
+        }
+        if (rpcRequest.GetMeta(JsonRpcRequest.MetaClientCapabilities) is not { ValueKind: JsonValueKind.Object })
+        {
+            return CreateError(
+                rpcRequest,
+                McpErrorModel.ErrorCodeInvalidParams,
+                string.Format(Resources.Errors.McpRequestMetaRequired, JsonRpcRequest.MetaClientCapabilities));
+        }
+        return null;
+    }
+
+    private JsonRpcErrorResponse CreateUnsupportedProtocolVersionError(JsonRpcRequest rpcRequest, string requestedVersion)
+    {
+        _logger.LogDebug("Unsupported protocol version '{ProtocolVersion}'.", requestedVersion);
+        return new JsonRpcErrorResponse(new McpErrorModel(
+            McpErrorModel.ErrorCodeUnsupportedProtocolVersion,
+            string.Format(Resources.Errors.McpUnsupportedProtocolVersion, requestedVersion,
+                string.Join(", ", _supportedProtocolVersions)),
+            new McpUnsupportedProtocolVersionDataModel
+            {
+                Supported = _supportedProtocolVersions.ToList(),
+                Requested = requestedVersion,
+            }))
+        {
+            Id = rpcRequest.Id,
+        };
+    }
+
+    private JsonRpcFrame ProcessDiscover(JsonRpcRequest rpcRequest)
+    {
+        var result = new McpDiscoverResultModel
+        {
+            SupportedVersions = _supportedProtocolVersions.ToList(),
+            Capabilities = CreateCapabilities(),
+            Instructions = Resources.Messages.McpInstructions,
+            TtlMs = DiscoverTtlMs,
+            CacheScope = McpCacheableResultModel.CacheScopePublic,
+        };
+        _logger.LogTrace("Discover request.");
+        return new JsonRpcResponse(rpcRequest.Id, result);
+    }
+
+    private JsonRpcFrame ProcessListTools(JsonRpcRequest rpcRequest)
     {
         var result = new McpListToolsResultModel
         {
-            Tools = _tools.Values.Select(t => t.Metadata).ToList(),
-        };
-        var response = new JsonRpcResponse
-        {
-            Id = rpcRequest.Id,
-            Result = result,
+            // Deterministic order allows the client-side caching.
+            Tools = _tools.Values
+                .Select(t => t.Metadata)
+                .OrderBy(t => t.Name, StringComparer.Ordinal)
+                .ToList(),
+            TtlMs = ListTtlMs,
+            CacheScope = McpCacheableResultModel.CacheScopePublic,
         };
         _logger.LogTrace("List tools request, {Count} tool(s).", _tools.Count);
-        return Task.FromResult<JsonRpcFrame>(response);
+        return new JsonRpcResponse(rpcRequest.Id, result);
+    }
+
+    private async Task<JsonRpcFrame> ProcessSubscriptionsListenAsync(JsonRpcRequest rpcRequest, CancellationToken cancellationToken)
+    {
+        if (rpcRequest.Params == null
+            || !rpcRequest.Params.TryGetValue("notifications", out var filterElement)
+            || filterElement.ValueKind != JsonValueKind.Object)
+        {
+            return CreateError(
+                rpcRequest,
+                McpErrorModel.ErrorCodeInvalidParams,
+                Resources.Errors.McpSubscriptionFilterRequired
+            );
+        }
+
+        // Acknowledge only the supported notification types.
+        var requestedFilter = filterElement.Deserialize(SourceGenerationContext.Default.McpSubscriptionFilterModel)
+            ?? new McpSubscriptionFilterModel();
+        var filter = new McpSubscriptionFilterModel
+        {
+            ToolsListChanged = requestedFilter.ToolsListChanged == true ? true : null,
+            ResourcesListChanged = requestedFilter.ResourcesListChanged == true ? true : null,
+        };
+
+        // The acknowledgement must be the first message of the subscription, register it after.
+        var acknowledgement = new JsonRpcNotification
+        {
+            Method = NotificationSubscriptionsAcknowledged,
+            Params = new McpSubscriptionsAcknowledgedParamsModel
+            {
+                Meta = new McpMetaModel
+                {
+                    SubscriptionId = rpcRequest.Id,
+                },
+                Notifications = filter,
+            },
+        };
+        if (await _mcpTransport.SendNotificationAsync(acknowledgement, rpcRequest.SpanId, cancellationToken))
+        {
+            _subscriptions[rpcRequest.SpanId] = new Subscription(rpcRequest.Id, rpcRequest.SpanId, filter);
+            _logger.LogTrace("Subscription {SubscriptionId} is open.", rpcRequest.Id);
+        }
+
+        // The stream stays open until the client or server closes it.
+        return new JsonRpcResponse();
+    }
+
+    private void CancelSubscription(JsonRpcRequest rpcRequest)
+    {
+        if (rpcRequest.Params == null
+            || !rpcRequest.Params.TryGetValue("requestId", out var requestIdElement))
+        {
+            return;
+        }
+
+        var requestId = GetIdKey(requestIdElement);
+        foreach (var subscription in _subscriptions.Values)
+        {
+            if (GetIdKey(subscription.Id) == requestId)
+            {
+                _subscriptions.TryRemove(subscription.SpanId, out _);
+                _logger.LogTrace("Subscription {SubscriptionId} is cancelled.", requestId);
+            }
+        }
+    }
+
+    private static string? GetIdKey(object? id) => id switch
+    {
+        JsonElement { ValueKind: JsonValueKind.String } element => element.GetString(),
+        JsonElement element => element.GetRawText(),
+        _ => id?.ToString(),
+    };
+
+    private async Task CloseSubscriptionsAsync()
+    {
+        // Signal the graceful end of the subscriptions.
+        foreach (var subscription in _subscriptions.Values)
+        {
+            _subscriptions.TryRemove(subscription.SpanId, out _);
+            var response = new JsonRpcResponse(subscription.Id, new McpResultModel
+            {
+                Meta = new McpMetaModel
+                {
+                    ServerInfo = _serverInfo,
+                    SubscriptionId = subscription.Id,
+                },
+            })
+            {
+                SpanId = subscription.SpanId,
+            };
+            try
+            {
+                await _mcpTransport.SendResponseAsync(response);
+            }
+            catch (Exception e)
+            {
+                _logger.LogDebug(e, "Cannot close subscription {SubscriptionId}.", subscription.Id);
+            }
+        }
     }
 
     private async Task<JsonRpcFrame> ProcessCallToolAsync(JsonRpcRequest rpcRequest, CancellationToken cancellationToken)
@@ -290,22 +591,22 @@ public sealed class McpServer
         };
     }
 
-    private Task<JsonRpcFrame> ProcessListResourcesAsync(JsonRpcRequest rpcRequest, CancellationToken cancellationToken)
+    private JsonRpcFrame ProcessListResources(JsonRpcRequest rpcRequest)
     {
         var result = new McpListResourcesResultModel
         {
-            Resources = _resources.Values.Select(r => r.Metadata).ToList(),
-        };
-        var response = new JsonRpcResponse
-        {
-            Id = rpcRequest.Id,
-            Result = result,
+            Resources = _resources.Values
+                .Select(r => r.Metadata)
+                .OrderBy(r => r.Uri, StringComparer.Ordinal)
+                .ToList(),
+            TtlMs = ListTtlMs,
+            CacheScope = McpCacheableResultModel.CacheScopePublic,
         };
         _logger.LogTrace("List resources request, {Count} resource(s).", _resources.Count);
-        return Task.FromResult<JsonRpcFrame>(response);
+        return new JsonRpcResponse(rpcRequest.Id, result);
     }
 
-    private async Task<JsonRpcFrame> ProcessReadResourceAsync(JsonRpcRequest rpcRequest, CancellationToken cancellationToken)
+    private async Task<JsonRpcFrame> ProcessReadResourceAsync(JsonRpcRequest rpcRequest, bool legacy, CancellationToken cancellationToken)
     {
         if (rpcRequest.Params == null
             || !rpcRequest.Params.TryGetValue("uri", out var uriElement)
@@ -323,7 +624,8 @@ public sealed class McpServer
         {
             return CreateError(
                 rpcRequest,
-                McpErrorModel.ErrorCodeResourceNotFound,
+                // The error code has been changed in 2026-07-28.
+                legacy ? McpErrorModel.ErrorCodeLegacyResourceNotFound : McpErrorModel.ErrorCodeInvalidParams,
                 string.Format(Resources.Errors.McpResourceNotFound, uri)
             );
         }
@@ -350,6 +652,9 @@ public sealed class McpServer
             Result = new McpReadResourceResultModel
             {
                 Contents = [CreateResourceContents(uri, resource.Metadata.MimeType, data)],
+                // The content may change at any time and may contain private data.
+                TtlMs = ReadResourceTtlMs,
+                CacheScope = McpCacheableResultModel.CacheScopePrivate,
             },
         };
     }

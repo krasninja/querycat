@@ -7,7 +7,7 @@ namespace QueryCat.Mcp.Models;
 /// items and an optional flag indicating whether the tool call resulted in an error.
 /// </summary>
 /// <remarks>
-/// https://modelcontextprotocol.io/specification/2025-11-25/server/tools#calling-tools.
+/// https://modelcontextprotocol.io/specification/2026-07-28/server/tools#calling-tools.
 /// </remarks>
 public sealed class McpCallToolResultModel : McpResultModel
 {

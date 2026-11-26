@@ -4,7 +4,7 @@ namespace QueryCat.Mcp.Models;
 /// Text content returned from a tool call.
 /// </summary>
 /// <remarks>
-/// https://modelcontextprotocol.io/specification/2025-11-25/server/tools#textcontent.
+/// https://modelcontextprotocol.io/specification/2026-07-28/server/tools#textcontent.
 /// </remarks>
 public sealed class McpToolTextContentModel : McpToolContentModel
 {
