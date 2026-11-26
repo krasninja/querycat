@@ -330,10 +330,11 @@ public partial class QueryCatIOHandler : global::QueryCat.Plugins.Sdk.QueryCatIO
             {
                 var columns = context_query_info.Columns
                               ?? (IList<QueryCat.Plugins.Sdk.Column>)ImmutableList<QueryCat.Plugins.Sdk.Column>.Empty;
+                var limit = context_query_info.Limit > -1 ? context_query_info.Limit : (long?)null;
                 rowsSource.QueryContext = new PluginQueryContext(
                     new QueryContextQueryInfo(
                         columns.Select(SdkConvert.Convert).ToList(),
-                        context_query_info.Limit)
+                        limit)
                     {
                         Offset = context_query_info.Offset,
                     },
