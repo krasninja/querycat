@@ -43,6 +43,7 @@ namespace QueryCat.Plugins.Sdk
     private string? _token_type;
     private long _expires_at;
     private List<string>? _scopes;
+    private global::QueryCat.Plugins.Sdk.AuthType _auth_type;
 
     public string AccessToken { get; set; } = string.Empty;
 
@@ -85,6 +86,23 @@ namespace QueryCat.Plugins.Sdk
       }
     }
 
+    /// <summary>
+    /// 
+    /// <seealso cref="global::QueryCat.Plugins.Sdk.AuthType"/>
+    /// </summary>
+    public global::QueryCat.Plugins.Sdk.AuthType AuthType
+    {
+      get
+      {
+        return _auth_type;
+      }
+      set
+      {
+        __isset.auth_type = true;
+        this._auth_type = value;
+      }
+    }
+
 
     public Isset __isset;
     public struct Isset
@@ -92,6 +110,7 @@ namespace QueryCat.Plugins.Sdk
       public bool token_type;
       public bool expires_at;
       public bool @scopes;
+      public bool auth_type;
     }
 
     public AuthToken()
@@ -172,6 +191,16 @@ namespace QueryCat.Plugins.Sdk
                 await TProtocolUtil.SkipAsync(iprot, field.Type, cancellationToken);
               }
               break;
+            case 5:
+              if (field.Type == TType.I32)
+              {
+                AuthType = (global::QueryCat.Plugins.Sdk.AuthType)await iprot.ReadI32Async(cancellationToken);
+              }
+              else
+              {
+                await TProtocolUtil.SkipAsync(iprot, field.Type, cancellationToken);
+              }
+              break;
             default: 
               await TProtocolUtil.SkipAsync(iprot, field.Type, cancellationToken);
               break;
@@ -242,6 +271,15 @@ namespace QueryCat.Plugins.Sdk
           await oprot.WriteListEndAsync(cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
+        if(__isset.auth_type)
+        {
+          tmp50.Name = "auth_type";
+          tmp50.Type = TType.I32;
+          tmp50.ID = 5;
+          await oprot.WriteFieldBeginAsync(tmp50, cancellationToken);
+          await oprot.WriteI32Async((int)AuthType, cancellationToken);
+          await oprot.WriteFieldEndAsync(cancellationToken);
+        }
         #pragma warning restore IDE0017  // simplified init
         await oprot.WriteFieldStopAsync(cancellationToken);
         await oprot.WriteStructEndAsync(cancellationToken);
@@ -259,7 +297,8 @@ namespace QueryCat.Plugins.Sdk
       return global::System.Object.Equals(AccessToken, other.AccessToken)
         && ((__isset.token_type == other.__isset.token_type) && ((!__isset.token_type) || (global::System.Object.Equals(TokenType, other.TokenType))))
         && ((__isset.expires_at == other.__isset.expires_at) && ((!__isset.expires_at) || (global::System.Object.Equals(ExpiresAt, other.ExpiresAt))))
-        && ((__isset.@scopes == other.__isset.@scopes) && ((!__isset.@scopes) || (TCollections.Equals(Scopes, other.Scopes))));
+        && ((__isset.@scopes == other.__isset.@scopes) && ((!__isset.@scopes) || (TCollections.Equals(Scopes, other.Scopes))))
+        && ((__isset.auth_type == other.__isset.auth_type) && ((!__isset.auth_type) || (global::System.Object.Equals(AuthType, other.AuthType))));
     }
 
     public override int GetHashCode() {
@@ -280,6 +319,10 @@ namespace QueryCat.Plugins.Sdk
         if((Scopes != null) && __isset.@scopes)
         {
           hashcode = (hashcode * 397) + TCollections.GetHashCode(Scopes);
+        }
+        if(__isset.auth_type)
+        {
+          hashcode = (hashcode * 397) + AuthType.GetHashCode();
         }
       }
       return hashcode;
@@ -307,6 +350,11 @@ namespace QueryCat.Plugins.Sdk
       {
         tmp52.Append(", Scopes: ");
         Scopes.ToString(tmp52);
+      }
+      if(__isset.auth_type)
+      {
+        tmp52.Append(", AuthType: ");
+        AuthType.ToString(tmp52);
       }
       tmp52.Append(')');
       return tmp52.ToString();

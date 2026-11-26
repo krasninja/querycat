@@ -183,7 +183,8 @@ public sealed class OAuth2Client
     {
         using var request = new HttpRequestMessage(HttpMethod.Get, url);
         request.Headers.Authorization = new AuthenticationHeaderValue(
-            string.IsNullOrEmpty(token.TokenType) ? "Bearer" : token.TokenType, token.AccessToken);
+            string.IsNullOrEmpty(token.TokenType) ? AuthToken.TokenTypeBearer : token.TokenType,
+            token.AccessToken);
         request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(ApplicationJsonMime));
         try
         {

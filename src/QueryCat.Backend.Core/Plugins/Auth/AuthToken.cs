@@ -6,14 +6,24 @@ namespace QueryCat.Backend.Core.Plugins.Auth;
 public sealed class AuthToken
 {
     /// <summary>
+    /// Default token type.
+    /// </summary>
+    public const string TokenTypeBearer = "Bearer";
+
+    /// <summary>
     /// Access token or API key.
     /// </summary>
     public required string AccessToken { get; init; }
 
     /// <summary>
+    /// Authentication type the token was obtained with.
+    /// </summary>
+    public AuthType AuthType { get; init; } = AuthType.OAuth2;
+
+    /// <summary>
     /// Token type, usually "Bearer".
     /// </summary>
-    public string TokenType { get; init; } = "Bearer";
+    public string TokenType { get; init; } = TokenTypeBearer;
 
     /// <summary>
     /// Expiration time. Null if the token does not expire.

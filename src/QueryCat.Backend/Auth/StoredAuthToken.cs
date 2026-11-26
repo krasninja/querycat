@@ -60,7 +60,8 @@ public sealed class StoredAuthToken
     public AuthToken ToAuthToken() => new()
     {
         AccessToken = AccessToken,
-        TokenType = string.IsNullOrEmpty(TokenType) ? "Bearer" : TokenType,
+        AuthType = Type,
+        TokenType = string.IsNullOrEmpty(TokenType) ? AuthToken.TokenTypeBearer : TokenType,
         ExpiresAt = ExpiresAt.HasValue ? DateTimeOffset.FromUnixTimeSeconds(ExpiresAt.Value) : null,
         Scopes = Scopes,
     };

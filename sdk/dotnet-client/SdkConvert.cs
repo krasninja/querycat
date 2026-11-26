@@ -383,6 +383,7 @@ public static class SdkConvert
         {
             TokenType = token.TokenType,
             Scopes = token.Scopes.ToList(),
+            AuthType = Convert(token.AuthType),
         };
         if (token.ExpiresAt.HasValue)
         {
@@ -405,9 +406,12 @@ public static class SdkConvert
         return new Backend.Core.Plugins.Auth.AuthToken
         {
             AccessToken = token.AccessToken,
-            TokenType = string.IsNullOrEmpty(token.TokenType) ? "Bearer" : token.TokenType,
+            TokenType = string.IsNullOrEmpty(token.TokenType)
+                ? Backend.Core.Plugins.Auth.AuthToken.TokenTypeBearer
+                : token.TokenType,
             ExpiresAt = token.__isset.expires_at ? DateTimeOffset.FromUnixTimeSeconds(token.ExpiresAt) : null,
             Scopes = token.Scopes ?? [],
+            AuthType = token.__isset.auth_type ? Convert(token.AuthType) : Backend.Core.Plugins.Auth.AuthType.OAuth2,
         };
     }
 

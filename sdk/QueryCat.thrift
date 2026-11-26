@@ -207,7 +207,8 @@ struct AuthToken {
   1: required string access_token,
   2: optional string token_type,
   3: optional i64 expires_at, // Unix seconds.
-  4: optional list<string> scopes
+  4: optional list<string> scopes,
+  5: optional AuthType auth_type
 }
 
 // Configuration value.
