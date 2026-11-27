@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using Microsoft.Extensions.Logging;
 
 namespace QueryCat.Backend.Core.Plugins.Auth;
 
@@ -8,6 +9,8 @@ namespace QueryCat.Backend.Core.Plugins.Auth;
 public sealed class AuthProvidersRegistry : IAuthProvidersRegistry
 {
     private readonly ConcurrentDictionary<string, AuthProviderInfo> _providers = new(StringComparer.OrdinalIgnoreCase);
+
+    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(AuthProvidersRegistry));
 
     /// <inheritdoc />
     public void Register(AuthProviderInfo provider)
@@ -24,6 +27,8 @@ public sealed class AuthProvidersRegistry : IAuthProvidersRegistry
             || existing.PluginName == provider.PluginName)
         {
             _providers[provider.Id] = provider;
+            _logger.LogTrace("Registered auth provider '{ProviderId}' for plugin '{PluginName}'.",
+                provider.Id, provider.PluginName);
             return;
         }
         throw new PluginException(string.Format(Resources.Errors.AuthProviderAlreadyRegistered,
@@ -34,5 +39,7 @@ public sealed class AuthProvidersRegistry : IAuthProvidersRegistry
     public AuthProviderInfo? Find(string id) => _providers.GetValueOrDefault(id);
 
     /// <inheritdoc />
-    public IReadOnlyList<AuthProviderInfo> GetProviders() => _providers.Values.OrderBy(p => p.Id).ToList();
+    public IReadOnlyList<AuthProviderInfo> GetProviders() => _providers.Values
+        .OrderBy(p => p.Id, StringComparer.OrdinalIgnoreCase)
+        .ToList();
 }
