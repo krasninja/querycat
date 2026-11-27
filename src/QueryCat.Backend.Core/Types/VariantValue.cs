@@ -1065,24 +1065,24 @@ public readonly partial struct VariantValue :
     /// <summary>
     /// Convert to string according to the format.
     /// </summary>
-    /// <param name="formatProvider">Culture specific formatting information.</param>
+    /// <param name="provider">Culture specific formatting information.</param>
     /// <returns>String representation.</returns>
-    public string ToString(IFormatProvider? formatProvider) => Type switch
+    public string ToString(IFormatProvider? provider) => Type switch
     {
         DataType.Null => NullValueString,
         DataType.Void => VoidValueString,
         DataType.Dynamic => VoidValueString,
-        DataType.Integer => AsIntegerUnsafe.ToString(formatProvider),
+        DataType.Integer => AsIntegerUnsafe.ToString(provider),
         DataType.String => AsStringUnsafe,
-        DataType.Boolean => AsBooleanUnsafe.ToString(formatProvider),
-        DataType.Float => AsFloatUnsafe.ToString(FloatNumberFormat, formatProvider),
-        DataType.Numeric => AsNumericUnsafe.ToString(FloatNumberFormat, formatProvider),
-        DataType.Timestamp => AsTimestampUnsafe.ToString(formatProvider),
-        DataType.Interval => AsIntervalUnsafe.ToString(null, formatProvider),
+        DataType.Boolean => AsBooleanUnsafe.ToString(provider),
+        DataType.Float => AsFloatUnsafe.ToString(FloatNumberFormat, provider),
+        DataType.Numeric => AsNumericUnsafe.ToString(FloatNumberFormat, provider),
+        DataType.Timestamp => AsTimestampUnsafe.ToString(provider),
+        DataType.Interval => AsIntervalUnsafe.ToString(null, provider),
         DataType.Object => $"[object:{AsObjectUnsafe}]",
         DataType.Blob => BlobToShortString(AsBlobUnsafe),
-        DataType.Array => ArrayToString(AsArrayUnsafe, formatProvider),
-        DataType.Map => MapToString(AsMapUnsafe, formatProvider),
+        DataType.Array => ArrayToString(AsArrayUnsafe, provider),
+        DataType.Map => MapToString(AsMapUnsafe, provider),
         _ => UnknownString,
     };
 

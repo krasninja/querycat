@@ -961,11 +961,11 @@ public partial class ThriftPluginsServer
         }
 
         /// <inheritdoc />
-        public async Task<ModelDescription> RowsSet_GetDescriptionAsync(long token, int object_handle, CancellationToken cancellationToken = default)
+        public async Task<ModelDescription> RowsSet_GetDescriptionAsync(long token, int object_rows_set_handle, CancellationToken cancellationToken = default)
         {
             try
             {
-                return await _handler.RowsSet_GetDescriptionAsync(token, object_handle, cancellationToken);
+                return await _handler.RowsSet_GetDescriptionAsync(token, object_rows_set_handle, cancellationToken);
             }
             catch (Exception ex)
             {

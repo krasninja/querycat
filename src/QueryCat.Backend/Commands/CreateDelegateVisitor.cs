@@ -546,12 +546,12 @@ internal partial class CreateDelegateVisitor : AstVisitor
     }
 
     /// <inheritdoc />
-    public override async ValueTask VisitAsync(MapValuesNode node, CancellationToken cancellationToken)
+    public override async ValueTask VisitAsync(MapValuesNode valuesNode, CancellationToken cancellationToken)
     {
-        await ResolveTypesVisitor.VisitAsync(node, cancellationToken);
+        await ResolveTypesVisitor.VisitAsync(valuesNode, cancellationToken);
 
-        var nodeFuncs = node.Map.ToDictionary(k => k.Key, v => NodeIdFuncMap[v.Value.Id]);
-        var capacity = node.Map.Count;
+        var nodeFuncs = valuesNode.Map.ToDictionary(k => k.Key, v => NodeIdFuncMap[v.Value.Id]);
+        var capacity = valuesNode.Map.Count;
         async ValueTask<VariantValue> Func(IExecutionThread thread, CancellationToken ct)
         {
             var map = new Dictionary<VariantValue, VariantValue>(capacity: capacity);
@@ -562,7 +562,7 @@ internal partial class CreateDelegateVisitor : AstVisitor
             }
             return VariantValue.CreateFromObject(map);
         }
-        NodeIdFuncMap[node.Id] = new FuncUnitDelegate(Func, node.Type);
+        NodeIdFuncMap[valuesNode.Id] = new FuncUnitDelegate(Func, valuesNode.Type);
     }
 
     #endregion

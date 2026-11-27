@@ -19,9 +19,10 @@ internal sealed class TestOutputWriter : TextWriter
     public override Encoding Encoding => Encoding.UTF8;
 
     /// <inheritdoc />
-    public override void WriteLine(string? message)
+    public override void WriteLine(string? value)
     {
-        _output.WriteLine(message ?? string.Empty);
+        base.WriteLine(value);
+        _output.WriteLine(value ?? string.Empty);
     }
 
     /// <inheritdoc />

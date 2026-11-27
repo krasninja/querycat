@@ -120,8 +120,8 @@ public sealed class ExceptionHandlePluginDecorator : Plugin.IAsync
         => HandleAsync(_client.RowsSet_DeleteRowAsync(token, object_rows_set_handle, cancellationToken));
 
     /// <inheritdoc />
-    public Task<ModelDescription> RowsSet_GetDescriptionAsync(long token, int object_handle, CancellationToken cancellationToken = default)
-        => HandleAsync(_client.RowsSet_GetDescriptionAsync(token, object_handle, cancellationToken));
+    public Task<ModelDescription> RowsSet_GetDescriptionAsync(long token, int object_rows_set_handle, CancellationToken cancellationToken = default)
+        => HandleAsync(_client.RowsSet_GetDescriptionAsync(token, object_rows_set_handle, cancellationToken));
 
     /// <inheritdoc />
     public Task<int> RowsFormatter_OpenInputAsync(long token, int object_rows_formatter_handle, int object_blob_handle, string? key,

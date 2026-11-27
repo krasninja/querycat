@@ -17,7 +17,7 @@ public class NullFunctionsFactory : FunctionsFactory
     public override IFunction CreateFromSignature(
         string signature,
         Delegate functionDelegate,
-        FunctionMetadata? metadata = null) => NullFunction.Instance;
+        FunctionMetadata? functionMetadata = null) => NullFunction.Instance;
 
     /// <inheritdoc />
     public override IEnumerable<IFunction> CreateAggregateFromType<TAggregate>() => [];

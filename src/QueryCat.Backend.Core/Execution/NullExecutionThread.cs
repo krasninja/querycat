@@ -48,10 +48,10 @@ public sealed class NullExecutionThread : IExecutionThread
         CancellationToken cancellationToken = default) => Task.FromResult(VariantValue.Null);
 
     /// <inheritdoc />
-    public async Task<IReadOnlyCollection<CompletionResult>> GetCompletionsAsync(string query, int position = -1, object? tag = null,
+    public Task<IReadOnlyCollection<CompletionResult>> GetCompletionsAsync(string text, int position = -1, object? tag = null,
         CancellationToken cancellationToken = default)
     {
-        return [];
+        return Task.FromResult((IReadOnlyCollection<CompletionResult>)new List<CompletionResult>());
     }
 
     /// <inheritdoc />

@@ -185,9 +185,9 @@ internal class ResolveTypesVisitor : AstVisitor
     }
 
     /// <inheritdoc />
-    public override ValueTask VisitAsync(MapValuesNode node, CancellationToken cancellationToken)
+    public override ValueTask VisitAsync(MapValuesNode valuesNode, CancellationToken cancellationToken)
     {
-        node.Type = DataType.Map;
+        valuesNode.Type = DataType.Map;
         return ValueTask.CompletedTask;
     }
 
