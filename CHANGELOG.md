@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.20.1] - 2026-11-27
+
 ### Added
 
 - Column attributes.
@@ -28,7 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - .NET 11 upgrade.
 - Improve "to_json" function.
- `_ANSWER_AGENT` variable, the default answer agent is now resolved from the config `__ai_agent` key.
+- `_ANSWER_AGENT` variable, the default answer agent is now resolved from the config `__ai_agent` key.
 - ClassRowsFrameBuilder.AddKeyColumn now adds the new column if it was not previously added.
 - Plugin config storage keys are prefixed with the plugin name.
 - Extended column attributes detection: more identifier column names are recognized ("uuid", "guid", "pk", "event_id", etc.) and more timestamp column names ("time", "date", "datetime", "ts", "@timestamp", "event_time", "occurred_at", "logged_at", etc.). Names are matched ignoring case and separators ("createdAt", "created-at", "created_at"). The "@id" attribute is set only if sample values are unique, "@ts" is set on a single, most specific column, and attributes already provided by the input are kept.
