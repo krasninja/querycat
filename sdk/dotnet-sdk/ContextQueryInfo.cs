@@ -41,6 +41,7 @@ namespace QueryCat.Plugins.Sdk
   public partial class ContextQueryInfo : TBase
   {
     private long _limit;
+    private Dictionary<string, global::QueryCat.Plugins.Sdk.VariantValue>? _extra_params;
 
     public List<global::QueryCat.Plugins.Sdk.Column>? Columns { get; set; }
 
@@ -59,11 +60,25 @@ namespace QueryCat.Plugins.Sdk
       }
     }
 
+    public Dictionary<string, global::QueryCat.Plugins.Sdk.VariantValue>? ExtraParams
+    {
+      get
+      {
+        return _extra_params;
+      }
+      set
+      {
+        __isset.extra_params = true;
+        this._extra_params = value;
+      }
+    }
+
 
     public Isset __isset;
     public struct Isset
     {
       public bool @limit;
+      public bool extra_params;
     }
 
     public ContextQueryInfo()
@@ -138,6 +153,29 @@ namespace QueryCat.Plugins.Sdk
                 await TProtocolUtil.SkipAsync(iprot, field.Type, cancellationToken);
               }
               break;
+            case 4:
+              if (field.Type == TType.Map)
+              {
+                {
+                  var _map210 = await iprot.ReadMapBeginAsync(cancellationToken);
+                  ExtraParams = new Dictionary<string, global::QueryCat.Plugins.Sdk.VariantValue>(_map210.Count);
+                  for(int _i211 = 0; _i211 < _map210.Count; ++_i211)
+                  {
+                    string _key212;
+                    global::QueryCat.Plugins.Sdk.VariantValue _val213;
+                    _key212 = await iprot.ReadStringAsync(cancellationToken);
+                    _val213 = new global::QueryCat.Plugins.Sdk.VariantValue();
+                    await _val213.ReadAsync(iprot, cancellationToken);
+                    ExtraParams[_key212] = _val213;
+                  }
+                  await iprot.ReadMapEndAsync(cancellationToken);
+                }
+              }
+              else
+              {
+                await TProtocolUtil.SkipAsync(iprot, field.Type, cancellationToken);
+              }
+              break;
             default: 
               await TProtocolUtil.SkipAsync(iprot, field.Type, cancellationToken);
               break;
@@ -167,37 +205,52 @@ namespace QueryCat.Plugins.Sdk
       oprot.IncrementRecursionDepth();
       try
       {
-        var tmp210 = new TStruct("ContextQueryInfo");
-        await oprot.WriteStructBeginAsync(tmp210, cancellationToken);
+        var tmp214 = new TStruct("ContextQueryInfo");
+        await oprot.WriteStructBeginAsync(tmp214, cancellationToken);
         #pragma warning disable IDE0017  // simplified init
-        var tmp211 = new TField();
+        var tmp215 = new TField();
         if((Columns != null))
         {
-          tmp211.Name = "columns";
-          tmp211.Type = TType.List;
-          tmp211.ID = 1;
-          await oprot.WriteFieldBeginAsync(tmp211, cancellationToken);
+          tmp215.Name = "columns";
+          tmp215.Type = TType.List;
+          tmp215.ID = 1;
+          await oprot.WriteFieldBeginAsync(tmp215, cancellationToken);
           await oprot.WriteListBeginAsync(new TList(TType.Struct, Columns.Count), cancellationToken);
-          foreach (global::QueryCat.Plugins.Sdk.Column _iter212 in Columns)
+          foreach (global::QueryCat.Plugins.Sdk.Column _iter216 in Columns)
           {
-            await _iter212.WriteAsync(oprot, cancellationToken);
+            await _iter216.WriteAsync(oprot, cancellationToken);
           }
           await oprot.WriteListEndAsync(cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
-        tmp211.Name = "offset";
-        tmp211.Type = TType.I64;
-        tmp211.ID = 2;
-        await oprot.WriteFieldBeginAsync(tmp211, cancellationToken);
+        tmp215.Name = "offset";
+        tmp215.Type = TType.I64;
+        tmp215.ID = 2;
+        await oprot.WriteFieldBeginAsync(tmp215, cancellationToken);
         await oprot.WriteI64Async(Offset, cancellationToken);
         await oprot.WriteFieldEndAsync(cancellationToken);
         if(__isset.@limit)
         {
-          tmp211.Name = "limit";
-          tmp211.Type = TType.I64;
-          tmp211.ID = 3;
-          await oprot.WriteFieldBeginAsync(tmp211, cancellationToken);
+          tmp215.Name = "limit";
+          tmp215.Type = TType.I64;
+          tmp215.ID = 3;
+          await oprot.WriteFieldBeginAsync(tmp215, cancellationToken);
           await oprot.WriteI64Async(Limit, cancellationToken);
+          await oprot.WriteFieldEndAsync(cancellationToken);
+        }
+        if((ExtraParams != null) && __isset.extra_params)
+        {
+          tmp215.Name = "extra_params";
+          tmp215.Type = TType.Map;
+          tmp215.ID = 4;
+          await oprot.WriteFieldBeginAsync(tmp215, cancellationToken);
+          await oprot.WriteMapBeginAsync(new TMap(TType.String, TType.Struct, ExtraParams.Count), cancellationToken);
+          foreach (string _iter217 in ExtraParams.Keys)
+          {
+            await oprot.WriteStringAsync(_iter217, cancellationToken);
+            await ExtraParams[_iter217].WriteAsync(oprot, cancellationToken);
+          }
+          await oprot.WriteMapEndAsync(cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
         #pragma warning restore IDE0017  // simplified init
@@ -216,7 +269,8 @@ namespace QueryCat.Plugins.Sdk
       if (ReferenceEquals(this, other)) return true;
       return TCollections.Equals(Columns, other.Columns)
         && global::System.Object.Equals(Offset, other.Offset)
-        && ((__isset.@limit == other.__isset.@limit) && ((!__isset.@limit) || (global::System.Object.Equals(Limit, other.Limit))));
+        && ((__isset.@limit == other.__isset.@limit) && ((!__isset.@limit) || (global::System.Object.Equals(Limit, other.Limit))))
+        && ((__isset.extra_params == other.__isset.extra_params) && ((!__isset.extra_params) || (TCollections.Equals(ExtraParams, other.ExtraParams))));
     }
 
     public override int GetHashCode() {
@@ -231,27 +285,36 @@ namespace QueryCat.Plugins.Sdk
         {
           hashcode = (hashcode * 397) + Limit.GetHashCode();
         }
+        if((ExtraParams != null) && __isset.extra_params)
+        {
+          hashcode = (hashcode * 397) + TCollections.GetHashCode(ExtraParams);
+        }
       }
       return hashcode;
     }
 
     public override string ToString()
     {
-      var tmp213 = new StringBuilder("ContextQueryInfo(");
+      var tmp218 = new StringBuilder("ContextQueryInfo(");
       if((Columns != null))
       {
-        tmp213.Append(", Columns: ");
-        Columns.ToString(tmp213);
+        tmp218.Append(", Columns: ");
+        Columns.ToString(tmp218);
       }
-      tmp213.Append(", Offset: ");
-      Offset.ToString(tmp213);
+      tmp218.Append(", Offset: ");
+      Offset.ToString(tmp218);
       if(__isset.@limit)
       {
-        tmp213.Append(", Limit: ");
-        Limit.ToString(tmp213);
+        tmp218.Append(", Limit: ");
+        Limit.ToString(tmp218);
       }
-      tmp213.Append(')');
-      return tmp213.ToString();
+      if((ExtraParams != null) && __isset.extra_params)
+      {
+        tmp218.Append(", ExtraParams: ");
+        ExtraParams.ToString(tmp218);
+      }
+      tmp218.Append(')');
+      return tmp218.ToString();
     }
   }
 

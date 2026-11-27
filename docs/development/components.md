@@ -92,7 +92,7 @@ while (await rowsIterator.MoveNextAsync())
 
 The `QueryCat.Backend.Core.Data.QueryContext` contains data and methods for extended query processing.
 
-1. Provides general query information: selected columns, offset, limit. See `QueryInfo` property.
+1. Provides general query information: selected columns, offset, limit and extra parameters (`ExtraParams`). See `QueryInfo` property.
 
 2. Provides simple key-value storage to share information between requests. See `InputConfigStorage`.
 

@@ -359,7 +359,8 @@ struct KeyColumn {
 struct ContextQueryInfo {
   1: required list<Column> columns,
   2: required i64 offset,
-  3: optional i64 limit
+  3: optional i64 limit,
+  4: optional map<string, VariantValue> extra_params
 }
 
 // Contains the general information.

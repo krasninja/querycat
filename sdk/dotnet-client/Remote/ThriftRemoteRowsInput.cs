@@ -87,6 +87,7 @@ public sealed class ThriftRemoteRowsInput : IRowsInputUpdate, IRowsInputDelete, 
                     Columns = QueryContext.QueryInfo.Columns.Select(SdkConvert.Convert).ToList(),
                     Limit = QueryContext.QueryInfo.Limit ?? -1,
                     Offset = QueryContext.QueryInfo.Offset,
+                    ExtraParams = QueryContext.QueryInfo.ExtraParams.ToDictionary(p => p.Key, p => SdkConvert.Convert(p.Value)),
                 },
                 new ContextInfo
                 {

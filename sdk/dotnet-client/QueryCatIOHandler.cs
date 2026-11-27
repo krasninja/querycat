@@ -337,6 +337,9 @@ public partial class QueryCatIOHandler : global::QueryCat.Plugins.Sdk.QueryCatIO
                         limit)
                     {
                         Offset = context_query_info.Offset,
+                        ExtraParams = context_query_info.ExtraParams != null
+                            ? context_query_info.ExtraParams.ToDictionary(p => p.Key, p => SdkConvert.Convert(p.Value))
+                            : new Dictionary<string, QueryCat.Backend.Core.Types.VariantValue>(),
                     },
                     _executionThread.ConfigStorage
                 );
