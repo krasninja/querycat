@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
@@ -21,7 +22,6 @@ internal sealed class AIAssistantInput : IRowsInput, IRowsIteratorParent
         var question = thread.Stack[0].AsString;
         IAnswerAgent? answerAgent = null;
 
-        var inputs = new List<KeyValuePair<string, IRowsInput>>();
         for (var i = 1; i < thread.Stack.FrameLength; i++)
         {
             var source = thread.Stack[i];
@@ -31,37 +31,16 @@ internal sealed class AIAssistantInput : IRowsInput, IRowsIteratorParent
                 && source.AsObjectUnsafe is IAnswerAgent agent)
             {
                 answerAgent = agent;
-                continue;
-            }
-
-            KeyValuePair<string, IRowsInput?> rowsInputNamePair = new KeyValuePair<string, IRowsInput?>(string.Empty, null);
-
-            // We can try to resolve strings to inputs.
-            if (source.Type == DataType.String)
-            {
-                rowsInputNamePair = await RowsInputConverter.ResolveInputAsync(thread, source.AsString, cancellationToken);
-            }
-            if (rowsInputNamePair.Value == null)
-            {
-                rowsInputNamePair = RowsInputConverter.Convert(source);
-            }
-
-            if (rowsInputNamePair.Value != null)
-            {
-                inputs.Add(new KeyValuePair<string, IRowsInput>(rowsInputNamePair.Key, rowsInputNamePair.Value));
+                break;
             }
         }
 
         if (answerAgent == null)
         {
-            answerAgent = AIAssistant.GetDefaultAnswerAgent(thread);
-        }
-        // No inputs provided? Let's search within current variables.
-        if (inputs.Count == 0)
-        {
-            inputs.AddRange(AIAssistant.GetInputs(thread));
+            answerAgent = await AIAssistant.GetDefaultAnswerAgentAsync(thread, cancellationToken);
         }
 
+        var inputs = await ResolveInputsFromThread(thread, cancellationToken);
         var aiInput = new AIAssistantInput(AIAssistant.Default, answerAgent, question, thread, inputs.ToArray());
         return VariantValue.CreateFromObject(aiInput);
     }
@@ -71,7 +50,9 @@ internal sealed class AIAssistantInput : IRowsInput, IRowsIteratorParent
     private readonly string _question;
     private readonly IExecutionThread _thread;
     private readonly KeyValuePair<string, IRowsInput>[] _inputs;
-    private IRowsIterator _rowsIterator = EmptyIterator.Instance;
+    private IRowsIterator _rowsIterator = EmptyRowsIterator.Instance;
+
+    private static readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(AIAssistantInput));
 
     /// <inheritdoc />
     public QueryContext QueryContext { get; set; } = NullQueryContext.Instance;
@@ -99,6 +80,77 @@ internal sealed class AIAssistantInput : IRowsInput, IRowsIteratorParent
         _question = question;
         _thread = thread;
         _inputs = inputs;
+    }
+
+    internal static async Task<IReadOnlyList<KeyValuePair<string, IRowsInput>>> ResolveInputsFromThread(
+        IExecutionThread thread,
+        CancellationToken cancellationToken = default)
+    {
+        var inputs = new List<KeyValuePair<string, IRowsInput>>();
+        for (var i = 1; i < thread.Stack.FrameLength; i++)
+        {
+            var source = thread.Stack[i];
+
+            // Special case. Here we can override answer agent, or use default.
+            if ((source.Type == DataType.Object || source.Type == DataType.Dynamic)
+                && source.AsObjectUnsafe is IAnswerAgent)
+            {
+                continue;
+            }
+
+            KeyValuePair<string, IRowsInput?> rowsInputNamePair = new KeyValuePair<string, IRowsInput?>(string.Empty, null);
+
+            // We can try to resolve strings to inputs.
+            if (source.Type == DataType.String)
+            {
+                rowsInputNamePair = await RowsInputConverter.ResolveInputAsync(thread, source.AsString, cancellationToken);
+            }
+            if (rowsInputNamePair.Value == null)
+            {
+                rowsInputNamePair = RowsInputConverter.Convert(source);
+            }
+
+            if (rowsInputNamePair.Value != null)
+            {
+                inputs.Add(new KeyValuePair<string, IRowsInput>(rowsInputNamePair.Key, rowsInputNamePair.Value));
+            }
+        }
+
+        // Fill from top scope.
+        foreach (var variable in thread.TopScope.Variables)
+        {
+            var rowsInputNamePair = RowsInputConverter.Convert(variable.Value);
+            if (rowsInputNamePair.Value != null)
+            {
+                inputs.Add(new KeyValuePair<string, IRowsInput>(variable.Key, rowsInputNamePair.Value));
+                continue;
+            }
+
+            if (variable.Value.Type == DataType.String)
+            {
+                var fileName = variable.Value.AsString;
+                if (!File.Exists(fileName))
+                {
+                    continue;
+                }
+
+                try
+                {
+                    rowsInputNamePair = await RowsInputConverter.ResolveInputAsync(thread, fileName, cancellationToken);
+                    if (rowsInputNamePair.Value != null)
+                    {
+                        inputs.Add(new KeyValuePair<string, IRowsInput>(variable.Key, rowsInputNamePair.Value));
+                        continue;
+                    }
+                }
+                catch (Exception e)
+                {
+                    _logger.LogWarning(e, "Cannot create input source from '{Source}'.", fileName);
+                }
+            }
+        }
+
+        return inputs;
     }
 
     /// <inheritdoc />

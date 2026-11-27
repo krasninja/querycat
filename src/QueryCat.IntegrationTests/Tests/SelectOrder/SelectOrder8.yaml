@@ -1,0 +1,16 @@
+expected: |
+  2,a
+  2,b
+  1,c
+  ,x
+  ,y
+  ,z
+query: |
+  select * from (
+    select 2 as a, 'b' as b union all
+    select null::integer, 'x' union all
+    select 1, 'c' union all
+    select null::integer, 'y' union all
+    select 2, 'a' union all
+    select null::integer, 'z'
+  ) as t order by a desc nulls last, b;

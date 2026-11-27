@@ -6,6 +6,11 @@ namespace QueryCat.Backend.Core.Plugins;
 public interface IPluginsLoader
 {
     /// <summary>
+    /// Configuration options declared by the loaded plugins.
+    /// </summary>
+    IPluginConfigOptionsRegistry ConfigOptions { get; }
+
+    /// <summary>
     /// Load plugins.
     /// </summary>
     /// <param name="options">Loading options.</param>

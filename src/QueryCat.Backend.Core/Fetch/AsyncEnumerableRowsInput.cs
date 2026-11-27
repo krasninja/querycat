@@ -80,7 +80,14 @@ public abstract class AsyncEnumerableRowsInput<[DynamicallyAccessedMembers(Dynam
 
         try
         {
-            value = _builder.GetValue(columnIndex, _enumerator.Current);
+            if (_builder.IsNoGetterColumns(columnIndex))
+            {
+                TryGetKeyColumnValueAnyOperation(columnIndex, [], out value);
+            }
+            else
+            {
+                value = _builder.GetValue(columnIndex, _enumerator.Current);
+            }
         }
         catch (Exception e)
         {

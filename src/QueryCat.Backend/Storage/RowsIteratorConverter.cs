@@ -20,7 +20,7 @@ public static class RowsIteratorConverter
         var type = variantValue.Type;
         if (type == DataType.Null)
         {
-            return EmptyIterator.Instance;
+            return EmptyRowsIterator.Instance;
         }
 
         if (type == DataType.Object || type == DataType.Dynamic)

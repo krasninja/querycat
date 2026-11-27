@@ -42,6 +42,7 @@ nav:
     - 'XML': output/xml.md
   - 'Functions':
     - 'Aggregate': functions/aggregate.md
+    - 'Array': functions/array.md
     - 'BLOB': functions/blob.md
     - 'Crypto': functions/crypto.md
     - 'Date and Time': functions/datetime.md
@@ -56,6 +57,7 @@ nav:
   - 'Features':
     - 'Autoexec': features/autoexec.md
     - 'Web Server': features/web-server.md
+    - 'MCP Server': features/mcp-server.md
   - 'Development':
     - 'Overview': development/index.md
     - 'Components': development/components.md
@@ -64,8 +66,11 @@ nav:
     - 'Thrift': development/connector-thrift.md
     - 'Simple Plugin': development/plugin-simple.md
     - 'Advanced Plugin': development/plugin-advanced.md
+    - 'Plugin Authentication': development/plugin-auth.md
+    - 'Plugin Configuration': development/plugin-config.md
   - 'Misc':
     - 'Alternative Tools': misc/alternatives.md
+    - 'Privacy Policy': misc/privacy.md
 theme: readthedocs
 exclude_docs: |
   internal

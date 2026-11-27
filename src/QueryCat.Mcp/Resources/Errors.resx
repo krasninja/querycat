@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:element name="root" msdata:IsDataSet="true">
+
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>1.3</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="McpMethodNotFound" xml:space="preserve">
+    <value>Method not found: {0}</value>
+  </data>
+  <data name="McpInvalidRequest" xml:space="preserve">
+    <value>The request is not a valid JSON-RPC request object.</value>
+  </data>
+  <data name="McpFunctionNameRequired" xml:space="preserve">
+    <value>Function name is required.</value>
+  </data>
+  <data name="McpInvalidFunctionArguments" xml:space="preserve">
+    <value>Function arguments must be an object of named arguments or an array of positional arguments.</value>
+  </data>
+  <data name="McpCannotCallAggregateFunction" xml:space="preserve">
+    <value>Cannot call aggregate function '{0}'.</value>
+  </data>
+  <data name="McpCannotCallUnsafeFunction" xml:space="preserve">
+    <value>Cannot call unsafe function '{0}' in safe mode.</value>
+  </data>
+  <data name="McpMissedRequiredOperation" xml:space="preserve">
+    <value>The function returns the input (`Object&lt;IRowsInput&gt;`) that requires filter operation(-s). Try to use `execute_query` tool with the query like `{0}`. Required columns and operations: {1}.</value>
+  </data>
+  <data name="McpQueryRequired" xml:space="preserve">
+    <value>Query argument is required.</value>
+  </data>
+  <data name="McpFunctionInfoArgumentsRequired" xml:space="preserve">
+    <value>Cannot open the input to get the columns schema. Provide 'args' that match the function signature.</value>
+  </data>
+  <data name="McpFunctionInfoInvalidRowsInput" xml:space="preserve">
+    <value>The function result is not a rows input or rows iterator.</value>
+  </data>
+  <data name="McpToolNameRequired" xml:space="preserve">
+    <value>Tool name is required.</value>
+  </data>
+  <data name="McpUnknownTool" xml:space="preserve">
+    <value>Unknown tool: {0}</value>
+  </data>
+  <data name="McpInternalError" xml:space="preserve">
+    <value>Internal server error.</value>
+  </data>
+  <data name="McpTermRequired" xml:space="preserve">
+    <value>Term is required.</value>
+  </data>
+  <data name="McpFunctionInfoUnsafeFunction" xml:space="preserve">
+    <value>The function is not safe, it is not called to get the columns schema. Use `execute_query` tool with the query like `SELECT * FROM {0}([arguments]) LIMIT 0` instead.</value>
+  </data>
+  <data name="McpRequestTooLarge" xml:space="preserve">
+    <value>The request is too large.</value>
+  </data>
+  <data name="McpResourceUriRequired" xml:space="preserve">
+    <value>Resource URI is required.</value>
+  </data>
+  <data name="McpResourceNotFound" xml:space="preserve">
+    <value>Resource '{0}' not found.</value>
+  </data>
+  <data name="McpResourceReadError" xml:space="preserve">
+    <value>Cannot read resource '{0}': {1}</value>
+  </data>
+  <data name="McpResourceTooLarge" xml:space="preserve">
+    <value>The resource is too large, max size is {0} bytes.</value>
+  </data>
+  <data name="McpResourceFileNotFound" xml:space="preserve">
+    <value>Resource file '{0}' not found.</value>
+  </data>
+  <data name="McpInvalidResourceDefinition" xml:space="preserve">
+    <value>Invalid resource definition '{0}', expected format is 'name=value'.</value>
+  </data>
+  <data name="McpUnsupportedResourceScheme" xml:space="preserve">
+    <value>Unsupported resource scheme '{0}', only file, http and https are supported.</value>
+  </data>
+  <data name="McpUnsupportedProtocolVersion" xml:space="preserve">
+    <value>Unsupported protocol version '{0}', supported versions: {1}.</value>
+  </data>
+  <data name="McpRequestMetaRequired" xml:space="preserve">
+    <value>The request '_meta' must contain '{0}' field.</value>
+  </data>
+  <data name="McpHeaderMissing" xml:space="preserve">
+    <value>Required header '{0}' is missing.</value>
+  </data>
+  <data name="McpHeaderMismatch" xml:space="preserve">
+    <value>Header mismatch: {0} header value '{1}' does not match body value '{2}'.</value>
+  </data>
+  <data name="McpHeaderInvalid" xml:space="preserve">
+    <value>Header '{0}' value is malformed.</value>
+  </data>
+  <data name="McpSubscriptionFilterRequired" xml:space="preserve">
+    <value>Subscription notifications filter is required.</value>
+  </data>
+</root>

@@ -38,7 +38,7 @@ public class MultiplyRowsIteratorTests
         // Act.
         var multiplyRowsIterator = new MultiplyRowsIterator(table1.GetIterator(), table2.GetIterator());
         var resultRowsFrame = new RowsFrame(multiplyRowsIterator.Columns);
-        await multiplyRowsIterator.ToFrameAsync(resultRowsFrame);
+        await multiplyRowsIterator.ToFrameAsync(resultRowsFrame, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert.
         Assert.Equal(6, resultRowsFrame.TotalRows);

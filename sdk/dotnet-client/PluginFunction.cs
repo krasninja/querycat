@@ -36,6 +36,9 @@ internal sealed class PluginFunction : IFunction
     /// <inheritdoc />
     public string[] Formatters { get; set; } = [];
 
+    /// <inheritdoc />
+    public string[] Examples { get; set; } = [];
+
     /// <summary>
     /// Function full signature.
     /// </summary>
@@ -51,8 +54,13 @@ internal sealed class PluginFunction : IFunction
             IsSafe = metadata.IsSafe;
             IsAggregate = metadata.IsAggregate;
             Formatters = metadata.Formatters;
+            Examples = metadata.Examples;
         }
         Arguments = ParseArgumentsSimple(signature);
+        if (metadata != null)
+        {
+            Arguments = FunctionMetadata.ApplyArgumentsDescriptions(Arguments, metadata.ArgumentsDescriptions);
+        }
         Name = GetFunctionName(signature);
     }
 

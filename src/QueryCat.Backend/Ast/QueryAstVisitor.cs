@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text;
 using QueryCat.Backend.Ast.Nodes;
+using QueryCat.Backend.Ast.Nodes.Call;
 using QueryCat.Backend.Ast.Nodes.Declare;
 using QueryCat.Backend.Ast.Nodes.Function;
 using QueryCat.Backend.Ast.Nodes.Select;
@@ -320,6 +321,24 @@ internal class QueryAstVisitor : AstVisitor
 
     #endregion
 
+    #region Call
+
+    /// <inheritdoc />
+    public override ValueTask VisitAsync(CallFunctionStatementNode node, CancellationToken cancellationToken)
+    {
+        Copy(node, node.RootNode);
+        return ValueTask.CompletedTask;
+    }
+
+    /// <inheritdoc />
+    public override ValueTask VisitAsync(CallFunctionNode node, CancellationToken cancellationToken)
+    {
+        Set(node, "CALL " + Get(node.FunctionCallNode));
+        return ValueTask.CompletedTask;
+    }
+
+    #endregion
+
     private void Set(IAstNode node, string value) => _nodeIdStringMap[node.Id] = value;
 
     internal string Get(IAstNode node) => _nodeIdStringMap.GetValueOrDefault(node.Id, string.Empty);
@@ -328,7 +347,7 @@ internal class QueryAstVisitor : AstVisitor
 
     private string GetStringWithParens(IAstNode node) => string.Concat("(", Get(node), ")");
 
-    private static string GetOperationString(VariantValue.Operation operation) => operation switch
+    internal static string GetOperationString(VariantValue.Operation operation) => operation switch
     {
         VariantValue.Operation.Add => "+",
         VariantValue.Operation.Subtract => "-",
@@ -339,7 +358,7 @@ internal class QueryAstVisitor : AstVisitor
         VariantValue.Operation.RightShift => ">>",
 
         VariantValue.Operation.Equals => "=",
-        VariantValue.Operation.NotEquals => "!=",
+        VariantValue.Operation.NotEquals => "<>",
         VariantValue.Operation.Greater => ">",
         VariantValue.Operation.GreaterOrEquals => ">=",
         VariantValue.Operation.Less => "<",

@@ -7,7 +7,6 @@ using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Core.Utils;
-using QueryCat.Backend.Storage;
 
 namespace QueryCat.Backend.Inputs;
 
@@ -19,6 +18,13 @@ public class AIAssistant
 {
     // ReSharper disable once InconsistentNaming
     public const string DefaultAIAgentVariableName = "_ANSWER_AGENT";
+
+    /// <summary>
+    /// The config storage key that contains the default AI answer agent function call.
+    /// For example, "ollama_agent('qwen3:8b')".
+    /// </summary>
+    // ReSharper disable once InconsistentNaming
+    public const string DefaultAIAgentConfigKey = "__ai_agent";
 
     /// <summary>
     /// Default instance of AI assistant.
@@ -33,18 +39,21 @@ public class AIAssistant
 
     public const string PromptGuidelines =
         """
-        == Rules
+        = Rules
         1. Generate exactly one read-only SELECT statement (CTEs allowed). Never INSERT, UPDATE, DELETE, SET or DECLARE.
         2. Use only the tables and columns listed below. Reference tables by their identifier.
         3. Quote identifiers with double quotes ("my col"); use single quotes only for string literals.
         4. Available types for CAST / ::: integer, string, float, timestamp, boolean, numeric, interval, blob.
         5. Supported: WITH [RECURSIVE], window functions, DISTINCT ON, LIMIT/OFFSET, FETCH FIRST n ROWS,
            LIKE, SIMILAR TO (uses .NET regex). Use only those functions listed in Functions section.
-        6. If the question cannot be answered from the given tables, do not guess; explain why in "Refusal".
+        6. If the question cannot be answered from the given tables or needs to be clarified by user, do NOT guess;
+           explain why in "Error" field.
+        7. If you cannot find function, table, column or input source that is needed for answer, note it in "Error" field.
 
-        Respond with a single JSON object and nothing else (no markdown, no comments):
-        {"Query": "<sql or empty>", "Refusal": "<reason or empty>"}
-        Example: {"Query": "SELECT \"name\" FROM \"actors\" WHERE \"age\" >= 18", "Refusal": ""}
+        Respond with a single JSON object and nothing else (no markdown, no extra text):
+        {"Query": "<sql or empty>", "Error": "<error reason or empty>", "Comment": "<query construction comments>"}
+        Success example: {"Query": "SELECT \"name\" FROM \"actors\" WHERE \"age\" >= 18", "Error": "", "Comment": ""}
+        Error example: {"Query": "", "Error": "Column 'age' cannot be found.", "Comment": ""}
         """;
 
     private const int MaxQueryFixAttempts = 3;
@@ -86,7 +95,7 @@ public class AIAssistant
         public AskAIRequest(string question, params KeyValuePair<string, IRowsInput>[] inputs)
         {
             Question = question;
-            Inputs = inputs.ToDictionary(k => k.Key, v => v.Value);
+            Inputs = inputs.DistinctBy(k => k.Key).ToDictionary(k => k.Key, v => v.Value);
         }
     }
 
@@ -97,9 +106,11 @@ public class AIAssistant
     {
         public string Query { get; set; } = string.Empty;
 
-        public string Refusal { get; set; } = string.Empty;
+        public string Error { get; set; } = string.Empty;
 
-        public bool IsSuccess => !string.IsNullOrEmpty(Query);
+        public string Comment { get; set; } = string.Empty;
+
+        public bool IsSuccess => !string.IsNullOrEmpty(Query) && string.IsNullOrEmpty(Error);
 
         internal static ChatResponse CreateSuccessMessage(string sql)
             => new(
@@ -109,7 +120,7 @@ public class AIAssistant
                 }, SourceGenerationContext.Default.PromptResponseModel));
 
         /// <inheritdoc />
-        public override string ToString() => $"Q: {Query}, R: {Refusal}";
+        public override string ToString() => $"Q: {Query}, E: {Error}, C: {Comment}";
     }
 
     /// <summary>
@@ -146,43 +157,53 @@ public class AIAssistant
     }
 
     /// <summary>
-    /// Get the default answer agent from variables.
+    /// Get the default answer agent. First, the special variable is checked, then the agent
+    /// function call is resolved from the config storage.
     /// </summary>
     /// <param name="thread">Execution thread.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Instance of <see cref="IAnswerAgent" />.</returns>
-    public static IAnswerAgent GetDefaultAnswerAgent(IExecutionThread thread)
+    /// <remarks>
+    /// The config storage is loaded lazily on the first query run, so call
+    /// <see cref="IConfigStorage.LoadAsync" /> before to resolve the agent from the config.
+    /// </remarks>
+    public static async Task<IAnswerAgent> GetDefaultAnswerAgentAsync(
+        IExecutionThread thread,
+        CancellationToken cancellationToken = default)
     {
-        var answerAgentValue = thread.GetVariable(DefaultAIAgentVariableName);
-        if (!answerAgentValue.IsNull
-            && (answerAgentValue.Type == DataType.Object || answerAgentValue.Type == DataType.Dynamic)
-            && answerAgentValue.AsObjectUnsafe is IAnswerAgent agent)
+        var answerAgent = GetAnswerAgent(thread.GetVariable(DefaultAIAgentVariableName));
+        if (answerAgent != null)
         {
-            return agent;
+            return answerAgent;
         }
 
-        throw new QueryCatException(
-            string.Format(Resources.Errors.AnswerAgentNotFound, DefaultAIAgentVariableName, nameof(IAnswerAgent)));
-    }
-
-    /// <summary>
-    /// Get all input variables.
-    /// </summary>
-    /// <param name="thread">Execution thread.</param>
-    /// <returns>List of inputs.</returns>
-    public static IList<KeyValuePair<string, IRowsInput>> GetInputs(IExecutionThread thread)
-    {
-        var inputs = new List<KeyValuePair<string, IRowsInput>>();
-        foreach (var variable in thread.TopScope.Variables)
+        // The agent can be also defined in the config as a function call, for example, "ollama_agent('qwen3:8b')".
+        // Execute this call to get the agent instance.
+        var agentCallValue = await thread.ConfigStorage.GetOrDefaultAsync(
+            DefaultAIAgentConfigKey, cancellationToken: cancellationToken);
+        var agentCall = agentCallValue.Type == DataType.String ? agentCallValue.AsStringUnsafe.Trim() : string.Empty;
+        if (!string.IsNullOrEmpty(agentCall))
         {
-            var rowsInputNamePair = RowsInputConverter.Convert(variable.Value);
-            if (rowsInputNamePair.Value == null)
+            var value = await thread.RunAsync(agentCall, cancellationToken: cancellationToken);
+            answerAgent = GetAnswerAgent(value);
+            if (answerAgent == null)
             {
-                continue;
+                throw new QueryCatException(string.Format(
+                    Resources.Errors.InvalidAnswerAgent, agentCall, nameof(IAnswerAgent)));
             }
-            inputs.Add(new KeyValuePair<string, IRowsInput>(variable.Key, rowsInputNamePair.Value));
+            return answerAgent;
         }
-        return inputs;
+
+        throw new QueryCatException(string.Format(Resources.Errors.AnswerAgentNotFound,
+            DefaultAIAgentVariableName, nameof(IAnswerAgent), DefaultAIAgentConfigKey));
     }
+
+    private static IAnswerAgent? GetAnswerAgent(VariantValue value)
+        => !value.IsNull
+           && (value.Type == DataType.Object || value.Type == DataType.Dynamic)
+           && value.AsObjectUnsafe is IAnswerAgent agent
+            ? agent
+            : null;
 
     private async Task CloseInputsAsync(
         IReadOnlyDictionary<string, IRowsInput> inputs,
@@ -209,23 +230,26 @@ public class AIAssistant
         _logger.LogDebug("Prompt: {Prompt}.", currentAiRequest);
         while (!canProceedQuery)
         {
-            var response = await answerAgent.AskAsync(new ChatRequest(messages.ToArray(), ChatRequest.TypeSql), cancellationToken);
+            var response = await answerAgent.AskAsync(
+                new ChatRequest(messages.ToArray(), ChatRequest.TypeSql), cancellationToken);
             messages.AddRange(response.Messages);
             if (_logger.IsEnabled(LogLevel.Trace))
             {
                 _logger.LogTrace("Resolver response: {Response}", response.ToString());
             }
+
             var model = ConvertAnswerToSql(response.Answer);
             canProceedQuery = model.IsSuccess;
             if (!canProceedQuery)
             {
-                var userResponse = await ClarifyAsync(model.Refusal, cancellationToken);
+                var userResponse = await ClarifyAsync(model.Error, cancellationToken);
                 if (string.IsNullOrEmpty(userResponse))
                 {
-                    throw new QueryCatException(string.Format(Resources.Errors.AnswerAgentIssue, model.Refusal));
+                    throw new QueryCatException(string.Format(Resources.Errors.AnswerAgentIssue, model.Error));
                 }
                 currentAiRequest = new ChatRequest(userResponse);
                 messages.AddRange(currentAiRequest.Messages);
+                queryAttempts++;
                 continue;
             }
 
@@ -268,7 +292,7 @@ public class AIAssistant
         {
             new(PromptPreamble, ChatMessage.RoleSystem),
             new(PromptGuidelines, ChatMessage.RoleSystem),
-            new(GetFunctionsPreamble(functions), ChatMessage.RoleSystem),
+            new(GetFunctionsPreamble(functions), ChatMessage.RoleUser),
             new(GetPromptTablesInformation(inputs)),
             new(GetPromptQuestion(question))
         };
@@ -290,7 +314,7 @@ public class AIAssistant
         return functionSection.ToString();
     }
 
-    private PromptResponseModel ConvertAnswerToSql(string answer)
+    private static PromptResponseModel ConvertAnswerToSql(string answer)
     {
         var startOfJson = answer.IndexOf('{');
         var endOfJson = answer.LastIndexOf('}');
@@ -298,7 +322,7 @@ public class AIAssistant
             || startOfJson < 0
             || endOfJson < 0)
         {
-            throw new InvalidOperationException(string.Format(Resources.Errors.InvalidAgentResponse, answer));
+            throw new QueryCatException(string.Format(Resources.Errors.InvalidAgentResponse, answer));
         }
         var json = answer.Substring(startOfJson, endOfJson - startOfJson + 1);
         var model = JsonSerializer.Deserialize(
@@ -306,7 +330,7 @@ public class AIAssistant
             SourceGenerationContext.Default.PromptResponseModel);
         if (model == null)
         {
-            throw new InvalidOperationException(string.Format(Resources.Errors.InvalidAgentResponse, json));
+            throw new QueryCatException(string.Format(Resources.Errors.InvalidAgentResponse, json));
         }
         return model;
     }

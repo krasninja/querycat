@@ -63,6 +63,12 @@ namespace QueryCat.Backend.Resources {
             }
         }
         
+        internal static string Plugins_InvalidUrl {
+            get {
+                return ResourceManager.GetString("Plugins_InvalidUrl", resourceCulture);
+            }
+        }
+        
         internal static string InvalidRowIndex {
             get {
                 return ResourceManager.GetString("InvalidRowIndex", resourceCulture);
@@ -423,6 +429,12 @@ namespace QueryCat.Backend.Resources {
             }
         }
         
+        internal static string InvalidAnswerAgent {
+            get {
+                return ResourceManager.GetString("InvalidAnswerAgent", resourceCulture);
+            }
+        }
+        
         internal static string CannotOverrideWindowPartition {
             get {
                 return ResourceManager.GetString("CannotOverrideWindowPartition", resourceCulture);
@@ -498,6 +510,36 @@ namespace QueryCat.Backend.Resources {
         internal static string CannotSetValue {
             get {
                 return ResourceManager.GetString("CannotSetValue", resourceCulture);
+            }
+        }
+        
+        internal static string CannotRunFunctionInSafeMode {
+            get {
+                return ResourceManager.GetString("CannotRunFunctionInSafeMode", resourceCulture);
+            }
+        }
+        
+        internal static string OAuth2Error {
+            get {
+                return ResourceManager.GetString("OAuth2Error", resourceCulture);
+            }
+        }
+        
+        internal static string OAuth2InvalidResponse {
+            get {
+                return ResourceManager.GetString("OAuth2InvalidResponse", resourceCulture);
+            }
+        }
+        
+        internal static string OAuth2DeviceCodeExpired {
+            get {
+                return ResourceManager.GetString("OAuth2DeviceCodeExpired", resourceCulture);
+            }
+        }
+        
+        internal static string StringTooLarge {
+            get {
+                return ResourceManager.GetString("StringTooLarge", resourceCulture);
             }
         }
     }

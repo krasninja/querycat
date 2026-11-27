@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Text;
 
 namespace QueryCat.Backend.Core.Types;
@@ -24,6 +25,8 @@ public static class Converter
         DataType.Blob => typeof(byte[]),
         DataType.Object => typeof(object),
         DataType.Dynamic => typeof(object),
+        DataType.Array => typeof(VariantValue[]),
+        DataType.Map => typeof(IDictionary<VariantValue, VariantValue>),
         DataType.Null => typeof(void),
         DataType.Void => typeof(void),
         _ => typeof(void)
@@ -66,6 +69,14 @@ public static class Converter
         if (typeof(byte[]).IsAssignableFrom(type) || typeof(IBlobData).IsAssignableFrom(type))
         {
             return DataType.Blob;
+        }
+        if (typeof(IDictionary).IsAssignableFrom(type))
+        {
+            return DataType.Map;
+        }
+        if (typeof(VariantValue[]).IsAssignableFrom(type))
+        {
+            return DataType.Array;
         }
         if (!type.IsValueType)
         {

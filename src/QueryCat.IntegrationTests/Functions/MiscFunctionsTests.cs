@@ -17,9 +17,9 @@ public sealed class MiscFunctionsTests
     {
         // Act.
         await using var thread = _executionThreadBootstrapper.Create();
-        var result1 = await thread.RunAsync(@"ECHO COALESCE(NULL, 10);");
-        var result2 = await thread.RunAsync(@"ECHO COALESCE(NULL, 10, 20);");
-        var result3 = await thread.RunAsync(@"ECHO COALESCE(NULL, 10 + NULL, NULL);");
+        var result1 = await thread.RunAsync(@"ECHO COALESCE(NULL, 10);", cancellationToken: TestContext.Current.CancellationToken);
+        var result2 = await thread.RunAsync(@"ECHO COALESCE(NULL, 10, 20);", cancellationToken: TestContext.Current.CancellationToken);
+        var result3 = await thread.RunAsync(@"ECHO COALESCE(NULL, 10 + NULL, NULL);", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert.
         Assert.Equal(10, result1.AsInteger);

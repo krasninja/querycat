@@ -26,7 +26,7 @@ public class DistinctRowsIteratorTests
 
         // Act.
         var resultRowsSet = await new DistinctRowsIterator(NullExecutionThread.Instance, table.GetIterator())
-            .ToFrameAsync();
+            .ToFrameAsync(cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert.
         Assert.Equal(3, resultRowsSet.TotalRows);

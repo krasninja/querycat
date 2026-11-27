@@ -90,4 +90,13 @@
   <data name="InvalidNumberOfValues" xml:space="preserve">
     <value>The number of values does not match the number of columns.</value>
   </data>
+  <data name="AuthRequired" xml:space="preserve">
+    <value>Authentication required for provider '{0}'. Run 'qcat plugin auth login {0}'.</value>
+  </data>
+  <data name="AuthProviderAlreadyRegistered" xml:space="preserve">
+    <value>Authentication provider '{0}' is already registered by plugin '{1}'.</value>
+  </data>
+  <data name="ConfigOptionInvalidType" xml:space="preserve">
+    <value>Cannot set option '{0}' of plugin '{1}': the value cannot be converted to type '{2}'.</value>
+  </data>
 </root>

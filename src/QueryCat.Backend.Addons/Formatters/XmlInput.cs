@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Utils;
 
@@ -254,7 +255,7 @@ internal sealed class XmlInput : IRowsInput, IDisposable
                             {
                                 continue;
                             }
-                            EnsureListSize(_currentRow, columnIndex + 1);
+                            CollectionUtils.EnsureListSize(_currentRow, columnIndex + 1);
                             _currentRow[columnIndex] = new VariantValue(_xmlReader.Value);
                             _attributesColumns.Push(columnIndex);
                         }
@@ -269,7 +270,7 @@ internal sealed class XmlInput : IRowsInput, IDisposable
                     {
                         continue;
                     }
-                    EnsureListSize(_currentRow, columnIndex + 1);
+                    CollectionUtils.EnsureListSize(_currentRow, columnIndex + 1);
                     _currentRow[columnIndex] = new VariantValue(_xmlReader.Value.Trim());
                     anyRead = true;
                 }
@@ -316,14 +317,6 @@ internal sealed class XmlInput : IRowsInput, IDisposable
     public void Explain(IndentedStringBuilder stringBuilder)
     {
         stringBuilder.AppendLine(nameof(XmlInput));
-    }
-
-    private static void EnsureListSize<T>(List<T?> list, int capacity)
-    {
-        while (list.Count < capacity)
-        {
-            list.Add(default);
-        }
     }
 
     private int GetColumnIndex(string name)

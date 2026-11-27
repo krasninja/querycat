@@ -81,34 +81,122 @@ public static class JsonFunctions
     }
 
     [SafeFunction]
-    [RequiresUnreferencedCode("Calls System.Text.Json.JsonSerializer.SerializeToNode<TValue>(TValue, JsonSerializerOptions)")]
-    [RequiresDynamicCode("Calls System.Text.Json.JsonSerializer.SerializeToNode<TValue>(TValue, JsonSerializerOptions)")]
     [Description("Constructs JSON text from object.")]
     [FunctionSignature("to_json(obj: any): string")]
     public static VariantValue ToJson(IExecutionThread thread)
     {
         var obj = thread.Stack.Pop();
-        JsonNode? node;
-        if (DataTypeUtils.IsSimple(obj.Type))
-        {
-            var dict = new Dictionary<string, object>
-            {
-                ["value"] = obj.ToString(CultureInfo.InvariantCulture),
-            };
-            node = JsonSerializer.SerializeToNode(dict, SourceGenerationContext.Default.DictionaryStringObject);
-        }
-        else
-        {
-            node = JsonSerializer.SerializeToNode(obj.AsObject);
-        }
+        var node = ConvertToJsonNode(in obj);
         if (node == null)
         {
-            return VariantValue.Null;
+            return new VariantValue("null");
         }
 
         var jsonString = node.ToJsonString(_jsonSerializerOptions);
         return new VariantValue(jsonString);
     }
+
+    #region JSON convert
+
+    private static JsonNode? ConvertToJsonNode(in VariantValue value)
+    {
+        return value.Type switch
+        {
+            DataType.Null or DataType.Void => null,
+            DataType.Integer => System.Text.Json.Nodes.JsonValue.Create(value.AsIntegerUnsafe),
+            DataType.Float => System.Text.Json.Nodes.JsonValue.Create(value.AsFloatUnsafe),
+            DataType.Numeric => System.Text.Json.Nodes.JsonValue.Create(value.AsNumericUnsafe),
+            DataType.String => System.Text.Json.Nodes.JsonValue.Create(value.AsStringUnsafe),
+            DataType.Boolean => System.Text.Json.Nodes.JsonValue.Create(value.AsBooleanUnsafe),
+            DataType.Timestamp => System.Text.Json.Nodes.JsonValue.Create(value.AsTimestampUnsafe.ToString("O")),
+            DataType.Interval => System.Text.Json.Nodes.JsonValue.Create(value.AsIntervalUnsafe.ToString()),
+            DataType.Blob => ConvertBlobToJsonNode(value.AsBlobUnsafe),
+            DataType.Array => ConvertArrayToJsonArray(value.AsArrayUnsafe),
+            DataType.Map => ConvertMapToJsonObject(value.AsMapUnsafe),
+            DataType.Object => ConvertObjectToJsonNode(value.AsObjectUnsafe),
+            _ => null,
+        };
+    }
+
+    private static JsonNode ConvertBlobToJsonNode(IBlobData blob)
+    {
+        using var stream = blob.GetStream();
+        using var memoryStream = new MemoryStream();
+        stream.CopyTo(memoryStream);
+        return System.Text.Json.Nodes.JsonValue.Create(Convert.ToBase64String(memoryStream.ToArray()));
+    }
+
+    private static JsonArray ConvertArrayToJsonArray(IEnumerable<VariantValue> list)
+    {
+        var jsonArray = new JsonArray();
+        foreach (var item in list)
+        {
+            jsonArray.Add(ConvertToJsonNode(in item));
+        }
+        return jsonArray;
+    }
+
+    private static JsonObject ConvertMapToJsonObject(IDictionary<VariantValue, VariantValue> map)
+    {
+        var jsonObject = new JsonObject();
+        foreach (var kvp in map)
+        {
+            var key = kvp.Key.ToString(CultureInfo.InvariantCulture);
+            var val = kvp.Value;
+            jsonObject[key] = ConvertToJsonNode(in val);
+        }
+        return jsonObject;
+    }
+
+    private static JsonNode? ConvertObjectToJsonNode(object? obj)
+    {
+        if (obj == null)
+        {
+            return null;
+        }
+
+        // Handle JsonNode directly.
+        if (obj is JsonNode jsonNode)
+        {
+            return jsonNode;
+        }
+        // Handle IDictionary<VariantValue, VariantValue>.
+        if (obj is IDictionary<VariantValue, VariantValue> variantMap)
+        {
+            return ConvertMapToJsonObject(variantMap);
+        }
+        // Handle IDictionary<string, VariantValue>.
+        if (obj is IDictionary<string, VariantValue> stringVariantMap)
+        {
+            var jsonObject = new JsonObject();
+            foreach (var kvp in stringVariantMap)
+            {
+                var val = kvp.Value;
+                jsonObject[kvp.Key] = ConvertToJsonNode(in val);
+            }
+            return jsonObject;
+        }
+        // Handle IList<VariantValue>.
+        if (obj is IList<VariantValue> variantList)
+        {
+            return ConvertArrayToJsonArray(variantList);
+        }
+        // Handle VariantValue[].
+        if (obj is VariantValue[] variantArray)
+        {
+            return ConvertArrayToJsonArray(variantArray);
+        }
+        // Handle IEnumerable<VariantValue>.
+        if (obj is IEnumerable<VariantValue> variantEnumerable)
+        {
+            return ConvertArrayToJsonArray(variantEnumerable);
+        }
+
+        // Fallback: convert to string.
+        return System.Text.Json.Nodes.JsonValue.Create(obj.ToString());
+    }
+
+    #endregion
 
     [SafeFunction]
     [Description("Tests whether a string contains valid JSON.")]

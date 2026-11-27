@@ -57,4 +57,7 @@
   <data name="PluginReadyTimeout" xml:space="preserve">
     <value>Plugin with token '{0}' ready timeout.</value>
   </data>
+  <data name="AuthProviderNotDeclared" xml:space="preserve">
+    <value>Plugin '{0}' cannot get token of authentication provider '{1}' because the plugin did not declare it.</value>
+  </data>
 </root>

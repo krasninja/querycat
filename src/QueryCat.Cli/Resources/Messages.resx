@@ -131,7 +131,7 @@
     <value>Install the plugin.</value>
   </data>
   <data name="PluginInstallCommand_NameDescription" xml:space="preserve">
-    <value>Plugin name.</value>
+    <value>Plugin name or URL of the plugin file.</value>
   </data>
   <data name="PluginInstallCommand_OverwriteDescription" xml:space="preserve">
     <value>Overwrite the plugin if it already exists.</value>
@@ -198,5 +198,132 @@
   </data>
   <data name="QueryCommand_AIDescription" xml:space="preserve">
     <value>Uses AI answer agent to convert natural language query to SQL.</value>
+  </data>
+  <data name="McpCommand_Description" xml:space="preserve">
+    <value>Run simple MCP server.</value>
+  </data>
+  <data name="McpCommand_TransportDescription" xml:space="preserve">
+    <value>Use stdio or HTTP transport.</value>
+  </data>
+  <data name="McpCommand_UnsafeDescription" xml:space="preserve">
+    <value>Allow to call unsafe functions and modification commands (INSERT, UPDATE, DELETE). By default, the MCP server runs in safe mode.</value>
+  </data>
+  <data name="McpCommand_ResourceDescription" xml:space="preserve">
+    <value>Add MCP resource in format 'name=value', where value is a file path, file:// URI or http(s):// URL. Can be specified multiple times.</value>
+  </data>
+  <data name="PluginAuthCommand_Description" xml:space="preserve">
+    <value>Manage plugins authentication.</value>
+  </data>
+  <data name="PluginAuthCommand_ProviderDescription" xml:space="preserve">
+    <value>Authentication provider identifier or plugin name.</value>
+  </data>
+  <data name="PluginOptionsListCommand_Description" xml:space="preserve">
+    <value>List configuration options declared by plugins and their current values.</value>
+  </data>
+  <data name="PluginOptionsListCommand_PluginDescription" xml:space="preserve">
+    <value>Plugin name. List options of all plugins if not specified.</value>
+  </data>
+  <data name="PluginAuthListCommand_Description" xml:space="preserve">
+    <value>List authentication providers declared by plugins and login status.</value>
+  </data>
+  <data name="PluginAuthLoginCommand_Description" xml:space="preserve">
+    <value>Log in to the plugin authentication provider.</value>
+  </data>
+  <data name="PluginAuthLoginCommand_DeviceDescription" xml:space="preserve">
+    <value>Use OAuth2 device authorization flow (for SSH and headless environments).</value>
+  </data>
+  <data name="PluginAuthLoginCommand_NoBrowserDescription" xml:space="preserve">
+    <value>Do not open browser, print the URL only.</value>
+  </data>
+  <data name="PluginAuthLoginCommand_ApiKeyDescription" xml:space="preserve">
+    <value>Enter API key or personal access token instead of OAuth2 login.</value>
+  </data>
+  <data name="PluginAuthLoginCommand_ClientIdDescription" xml:space="preserve">
+    <value>Override OAuth2 client identifier provided by plugin.</value>
+  </data>
+  <data name="PluginAuthLoginCommand_ClientSecretDescription" xml:space="preserve">
+    <value>Override OAuth2 client secret provided by plugin.</value>
+  </data>
+  <data name="PluginAuthLogoutCommand_Description" xml:space="preserve">
+    <value>Remove stored credentials of the authentication provider.</value>
+  </data>
+  <data name="PluginAuthLogin_OpenUrl" xml:space="preserve">
+    <value>Open the URL in browser to authorize:
+{0}</value>
+  </data>
+  <data name="PluginAuthLogin_DeviceCode" xml:space="preserve">
+    <value>Open {0} and enter the code: {1}</value>
+  </data>
+  <data name="PluginAuthLogin_Waiting" xml:space="preserve">
+    <value>Waiting for authorization...</value>
+  </data>
+  <data name="PluginAuthLogin_EnterApiKey" xml:space="preserve">
+    <value>Enter API key for '{0}': </value>
+  </data>
+  <data name="PluginAuthLogin_Success" xml:space="preserve">
+    <value>Logged in to '{0}'.</value>
+  </data>
+  <data name="PluginAuthLogout_Success" xml:space="preserve">
+    <value>Logged out from '{0}'.</value>
+  </data>
+  <data name="PluginAuthLogout_NotFound" xml:space="preserve">
+    <value>No stored credentials for '{0}'.</value>
+  </data>
+  <data name="PluginOptionsCommand_Description" xml:space="preserve">
+    <value>Manage configuration options.</value>
+  </data>
+  <data name="PluginOptionsCommand_PluginDescription" xml:space="preserve">
+    <value>Plugin name.</value>
+  </data>
+  <data name="PluginOptionsCommand_NameDescription" xml:space="preserve">
+    <value>Option name.</value>
+  </data>
+  <data name="PluginOptionsGetCommand_Description" xml:space="preserve">
+    <value>Get the current value of the option. The default value is returned if the option is not set.</value>
+  </data>
+  <data name="PluginOptionsSetCommand_Description" xml:space="preserve">
+    <value>Set the option value.</value>
+  </data>
+  <data name="PluginOptionsSetCommand_ValueDescription" xml:space="preserve">
+    <value>Option value. It is converted to the option type.</value>
+  </data>
+  <data name="PluginOptionsUnsetCommand_Description" xml:space="preserve">
+    <value>Remove the option value, so the default value is used.</value>
+  </data>
+  <data name="PluginOptionsSet_Success" xml:space="preserve">
+    <value>Option '{0}' is set to '{1}'.</value>
+  </data>
+  <data name="PluginOptionsUnset_Success" xml:space="preserve">
+    <value>Option '{0}' is unset.</value>
+  </data>
+  <data name="QueryCommand_WebProxyCommand" xml:space="preserve">
+    <value>Configure proxy for web requests.</value>
+  </data>
+  <data name="AgentCommand_Description" xml:space="preserve">
+    <value>AI answer agents management.</value>
+  </data>
+  <data name="AgentListCommand_Description" xml:space="preserve">
+    <value>List functions that create an AI answer agent.</value>
+  </data>
+  <data name="AgentGetCommand_Description" xml:space="preserve">
+    <value>Show the current AI answer agent function call.</value>
+  </data>
+  <data name="AgentSetCommand_Description" xml:space="preserve">
+    <value>Set the default AI answer agent.</value>
+  </data>
+  <data name="AgentSetCommand_AgentDescription" xml:space="preserve">
+    <value>The agent function call. Example: ollama_agent('qwen3:8b').</value>
+  </data>
+  <data name="AgentList_Current" xml:space="preserve">
+    <value>Current AI agent: {0}</value>
+  </data>
+  <data name="AgentGet_NotSet" xml:space="preserve">
+    <value>AI agent is not set. Use 'qcat agent set' command to set it.</value>
+  </data>
+  <data name="AgentSet_Success" xml:space="preserve">
+    <value>AI agent is set to '{0}'.</value>
+  </data>
+  <data name="AgentGetUserResponse" xml:space="preserve">
+    <value>Provide your answer below.</value>
   </data>
 </root>

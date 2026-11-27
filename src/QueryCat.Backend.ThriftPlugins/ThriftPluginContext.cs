@@ -2,12 +2,12 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using Microsoft.Extensions.Logging;
+using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 using Thrift.Protocol;
 using Thrift.Transport;
 using QueryCat.Backend.Core;
 using QueryCat.Plugins.Client;
 using QueryCat.Plugins.Sdk;
-using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 
 namespace QueryCat.Backend.ThriftPlugins;
 
@@ -33,6 +33,16 @@ internal sealed class ThriftPluginContext : IDisposable, IAsyncDisposable
     public long Token { get; set; } = -1;
 
     public IReadOnlyList<PluginContextFunction> Functions => _functions;
+
+    /// <summary>
+    /// Authentication providers declared by the plugin.
+    /// </summary>
+    public IReadOnlyList<PluginContextAuth> AuthProviders { get; set; } = [];
+
+    /// <summary>
+    /// Configuration options declared by the plugin.
+    /// </summary>
+    public IReadOnlyList<PluginContextConfigOption> ConfigOptions { get; set; } = [];
 
     public ObjectsStorage ObjectsStorage { get; }
 
@@ -183,7 +193,7 @@ internal sealed class ThriftPluginContext : IDisposable, IAsyncDisposable
             _clients.Add(pluginClient);
 
             // The new client will be returned to the queue after session release.
-            return new PluginClientIdDecorator(newClient);
+            return new PluginClientIdDecorator(new ExceptionHandlePluginDecorator(newClient));
         }
         catch (Exception)
         {

@@ -188,5 +188,23 @@ namespace QueryCat.Backend.Core.Resources {
                 return ResourceManager.GetString("InvalidNumberOfValues", resourceCulture);
             }
         }
+        
+        internal static string AuthRequired {
+            get {
+                return ResourceManager.GetString("AuthRequired", resourceCulture);
+            }
+        }
+        
+        internal static string AuthProviderAlreadyRegistered {
+            get {
+                return ResourceManager.GetString("AuthProviderAlreadyRegistered", resourceCulture);
+            }
+        }
+        
+        internal static string ConfigOptionInvalidType {
+            get {
+                return ResourceManager.GetString("ConfigOptionInvalidType", resourceCulture);
+            }
+        }
     }
 }

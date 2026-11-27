@@ -1,3 +1,4 @@
+using QueryCat.Backend.Auth;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Plugins;
 using QueryCat.Backend.Execution;
@@ -20,6 +21,11 @@ internal sealed class ApplicationRoot : IDisposable, IAsyncDisposable
     public IPluginsManager PluginsManager { get; }
 
     /// <summary>
+    /// Plugins authentication tokens store.
+    /// </summary>
+    internal IAuthTokenStore AuthTokenStore { get; }
+
+    /// <summary>
     /// Application level rows output.
     /// </summary>
     public IRowsOutput RowsOutput { get; set; } = NullRowsOutput.Instance;
@@ -31,10 +37,12 @@ internal sealed class ApplicationRoot : IDisposable, IAsyncDisposable
     /// </summary>
     /// <param name="thread">Execution thread.</param>
     /// <param name="pluginsManager">Plugins manager.</param>
-    public ApplicationRoot(DefaultExecutionThread thread, IPluginsManager pluginsManager)
+    /// <param name="authTokenStore">Plugins authentication tokens store.</param>
+    public ApplicationRoot(DefaultExecutionThread thread, IPluginsManager pluginsManager, IAuthTokenStore authTokenStore)
     {
         Thread = thread;
         PluginsManager = pluginsManager;
+        AuthTokenStore = authTokenStore;
     }
 
     /// <inheritdoc />
@@ -57,6 +65,7 @@ internal sealed class ApplicationRoot : IDisposable, IAsyncDisposable
         {
             return;
         }
+        _isDisposed = true;
 
         if (PluginsManager is IAsyncDisposable asyncDisposable)
         {
@@ -66,7 +75,7 @@ internal sealed class ApplicationRoot : IDisposable, IAsyncDisposable
         {
             (PluginsManager as IDisposable)?.Dispose();
         }
+
         await Thread.DisposeAsync();
-        _isDisposed = true;
     }
 }

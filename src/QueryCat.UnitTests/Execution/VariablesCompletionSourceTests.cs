@@ -30,7 +30,7 @@ public sealed class VariablesCompletionSourceTests
         thread.TopScope.Variables["name"] = VariantValue.Null;
 
         // Act.
-        var firstCompletion = (await thread.GetCompletionsAsync(query)).FirstOrDefault(CompletionResult.Empty);
+        var firstCompletion = (await thread.GetCompletionsAsync(query, cancellationToken: TestContext.Current.CancellationToken)).FirstOrDefault(CompletionResult.Empty);
 
         // Assert.
         Assert.Equal(expected, firstCompletion.Completion.Label);
@@ -48,7 +48,7 @@ public sealed class VariablesCompletionSourceTests
         thread.TopScope.Variables["name"] = VariantValue.Null;
 
         // Act.
-        var firstCompletion = (await thread.GetCompletionsAsync(query)).FirstOrDefault(CompletionResult.Empty);
+        var firstCompletion = (await thread.GetCompletionsAsync(query, cancellationToken: TestContext.Current.CancellationToken)).FirstOrDefault(CompletionResult.Empty);
         var replacedText = firstCompletion.Apply(query);
 
         // Assert.

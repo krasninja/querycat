@@ -1,5 +1,5 @@
 using System.Text;
-using Xunit.Abstractions;
+using Xunit;
 
 namespace QueryCat.UnitTests;
 
@@ -21,7 +21,7 @@ internal sealed class TestOutputWriter : TextWriter
     /// <inheritdoc />
     public override void WriteLine(string? message)
     {
-        _output.WriteLine(message);
+        _output.WriteLine(message ?? string.Empty);
     }
 
     /// <inheritdoc />

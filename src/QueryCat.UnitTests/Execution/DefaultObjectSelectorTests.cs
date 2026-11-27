@@ -21,7 +21,7 @@ public class DefaultObjectSelectorTests
         var context = new ObjectSelectorContext(target);
 
         // Act.
-        var token = (await _selector.SelectByIndexAsync(context, [1]))!.Value;
+        var token = (await _selector.SelectByIndexAsync(context, [1], TestContext.Current.CancellationToken))!.Value;
 
         // Assert.
         Assert.Equal(2, token.Value);
@@ -36,7 +36,7 @@ public class DefaultObjectSelectorTests
         context.Push(new ObjectSelectorContext.Token(target, Indexes: [1]));
 
         // Act.
-        await _selector.SetValueAsync(context, 5);
+        await _selector.SetValueAsync(context, 5, TestContext.Current.CancellationToken);
 
         // Assert.
         Assert.Equal(5, target[1]);
@@ -54,7 +54,7 @@ public class DefaultObjectSelectorTests
         var context = new ObjectSelectorContext(target);
 
         // Act.
-        var token = (await _selector.SelectByIndexAsync(context, ["item2"]))!.Value;
+        var token = (await _selector.SelectByIndexAsync(context, ["item2"], TestContext.Current.CancellationToken))!.Value;
 
         // Assert.
         Assert.Equal(25, token.Value);
@@ -72,7 +72,7 @@ public class DefaultObjectSelectorTests
         var context = new ObjectSelectorContext(target);
 
         // Act.
-        var token = (await _selector.SelectByIndexAsync(context, ["token"]))!.Value;
+        var token = (await _selector.SelectByIndexAsync(context, ["token"], TestContext.Current.CancellationToken))!.Value;
 
         // Assert.
         Assert.Equal("0x1", token.Value);
@@ -91,7 +91,7 @@ public class DefaultObjectSelectorTests
         context.Push(new ObjectSelectorContext.Token(target, Indexes: ["token"]));
 
         // Act.
-        await _selector.SetValueAsync(context, "0x2");
+        await _selector.SetValueAsync(context, "0x2", TestContext.Current.CancellationToken);
 
         // Assert.
         Assert.Equal("0x2", target["token"]);
@@ -110,7 +110,7 @@ public class DefaultObjectSelectorTests
         context.Push(new ObjectSelectorContext.Token(target, Indexes: ["item2"]));
 
         // Act.
-        await _selector.SetValueAsync(context, 13);
+        await _selector.SetValueAsync(context, 13, TestContext.Current.CancellationToken);
 
         // Assert.
         Assert.Equal(13, target["item2"]);

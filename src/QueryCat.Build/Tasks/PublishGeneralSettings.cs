@@ -15,7 +15,6 @@ public class PublishGeneralSettings : DotNetPublishSettings
         PublishTrimmed = publishAot;
         PublishSingleFile = publishAot ? null : true;
         NoLogo = true;
-        IncludeAllContentForSelfExtract = publishAot ? null : true;
         EnableCompressionInSingleFile = publishAot ? null : true;
         SelfContained = publishAot ? null : true;
         ArgumentCustomization = pag =>

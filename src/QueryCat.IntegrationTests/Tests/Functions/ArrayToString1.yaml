@@ -1,0 +1,4 @@
+expected: |
+  "a,b,c","a,NULL,c"
+query: |
+  select array_to_string(ARRAY['a', 'b', 'c'], ','), array_to_string(ARRAY['a', null, 'c'], ',', 'NULL');

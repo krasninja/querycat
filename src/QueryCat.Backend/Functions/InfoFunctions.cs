@@ -15,7 +15,7 @@ namespace QueryCat.Backend.Functions;
 public static class InfoFunctions
 {
     [SafeFunction]
-    [Description("Return all registered functions.")]
+    [Description("Returns all registered functions.")]
     [FunctionSignature("_functions(): object<IRowsInput>")]
     internal static VariantValue Functions(IExecutionThread thread)
     {
@@ -26,12 +26,39 @@ public static class InfoFunctions
                 .AddProperty("is_aggregate", p => p.IsAggregate)
                 .AddProperty("description", p => p.Description)
                 .AddProperty("is_safe", p => p.IsSafe)
+                .AddProperty("examples", p => string.Join('\n', p.Examples))
             );
         return VariantValue.CreateFromObject(input);
     }
 
     [SafeFunction]
-    [Description("Return row input columns information.")]
+    [Description("Returns function arguments.")]
+    [FunctionSignature("_function_args(name: string): object<IRowsInput>")]
+    internal static VariantValue FunctionArguments(IExecutionThread thread)
+    {
+        var functionName = thread.Stack.Pop().AsString;
+        if (string.IsNullOrEmpty(functionName))
+        {
+            return VariantValue.Null;
+        }
+
+        var functions = thread.FunctionsManager.FindByName(functionName);
+        var args = functions.SelectMany(f => f.Arguments).DistinctBy(a => a.Name);
+        var input = EnumerableRowsInput<FunctionSignatureArgument>.FromSource(args,
+            builder => builder
+                .AddProperty("name", p => p.Name)
+                .AddProperty("type", p => p.Type)
+                .AddProperty("default_value", p => p.DefaultValue)
+                .AddProperty("is_optional", p => p.IsOptional)
+                .AddProperty("is_variadic", p => p.IsVariadic)
+                .AddProperty("is_array", p => p.IsArray)
+                .AddProperty("description", p => p.Description)
+        );
+        return VariantValue.CreateFromObject(input);
+    }
+
+    [SafeFunction]
+    [Description("Returns row input columns information.")]
     [FunctionSignature("_schema(input: object<IRowsInput>): object<IRowsInput>")]
     public static async ValueTask<VariantValue> Schema(IExecutionThread thread, CancellationToken cancellationToken)
     {
@@ -79,26 +106,33 @@ public static class InfoFunctions
         var inputResult = EnumerableRowsInput<Column>.FromSource(columns,
             builder => builder
 #if DEBUG
-                .AddProperty("id", f => f.Id)
+                .AddProperty("id", f => f.Id, description: "Column internal identifier.")
+                .SetAttribute("id", Column.AttributeId)
 #endif
-                .AddProperty("name", f => f.FullName, defaultLength: 45)
-                .AddProperty("type", f => f.DataType)
+                .AddProperty("name", f => f.FullName, defaultLength: 45, description: "Column name.")
+                .AddProperty("type", f => f.DataType, description: "Column data type.")
 #if DEBUG
-                .AddProperty("length", f => f.Length)
+                .AddProperty("length", f => f.Length, description: "Column approximate length.")
 #endif
-                .AddProperty("description", f => f.Description)
-                .AddProperty("key_operators", GetKeyConditions)
+                .AddProperty("description", f => f.Description, description: "Column description.")
+                .AddProperty("attributes",
+                    f => f.Attributes
+                        .Select(a => string.Join('=', a.Key, a.Value))
+                        .Select(a => new VariantValue(a))
+                        .ToArray(),
+                    description: "Column attributes.")
+                .AddProperty("key_operators", GetKeyConditions, description: "Supported indexed operations.")
             );
         return VariantValue.CreateFromObject(inputResult);
     }
 
 #if ENABLE_PLUGINS
     [SafeFunction]
-    [Description("Return available plugins from repository.")]
+    [Description("Returns available plugins from repository.")]
     [FunctionSignature("_plugins(): object<IRowsInput>")]
     public static async ValueTask<VariantValue> Plugins(IExecutionThread thread, CancellationToken cancellationToken)
     {
-        var plugins = await thread.PluginsManager.ListAsync(localOnly: false, cancellationToken);
+        var plugins = await thread.PluginsManager.ListAsync(cancellationToken: cancellationToken);
         var input = EnumerableRowsInput<PluginInfo>.FromSource(plugins,
             builder => builder
                 .AddProperty("name", p => p.Name)
@@ -113,7 +147,7 @@ public static class InfoFunctions
 #endif
 
     [SafeFunction]
-    [Description("Get expression type.")]
+    [Description("Gets expression type.")]
     [FunctionSignature("_typeof(arg: any): string")]
     internal static VariantValue TypeOf(IExecutionThread thread)
     {
@@ -135,13 +169,14 @@ public static class InfoFunctions
     }
 
     [SafeFunction]
-    [Description("Provide a list of OS time zone names.")]
+    [Description("Provides a list of OS time zone names.")]
     [FunctionSignature("_timezone_names(): object<IRowsInput>")]
     internal static VariantValue TimeZoneNames(IExecutionThread thread)
     {
         var input = EnumerableRowsInput<TimeZoneInfo>.FromSource(TimeZoneInfo.GetSystemTimeZones(),
             builder => builder
                 .AddProperty("id", p => p.Id, "Time zone code.")
+                .SetAttribute("id", Column.AttributeId)
                 .AddProperty("name", p => p.StandardName, "Time zone name.")
                 .AddProperty("utc_offset", p => p.BaseUtcOffset, "Offset from UTC (positive means east of Greenwich).")
                 .AddProperty("is_dst", p => p.SupportsDaylightSavingTime, "True if currently observing daylight savings")
@@ -150,7 +185,7 @@ public static class InfoFunctions
     }
 
     [SafeFunction]
-    [Description("Get current running platform/OS.")]
+    [Description("Gets current running platform/OS.")]
     [FunctionSignature("_platform(): string")]
     internal static VariantValue Platform(IExecutionThread thread)
     {
@@ -160,6 +195,7 @@ public static class InfoFunctions
     internal static void RegisterFunctions(IFunctionsManager functionsManager)
     {
         functionsManager.RegisterFunction(Functions);
+        functionsManager.RegisterFunction(FunctionArguments);
         functionsManager.RegisterFunction(Schema);
 #if ENABLE_PLUGINS
         functionsManager.RegisterFunction(Plugins);

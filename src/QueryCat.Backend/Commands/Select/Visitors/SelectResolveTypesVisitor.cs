@@ -3,6 +3,9 @@ using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
+#if NET8_0
+using QueryCat.Backend.Utils;
+#endif
 
 namespace QueryCat.Backend.Commands.Select.Visitors;
 
@@ -15,10 +18,12 @@ internal sealed class SelectResolveTypesVisitor : ResolveTypesVisitor
         base(executionThread)
     {
         _context = context;
-        AstTraversal.TypesToIgnore.Add(typeof(SelectQuerySpecificationNode));
-        AstTraversal.TypesToIgnore.Add(typeof(SelectQueryCombineNode));
-        AstTraversal.TypesToIgnore.Add(typeof(SelectTableJoinedOnNode));
-        AstTraversal.TypesToIgnore.Add(typeof(SelectTableJoinedUsingNode));
+        AstTraversal.TypesToIgnore.AddRange(
+            typeof(SelectQuerySpecificationNode),
+            typeof(SelectQueryCombineNode),
+            typeof(SelectTableJoinedOnNode),
+            typeof(SelectTableJoinedUsingNode)
+        );
         AstTraversal.AcceptBeforeIgnore = true;
     }
 

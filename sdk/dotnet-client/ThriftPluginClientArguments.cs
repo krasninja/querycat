@@ -10,6 +10,8 @@ public sealed class ThriftPluginClientArguments
 
     public int ParentPid { get; set; } = -1;
 
+    public string WebProxy { get; set; } = string.Empty;
+
     public string DebugServerPath { get; set; } = string.Empty;
 
     public string DebugServerQueryText { get; set; } = string.Empty;

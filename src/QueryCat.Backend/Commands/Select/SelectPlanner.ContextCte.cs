@@ -66,7 +66,7 @@ internal sealed partial class SelectPlanner
 
         // Add it into CTE list. Instead of exposing RowsIterator we wrap it into proxy.
         // By switching that proxy to new rows set we evaluate recursive iterator with the new result.
-        var proxyRowsIterator = new ProxyRowsIterator(new EmptyIterator(initialQueryCommandContext.CurrentIterator));
+        var proxyRowsIterator = new ProxyRowsIterator(new EmptyRowsIterator(initialQueryCommandContext.CurrentIterator));
         context.CteList.Add(new CommonTableExpression(withNode.Name, proxyRowsIterator));
 
         // Then prepare iterator for recursive part.

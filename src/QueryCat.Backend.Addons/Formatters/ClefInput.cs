@@ -26,7 +26,7 @@ internal sealed class ClefInput : JsonInput
             switch (column.Name)
             {
                 case "@t":
-                    newColumns.Add(new Column("timestamp", DataType.Timestamp, "An ISO 8601 timestamp."));
+                    newColumns.Add(new Column("timestamp", DataType.Timestamp, "An ISO 8601 timestamp.", Column.ColumnAttributeTimestamp));
                     break;
                 case "@m":
                     newColumns.Add(new Column("message", DataType.String, "A fully-rendered message describing the event."));
@@ -39,7 +39,13 @@ internal sealed class ClefInput : JsonInput
                     newColumns.Add(new Column("level", column.DataType, "An implementation-specific level or severity identifier (string or number)."));
                     break;
                 case "@x":
-                    newColumns.Add(new Column("exception", DataType.String, "A language-dependent error representation potentially including backtrace."));
+                    newColumns.Add(
+                        new Column(
+                            "exception",
+                            DataType.String,
+                            "A language-dependent error representation potentially including backtrace.",
+                            Column.ColumnAttributeError
+                        ));
                     break;
                 case "@i":
                     newColumns.Add(new Column("event_id", column.DataType, "An implementation specific event id, identifying the type of the event (string or number)."));
@@ -49,7 +55,13 @@ internal sealed class ClefInput : JsonInput
                         "If @mt includes tokens with programming-language-specific formatting, an array of pre-rendered values for each such token."));
                     break;
                 case "@tr":
-                    newColumns.Add(new Column("trace_id", column.DataType, "The id of the trace that was active when the event was created, if any."));
+                    newColumns.Add(
+                        new Column(
+                            "trace_id",
+                            column.DataType,
+                            "The id of the trace that was active when the event was created, if any.",
+                            Column.ColumnAttributeId
+                        ));
                     break;
                 case "@sp":
                     newColumns.Add(new Column("span_id", column.DataType, "The id of the span that was active when the event was created, if any."));

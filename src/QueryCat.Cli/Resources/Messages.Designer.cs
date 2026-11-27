@@ -392,5 +392,257 @@ namespace QueryCat.Cli.Resources {
                 return ResourceManager.GetString("QueryCommand_AIDescription", resourceCulture);
             }
         }
+        
+        internal static string McpCommand_Description {
+            get {
+                return ResourceManager.GetString("McpCommand_Description", resourceCulture);
+            }
+        }
+        
+        internal static string McpCommand_TransportDescription {
+            get {
+                return ResourceManager.GetString("McpCommand_TransportDescription", resourceCulture);
+            }
+        }
+        
+        internal static string McpCommand_UnsafeDescription {
+            get {
+                return ResourceManager.GetString("McpCommand_UnsafeDescription", resourceCulture);
+            }
+        }
+        
+        internal static string McpCommand_ResourceDescription {
+            get {
+                return ResourceManager.GetString("McpCommand_ResourceDescription", resourceCulture);
+            }
+        }
+        
+        internal static string PluginAuthCommand_Description {
+            get {
+                return ResourceManager.GetString("PluginAuthCommand_Description", resourceCulture);
+            }
+        }
+        
+        internal static string PluginAuthCommand_ProviderDescription {
+            get {
+                return ResourceManager.GetString("PluginAuthCommand_ProviderDescription", resourceCulture);
+            }
+        }
+        
+        internal static string PluginOptionsListCommand_Description {
+            get {
+                return ResourceManager.GetString("PluginOptionsListCommand_Description", resourceCulture);
+            }
+        }
+        
+        internal static string PluginOptionsListCommand_PluginDescription {
+            get {
+                return ResourceManager.GetString("PluginOptionsListCommand_PluginDescription", resourceCulture);
+            }
+        }
+        
+        internal static string PluginAuthListCommand_Description {
+            get {
+                return ResourceManager.GetString("PluginAuthListCommand_Description", resourceCulture);
+            }
+        }
+        
+        internal static string PluginAuthLoginCommand_Description {
+            get {
+                return ResourceManager.GetString("PluginAuthLoginCommand_Description", resourceCulture);
+            }
+        }
+        
+        internal static string PluginAuthLoginCommand_DeviceDescription {
+            get {
+                return ResourceManager.GetString("PluginAuthLoginCommand_DeviceDescription", resourceCulture);
+            }
+        }
+        
+        internal static string PluginAuthLoginCommand_NoBrowserDescription {
+            get {
+                return ResourceManager.GetString("PluginAuthLoginCommand_NoBrowserDescription", resourceCulture);
+            }
+        }
+        
+        internal static string PluginAuthLoginCommand_ApiKeyDescription {
+            get {
+                return ResourceManager.GetString("PluginAuthLoginCommand_ApiKeyDescription", resourceCulture);
+            }
+        }
+        
+        internal static string PluginAuthLoginCommand_ClientIdDescription {
+            get {
+                return ResourceManager.GetString("PluginAuthLoginCommand_ClientIdDescription", resourceCulture);
+            }
+        }
+        
+        internal static string PluginAuthLoginCommand_ClientSecretDescription {
+            get {
+                return ResourceManager.GetString("PluginAuthLoginCommand_ClientSecretDescription", resourceCulture);
+            }
+        }
+        
+        internal static string PluginAuthLogoutCommand_Description {
+            get {
+                return ResourceManager.GetString("PluginAuthLogoutCommand_Description", resourceCulture);
+            }
+        }
+        
+        internal static string PluginAuthLogin_OpenUrl {
+            get {
+                return ResourceManager.GetString("PluginAuthLogin_OpenUrl", resourceCulture);
+            }
+        }
+        
+        internal static string PluginAuthLogin_DeviceCode {
+            get {
+                return ResourceManager.GetString("PluginAuthLogin_DeviceCode", resourceCulture);
+            }
+        }
+        
+        internal static string PluginAuthLogin_Waiting {
+            get {
+                return ResourceManager.GetString("PluginAuthLogin_Waiting", resourceCulture);
+            }
+        }
+        
+        internal static string PluginAuthLogin_EnterApiKey {
+            get {
+                return ResourceManager.GetString("PluginAuthLogin_EnterApiKey", resourceCulture);
+            }
+        }
+        
+        internal static string PluginAuthLogin_Success {
+            get {
+                return ResourceManager.GetString("PluginAuthLogin_Success", resourceCulture);
+            }
+        }
+        
+        internal static string PluginAuthLogout_Success {
+            get {
+                return ResourceManager.GetString("PluginAuthLogout_Success", resourceCulture);
+            }
+        }
+        
+        internal static string PluginAuthLogout_NotFound {
+            get {
+                return ResourceManager.GetString("PluginAuthLogout_NotFound", resourceCulture);
+            }
+        }
+        
+        internal static string PluginOptionsCommand_Description {
+            get {
+                return ResourceManager.GetString("PluginOptionsCommand_Description", resourceCulture);
+            }
+        }
+        
+        internal static string PluginOptionsCommand_PluginDescription {
+            get {
+                return ResourceManager.GetString("PluginOptionsCommand_PluginDescription", resourceCulture);
+            }
+        }
+        
+        internal static string PluginOptionsCommand_NameDescription {
+            get {
+                return ResourceManager.GetString("PluginOptionsCommand_NameDescription", resourceCulture);
+            }
+        }
+        
+        internal static string PluginOptionsGetCommand_Description {
+            get {
+                return ResourceManager.GetString("PluginOptionsGetCommand_Description", resourceCulture);
+            }
+        }
+        
+        internal static string PluginOptionsSetCommand_Description {
+            get {
+                return ResourceManager.GetString("PluginOptionsSetCommand_Description", resourceCulture);
+            }
+        }
+        
+        internal static string PluginOptionsSetCommand_ValueDescription {
+            get {
+                return ResourceManager.GetString("PluginOptionsSetCommand_ValueDescription", resourceCulture);
+            }
+        }
+        
+        internal static string PluginOptionsUnsetCommand_Description {
+            get {
+                return ResourceManager.GetString("PluginOptionsUnsetCommand_Description", resourceCulture);
+            }
+        }
+        
+        internal static string PluginOptionsSet_Success {
+            get {
+                return ResourceManager.GetString("PluginOptionsSet_Success", resourceCulture);
+            }
+        }
+        
+        internal static string PluginOptionsUnset_Success {
+            get {
+                return ResourceManager.GetString("PluginOptionsUnset_Success", resourceCulture);
+            }
+        }
+        
+        internal static string QueryCommand_WebProxyCommand {
+            get {
+                return ResourceManager.GetString("QueryCommand_WebProxyCommand", resourceCulture);
+            }
+        }
+        
+        internal static string AgentCommand_Description {
+            get {
+                return ResourceManager.GetString("AgentCommand_Description", resourceCulture);
+            }
+        }
+        
+        internal static string AgentListCommand_Description {
+            get {
+                return ResourceManager.GetString("AgentListCommand_Description", resourceCulture);
+            }
+        }
+        
+        internal static string AgentGetCommand_Description {
+            get {
+                return ResourceManager.GetString("AgentGetCommand_Description", resourceCulture);
+            }
+        }
+        
+        internal static string AgentSetCommand_Description {
+            get {
+                return ResourceManager.GetString("AgentSetCommand_Description", resourceCulture);
+            }
+        }
+        
+        internal static string AgentSetCommand_AgentDescription {
+            get {
+                return ResourceManager.GetString("AgentSetCommand_AgentDescription", resourceCulture);
+            }
+        }
+        
+        internal static string AgentList_Current {
+            get {
+                return ResourceManager.GetString("AgentList_Current", resourceCulture);
+            }
+        }
+        
+        internal static string AgentGet_NotSet {
+            get {
+                return ResourceManager.GetString("AgentGet_NotSet", resourceCulture);
+            }
+        }
+        
+        internal static string AgentSet_Success {
+            get {
+                return ResourceManager.GetString("AgentSet_Success", resourceCulture);
+            }
+        }
+        
+        internal static string AgentGetUserResponse {
+            get {
+                return ResourceManager.GetString("AgentGetUserResponse", resourceCulture);
+            }
+        }
     }
 }

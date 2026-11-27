@@ -25,7 +25,7 @@ public class QueryCatException : Exception
     /// </summary>
     /// <param name="message">Exception message.</param>
     /// <param name="innerException">Inner exception.</param>
-    public QueryCatException(string message, Exception innerException) : base(message, innerException)
+    public QueryCatException(string message, Exception? innerException) : base(message, innerException)
     {
     }
 }

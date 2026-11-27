@@ -41,7 +41,6 @@ internal sealed class OrderRowsIterator : IRowsIterator, IRowsIteratorParent
         _orderRowsFrame = new RowsFrame(orderColumns.ToArray());
 
         _orderIndex = new OrderColumnsIndex(
-            _thread,
             _orderRowsFrame.GetIterator(),
             orders.Select(
                 (o, index) => new OrderColumnData(index, o.Direction, o.NullOrder))

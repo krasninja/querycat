@@ -76,6 +76,16 @@ internal sealed partial class SelectPlanner
         }
     }
 
+    private void QueryContext_SetModificationTarget(SelectCommandContext context)
+    {
+        var isModificationTarget = context.Parent == null
+            && _operationIntentionType is OperationIntentionType.Update or OperationIntentionType.Delete;
+        foreach (var inputContext in context.Inputs)
+        {
+            inputContext.IsModificationTarget = isModificationTarget;
+        }
+    }
+
     /// <summary>
     /// A condition is only a safe key condition under a pure AND chain.
     /// </summary>
@@ -119,20 +129,23 @@ internal sealed partial class SelectPlanner
 
             // Left and Right must be id and expression.
             if (binaryOperationExpressionNode.MatchType(out IdentifierExpressionNode? identifierNode, out ExpressionNode? expressionNode)
-                && await TryFindAndAddIdConditionAsync(identifierNode, expressionNode, ct))
+                && await TryFindAndAddIdConditionAsync(identifierNode, expressionNode, binaryOperationExpressionNode, ct))
             {
                 return true;
             }
             if (binaryOperationExpressionNode.MatchType(out expressionNode, out identifierNode)
-                && await TryFindAndAddIdConditionAsync(identifierNode, expressionNode, ct))
+                && await TryFindAndAddIdConditionAsync(identifierNode, expressionNode, binaryOperationExpressionNode, ct))
             {
                 return true;
             }
 
             return false;
 
-            async ValueTask<bool> TryFindAndAddIdConditionAsync(IdentifierExpressionNode? localIdentifierNode,
-                ExpressionNode? localExpressionNode, CancellationToken localCancellationToken)
+            async ValueTask<bool> TryFindAndAddIdConditionAsync(
+                IdentifierExpressionNode? localIdentifierNode,
+                ExpressionNode? localExpressionNode,
+                BinaryOperationExpressionNode localBinaryOperationExpressionNode,
+                CancellationToken localCancellationToken)
             {
                 if (localIdentifierNode == null)
                 {
@@ -146,8 +159,12 @@ internal sealed partial class SelectPlanner
                     return false;
                 }
                 var valueFunc = await makeDelegateVisitor.RunAndReturnAsync(localExpressionNode!, localCancellationToken);
-                commandContext.Conditions.TryAddCondition(column, binaryOperationExpressionNode.Operation,
-                    new KeyConditionSingleValueGeneratorFunc(valueFunc));
+                var op = binaryOperationExpressionNode.Operation;
+                if (ReferenceEquals(localIdentifierNode, binaryOperationExpressionNode.RightNode))
+                {
+                    op = BinaryOperationExpressionNode.GetReverseOperation(op) ?? op;
+                }
+                commandContext.Conditions.TryAddCondition(column, op, new KeyConditionSingleValueGeneratorFunc(valueFunc));
                 return true;
             }
         }
@@ -267,7 +284,25 @@ internal sealed partial class SelectPlanner
             if (keyCondition.KeyColumn.IsRequired && keyCondition.Conditions.Length < 1)
             {
                 var column = keyCondition.RowsInput.Columns[keyCondition.KeyColumn.ColumnIndex];
-                throw new QueryMissedConditionException(column.FullName, keyCondition.KeyColumn.GetOperations());
+                var inputContext = context.Inputs.FirstOrDefault(i => i.RowsInput == keyCondition.RowsInput);
+                if (inputContext != null && inputContext.InputSourceFunction != null)
+                {
+                    throw new QueryMissedConditionException(
+                        inputContext.InputSourceFunction.Name,
+                        QueryMissedConditionException.MissedConditionInputSourceType.Function,
+                        column.Name, keyCondition.KeyColumn.GetOperations());
+                }
+                else if (inputContext != null && !string.IsNullOrEmpty(inputContext.InputSourceIdentifier))
+                {
+                    throw new QueryMissedConditionException(
+                        inputContext.InputSourceIdentifier,
+                        QueryMissedConditionException.MissedConditionInputSourceType.Identifier,
+                        column.Name, keyCondition.KeyColumn.GetOperations());
+                }
+                else
+                {
+                    throw new QueryMissedConditionException(column.FullName, keyCondition.KeyColumn.GetOperations());
+                }
             }
         }
     }

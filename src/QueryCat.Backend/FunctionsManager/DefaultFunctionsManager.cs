@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Ast;
+using QueryCat.Backend.Commands;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
@@ -149,6 +150,14 @@ public sealed partial class DefaultFunctionsManager : IFunctionsManager
         FunctionCallArguments callArguments,
         CancellationToken cancellationToken = default)
     {
+        if (executionThread is IExecutionThread<ExecutionOptions> executionThreadWithOptions
+            && executionThreadWithOptions.Options.SafeMode
+            && !function.IsSafe)
+        {
+            throw new SafeModeException(
+                string.Format(Resources.Errors.CannotRunFunctionInSafeMode, function.Name));
+        }
+
         var positionalIndex = 0;
 
         using var frame = executionThread.Stack.CreateFrame();

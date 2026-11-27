@@ -2,12 +2,14 @@
 using System.Text;
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend;
+using QueryCat.Backend.Auth;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Plugins;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Core.Utils;
+using QueryCat.Backend.Execution;
 using QueryCat.Backend.Formatters;
 using QueryCat.Backend.Storage;
 
@@ -16,7 +18,7 @@ namespace QueryCat.Tester;
 /// <summary>
 /// Program entry point.
 /// </summary>
-public class Program
+public sealed class Program
 {
     private static readonly Option<string[]> _pluginFilesOption = new("--plugin-files")
     {
@@ -40,6 +42,11 @@ public class Program
         Description = "Variables for query.",
     };
 
+    private static readonly Option<string?> _pluginPrefixOption = new("--plugin-prefix")
+    {
+        Description = "Plugin prefix for config storage keys.",
+    };
+
     public static async Task<int> Main(string[] args)
     {
         var rootCommand = new RootCommand("QueryCat Tester");
@@ -48,6 +55,7 @@ public class Program
         rootCommand.Add(_filesOption);
         rootCommand.Add(_queryArgument);
         rootCommand.Add(_variablesOption);
+        rootCommand.Add(_pluginPrefixOption);
 
         rootCommand.SetAction((parseResult, cancellationToken) =>
         {
@@ -56,6 +64,7 @@ public class Program
                 parseResult.GetValue(_pluginFilesOption) ?? [],
                 parseResult.GetValue(_filesOption) ?? [],
                 parseResult.GetValue(_variablesOption) ?? [],
+                parseResult.GetValue(_pluginPrefixOption),
                 cancellationToken
             );
         });
@@ -68,6 +77,7 @@ public class Program
         string[] pluginDirectories,
         string[] files,
         string[] variables,
+        string? pluginPrefix,
         CancellationToken cancellationToken = default)
     {
         InitializeLogger();
@@ -79,13 +89,20 @@ public class Program
             RunBootstrapScript = true,
         };
 
+        var authTokenStore = new FileAuthTokenStore(
+            Path.Combine(Application.GetApplicationDirectory(), "auth.json"));
         var executionThread = new ExecutionThreadBootstrapper(options)
             .WithStandardFunctions()
             .WithStandardUriResolvers()
-            .WithConfigStorage(new MemoryConfigStorage())
+            .WithConfigStorage(new PersistentConfigStorage(
+                Path.Combine(Application.GetConfigDirectory(), "config.json"),
+                pluginPrefix)
+            )
+            .WithAuthTokenManager(new DefaultAuthTokenManager(authTokenStore))
             .WithPluginsLoader(thread => new SimplePluginsAssemblyLoader(
                 workingDirectoryPlugins.Union(pluginDirectories),
-                thread.FunctionsManager))
+                thread.FunctionsManager,
+                thread.AuthTokensManager.Providers))
             .Create();
         await executionThread.PluginsManager.PluginsLoader.LoadAsync(new PluginsLoadingOptions(), CancellationToken.None);
 

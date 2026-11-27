@@ -9,13 +9,13 @@ using QueryCat.Backend.Core.Utils;
 namespace QueryCat.Backend.Core.Functions;
 
 /// <summary>
-/// Various format methods for functions maintenance (common naming, arguments formatting, etc).
+/// Various format methods for functions maintenance (common naming, arguments formatting, etc.).
 /// </summary>
 internal static class FunctionFormatter
 {
     internal static string GetSignatureFromParameters(ReadOnlySpan<char> name, ParameterInfo[] parameterInfos, Type outputType)
     {
-        var sb = new StringBuilder();
+        var sb = new StringBuilder(capacity: 60);
         sb.Append(name);
         sb.Append('(');
 
@@ -58,6 +58,10 @@ internal static class FunctionFormatter
             {
                 return nameof(IRowsFormatter);
             }
+            if (objType.IsAssignableTo(typeof(IAnswerAgent)))
+            {
+                return nameof(IAnswerAgent);
+            }
             return string.Empty;
         }
 
@@ -97,7 +101,7 @@ internal static class FunctionFormatter
 
         // Based on https://stackoverflow.com/questions/63055621/how-to-convert-camel-case-to-snake-case-with-two-capitals-next-to-each-other.
         var sb = new StringBuilder(capacity: target.Length)
-            .Append(char.ToLower(target[0]));
+            .Append(char.ToLower(target[0], CultureInfo.InvariantCulture));
         for (var i = 1; i < target.Length; ++i)
         {
             var ch = target[i];
@@ -192,4 +196,35 @@ internal static class FunctionFormatter
         target = StringUtils.Unquote(target);
         return target.ToUpperInvariant();
     }
+
+    /// <summary>
+    /// Is the function a rows source that can be used in FROM clause.
+    /// </summary>
+    /// <param name="function">Function.</param>
+    /// <returns><c>True</c> if the function returns <see cref="IRowsInput" /> or <see cref="IRowsIterator" />.</returns>
+    internal static bool IsRowsInputFunction(IFunction function)
+        => !function.IsAggregate
+           && function.ReturnType == DataType.Object
+           && (function.ReturnObjectName.Equals(nameof(IRowsInput), StringComparison.OrdinalIgnoreCase)
+               || function.ReturnObjectName.Equals(nameof(IRowsIterator), StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>
+    /// Is the function a rows output that can be used in INTO clause.
+    /// </summary>
+    /// <param name="function">Function.</param>
+    /// <returns><c>True</c> if the function returns <see cref="IRowsOutput" />.</returns>
+    internal static bool IsRowsOutputFunction(IFunction function)
+        => !function.IsAggregate
+           && function.ReturnType == DataType.Object
+           && function.ReturnObjectName.Equals(nameof(IRowsOutput), StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Is the function an AI answer agent factory.
+    /// </summary>
+    /// <param name="function">Function.</param>
+    /// <returns><c>True</c> if the function returns <see cref="IAnswerAgent" />.</returns>
+    internal static bool IsAnswerAgentFunction(IFunction function)
+        => !function.IsAggregate
+           && function.ReturnType == DataType.Object
+           && function.ReturnObjectName.Equals(nameof(IAnswerAgent), StringComparison.OrdinalIgnoreCase);
 }

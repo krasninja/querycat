@@ -82,8 +82,14 @@ public static class Application
     /// <summary>
     /// Full product name with version.
     /// </summary>
-    /// <returns></returns>
+    /// <returns>Product name with version.</returns>
     public static string GetProductFullName() => $"{ProductName} {GetVersion()}";
+
+    /// <summary>
+    /// Full product name with version for web: https://httpwg.org/specs/rfc9110.html#field.server.
+    /// </summary>
+    /// <returns>Product name with version.</returns>
+    public static string GetProductFullNameForWeb() => $"{ProductName}/{GetVersion()} ({GetRuntimeIdentifier()})";
 
     /// <summary>
     /// Get current platform identifier.

@@ -53,7 +53,7 @@ public sealed class KeyColumn
     /// Get all available operations.
     /// </summary>
     /// <returns>Operations.</returns>
-    public IEnumerable<VariantValue.Operation> GetOperations() => _operations;
+    public IReadOnlyCollection<VariantValue.Operation> GetOperations() => _operations;
 
     /// <summary>
     /// Returns <c>true</c> if key column contains the operation.

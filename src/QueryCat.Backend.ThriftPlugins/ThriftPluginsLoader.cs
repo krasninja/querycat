@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -7,6 +8,7 @@ using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Plugins;
+using QueryCat.Backend.Core.Plugins.Auth;
 using QueryCat.Plugins.Client;
 using QueryCat.Plugins.Client.Remote;
 using QueryCat.Plugins.Sdk;
@@ -27,6 +29,7 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
     private readonly string? _applicationDirectory;
     private readonly bool _debugMode;
     private readonly LogLevel _minLogLevel;
+    private readonly string _webProxy;
     private readonly ThriftPluginsServer _server;
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(ThriftPluginsLoader));
     private readonly HashSet<string> _loadedPlugins = new();
@@ -53,9 +56,11 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
     /// </summary>
     public string ServerPipeName { get; } = ThriftEndpoint.GenerateIdentifier("qcath");
 
-    internal sealed record FunctionsCache(
-        [property:JsonPropertyName("createdAt")] long CreatedAt,
-        [property:JsonPropertyName("functions")] IReadOnlyList<PluginContextFunction> Functions);
+    internal sealed record PluginsFunctionsCache(
+        [property: JsonPropertyName("createdAt")] long CreatedAt,
+        [property: JsonPropertyName("functions")] IReadOnlyList<PluginContextFunction> Functions,
+        [property: JsonPropertyName("auth")] IReadOnlyList<PluginContextAuth>? AuthProviders = null,
+        [property: JsonPropertyName("options")] IReadOnlyList<PluginContextConfigOption>? ConfigOptions = null);
 
     private class FunctionCallPluginBase
     {
@@ -137,17 +142,20 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
         string? functionsCacheDirectory = null,
         bool debugMode = false,
         LogLevel minLogLevel = LogLevel.Information,
-        int maxConnectionsToPlugin = 1) : base(pluginDirectories)
+        int maxConnectionsToPlugin = 1,
+        string? webProxy = null) : base(pluginDirectories)
     {
         _thread = thread;
         _applicationDirectory = applicationDirectory;
         _debugMode = debugMode;
         _minLogLevel = minLogLevel;
+        _webProxy = webProxy ?? string.Empty;
         if (!string.IsNullOrEmpty(endpoint.NamedPipe))
         {
             ServerPipeName = endpoint.NamedPipe;
         }
-        _server = new ThriftPluginsServer(thread, endpoint, maxConnectionsToClient: maxConnectionsToPlugin);
+        _server = new ThriftPluginsServer(thread, endpoint, maxConnectionsToClient: maxConnectionsToPlugin,
+            configOptions: ConfigOptions);
         if (_debugMode)
         {
             _server.PluginRegistrationTimeoutSeconds = -1;
@@ -172,6 +180,8 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
             RegisterFunctions(_thread.FunctionsManager, e.PluginContext);
             _filesWithLoadedFunctions.Add(file);
         }
+        RegisterAuthProviders(e.PluginContext.AuthProviders);
+        RegisterConfigOptions(e.PluginContext.ConfigOptions);
 
         try
         {
@@ -342,9 +352,11 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
 
         try
         {
-            if (TryGetCachedFunctions(file, out var functions))
+            if (TryGetCache(file, out var cache))
             {
-                RegisterFunctions(_thread.FunctionsManager, file, functions);
+                RegisterFunctions(_thread.FunctionsManager, file, cache.Functions);
+                RegisterAuthProviders(cache.AuthProviders ?? []);
+                RegisterConfigOptions(cache.ConfigOptions ?? []);
                 _filesWithLoadedFunctions.Add(file);
                 return;
             }
@@ -431,11 +443,20 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
             throw new ProxyNotFoundException(file);
         }
 
+        var additionalArguments = new List<string>
+        {
+            "--assembly=" + file,
+        };
+        if (!string.IsNullOrEmpty(_webProxy))
+        {
+            additionalArguments.Add($"--{ThriftPluginClient.PluginWebProxyParameter}={_webProxy}");
+        }
+
         _logger.LogDebug("Loading '{Assembly}' with proxy. Location: '{Location}'.", file, proxyExecutable);
         return LoadPluginExecutable(
             proxyExecutable,
             registrationToken,
-            ["--assembly=" + file],
+            additionalArguments.ToArray(),
             file,
             cancellationToken);
     }
@@ -598,10 +619,12 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
                 wrapper.FunctionDelegateCallAsync,
                 new FunctionMetadata
                 {
-                    Description = function.Description,
-                    IsSafe = function.IsSafe,
-                    IsAggregate = function.IsAggregate,
+                    Description = function.Description ?? string.Empty,
+                    IsSafe = function.IsSafe ?? false,
+                    IsAggregate = function.IsAggregate ?? false,
                     Formatters = function.Formatters ?? [],
+                    ArgumentsDescriptions = function.ArgumentsDescriptions ?? new Dictionary<string, string>(),
+                    Examples = function.Examples ?? [],
                 });
             functionsManager.RegisterFunction(internalFunction);
             wrapper.FunctionName = internalFunction.Name;
@@ -657,12 +680,60 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
                 wrapper.FunctionDelegateCallAsync,
                 new FunctionMetadata
                 {
-                    Description = function.Description,
-                    IsSafe = function.IsSafe,
-                    IsAggregate = function.IsAggregate,
+                    Description = function.Description ?? string.Empty,
+                    IsSafe = function.IsSafe ?? false,
+                    IsAggregate = function.IsAggregate ?? false,
+                    Formatters = function.Formatters ?? [],
+                    ArgumentsDescriptions = function.ArgumentsDescriptions ?? new Dictionary<string, string>(),
+                    Examples = function.Examples ?? [],
                 });
             functionsManager.RegisterFunction(internalFunction);
             wrapper.FunctionName = internalFunction.Name;
+        }
+    }
+
+    private void RegisterAuthProviders(IReadOnlyList<PluginContextAuth> providers)
+    {
+        foreach (var provider in providers)
+        {
+            try
+            {
+                _thread.AuthTokensManager.Providers.Register(new AuthProviderInfo
+                {
+                    Id = provider.Id,
+                    Type = provider.Type,
+                    DisplayName = provider.DisplayName,
+                    AuthorizationUrl = provider.AuthorizationUrl,
+                    TokenUrl = provider.TokenUrl,
+                    DeviceAuthorizationUrl = provider.DeviceAuthorizationUrl,
+                    ClientId = provider.ClientId,
+                    ClientSecret = provider.ClientSecret,
+                    Scopes = provider.Scopes ?? [],
+                    ExtraParams = provider.ExtraParams ?? new Dictionary<string, string>(),
+                    RedirectPort = provider.RedirectPort,
+                    RedirectLoopback = provider.RedirectLoopback,
+                    RedirectPath = provider.RedirectPath,
+                    RefreshTokenUrl = provider.RefreshTokenUrl,
+                    RefreshTokenParamName = provider.RefreshTokenParamName,
+                    PreferDeviceFlow = provider.PreferDeviceFlow,
+                    AllowApiKey = provider.AllowApiKey,
+                    DisablePkce = provider.DisablePkce,
+                    TokenValidateUrl = provider.TokenValidateUrl,
+                    PluginName = provider.PluginName,
+                });
+            }
+            catch (PluginException e)
+            {
+                _logger.LogWarning("{Error}", e.Message);
+            }
+        }
+    }
+
+    private void RegisterConfigOptions(IReadOnlyList<PluginContextConfigOption> options)
+    {
+        foreach (var option in options)
+        {
+            ConfigOptions.Register(option.ToPluginConfigOption());
         }
     }
 
@@ -676,17 +747,21 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
         }
 
         var fileInfo = new FileInfo(fileName);
-        var cacheEntry = new FunctionsCache(fileInfo.CreationTimeUtc.Ticks, context.Functions);
+        var cacheEntry = new PluginsFunctionsCache(
+            fileInfo.CreationTimeUtc.Ticks,
+            context.Functions,
+            context.AuthProviders,
+            context.ConfigOptions);
         var pluginName = PluginInfo.CreateFromUniversalName(fileName).Name;
         var cacheFile = Path.Combine(_functionsCacheDirectory, pluginName + FunctionsCacheFileExtension);
         Directory.CreateDirectory(_functionsCacheDirectory);
         using var cacheFileStream = File.Create(cacheFile);
-        JsonSerializer.Serialize(cacheFileStream, cacheEntry, SourceGenerationContext.Default.FunctionsCache);
+        JsonSerializer.Serialize(cacheFileStream, cacheEntry, SourceGenerationContext.Default.PluginsFunctionsCache);
     }
 
-    private bool TryGetCachedFunctions(string fileName, out IEnumerable<PluginContextFunction> functions)
+    private bool TryGetCache(string fileName, [NotNullWhen(true)] out PluginsFunctionsCache? cache)
     {
-        functions = [];
+        cache = null;
 
         if (string.IsNullOrEmpty(_functionsCacheDirectory))
         {
@@ -702,22 +777,24 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
         var fileInfo = new FileInfo(fileName);
 
         using var cacheFileStream = File.OpenRead(cacheFile);
-        var cacheEntry = JsonSerializer.Deserialize(cacheFileStream, SourceGenerationContext.Default.FunctionsCache);
+        var cacheEntry = JsonSerializer.Deserialize(cacheFileStream, SourceGenerationContext.Default.PluginsFunctionsCache);
         cacheFileStream.Close();
         if (cacheEntry == null)
         {
             return false;
         }
 
-        // If plugin file has changed - invalidate the cache.
-        if (cacheEntry.CreatedAt != fileInfo.CreationTimeUtc.Ticks)
+        // If plugin file has changed - invalidate the cache. Also invalidate cache created
+        // before authentication providers or configuration options support.
+        if (cacheEntry.CreatedAt != fileInfo.CreationTimeUtc.Ticks || cacheEntry.AuthProviders == null
+            || cacheEntry.ConfigOptions == null)
         {
             _logger.LogDebug("Update plugin cache '{PluginName}'.", pluginName);
             File.Delete(cacheFile);
             return false;
         }
 
-        functions = cacheEntry.Functions;
+        cache = cacheEntry;
         return true;
     }
 

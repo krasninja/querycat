@@ -6,6 +6,7 @@ using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Plugins;
+using QueryCat.Backend.Core.Plugins.Auth;
 
 namespace QueryCat.Backend.AssemblyPlugins;
 
@@ -19,8 +20,50 @@ public class DotNetAssemblyPluginsLoader : PluginsLoader, IDisposable
 
     private const string RegistrationClassName = "Registration";
     private const string RegistrationMethodName = "RegisterFunctions";
+    private const string RegisterAuthProvidersMethodName = "RegisterAuthProviders";
+    private const string RegisterConfigOptionsMethodName = "RegisterConfigOptions";
     private const string OnLoadMethodName = "OnLoadAsync";
     private const string OnUnloadMethodName = "OnUnloadAsync";
+
+    /// <summary>
+    /// Sets the plugin name for every registered provider.
+    /// </summary>
+    private sealed class PluginAuthProvidersRegistry(IAuthProvidersRegistry registry, string pluginName)
+        : IAuthProvidersRegistry
+    {
+        /// <inheritdoc />
+        public void Register(AuthProviderInfo provider)
+        {
+            provider.PluginName = pluginName;
+            registry.Register(provider);
+        }
+
+        /// <inheritdoc />
+        public AuthProviderInfo? Find(string id) => registry.Find(id);
+
+        /// <inheritdoc />
+        public IReadOnlyList<AuthProviderInfo> GetProviders() => registry.GetProviders();
+    }
+
+    /// <summary>
+    /// Sets the plugin name for every registered config option.
+    /// </summary>
+    private sealed class PluginConfigOptionsRegistryScoped(IPluginConfigOptionsRegistry registry, string pluginName)
+        : IPluginConfigOptionsRegistry
+    {
+        /// <inheritdoc />
+        public void Register(PluginConfigOption option)
+        {
+            option.PluginName = pluginName;
+            registry.Register(option);
+        }
+
+        /// <inheritdoc />
+        public PluginConfigOption? Find(string pluginName, string name) => registry.Find(pluginName, name);
+
+        /// <inheritdoc />
+        public IReadOnlyList<PluginConfigOption> GetOptions(string? pluginName = null) => registry.GetOptions(pluginName);
+    }
 
     private sealed record AssemblyContext(
         Stream Stream,
@@ -47,6 +90,12 @@ public class DotNetAssemblyPluginsLoader : PluginsLoader, IDisposable
 
     private static readonly string[] _monikerDirectories =
     [
+#if NET12_0_OR_GREATER
+        "net12.0",
+#endif
+#if NET11_0_OR_GREATER
+        "net11.0",
+#endif
 #if NET10_0_OR_GREATER
         "net10.0",
 #endif
@@ -73,7 +122,22 @@ public class DotNetAssemblyPluginsLoader : PluginsLoader, IDisposable
     public DotNetAssemblyPluginsLoader(
         IFunctionsManager functionsManager,
         IExecutionThread executionThread,
-        IEnumerable<string> pluginDirectories) : base(pluginDirectories)
+        IEnumerable<string> pluginDirectories) : this(functionsManager, executionThread, pluginDirectories, null)
+    {
+    }
+
+    /// <summary>
+    /// Constructor.
+    /// </summary>
+    /// <param name="functionsManager">Functions manager.</param>
+    /// <param name="executionThread">Execution thread.</param>
+    /// <param name="pluginDirectories">Plugin directories or files.</param>
+    /// <param name="configOptions">Registry to add plugins configuration options to. New one is created if null.</param>
+    public DotNetAssemblyPluginsLoader(
+        IFunctionsManager functionsManager,
+        IExecutionThread executionThread,
+        IEnumerable<string> pluginDirectories,
+        IPluginConfigOptionsRegistry? configOptions) : base(pluginDirectories, configOptions)
     {
         _functionsManager = functionsManager;
         _executionThread = executionThread;
@@ -442,6 +506,30 @@ public class DotNetAssemblyPluginsLoader : PluginsLoader, IDisposable
             {
                 _logger.LogDebug("Register using '{ClassName}' class.", RegistrationClassName);
                 registerMethod.Invoke(null, [_functionsManager]);
+            }
+
+            // static void RegisterAuthProviders(IAuthProvidersRegistry registry).
+            var registerAuthProvidersMethod = registerType.GetMethod(
+                RegisterAuthProvidersMethodName,
+                BindingFlags.Public | BindingFlags.Static,
+                [typeof(IAuthProvidersRegistry)]);
+            if (registerAuthProvidersMethod != null)
+            {
+                var registry = new PluginAuthProvidersRegistry(_executionThread.AuthTokensManager.Providers,
+                    assembly.GetName().Name ?? string.Empty);
+                registerAuthProvidersMethod.Invoke(null, [registry]);
+            }
+
+            // static void RegisterConfigOptions(IPluginConfigOptionsRegistry registry).
+            var registerConfigOptionsMethod = registerType.GetMethod(
+                RegisterConfigOptionsMethodName,
+                BindingFlags.Public | BindingFlags.Static,
+                [typeof(IPluginConfigOptionsRegistry)]);
+            if (registerConfigOptionsMethod != null)
+            {
+                var registry = new PluginConfigOptionsRegistryScoped(ConfigOptions,
+                    assembly.GetName().Name ?? string.Empty);
+                registerConfigOptionsMethod.Invoke(null, [registry]);
             }
 
             // static Task OnLoadAsync(IExecutionThread executionThread, CancellationToken cancellationToken).

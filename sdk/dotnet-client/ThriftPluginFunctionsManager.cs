@@ -67,6 +67,9 @@ public sealed class ThriftPluginFunctionsManager : IFunctionsManager
                 Description = function.Description,
                 IsAggregate = function.IsAggregate,
                 IsSafe = function.IsSafe,
+                Formatters = function.FormatterIds?.ToArray() ?? [],
+                ArgumentsDescriptions = function.ArgumentsDescriptions ?? new Dictionary<string, string>(),
+                Examples = function.Examples?.ToArray() ?? [],
             }
         );
     }
@@ -94,6 +97,8 @@ public sealed class ThriftPluginFunctionsManager : IFunctionsManager
                     {
                         FormatterIds = function.Formatters.ToList(),
                         IsSafe = function.IsSafe,
+                        ArgumentsDescriptions = SdkConvert.GetArgumentsDescriptions(function),
+                        Examples = function.Examples.ToList(),
                     }],
                     ct);
             });

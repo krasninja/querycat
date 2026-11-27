@@ -33,7 +33,7 @@ public sealed class DefaultFunctionsManagerTests
         var func = _functionsManager.FindByNameFirst("add",
             FunctionCallArgumentsTypes.FromPositionArguments(DataType.Integer, DataType.Integer));
         using var frame = thread.Stack.CreateFrameWithArguments(new VariantValue(5), new VariantValue(6));
-        var ret = await FunctionCaller.CallAsync(func.Delegate, thread);
+        var ret = await FunctionCaller.CallAsync(func.Delegate, thread, TestContext.Current.CancellationToken);
 
         Assert.Equal(11L, ret.AsIntegerUnsafe);
     }
@@ -56,7 +56,7 @@ public sealed class DefaultFunctionsManagerTests
                 DataType.String, DataType.Integer, DataType.Integer));
         using var frame = thread.Stack.CreateFrameWithArguments(
             new VariantValue("sum"), new VariantValue(5), new VariantValue(5));
-        var ret = await FunctionCaller.CallAsync(func.Delegate, thread);
+        var ret = await FunctionCaller.CallAsync(func.Delegate, thread, TestContext.Current.CancellationToken);
 
         Assert.Equal("sum: 10", ret);
     }
@@ -71,7 +71,7 @@ public sealed class DefaultFunctionsManagerTests
         var func = _functionsManager.FindByNameFirst("add",
             FunctionCallArgumentsTypes.FromPositionArguments(DataType.String));
         using var frame = thread.Stack.CreateFrameWithArguments(new VariantValue("sum"));
-        var ret = await FunctionCaller.CallAsync(func.Delegate, thread);
+        var ret = await FunctionCaller.CallAsync(func.Delegate, thread, TestContext.Current.CancellationToken);
 
         Assert.Equal("sum: 0", ret);
     }
@@ -99,13 +99,13 @@ public sealed class DefaultFunctionsManagerTests
         // Act.
         var func1 = _functionsManager.FindByNameFirst("test_class1",
             FunctionCallArgumentsTypes.FromPositionArguments(DataType.Integer, DataType.String));
-        var value1 = await FunctionCaller.CallWithArgumentsAsync(func1.Delegate, thread, [1, "2"]);
+        var value1 = await FunctionCaller.CallWithArgumentsAsync(func1.Delegate, thread, [1, "2"], TestContext.Current.CancellationToken);
         var func2 = _functionsManager.FindByNameFirst("test_class2",
             FunctionCallArgumentsTypes.FromPositionArguments(DataType.Integer, DataType.String));
-        var value2 = await FunctionCaller.CallWithArgumentsAsync(func2.Delegate, thread, [1, "2"]);
+        var value2 = await FunctionCaller.CallWithArgumentsAsync(func2.Delegate, thread, [1, "2"], TestContext.Current.CancellationToken);
         var func3 = _functionsManager.FindByNameFirst("test_class3",
             FunctionCallArgumentsTypes.FromPositionArguments(DataType.Integer, DataType.String));
-        var value3 = await FunctionCaller.CallWithArgumentsAsync(func3.Delegate, thread, [1, "2"]);
+        var value3 = await FunctionCaller.CallWithArgumentsAsync(func3.Delegate, thread, [1, "2"], TestContext.Current.CancellationToken);
 
         // Assert.
         Assert.Equal("1 2", value1.As<TestClass1>()!.Value);
@@ -136,10 +136,10 @@ public sealed class DefaultFunctionsManagerTests
 
         // Act.
         var func1 = _functionsManager.FindByNameFirst("function1");
-        await FunctionCaller.CallWithArgumentsAsync(func1.Delegate, thread);
+        await FunctionCaller.CallWithArgumentsAsync(func1.Delegate, thread, cancellationToken: TestContext.Current.CancellationToken);
         var func2 = _functionsManager.FindByNameFirst("testfunc",
             FunctionCallArgumentsTypes.FromPositionArguments(DataType.String));
-        var value2 = await FunctionCaller.CallWithArgumentsAsync(func2.Delegate, thread, ["2"]);
+        var value2 = await FunctionCaller.CallWithArgumentsAsync(func2.Delegate, thread, ["2"], TestContext.Current.CancellationToken);
 
         // Assert.
         Assert.Equal(2, value2.AsInteger);
@@ -157,5 +157,35 @@ public sealed class DefaultFunctionsManagerTests
         {
             return int.Parse(str);
         }
+    }
+
+    [Fact]
+    public void RegisterFunction_WithArgumentDescriptionsAndExamples_ShouldExposeMetadata()
+    {
+        // Act.
+        _functionsManager.RegisterFunction(SumIntegersDescribed);
+        var func = _functionsManager.FindByNameFirst("add_described",
+            FunctionCallArgumentsTypes.FromPositionArguments(DataType.Integer, DataType.Integer));
+        var funcFromMetadata = _functionsManager.Factory.CreateFromSignature(
+            "add_described(a: integer, b: integer): integer",
+            SumIntegersDescribed,
+            FunctionMetadata.CreateFromAttributes(((Delegate)SumIntegersDescribed).Method));
+
+        // Assert.
+        foreach (var function in new[] { func, funcFromMetadata })
+        {
+            Assert.Equal("First value.", function.Arguments[0].Description);
+            Assert.Equal(string.Empty, function.Arguments[1].Description);
+            Assert.Equal(["add_described(1, 2)", "SELECT add_described(1, 2)"], function.Examples);
+        }
+    }
+
+    [FunctionSignature("add_described(a: integer, b: integer): integer")]
+    [FunctionArgumentDescription("a", "First value.")]
+    [FunctionExample("add_described(1, 2)")]
+    [FunctionExample("SELECT add_described(1, 2)")]
+    private static VariantValue SumIntegersDescribed(IExecutionThread thread)
+    {
+        return new VariantValue(thread.Stack[0].AsInteger + thread.Stack[1].AsInteger);
     }
 }

@@ -1,6 +1,8 @@
 using System.CommandLine;
 using System.Net;
 using QueryCat.Cli.Infrastructure;
+using WebServerClass = QueryCat.WebServer.WebServer;
+using QueryCat.WebServer;
 
 namespace QueryCat.Cli.Commands;
 
@@ -61,10 +63,14 @@ internal sealed class ServeCommand : BaseCommand
 
             applicationOptions.InitializeLogger();
             applicationOptions.InitializeAIAssistant();
-            await using var root = await applicationOptions.CreateApplicationRootAsync();
+            await using var root = await applicationOptions.CreateApplicationRootAsync(new AppExecutionOptions
+            {
+                SafeMode = safeMode,
+                RunBootstrapScript = true,
+                UseConfig = true,
+            });
             root.Thread.Options.AddRowNumberColumn = true;
-            root.Thread.Options.SafeMode = safeMode;
-            var webServer = new WebServer(root.Thread, new WebServerOptions
+            var webServer = new WebServerClass(root.Thread, new WebServerOptions
             {
                 Url = urls,
                 Password = password,
@@ -76,7 +82,7 @@ internal sealed class ServeCommand : BaseCommand
             {
                 webServer.AllowOrigin = allowOrigin;
             }
-            await webServer.RunAsync(cancellationToken: cancellationToken);
+            await webServer.StartAsync(cancellationToken: cancellationToken);
         });
     }
 }

@@ -8,6 +8,7 @@ using QueryCat.Backend.Commands.Select.Iterators;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
+using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Storage;
@@ -175,6 +176,7 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
             store,
             _rowsInputFactory,
             rowsInputContext);
+        SetContextSourceData(rowsInputContext, node);
 
         return rowsInputContext;
     }
@@ -208,6 +210,7 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
             await rowsInputContext.RowsInput.OpenAsync(cancellationToken);
             _logger.LogDebug("Open rows input {RowsInput}.", rowsInputContext.RowsInput);
             node.SetAttribute(AstAttributeKeys.RowsInputContextKey, rowsInputContext);
+            SetContextSourceData(rowsInputContext, node);
             return rowsInputContext;
         }
 
@@ -277,8 +280,11 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
             callFuncUnitDecorator.CacheEnabled = false;
         }
         var resolveStringAsSource = functionCallNode.FunctionName.StartsWith("read", StringComparison.OrdinalIgnoreCase);
-        return await _rowsInputFactory.CreateRowsInputAsync(
+        var context = await _rowsInputFactory.CreateRowsInputAsync(
             source, alias, _executionThread, formatNode, resolveStringAsSource, cancellationToken);
+        SetContextSourceData(context, functionCallNode);
+
+        return context;
     }
 
     private async ValueTask<SelectInputQueryContext?> CreateVaryInputContextAsync(
@@ -305,6 +311,7 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
         {
             callFuncUnitDecorator.CacheEnabled = false;
         }
+        SetContextSourceData(context, functionCallNode);
         return context;
     }
 
@@ -358,6 +365,29 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
             }
             return value;
         }
+    }
+
+    private static void SetContextSourceData(SelectInputQueryContext? context, FunctionCallNode functionCallNode)
+    {
+        if (context == null)
+        {
+            return;
+        }
+        var sourceFunction = functionCallNode.GetAttribute<IFunction?>(AstAttributeKeys.FunctionKey);
+        if (sourceFunction == null)
+        {
+            return;
+        }
+        context.InputSourceFunction = sourceFunction;
+    }
+
+    private static void SetContextSourceData(SelectInputQueryContext? context, IdentifierExpressionNode idNode)
+    {
+        if (context == null)
+        {
+            return;
+        }
+        context.InputSourceIdentifier = idNode.FullName;
     }
 
     /// <summary>

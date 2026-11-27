@@ -16,7 +16,22 @@ internal sealed class ApplicationRootCommand : RootCommand
             new SchemaCommand(),
             new CallFunctionCommand(),
             new ServeCommand(),
+            new McpCommand(),
+            new Command("agent", Resources.Messages.AgentCommand_Description)
+            {
+                new AgentListCommand(),
+                new AgentGetCommand(),
+                new AgentSetCommand(),
+            },
+            new Command("options", Resources.Messages.PluginOptionsCommand_Description)
+            {
+                new OptionsGetCommand(),
+                new OptionsSetCommand(),
+                new OptionsUnsetCommand(),
+            }
+        );
 #if ENABLE_PLUGINS
+        Add(
             new Command("plugin", Resources.Messages.PluginCommand_Description)
             {
                 new PluginInstallCommand(),
@@ -24,6 +39,13 @@ internal sealed class ApplicationRootCommand : RootCommand
                 new PluginRemoveCommand(),
                 new PluginUpdateCommand(),
                 new PluginDebugCommand(),
+                new PluginOptionsCommand(),
+                new Command("auth", Resources.Messages.PluginAuthCommand_Description)
+                {
+                    new PluginAuthListCommand(),
+                    new PluginAuthLoginCommand(),
+                    new PluginAuthLogoutCommand(),
+                },
 #if PLUGIN_THRIFT
                 new PluginProxyCommand(),
 #endif

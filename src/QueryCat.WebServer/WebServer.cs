@@ -1,0 +1,616 @@
+using System.Collections.Frozen;
+using System.Globalization;
+using System.Net;
+using System.Reflection;
+using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Web;
+using Microsoft.Extensions.Logging;
+using QueryCat.Backend.Core;
+using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Execution;
+using QueryCat.Backend.Core.Functions;
+using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Core.Utils;
+using QueryCat.Backend.Execution;
+using QueryCat.Backend.Formatters;
+using QueryCat.Backend.Storage;
+using QueryCat.Backend.Utils;
+
+namespace QueryCat.WebServer;
+
+/// <summary>
+/// Simple web server that provides endpoint to run queries.
+/// </summary>
+public sealed partial class WebServer
+{
+    private const string DefaultEndpointUri = "http://localhost:6789/";
+    private const string QueryField = "query";
+
+    /// <summary>
+    /// Endpoint URI.
+    /// </summary>
+    public string Uri { get; }
+
+    public string AllowOrigin { get; set; } = string.Empty;
+
+    private readonly FrozenDictionary<string, Func<HttpListenerRequest, HttpListenerResponse, CancellationToken, Task>> _actions;
+
+    private readonly IExecutionThread _executionThread;
+    private readonly string? _password;
+    private readonly string? _filesRoot;
+    private readonly HashSet<IPAddress> _allowedAddresses;
+    private readonly MimeTypesProvider _mimeTypesProvider = Backend.Functions.IOFunctions.MimeTypesProvider;
+    private int? _allowedAddressesSlots;
+    private readonly Lock _lockObj = new();
+    private readonly int _acceptConnections;
+
+    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(WebServer));
+
+    internal sealed class WebServerReply : Dictionary<string, object>;
+
+    public WebServer(IExecutionThread executionThread, WebServerOptions options)
+    {
+        _actions = new Dictionary<string, Func<HttpListenerRequest, HttpListenerResponse, CancellationToken, Task>>
+        {
+            ["/"] = HandleIndexActionAsync,
+            ["/index.html"] = HandleIndexActionAsync,
+            ["/index.js"] = HandleIndexJsActionAsync,
+            ["/api/info"] = Info_HandleInfoApiActionAsync,
+            ["/api/query"] = HandleQueryApiActionAsync,
+            ["/api/schema"] = HandleSchemaApiActionAsync,
+            ["/api/files"] = Files_HandleFilesApiActionAsync,
+        }.ToFrozenDictionary();
+
+        _executionThread = executionThread;
+        _password = options.Password;
+        _filesRoot = options.FilesRoot;
+        _allowedAddresses = new HashSet<IPAddress>(options.AllowedAddresses);
+        _allowedAddressesSlots = options.AllowedAddressesSlots;
+        _acceptConnections = Environment.ProcessorCount;
+        Uri = options.Url ?? DefaultEndpointUri;
+    }
+
+    /// <summary>
+    /// Run web server.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Awaitable task.</returns>
+    public async Task StartAsync(CancellationToken cancellationToken = default)
+    {
+        using var listener = new HttpListener();
+        listener.Prefixes.Add(Uri);
+        if (!string.IsNullOrEmpty(_password))
+        {
+            listener.AuthenticationSchemes = AuthenticationSchemes.Basic;
+        }
+        listener.IgnoreWriteExceptions = true;
+        listener.Start();
+        Console.Out.WriteLine(Resources.Messages.WebServerListen, Uri);
+
+        var semaphore = new SemaphoreSlim(_acceptConnections, _acceptConnections);
+        while (true)
+        {
+            try
+            {
+                await semaphore.WaitAsync(cancellationToken);
+                await listener.GetContextAsync()
+                    .ContinueWith(async t =>
+                    {
+                        semaphore.Release();
+                        await HandleRequestAsync(t.Result, cancellationToken);
+                    }, cancellationToken).ConfigureAwait(false);
+            }
+            catch (TaskCanceledException)
+            {
+                break;
+            }
+        }
+        // ReSharper disable once FunctionNeverReturns
+    }
+
+    private async Task HandleRequestAsync(HttpListenerContext context, CancellationToken cancellationToken)
+    {
+        var response = context.Response;
+        response.Headers["Server"] = Application.GetProductFullNameForWeb();
+        response.StatusCode = (int)HttpStatusCode.OK;
+
+        // Large request protection.
+        if (context.Request.ContentLength64 > 1024 * 1024)
+        {
+            _logger.LogWarning("[{Address}]: request content length is too large: {Length} bytes.",
+                context.Request.RemoteEndPoint.Address, context.Request.ContentLength64);
+            response.StatusCode = (int)HttpStatusCode.RequestEntityTooLarge;
+            response.Close();
+            return;
+        }
+
+        // CORS.
+        if (!string.IsNullOrEmpty(AllowOrigin))
+        {
+            response.Headers.Add("Access-Control-Allow-Origin", AllowOrigin);
+            if (context.Request.HttpMethod.Equals(HttpMethod.Options.Method))
+            {
+                response.Headers.Add("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
+                response.Headers.Add("Access-Control-Allow-Headers", "Content-Type");
+                response.Headers.Add("Access-Control-Max-Age", "86400");
+                response.StatusCode = (int)HttpStatusCode.OK;
+                response.Close();
+                return;
+            }
+        }
+
+        // Validate IP.
+        lock (_lockObj)
+        {
+            if ((_allowedAddresses.Count > 0 || _allowedAddressesSlots.HasValue)
+                && !_allowedAddresses.Contains(context.Request.RemoteEndPoint.Address))
+            {
+                if (_allowedAddressesSlots > 0)
+                {
+                    _allowedAddresses.Add(context.Request.RemoteEndPoint.Address);
+                    _allowedAddressesSlots--;
+                    _logger.LogInformation("[{Address}]: added to authorized list.", context.Request.RemoteEndPoint.Address);
+                }
+                else
+                {
+                    _logger.LogInformation("[{Address}]: unauthorized access.", context.Request.RemoteEndPoint.Address);
+                    response.StatusCode = (int)HttpStatusCode.Unauthorized;
+                    response.Close();
+                    return;
+                }
+            }
+        }
+
+        // Auth.
+        if (context.User?.Identity != null)
+        {
+            var identity = (HttpListenerBasicIdentity)context.User.Identity;
+            if (identity.Password != _password)
+            {
+                response.StatusCode = (int)HttpStatusCode.Unauthorized;
+                response.Close();
+                return;
+            }
+        }
+
+        // Find action by path.
+        var path = context.Request.Url?.LocalPath ?? string.Empty;
+        if (_actions.TryGetValue(path, out var action))
+        {
+            try
+            {
+                await action.Invoke(context.Request, response, cancellationToken);
+            }
+            catch (QueryCatException e)
+            {
+                _logger.LogWarning(e, "Invalid input: {Error}", e.Message);
+                response.ContentType = System.Net.Mime.MediaTypeNames.Application.Json;
+                response.StatusCode = (int)HttpStatusCode.BadRequest;
+                await using var jsonWriter = new Utf8JsonWriter(response.OutputStream);
+                WriteJsonMessage(jsonWriter, e.Message);
+            }
+            catch (UnauthorizedAccessException e)
+            {
+                _logger.LogError(e, "Unauthorized access.");
+                response.StatusCode = (int)HttpStatusCode.Unauthorized;
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "Error while processing request.");
+                response.StatusCode = (int)HttpStatusCode.InternalServerError;
+            }
+        }
+        else
+        {
+            response.StatusCode = (int)HttpStatusCode.NotFound;
+        }
+
+        response.Close();
+    }
+
+    #region Handles
+
+    private Task HandleIndexActionAsync(HttpListenerRequest request, HttpListenerResponse response, CancellationToken cancellationToken)
+    {
+        return WriteResourceToStream(@"QueryCat.WebServer.WebServerIndex.html", response, cancellationToken);
+    }
+
+    private Task HandleIndexJsActionAsync(HttpListenerRequest request, HttpListenerResponse response, CancellationToken cancellationToken)
+    {
+        return WriteResourceToStream(@"QueryCat.WebServer.WebServerPage.js", response, cancellationToken);
+    }
+
+    private async Task HandleQueryApiActionAsync(HttpListenerRequest request, HttpListenerResponse response, CancellationToken cancellationToken)
+    {
+        if (request.HttpMethod != HttpMethod.Post.Method && request.HttpMethod != HttpMethod.Get.Method)
+        {
+            response.StatusCode = (int)HttpStatusCode.MethodNotAllowed;
+            return;
+        }
+
+        var queryData = GetQueryDataFromRequest(request);
+        _logger.LogInformation("[{Address}] Query: {QueryData}", request.RemoteEndPoint.Address, queryData);
+        var lastResult = await _executionThread.RunAsync(queryData.Query, queryData.ParametersAsDict, cancellationToken);
+        await WriteValueAsync(lastResult, request, response, cancellationToken);
+        lastResult.Close();
+    }
+
+    private async Task HandleSchemaApiActionAsync(HttpListenerRequest request, HttpListenerResponse response, CancellationToken cancellationToken)
+    {
+        if (request.HttpMethod != HttpMethod.Post.Method && request.HttpMethod != HttpMethod.Get.Method)
+        {
+            response.StatusCode = (int)HttpStatusCode.MethodNotAllowed;
+            return;
+        }
+
+        var query = GetQueryDataFromRequest(request);
+        _logger.LogInformation("[{Address}] Schema: {Query}", request.RemoteEndPoint.Address, query);
+
+        var thread = _executionThread as DefaultExecutionThread;
+        if (thread == null)
+        {
+            return;
+        }
+
+        void ThreadOnStatementExecuted(object? sender, ExecuteEventArgs e)
+        {
+            if (!e.Result.IsNull
+                && e.Result.Type == DataType.Object
+                && e.Result.AsObject is IRowsSchema rowsSchema
+                && _executionThread is DefaultExecutionThread defaultExecutionThread)
+            {
+                AsyncUtils.RunSync(async () =>
+                {
+                    var schema = await FunctionCaller.CallWithArgumentsAsync(Backend.Functions.InfoFunctions.Schema,
+                        defaultExecutionThread, [rowsSchema], cancellationToken);
+                    await WriteValueAsync(schema, request, response, cancellationToken);
+                });
+                e.ContinueExecution = false;
+            }
+        }
+
+        try
+        {
+            thread.StatementExecuted += ThreadOnStatementExecuted;
+            var result = await _executionThread.RunAsync(query.Query, query.ParametersAsDict, cancellationToken);
+            result.Close();
+        }
+        finally
+        {
+            thread.StatementExecuted -= ThreadOnStatementExecuted;
+        }
+    }
+
+    #endregion
+
+    private async Task WriteValueAsync(
+        VariantValue value,
+        HttpListenerRequest request,
+        HttpListenerResponse response,
+        CancellationToken cancellationToken)
+    {
+        if (value.Type == DataType.Blob && value.AsObjectUnsafe is IBlobData blobData)
+        {
+            response.ContentType = blobData.ContentType;
+            await using var blobStream = blobData.GetStream();
+            if (blobStream.CanSeek)
+            {
+                response.ContentLength64 = blobStream.Length;
+            }
+            await blobStream.CopyToAsync(response.OutputStream, cancellationToken);
+            await response.OutputStream.FlushAsync(cancellationToken);
+        }
+        else
+        {
+            var acceptedType = request.AcceptTypes?.FirstOrDefault();
+            if (string.IsNullOrEmpty(acceptedType) || acceptedType == "*/*")
+            {
+                acceptedType = request.ContentType;
+            }
+
+            var iterator = RowsIteratorConverter.Convert(value);
+            if (acceptedType == System.Net.Mime.MediaTypeNames.Text.Html)
+            {
+                response.ContentType = System.Net.Mime.MediaTypeNames.Text.Html;
+                await using var streamWriter = new StreamWriter(response.OutputStream);
+                await WriteHtmlAsync(iterator, streamWriter, cancellationToken);
+            }
+            else if (acceptedType == System.Net.Mime.MediaTypeNames.Application.Json)
+            {
+                response.ContentType = System.Net.Mime.MediaTypeNames.Application.Json;
+                await using var jsonWriter = new Utf8JsonWriter(response.OutputStream);
+                await WriteJsonAsync(iterator, jsonWriter, cancellationToken);
+            }
+            else
+            {
+                response.ContentType = System.Net.Mime.MediaTypeNames.Text.Plain;
+                await WriteTextAsync(iterator, response.OutputStream, cancellationToken);
+            }
+        }
+    }
+
+    internal sealed class WebServerQueryData
+    {
+        public string Query { get; set; } = string.Empty;
+
+        public List<WebServerQueryDataParameter> Parameters { get; set; } = new();
+
+        public IDictionary<string, VariantValue> ParametersAsDict => Parameters.ToDictionary(k => k.Key, k => k.Value);
+
+        public WebServerQueryData()
+        {
+        }
+
+        public WebServerQueryData(string query)
+        {
+            Query = query;
+        }
+
+        /// <inheritdoc />
+        public override string ToString() => Query;
+    }
+
+    internal class WebServerQueryDataParameter
+    {
+        public string Key { get; set; } = string.Empty;
+
+        [JsonConverter(typeof(VariantValueJsonConverter))]
+        public VariantValue Value { get; set; }
+    }
+
+    private static WebServerQueryData GetQueryDataFromRequest(HttpListenerRequest request)
+    {
+        if (request.HttpMethod == HttpMethod.Post.Method)
+        {
+            using var sr = new StreamReader(request.InputStream);
+            var text = sr.ReadToEnd();
+            var content = request.ContentType ?? string.Empty;
+            if (content.StartsWith(System.Net.Mime.MediaTypeNames.Text.Plain, StringComparison.InvariantCultureIgnoreCase)
+                || content.StartsWith(System.Net.Mime.MediaTypeNames.Application.FormUrlEncoded, StringComparison.InvariantCultureIgnoreCase))
+            {
+                return new WebServerQueryData(text);
+            }
+            else if (content.StartsWith(System.Net.Mime.MediaTypeNames.Application.Json, StringComparison.InvariantCultureIgnoreCase))
+            {
+                try
+                {
+                    return JsonSerializer.Deserialize(text, SourceGenerationContext.Default.WebServerQueryData)
+                           ?? new WebServerQueryData();
+                }
+                catch (JsonException e)
+                {
+                    throw new QueryCatException(
+                        string.Format(Resources.Errors.InvalidInputData, e.Message), e);
+                }
+            }
+            else if (!string.IsNullOrEmpty(content)
+                && content.StartsWith(System.Net.Mime.MediaTypeNames.Multipart.FormData))
+            {
+                foreach (var pair in ParseMultipartData(text))
+                {
+                    if (pair.Key == QueryField)
+                    {
+                        return new WebServerQueryData(pair.Value.Trim());
+                    }
+                }
+            }
+        }
+        else if (request.HttpMethod == HttpMethod.Get.Method)
+        {
+            var query = request.QueryString.Get("q");
+            if (!string.IsNullOrEmpty(query))
+            {
+                return new WebServerQueryData(query);
+            }
+            return new WebServerQueryData(request.QueryString.Get(QueryField) ?? string.Empty);
+        }
+        throw new QueryCatException(Resources.Errors.InvalidContentType);
+    }
+
+    private static IEnumerable<KeyValuePair<string, string>> ParseMultipartData(string data)
+    {
+        var currentField = string.Empty;
+        var currentBoundary = string.Empty;
+        var currentValue = new StringBuilder();
+        foreach (var line in data.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            if (line.StartsWith("---"))
+            {
+                if (string.IsNullOrEmpty(currentBoundary))
+                {
+                    currentBoundary = line;
+                }
+                else
+                {
+                    if (currentValue.Length > 0)
+                    {
+                        yield return new KeyValuePair<string, string>(currentField, currentValue.ToString());
+                    }
+                    currentBoundary = string.Empty;
+                    currentField = string.Empty;
+                    currentValue.Clear();
+                }
+                continue;
+            }
+
+            if (string.IsNullOrEmpty(currentBoundary))
+            {
+                continue;
+            }
+
+            if (line.StartsWith("Content-Disposition:", StringComparison.InvariantCultureIgnoreCase))
+            {
+                foreach (var dispositionEntry in line.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+                {
+                    var dispositionEntryFields = StringUtils.GetFieldsFromLine(dispositionEntry, delimiter: '=', quoteChar: '"');
+                    if (dispositionEntryFields.Length == 2 && dispositionEntryFields[0] == "name")
+                    {
+                        currentField = dispositionEntryFields[1];
+                    }
+                }
+                continue;
+            }
+
+            currentValue.AppendLine(line);
+        }
+    }
+
+    private static async Task WriteHtmlAsync(IRowsIterator iterator, StreamWriter streamWriter, CancellationToken cancellationToken)
+    {
+        await streamWriter.WriteLineAsync("""
+                                          <!DOCTYPE html><HTML>
+                                          <HEAD>
+                                          <META CHARSET="utf-8">
+                                          <LINK REL="stylesheet" HREF="https://cdn.jsdelivr.net/npm/bulma@1.0.3/css/bulma.min.css">
+                                          </HEAD>
+                                          <BODY><TABLE CLASS="table qcat-table">
+                                          """);
+
+        await streamWriter.WriteLineAsync("<TR>");
+        foreach (var column in iterator.Columns)
+        {
+            if (column.IsHidden)
+            {
+                continue;
+            }
+            await streamWriter.WriteLineAsync($"<TH>{HttpUtility.HtmlEncode(column.Name)}</TH>");
+        }
+        await streamWriter.WriteLineAsync("</TR>");
+
+        while (await iterator.MoveNextAsync(cancellationToken))
+        {
+            await streamWriter.WriteLineAsync("<TR>");
+            for (var i = 0; i < iterator.Columns.Length; i++)
+            {
+                if (iterator.Columns[i].IsHidden)
+                {
+                    continue;
+                }
+                await streamWriter.WriteLineAsync($"<TD>{HttpUtility.HtmlEncode(iterator.Current[i].ToString(CultureInfo.InvariantCulture))}</TD>");
+            }
+            await streamWriter.WriteLineAsync("</TR>");
+        }
+
+        await streamWriter.WriteLineAsync("</TABLE></BODY></HTML>");
+    }
+
+    private async Task WriteTextAsync(IRowsIterator iterator, Stream stream, CancellationToken cancellationToken)
+    {
+        var formatter = new TextTableFormatter();
+        var blobStream = new StreamBlobData(() => new StreamWrapper(stream, leaveOpen: true));
+        var output = formatter.OpenOutput(blobStream);
+        await output.WriteAsync(iterator, adjustColumnsLengths: true, _executionThread.ConfigStorage,
+            cancellationToken: cancellationToken);
+    }
+
+    private static async Task WriteJsonAsync(IRowsIterator iterator, Utf8JsonWriter jsonWriter, CancellationToken cancellationToken)
+    {
+        jsonWriter.WriteStartObject();
+        WriteJsonSchema(iterator.Columns, jsonWriter);
+        await WriteJsonDataAsync(iterator, jsonWriter, cancellationToken);
+        jsonWriter.WriteEndObject();
+    }
+
+    private static void WriteJsonSchema(Column[] columns, Utf8JsonWriter jsonWriter)
+    {
+        jsonWriter.WritePropertyName("schema");
+        jsonWriter.WriteStartArray();
+        foreach (var column in columns)
+        {
+            if (column.IsHidden)
+            {
+                continue;
+            }
+            jsonWriter.WriteStartObject();
+            jsonWriter.WritePropertyName("id");
+            jsonWriter.WriteNumberValue(column.Id);
+            jsonWriter.WritePropertyName("name");
+            jsonWriter.WriteStringValue(column.Name);
+            jsonWriter.WritePropertyName("type");
+            jsonWriter.WriteStringValue(column.DataType.ToString());
+            jsonWriter.WritePropertyName("description");
+            jsonWriter.WriteStringValue(column.Description);
+            jsonWriter.WriteEndObject();
+        }
+        jsonWriter.WriteEndArray();
+    }
+
+    private static async Task WriteJsonDataAsync(IRowsIterator iterator, Utf8JsonWriter jsonWriter, CancellationToken cancellationToken)
+    {
+        jsonWriter.WritePropertyName("data");
+        jsonWriter.WriteStartArray();
+        while (await iterator.MoveNextAsync(cancellationToken))
+        {
+            jsonWriter.WriteStartObject();
+            for (var i = 0; i < iterator.Columns.Length; i++)
+            {
+                if (iterator.Columns[i].IsHidden)
+                {
+                    continue;
+                }
+                jsonWriter.WritePropertyName(iterator.Columns[i].Name);
+                WriteJsonVariantValue(jsonWriter, iterator.Current[i]);
+            }
+            jsonWriter.WriteEndObject();
+        }
+        jsonWriter.WriteEndArray();
+    }
+
+    private static void WriteJsonVariantValue(Utf8JsonWriter jsonWriter, in VariantValue value)
+    {
+        if (value.IsNull)
+        {
+            jsonWriter.WriteNullValue();
+            return;
+        }
+
+        switch (value.Type)
+        {
+            case DataType.Integer:
+                jsonWriter.WriteNumberValue(value.AsIntegerUnsafe);
+                break;
+            case DataType.Float:
+                jsonWriter.WriteNumberValue(value.AsFloatUnsafe);
+                break;
+            case DataType.Numeric:
+                jsonWriter.WriteNumberValue(value.AsNumericUnsafe);
+                break;
+            case DataType.String:
+                jsonWriter.WriteStringValue(value.AsString);
+                break;
+            case DataType.Boolean:
+                jsonWriter.WriteBooleanValue(value.AsBoolean);
+                break;
+            default:
+                jsonWriter.WriteStringValue(value.ToString(CultureInfo.InvariantCulture));
+                break;
+        }
+    }
+
+    private static void WriteJsonMessage(Utf8JsonWriter jsonWriter, string message)
+    {
+        jsonWriter.WriteStartObject();
+        jsonWriter.WritePropertyName("message");
+        jsonWriter.WriteStringValue(message);
+        jsonWriter.WriteEndObject();
+    }
+
+    private async Task WriteResourceToStream(string uri, HttpListenerResponse response, CancellationToken cancellationToken)
+    {
+        // Determine path.
+        var assembly = Assembly.GetExecutingAssembly();
+
+        // Set content type.
+        var extension = Path.GetExtension(uri);
+        response.ContentType = _mimeTypesProvider.GetContentTypeByExtension(extension);
+
+        // Format: "{Namespace}.{Folder}.{filename}.{Extension}"
+        await using Stream? stream = assembly.GetManifestResourceStream(uri);
+        if (stream != null)
+        {
+            await stream.CopyToAsync(response.OutputStream, cancellationToken)!;
+        }
+    }
+}

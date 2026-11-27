@@ -78,6 +78,9 @@ public sealed class DefaultFunctionsFactory : FunctionsFactory
             }
         }
 
+        /// <inheritdoc />
+        public string[] Examples => FunctionMetadata.GetExamples(Delegate.Method);
+
         public LazyAttributesFunction(string signature, Delegate @delegate, IAstBuilder astBuilder)
         {
             _signature = signature;
@@ -102,7 +105,9 @@ public sealed class DefaultFunctionsFactory : FunctionsFactory
             {
                 return _arguments;
             }
-            _arguments = GetSignatureArguments(GetSignature().ArgumentNodes);
+            _arguments = FunctionMetadata.ApplyArgumentsDescriptions(
+                GetSignatureArguments(GetSignature().ArgumentNodes),
+                FunctionMetadata.GetArgumentsDescriptions(Delegate.Method));
             return _arguments;
         }
     }
@@ -153,6 +158,14 @@ public sealed class DefaultFunctionsFactory : FunctionsFactory
         /// <inheritdoc />
         public string[] Formatters { get; set; } = [];
 
+        /// <inheritdoc />
+        public string[] Examples { get; set; } = [];
+
+        /// <summary>
+        /// Map of argument name to its description.
+        /// </summary>
+        public IReadOnlyDictionary<string, string> ArgumentsDescriptions { get; set; } = new Dictionary<string, string>();
+
         public LazySignatureFunction(string signature, Delegate @delegate, IAstBuilder astBuilder)
         {
             _signature = signature;
@@ -177,7 +190,9 @@ public sealed class DefaultFunctionsFactory : FunctionsFactory
             {
                 return _arguments;
             }
-            _arguments = GetSignatureArguments(GetSignature().ArgumentNodes);
+            _arguments = FunctionMetadata.ApplyArgumentsDescriptions(
+                GetSignatureArguments(GetSignature().ArgumentNodes),
+                ArgumentsDescriptions);
             return _arguments;
         }
     }
@@ -235,6 +250,9 @@ public sealed class DefaultFunctionsFactory : FunctionsFactory
         /// <inheritdoc />
         public string[] Formatters => [];
 
+        /// <inheritdoc />
+        public string[] Examples => FunctionMetadata.GetExamples(typeof(TAggregate));
+
         public LazyAggregateFunction(string signature, IAstBuilder astBuilder)
         {
             _signature = signature;
@@ -264,7 +282,9 @@ public sealed class DefaultFunctionsFactory : FunctionsFactory
             {
                 return _arguments;
             }
-            _arguments = GetSignatureArguments(GetSignature().ArgumentNodes);
+            _arguments = FunctionMetadata.ApplyArgumentsDescriptions(
+                GetSignatureArguments(GetSignature().ArgumentNodes),
+                FunctionMetadata.GetArgumentsDescriptions(typeof(TAggregate)));
             return _arguments;
         }
     }
@@ -347,6 +367,8 @@ public sealed class DefaultFunctionsFactory : FunctionsFactory
             function.IsSafe = functionMetadata.IsSafe;
             function.Formatters = functionMetadata.Formatters;
             function.IsAggregate = functionMetadata.IsAggregate;
+            function.Examples = functionMetadata.Examples;
+            function.ArgumentsDescriptions = functionMetadata.ArgumentsDescriptions;
         }
         return function;
     }

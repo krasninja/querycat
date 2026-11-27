@@ -1,3 +1,5 @@
+using QueryCat.Backend.Core.Types;
+
 namespace QueryCat.Backend.Core.Data;
 
 /// <summary>
@@ -19,6 +21,12 @@ public sealed class QueryContextQueryInfo
     /// Get rows limit. Allows to select only needed amount of records.
     /// </summary>
     public long? Limit { get; internal set; }
+
+    /// <summary>
+    /// Extra parameters passed to the rows source. Can be used to provide
+    /// additional information about the executing query.
+    /// </summary>
+    public IReadOnlyDictionary<string, VariantValue> ExtraParams { get; init; } = new Dictionary<string, VariantValue>();
 
     /// <summary>
     /// Constructor.

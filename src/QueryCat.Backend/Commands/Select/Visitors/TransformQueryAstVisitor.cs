@@ -59,7 +59,10 @@ internal class TransformQueryAstVisitor : AstVisitor
         // For reference: https://en.wikipedia.org/wiki/Yoda_conditions.
         if (node.RightNode is IdentifierExpressionNode)
         {
-            node.TryReverse();
+            if (node.TryReverse())
+            {
+                node.SetAttribute(AstAttributeKeys.OperationOperandsSwap, true);
+            }
         }
         return base.VisitAsync(node, cancellationToken);
     }

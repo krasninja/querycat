@@ -30,6 +30,7 @@ public sealed partial class ThriftPluginsServer : IDisposable
     public SimpleUri ServerEndpointUri => _mainServerThread.Endpoint;
 
     private readonly IConfigStorage _configStorage;
+    private readonly IPluginConfigOptionsRegistry _configOptions;
     private readonly IExecutionThread _executionThread;
     private readonly CancellationTokenSource _serverCts = new();
     private readonly ConcurrentDictionary<string, RegistrationTokenData> _registrationTokens = new();
@@ -82,13 +83,15 @@ public sealed partial class ThriftPluginsServer : IDisposable
     public ThriftPluginsServer(
         IExecutionThread executionThread,
         ThriftEndpoint serverEndpoint,
-        int maxConnectionsToClient = 1)
+        int maxConnectionsToClient = 1,
+        IPluginConfigOptionsRegistry? configOptions = null)
     {
 #if !DEBUG
         IgnoreThriftLogs = true;
 #endif
         _executionThread = executionThread;
         _configStorage = executionThread.ConfigStorage;
+        _configOptions = configOptions ?? new PluginConfigOptionsRegistry();
         var uri = serverEndpoint.Uri;
         var server = CreateServer(uri);
         _mainServerThread = new ServerThread(uri, server);

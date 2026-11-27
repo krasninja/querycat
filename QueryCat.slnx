@@ -1,0 +1,41 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Folder Name="/Backend/">
+    <Project Path="src/QueryCat.Backend.Addons/QueryCat.Backend.Addons.csproj" />
+    <Project Path="src/QueryCat.Backend.AssemblyPlugins/QueryCat.Backend.AssemblyPlugins.csproj" />
+    <Project Path="src/QueryCat.Backend.Core/QueryCat.Backend.Core.csproj" />
+    <Project Path="src/QueryCat.Backend.ThriftPlugins/QueryCat.Backend.ThriftPlugins.csproj" />
+    <Project Path="src/QueryCat.Backend/QueryCat.Backend.csproj" />
+  </Folder>
+  <Folder Name="/Build/">
+    <Project Path="src/QueryCat.Build/QueryCat.Build.csproj" />
+  </Folder>
+  <Folder Name="/Client/">
+    <Project Path="src/QueryCat.Cli/QueryCat.Cli.csproj" />
+    <Project Path="src/QueryCat.Mcp/QueryCat.Mcp.csproj" />
+    <Project Path="src/QueryCat.OAuth/QueryCat.OAuth.csproj" />
+    <Project Path="src/QueryCat.PluginsProxy/QueryCat.PluginsProxy.csproj" />
+    <Project Path="src/QueryCat.Tester/QueryCat.Tester.csproj" />
+    <Project Path="src/QueryCat.WebServer/QueryCat.WebServer.csproj" />
+  </Folder>
+  <Folder Name="/Plugin/">
+    <File Path="sdk/openapi.yaml" />
+    <File Path="sdk/QueryCat.thrift" />
+    <Project Path="sdk/dotnet-client/QueryCat.Plugins.Client.csproj" />
+    <Project Path="sdk/dotnet-sdk/QueryCat.Plugins.Sdk.csproj" />
+  </Folder>
+  <Folder Name="/Samples/">
+    <Project Path="src/QueryCat.Samples/QueryCat.Samples.csproj" />
+  </Folder>
+  <Folder Name="/Tests/">
+    <Project Path="src/QueryCat.Benchmarks/QueryCat.Benchmarks.csproj" />
+    <Project Path="src/QueryCat.IntegrationTests/QueryCat.IntegrationTests.csproj" />
+    <Project Path="src/QueryCat.Plugins.Sample/QueryCat.Plugins.Sample.csproj" />
+    <Project Path="src/QueryCat.Tests.QueryRunner/QueryCat.Tests.QueryRunner.csproj" />
+    <Project Path="src/QueryCat.UnitTests/QueryCat.UnitTests.csproj" />
+  </Folder>
+</Solution>

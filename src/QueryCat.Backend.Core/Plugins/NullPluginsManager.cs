@@ -23,7 +23,7 @@ public sealed class NullPluginsManager : IPluginsManager
     }
 
     /// <inheritdoc />
-    public Task<IEnumerable<PluginInfo>> ListAsync(bool localOnly = false, CancellationToken cancellationToken = default)
+    public Task<IEnumerable<PluginInfo>> ListAsync(PluginListOptions? options = null, CancellationToken cancellationToken = default)
     {
         return Task.FromResult(Array.Empty<PluginInfo>().AsEnumerable());
     }
@@ -44,5 +44,12 @@ public sealed class NullPluginsManager : IPluginsManager
     public Task RemoveAsync(string name, CancellationToken cancellationToken = default)
     {
         return Task.CompletedTask;
+    }
+
+    /// <inheritdoc />
+    public Task<IReadOnlyCollection<PluginConfigOption>> GetOptionsAsync(string name, CancellationToken cancellationToken = default)
+    {
+        IReadOnlyCollection<PluginConfigOption> options = PluginsLoader.ConfigOptions.GetOptions(name);
+        return Task.FromResult(options);
     }
 }

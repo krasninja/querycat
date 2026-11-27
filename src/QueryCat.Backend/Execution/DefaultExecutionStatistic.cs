@@ -1,6 +1,7 @@
 using System.Text;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Execution;
+using QueryCat.Backend.Core.Utils;
 
 namespace QueryCat.Backend.Execution;
 
@@ -12,7 +13,7 @@ public sealed class DefaultExecutionStatistic : ExecutionStatistic
     /// <summary>
     /// Errors total count by codes.
     /// </summary>
-    private readonly Dictionary<ErrorCode, long> _statistic = new();
+    private readonly SmallDictionary<ErrorCode, long> _statistic = new();
 
     private readonly List<RowErrorInfo> _errorRows = new();
 

@@ -1,0 +1,107 @@
+using System.CommandLine;
+using QueryCat.Cli.Infrastructure;
+using QueryCat.Mcp;
+using QueryCat.Mcp.McpResources;
+using QueryCat.Mcp.Transports;
+
+namespace QueryCat.Cli.Commands;
+
+internal sealed class McpCommand : BaseCommand
+{
+    private enum McpTransport
+    {
+        Http,
+        Stdio
+    }
+
+    /// <inheritdoc />
+    public McpCommand() : base("mcp", Resources.Messages.McpCommand_Description)
+    {
+        var urlOption = new Option<string>("--url")
+        {
+            Description = Resources.Messages.ServeCommand_UrlsDescription,
+        };
+        var allowOriginOption = new Option<string>("--allow-origin")
+        {
+            Description = Resources.Messages.ServeCommand_AllowOriginDescription,
+        };
+        var transportOption = new Option<McpTransport>("--transport")
+        {
+            Description = Resources.Messages.McpCommand_TransportDescription,
+            DefaultValueFactory = _ => McpTransport.Http,
+        };
+        var unsafeOption = new Option<bool>("--unsafe")
+        {
+            Description = Resources.Messages.McpCommand_UnsafeDescription,
+        };
+        var resourceOption = new Option<string[]>("--resource", "-r")
+        {
+            Description = Resources.Messages.McpCommand_ResourceDescription,
+            AllowMultipleArgumentsPerToken = false,
+        };
+
+        Add(urlOption);
+        Add(allowOriginOption);
+        Add(transportOption);
+        Add(unsafeOption);
+        Add(resourceOption);
+        this.SetAction(async (parseResult, cancellationToken) =>
+        {
+            parseResult.InvocationConfiguration.EnableDefaultExceptionHandler = false;
+
+            var applicationOptions = GetApplicationOptions(parseResult);
+            var urls = parseResult.GetValue(urlOption);
+            var allowOrigin = parseResult.GetValue(allowOriginOption);
+            var transport = parseResult.GetValue(transportOption);
+            var unsafeMode = parseResult.GetValue(unsafeOption);
+            var resources = parseResult.GetValue(resourceOption) ?? [];
+
+            applicationOptions.InitializeLogger(useErrorOut: transport == McpTransport.Stdio);
+            await using var root = await applicationOptions.CreateApplicationRootAsync(new AppExecutionOptions
+            {
+                SafeMode = !unsafeMode,
+                RunBootstrapScript = true,
+                UseConfig = true,
+            });
+            var mcpTransport = CreateTransport(new McpServerOptions
+            {
+                Url = urls,
+                AllowOrigin = allowOrigin,
+            }, transport);
+            var mcpServer = new McpServer(root.Thread, mcpTransport);
+            McpServerInitializer.AddDefaultTools(mcpServer);
+            foreach (var resourceDefinition in resources)
+            {
+                mcpServer.AddResource(McpResourceFactory.CreateFromDefinition(resourceDefinition));
+            }
+            await mcpTransport.StartAsync(cancellationToken: cancellationToken);
+
+            // Loop.
+            try
+            {
+                await mcpServer.LoopAsync(cancellationToken);
+            }
+            finally
+            {
+                await mcpTransport.StopAsync(cancellationToken);
+                if (mcpTransport is IAsyncDisposable asyncDisposable)
+                {
+                    await asyncDisposable.DisposeAsync();
+                }
+                else if (mcpTransport is IDisposable disposable)
+                {
+                    disposable.Dispose();
+                }
+            }
+        });
+    }
+
+    private static IMcpTransport CreateTransport(McpServerOptions options, McpTransport transport)
+    {
+        if (transport == McpTransport.Stdio)
+        {
+            return new McpStdioTransport();
+        }
+        return new McpHttpTransport(options);
+    }
+}

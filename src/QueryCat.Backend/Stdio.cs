@@ -5,6 +5,7 @@ namespace QueryCat.Backend;
 /// </summary>
 public static class Stdio
 {
+    private static Stream? _errorStream;
     private static Stream? _outputStream;
     private static Stream? _inputStream;
 #if NET9_0_OR_GREATER
@@ -27,6 +28,23 @@ public static class Stdio
         lock (_objLock)
         {
             return _outputStream = Console.OpenStandardOutput();
+        }
+    }
+
+    /// <summary>
+    /// Get the cached standard error stream.
+    /// </summary>
+    /// <returns>Standard error stream.</returns>
+    public static Stream GetConsoleError()
+    {
+        if (_errorStream != null)
+        {
+            return _errorStream;
+        }
+
+        lock (_objLock)
+        {
+            return _errorStream = Console.OpenStandardError();
         }
     }
 

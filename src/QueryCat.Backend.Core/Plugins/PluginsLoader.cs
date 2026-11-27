@@ -15,13 +15,26 @@ public abstract class PluginsLoader : IPluginsLoader
     /// </summary>
     protected string PluginKeyword { get; set; } = "plugin";
 
+    /// <inheritdoc />
+    public IPluginConfigOptionsRegistry ConfigOptions { get; }
+
     /// <summary>
     /// Constructor.
     /// </summary>
     /// <param name="pluginDirectories">Directories.</param>
-    public PluginsLoader(IEnumerable<string> pluginDirectories)
+    public PluginsLoader(IEnumerable<string> pluginDirectories) : this(pluginDirectories, null)
+    {
+    }
+
+    /// <summary>
+    /// Constructor.
+    /// </summary>
+    /// <param name="pluginDirectories">Directories.</param>
+    /// <param name="configOptions">Plugins configuration options registry. New one is created if null.</param>
+    public PluginsLoader(IEnumerable<string> pluginDirectories, IPluginConfigOptionsRegistry? configOptions)
     {
         PluginDirectories = pluginDirectories;
+        ConfigOptions = configOptions ?? new PluginConfigOptionsRegistry();
     }
 
     /// <inheritdoc />

@@ -1,4 +1,5 @@
 using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Utils;
 
 namespace QueryCat.Backend.Commands.Select;
@@ -31,6 +32,16 @@ internal sealed class SelectInputQueryContext : QueryContext
     /// Is vary input source. Vary input source contain identifiers as input arguments.
     /// </summary>
     public bool IsVary { get; set; }
+
+    /// <summary>
+    /// The source function that was used to create input source.
+    /// </summary>
+    internal IFunction? InputSourceFunction { get; set; }
+
+    /// <summary>
+    /// The source identifier that was used for input source.
+    /// </summary>
+    internal string InputSourceIdentifier { get; set; } = string.Empty;
 
     /// <inheritdoc />
     public SelectInputQueryContext(IRowsInput rowsInput, Column[] columns, IConfigStorage configStorage)

@@ -28,6 +28,12 @@ public abstract class QueryContext
     internal bool SkipIfNoColumns { get; set; }
 
     /// <summary>
+    /// The rows input is the target of a modification (UPDATE or DELETE). Modifications are applied
+    /// to the current row, so the source must not read rows ahead of it.
+    /// </summary>
+    internal bool IsModificationTarget { get; set; }
+
+    /// <summary>
     /// Constructor.
     /// </summary>
     /// <param name="queryInfo">Query info.</param>

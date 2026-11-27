@@ -6,6 +6,8 @@ namespace QueryCat.Backend.Relational;
 
 internal sealed class FuncUnitRowsIteratorColumn(IRowsIterator rowsIterator, int columnIndex) : IFuncUnit
 {
+    public Column SourceColumn => rowsIterator.Columns[columnIndex];
+
     /// <inheritdoc />
     public DataType OutputType => rowsIterator.Columns[columnIndex].DataType;
 

@@ -27,6 +27,9 @@
   <data name="Plugins_CannotFind" xml:space="preserve">
     <value>Cannot find plugin '{0}' in repository.</value>
   </data>
+  <data name="Plugins_InvalidUrl" xml:space="preserve">
+    <value>Invalid plugin URL '{0}'. The URL must point to the plugin file.</value>
+  </data>
   <data name="InvalidRowIndex" xml:space="preserve">
     <value>Invalid row index {0}.</value>
   </data>
@@ -205,7 +208,10 @@
     <value>Invalid agent response: {0}</value>
   </data>
   <data name="AnswerAgentNotFound" xml:space="preserve">
-    <value>Answer agent not found. Define or set '{0}' variable to object of type '{1}'.</value>
+    <value>Answer agent not found. Define or set '{0}' variable to object of type '{1}', or set the agent function call (for example, "ollama_agent('qwen3:8b')") in the config with the '{2}' key.</value>
+  </data>
+  <data name="InvalidAnswerAgent" xml:space="preserve">
+    <value>The configured answer agent '{0}' does not return an object of type '{1}'.</value>
   </data>
   <data name="CannotOverrideWindowPartition" xml:space="preserve">
     <value>Cannot override PARTITION BY clause of window '{0}'.</value>
@@ -245,5 +251,20 @@
   </data>
   <data name="CannotSetValue" xml:space="preserve">
     <value>Cannot set value '{0}'.</value>
+  </data>
+  <data name="CannotRunFunctionInSafeMode" xml:space="preserve">
+    <value>Cannot run the function '{0}' in safe mode.</value>
+  </data>
+  <data name="OAuth2Error" xml:space="preserve">
+    <value>Authentication failed: {0}. {1}</value>
+  </data>
+  <data name="OAuth2InvalidResponse" xml:space="preserve">
+    <value>Invalid OAuth2 response from '{0}' (HTTP {1}).</value>
+  </data>
+  <data name="OAuth2DeviceCodeExpired" xml:space="preserve">
+    <value>Device code has expired, please try again.</value>
+  </data>
+  <data name="StringTooLarge" xml:space="preserve">
+    <value>The resulting string is too long, maximum length is {0} characters.</value>
   </data>
 </root>

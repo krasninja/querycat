@@ -1,6 +1,9 @@
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
+using QueryCat.Backend.Core.Plugins;
+using QueryCat.Backend.Core.Plugins.Auth;
+using QueryCat.Backend.Core.Types;
 using QueryCat.Plugins.Sample.Functions;
 using QueryCat.Plugins.Sample.Inputs;
 
@@ -23,6 +26,29 @@ internal static class Registration
         functionsManager.RegisterFunction(TestSimpleNonStandard.TestSimpleNonStandardFunction);
         functionsManager.RegisterFunction(TestSimple.TestSimpleFunction);
         functionsManager.RegisterFunction(TestBlob.TestBlobFunction);
+        functionsManager.RegisterFunction(TestAuth.TestAuthFunction);
+    }
+
+    /// <summary>
+    /// Register authentication providers. QueryCat host performs login and token refresh.
+    /// </summary>
+    /// <param name="registry">Authentication providers registry.</param>
+    public static void RegisterAuthProviders(IAuthProvidersRegistry registry)
+    {
+        registry.Register(TestAuth.Provider);
+    }
+
+    /// <summary>
+    /// Register plugin configuration options. The values are stored by QueryCat host
+    /// with the plugin name prefix ("QueryCat.Plugins.Sample:url").
+    /// </summary>
+    /// <param name="registry">Configuration options registry.</param>
+    public static void RegisterConfigOptions(IPluginConfigOptionsRegistry registry)
+    {
+        registry.Register(new PluginConfigOption("url", DataType.String, "Remote service URL.",
+            new VariantValue("https://example.com")));
+        registry.Register(new PluginConfigOption("page_size", DataType.Integer, "Number of items to fetch per request.",
+            new VariantValue(100)));
     }
 
     /// <summary>

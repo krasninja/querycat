@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Core.Utils;
 using DataType = QueryCat.Backend.Core.Types.DataType;
 
 namespace QueryCat.Backend.Core.Data;
@@ -7,13 +8,117 @@ namespace QueryCat.Backend.Core.Data;
 /// <summary>
 /// Represents a relational column.
 /// </summary>
-[Serializable]
 public class Column : ICloneable, IModelDescription
 {
     /// <summary>
     /// The title can be used for a single result, or when there is only one column in result.
     /// </summary>
     public const string ValueColumnTitle = "value";
+
+    #region Attributes
+
+    /// <summary>
+    /// The attribute should be used to mark unique identifier columns.
+    /// No value required.
+    /// </summary>
+    public const string AttributeId = "@id";
+
+    /// <summary>
+    /// The attribute should be used to mark unique identifier columns.
+    /// No value required.
+    /// </summary>
+    public static ColumnAttribute ColumnAttributeId { get; } = new(AttributeId);
+
+    /// <summary>
+    /// The attribute should be used to mark timestamp fields that identifies
+    /// of event or log creation date and time.
+    /// </summary>
+    public const string AttributeTimestamp = "@ts";
+
+    /// <summary>
+    /// The attribute should be used to mark timestamp fields that identifies
+    /// of event or log creation date and time.
+    /// </summary>
+    public static ColumnAttribute ColumnAttributeTimestamp { get; } = new(AttributeTimestamp);
+
+    /// <summary>
+    /// The attribute should be used to mark currency numeric fields.
+    /// </summary>
+    public const string AttributeCurrency = "@currency";
+
+    /// <summary>
+    /// The attribute should be used to mark currency numeric fields.
+    /// </summary>
+    public static ColumnAttribute ColumnAttributeCurrency { get; } = new(AttributeCurrency);
+
+    /// <summary>
+    /// The attribute should be used to mark raw data (JSON, string) representation fields.
+    /// </summary>
+    public const string AttributeRawData = "@raw";
+
+    /// <summary>
+    /// The attribute should be used to mark raw data (JSON, string) representation fields.
+    /// </summary>
+    public static ColumnAttribute ColumnAttributeRawData { get; } = new(AttributeRawData);
+
+    /// <summary>
+    /// The attribute should be used to mark string fields that contain
+    /// error message or exception.
+    /// </summary>
+    public const string AttributeError = "@error";
+
+    /// <summary>
+    /// The attribute should be used to mark string fields that contain
+    /// error message or exception.
+    /// </summary>
+    public static ColumnAttribute ColumnAttributeError { get; } = new(AttributeError);
+
+    /// <summary>
+    /// The attribute should be used to mark columns that correlate related records
+    /// (trace, span, request, session identifiers). Unlike <see cref="AttributeId" />
+    /// the values are not unique. No value required.
+    /// </summary>
+    public const string AttributeTrace = "@trace";
+
+    /// <summary>
+    /// The attribute should be used to mark columns that correlate related records
+    /// (trace, span, request, session identifiers). Unlike <see cref="AttributeId" />
+    /// the values are not unique. No value required.
+    /// </summary>
+    public static ColumnAttribute ColumnAttributeTrace { get; } = new(AttributeTrace);
+
+    /// <summary>
+    /// The attribute should be used to mark string columns which have a specific format
+    /// (file names, URI, JSON, etc.).
+    /// </summary>
+    public const string AttributeFormat = "@fmt";
+
+    public const string AttributeFormatJson = "json";
+    public const string AttributeFormatXml = "xml";
+    public const string AttributeFormatEmail = "email";
+    public const string AttributeFormatPhone = "phone";
+    public const string AttributeFormatRegularExpression = "regexp";
+    public const string AttributeFormatUri = "uri";
+    public const string AttributeFormatFile = "file";
+    public const string AttributeFormatBase64 = "base64";
+    public const string AttributeFormatCreditCard = "credit_card";
+    public const string AttributeFormatPassword = "password";
+    public const string AttributeFormatType = "type";
+    public const string AttributeFormatIpAddress = "ip_address";
+
+    /// <summary>
+    /// The attribute should be used to mark string fields that contain
+    /// HTTP status code (20x, 40x, 50x, etc.).
+    /// </summary>
+    public const string AttributeHttpCode = "@http_code";
+
+    /// <summary>
+    /// The attribute should be used to mark string fields that contain
+    /// HTTP method (GET, POST, etc.).
+    /// </summary>
+    public const string AttributeHttpMethod = "@http_method";
+
+    #endregion
 
     private static int _nextId = 1;
 
@@ -56,15 +161,55 @@ public class Column : ICloneable, IModelDescription
     /// </summary>
     public int Length { get; internal set; }
 
-    private Dictionary<string, VariantValue>? _attributes;
+    /// <summary>
+    /// Column attribute.
+    /// </summary>
+    /// <param name="key">Attribute key.</param>
+    /// <param name="value">Attribute value.</param>
+    public readonly struct ColumnAttribute(string key, VariantValue value)
+    {
+        /// <summary>
+        /// Key.
+        /// </summary>
+        public string Key { get; } = key;
+
+        /// <summary>
+        /// Value.
+        /// </summary>
+        public VariantValue Value { get; } = value;
+
+        /// <summary>
+        /// Constructor.
+        /// </summary>
+        /// <param name="key">Attribute key.</param>
+        public ColumnAttribute(string key) : this(key, VariantValue.Null)
+        {
+        }
+
+        /// <summary>
+        /// Constructor.
+        /// </summary>
+        /// <param name="key">Attribute key.</param>
+        /// <param name="value">Attribute value.</param>
+        public ColumnAttribute(string key, string value) : this(key, new VariantValue(value))
+        {
+        }
+    }
+
+    private SmallDictionary<string, VariantValue>? _attributes;
 
     /// <summary>
     /// Column metadata attributes.
     /// </summary>
     public IReadOnlyDictionary<string, VariantValue> Attributes
     {
-        get => _attributes ??= new Dictionary<string, VariantValue>();
+        get => _attributes ??= new SmallDictionary<string, VariantValue>();
     }
+
+    /// <summary>
+    /// <c>True</c> if column has attribute.
+    /// </summary>
+    public bool HasAttributes => _attributes != null && _attributes.Count > 0;
 
     /// <summary>
     /// Should the column be visible on output. It doesn't affect column search.
@@ -77,7 +222,8 @@ public class Column : ICloneable, IModelDescription
     /// <param name="name">Column name.</param>
     /// <param name="dataType">Column type.</param>
     /// <param name="description">Description.</param>
-    public Column(string name, DataType dataType, string? description = null)
+    /// <param name="attributes">Attributes.</param>
+    public Column(string name, DataType dataType, string? description = null, params ColumnAttribute[]? attributes)
     {
         ArgumentException.ThrowIfNullOrEmpty(name);
         if (!DataTypeUtils.RowDataTypes.Contains(dataType))
@@ -90,6 +236,39 @@ public class Column : ICloneable, IModelDescription
         DataType = dataType;
         Description = description ?? string.Empty;
         Length = GetDefaultColumnLength();
+        if (attributes != null)
+        {
+            foreach (var attribute in attributes)
+            {
+                SetAttribute(attribute.Key, attribute.Value);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Constructor.
+    /// </summary>
+    /// <param name="name">Column name.</param>
+    /// <param name="dataType">Column type.</param>
+    /// <param name="description">Description.</param>
+    public Column(string name, DataType dataType, string? description = null) :
+        this(name, dataType, description, null)
+    {
+    }
+
+    /// <summary>
+    /// Constructor.
+    /// </summary>
+    /// <param name="name">Column name.</param>
+    /// <param name="sourceName">Source name.</param>
+    /// <param name="dataType">Column type.</param>
+    /// <param name="description">Description.</param>
+    /// <param name="attributes">Attributes.</param>
+    public Column(string name, string sourceName, DataType dataType, string? description = null,
+        params ColumnAttribute[]? attributes) :
+        this(name, dataType, description, attributes)
+    {
+        SourceName = sourceName;
     }
 
     /// <summary>
@@ -100,7 +279,7 @@ public class Column : ICloneable, IModelDescription
     /// <param name="dataType">Column type.</param>
     /// <param name="description">Description.</param>
     public Column(string name, string sourceName, DataType dataType, string? description = null) :
-        this(name, dataType, description)
+        this(name, dataType, description, null)
     {
         SourceName = sourceName;
     }
@@ -111,21 +290,12 @@ public class Column : ICloneable, IModelDescription
     /// <param name="columnIndex">Column index.</param>
     /// <param name="dataType">Column type.</param>
     /// <param name="description">Description.</param>
-    /// <param name="attributes">Attributes.</param>
     public Column(
         int columnIndex,
         DataType dataType,
-        string? description = null,
-        KeyValuePair<string, VariantValue>[]? attributes = null) :
+        string? description = null) :
         this($"column{columnIndex}", dataType, description)
     {
-        if (attributes != null)
-        {
-            foreach (var attribute in attributes)
-            {
-                SetAttribute(attribute.Key, attribute.Value);
-            }
-        }
     }
 
     /// <summary>
@@ -151,13 +321,33 @@ public class Column : ICloneable, IModelDescription
     /// <summary>
     /// Set column metadata attribute. The existing value will be overridden.
     /// </summary>
+    /// <param name="attribute">Attribute.</param>
+    public void SetAttribute(ColumnAttribute attribute)
+    {
+        SetAttribute(attribute.Key, attribute.Value);
+    }
+
+    /// <summary>
+    /// Set column metadata attribute. The existing value will be overridden.
+    /// </summary>
     /// <param name="name">Attribute name.</param>
     /// <param name="value">Attribute value.</param>
-    public void SetAttribute(string name, VariantValue value)
+    public void SetAttribute(string name, VariantValue value = default)
     {
         ArgumentException.ThrowIfNullOrEmpty(name);
-        var attributes = _attributes ??= new Dictionary<string, VariantValue>();
-        attributes[name] = value;
+        _attributes = _attributes ??= new SmallDictionary<string, VariantValue>();
+        _attributes[name] = value;
+    }
+
+    /// <summary>
+    /// Set column metadata attribute. The existing value will be overridden.
+    /// </summary>
+    /// <param name="name">Attribute name.</param>
+    /// <param name="value">Attribute value.</param>
+    public void SetAttribute(string name, string value)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(name);
+        SetAttribute(name, new VariantValue(value));
     }
 
     private int GetDefaultColumnLength()

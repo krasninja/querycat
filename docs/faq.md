@@ -44,6 +44,17 @@ QueryCat is not a true database engine. It doesn't know anything about input sou
 
 QueryCat does not send any local or personal information to the author or any company.
 
+## How do I route web requests through a proxy?
+
+Use the `--web-proxy` application option. HTTP, HTTPS and SOCKS proxies are supported:
+
+```bash
+qcat query --web-proxy=http://proxy.example.com:8080/ "SELECT * FROM curl('https://example.com/data.csv')"
+qcat query --web-proxy=socks5://proxy.example.com:1080/ "SELECT * FROM curl('https://example.com/data.csv')"
+```
+
+For proxy authentication, include the user name and password in the URI: `http://username:password@proxy.example.com:8080/`. Percent-encode special characters in credentials. The setting also applies to .NET plugins running through `QueryCat.PluginsProxy`.
+
 ## Why do I need to install "proxy" to run plugins?
 
 The plugins are written in .NET and require the full version of .NET platform to run them. Since QueryCat is compiled with AOT it does not have it. That's why we need another "proxy" to load plugin assemblies.

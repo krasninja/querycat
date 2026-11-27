@@ -4,6 +4,8 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("QueryCat.Backend.Addons")]
 [assembly: InternalsVisibleTo("QueryCat.Backend")]
 [assembly: InternalsVisibleTo("QueryCat.Backend.ThriftPlugins")]
+[assembly: InternalsVisibleTo("QueryCat.WebServer")]
+[assembly: InternalsVisibleTo("QueryCat.Mcp")]
 
 [assembly: InternalsVisibleTo("QueryCat.UnitTests")]
 [assembly: InternalsVisibleTo("QueryCat.IntegrationTests")]
@@ -11,3 +13,5 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("QueryCat.Benchmarks")]
 [assembly: InternalsVisibleTo("QueryCat.Build")]
 [assembly: InternalsVisibleTo("qcat")]
+[assembly: InternalsVisibleTo("qcatstudio")]
+[assembly: InternalsVisibleTo("QueryCat.Studio.Domain")]

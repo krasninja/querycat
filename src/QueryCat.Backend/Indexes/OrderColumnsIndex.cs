@@ -1,5 +1,4 @@
 using QueryCat.Backend.Core.Data;
-using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Indexes;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Relational;
@@ -11,137 +10,184 @@ namespace QueryCat.Backend.Indexes;
 /// </summary>
 internal sealed class OrderColumnsIndex : IOrderIndex
 {
-    private readonly IExecutionThread _thread;
     private int[] _rowsOrder = [];
-    private readonly OrderDirection[] _directions;
-    private readonly IFuncUnit[] _valueGetters;
-    private readonly NullOrder[] _nullOrders;
-    private readonly int[] _columnIndexes;
+    private readonly OrderColumnData[] _orderColumnData;
 
     private ICursorRowsIterator RowsFrameIterator { get; }
 
-    private class RowsComparer : IComparer<int>
+    #region Column keys
+
+    /// <summary>
+    /// Sort keys of a single order column, stored column-major as native values.
+    /// </summary>
+    private abstract class ColumnKeys
     {
-        private readonly OrderColumnsIndex _orderColumnsIndex;
-        private readonly List<VariantValue> _values;
+        private readonly bool[] _isNull;
+        private readonly int _direction;
+        private readonly int _leftNullResult;
+        private bool _hasNulls;
 
-        private readonly VariantValue[] _values1;
-        private readonly VariantValue[] _values2;
-
-        private readonly int[] _greaterValues;
-        private readonly int[] _lessValues;
-
-        private readonly VariantValue.BinaryFunction[] _greaterFunctions;
-        private readonly VariantValue.BinaryFunction[] _lessFunctions;
-
-        public RowsComparer(OrderColumnsIndex orderColumnsIndex)
+        protected ColumnKeys(int count, OrderColumnData orderColumnData)
         {
-            _orderColumnsIndex = orderColumnsIndex;
-
-            _values = new List<VariantValue>();
-            _values1 = new VariantValue[_orderColumnsIndex._valueGetters.Length];
-            _values2 = new VariantValue[_orderColumnsIndex._valueGetters.Length];
-
-            _greaterValues = _orderColumnsIndex._directions
-                .Select(d => d == OrderDirection.Ascending ? 1 : -1).ToArray();
-            _lessValues = _orderColumnsIndex._directions
-                .Select(d => d == OrderDirection.Ascending ? -1 : 1).ToArray();
-            var columnsTypes = _orderColumnsIndex._columnIndexes
-                .Select(i => _orderColumnsIndex.RowsFrameIterator.Columns[i].DataType).ToArray();
-            _greaterFunctions = columnsTypes
-                .Select((t, i) => GetGreaterDelegate(t, _orderColumnsIndex._nullOrders[i], _greaterValues[i]))
-                .ToArray();
-            _lessFunctions = columnsTypes
-                .Select((t, i) => GetLessDelegate(t, _orderColumnsIndex._nullOrders[i], _lessValues[i]))
-                .ToArray();
+            _isNull = new bool[count];
+            _direction = orderColumnData.Direction == OrderDirection.Ascending ? 1 : -1;
+            // Nulls placement does not depend on the direction.
+            _leftNullResult = orderColumnData.NullOrder == NullOrder.NullsFirst ? -1 : 1;
         }
 
-        private static VariantValue.BinaryFunction GetGreaterDelegate(
-            DataType type,
-            NullOrder nullOrder,
-            int greater)
+        public void Set(int rowIndex, in VariantValue value)
         {
-            var greaterValue = new VariantValue(greater == -1);
-            var lessValue = new VariantValue(!greaterValue.AsBooleanUnsafe);
-            var func = VariantValue.GetGreaterDelegate(type, type);
-            return (in VariantValue left, in VariantValue right) =>
+            if (value.IsNull)
             {
-                if (left.IsNull)
-                {
-                    return nullOrder == NullOrder.NullsFirst ? greaterValue : lessValue;
-                }
-                else if (right.IsNull)
-                {
-                    return nullOrder == NullOrder.NullsFirst ? lessValue : greaterValue;
-                }
-                return func.Invoke(in left, in right);
-            };
-        }
-
-        private static VariantValue.BinaryFunction GetLessDelegate(
-            DataType type,
-            NullOrder nullOrder,
-            int less)
-        {
-            var lessValue = new VariantValue(less == -1);
-            var greaterValue = new VariantValue(!lessValue.AsBooleanUnsafe);
-            var func = VariantValue.GetLessDelegate(type, type);
-            return (in VariantValue left, in VariantValue right) =>
+                _isNull[rowIndex] = true;
+                _hasNulls = true;
+            }
+            else
             {
-                if (left.IsNull)
-                {
-                    return nullOrder == NullOrder.NullsFirst ? lessValue : greaterValue;
-                }
-                else if (right.IsNull)
-                {
-                    return nullOrder == NullOrder.NullsFirst ? greaterValue : lessValue;
-                }
-                return func.Invoke(in left, in right);
-            };
-        }
-
-        internal async ValueTask LoadAsync(CancellationToken cancellationToken = default)
-        {
-            _values.Clear();
-            _values.EnsureCapacity((int)_orderColumnsIndex.RowsFrameIterator.TotalRows * _orderColumnsIndex._valueGetters.Length);
-            while (await _orderColumnsIndex.RowsFrameIterator.MoveNextAsync(cancellationToken))
-            {
-                foreach (var valueGetter in _orderColumnsIndex._valueGetters)
-                {
-                    var value = await valueGetter.InvokeAsync(_orderColumnsIndex._thread, cancellationToken);
-                    _values.Add(value);
-                }
+                SetValue(rowIndex, in value);
             }
         }
 
-        private void FillValues(VariantValue[] values, int rowIndex)
+        protected abstract void SetValue(int rowIndex, in VariantValue value);
+
+        protected abstract int CompareValues(int x, int y);
+
+        public int Compare(int x, int y)
         {
-            for (var i = 0; i < values.Length; i++)
+            if (_hasNulls)
             {
-                values[i] = _values[rowIndex * _orderColumnsIndex._columnIndexes.Length + i];
+                var xIsNull = _isNull[x];
+                var yIsNull = _isNull[y];
+                if (xIsNull || yIsNull)
+                {
+                    if (xIsNull && yIsNull)
+                    {
+                        return 0;
+                    }
+                    return xIsNull ? _leftNullResult : -_leftNullResult;
+                }
             }
+            return CompareValues(x, y) * _direction;
+        }
+    }
+
+    private sealed class Int64ColumnKeys(int count, OrderColumnData data, Func<VariantValue, long> getter)
+        : ColumnKeys(count, data)
+    {
+        private readonly long[] _values = new long[count];
+
+        /// <inheritdoc />
+        protected override void SetValue(int rowIndex, in VariantValue value) => _values[rowIndex] = getter(value);
+
+        /// <inheritdoc />
+        protected override int CompareValues(int x, int y) => _values[x].CompareTo(_values[y]);
+    }
+
+    private sealed class FloatColumnKeys(int count, OrderColumnData data) : ColumnKeys(count, data)
+    {
+        private readonly double[] _values = new double[count];
+
+        /// <inheritdoc />
+        protected override void SetValue(int rowIndex, in VariantValue value) => _values[rowIndex] = value.AsFloatUnsafe;
+
+        /// <inheritdoc />
+        protected override int CompareValues(int x, int y)
+        {
+            // Do not use CompareTo to keep NaN semantic the same as for ">" and "<" operators.
+            double left = _values[x], right = _values[y];
+            return left > right ? 1 : left < right ? -1 : 0;
+        }
+    }
+
+    private sealed class NumericColumnKeys(int count, OrderColumnData data) : ColumnKeys(count, data)
+    {
+        private readonly decimal[] _values = new decimal[count];
+
+        /// <inheritdoc />
+        protected override void SetValue(int rowIndex, in VariantValue value) => _values[rowIndex] = value.AsNumericUnsafe;
+
+        /// <inheritdoc />
+        protected override int CompareValues(int x, int y) => _values[x].CompareTo(_values[y]);
+    }
+
+    private sealed class StringColumnKeys(int count, OrderColumnData data) : ColumnKeys(count, data)
+    {
+        private readonly string[] _values = new string[count];
+
+        /// <inheritdoc />
+        protected override void SetValue(int rowIndex, in VariantValue value) => _values[rowIndex] = value.AsStringUnsafe;
+
+        /// <inheritdoc />
+        protected override int CompareValues(int x, int y) => string.CompareOrdinal(_values[x], _values[y]);
+    }
+
+    /// <summary>
+    /// Fallback for types without native comparison: uses the generic greater/less operators.
+    /// </summary>
+    private sealed class VariantColumnKeys : ColumnKeys
+    {
+        private readonly VariantValue[] _values;
+        private readonly VariantValue.BinaryFunction _greater;
+        private readonly VariantValue.BinaryFunction _less;
+
+        public VariantColumnKeys(int count, OrderColumnData data, DataType type) : base(count, data)
+        {
+            _values = new VariantValue[count];
+            _greater = VariantValue.GetGreaterDelegate(type, type);
+            _less = VariantValue.GetLessDelegate(type, type);
         }
 
         /// <inheritdoc />
-        public int Compare(int x, int y)
-        {
-            FillValues(_values1, x);
-            FillValues(_values2, y);
+        protected override void SetValue(int rowIndex, in VariantValue value) => _values[rowIndex] = value;
 
-            for (var i = 0; i < _values1.Length; i++)
+        /// <inheritdoc />
+        protected override int CompareValues(int x, int y)
+        {
+            ref readonly var left = ref _values[x];
+            ref readonly var right = ref _values[y];
+            if (_greater.Invoke(in left, in right).AsBoolean)
             {
-                if (_greaterFunctions[i].Invoke(in _values1[i], in _values2[i]).AsBoolean)
-                {
-                    return _greaterValues[i];
-                }
-                if (_lessFunctions[i].Invoke(in _values1[i], in _values2[i]).AsBoolean)
-                {
-                    return _lessValues[i];
-                }
+                return 1;
+            }
+            if (_less.Invoke(in left, in right).AsBoolean)
+            {
+                return -1;
             }
             return 0;
         }
     }
+
+    private static ColumnKeys CreateColumnKeys(int count, OrderColumnData data, DataType type) => type switch
+    {
+        DataType.Integer => new Int64ColumnKeys(count, data, v => v.AsIntegerUnsafe),
+        DataType.Boolean => new Int64ColumnKeys(count, data, v => v.AsBooleanUnsafe ? 1 : 0),
+        DataType.Timestamp => new Int64ColumnKeys(count, data, v => v.AsTimestampUnsafe.Ticks),
+        DataType.Interval => new Int64ColumnKeys(count, data, v => v.AsIntervalUnsafe.Ticks),
+        DataType.Float => new FloatColumnKeys(count, data),
+        DataType.Numeric => new NumericColumnKeys(count, data),
+        DataType.String => new StringColumnKeys(count, data),
+        _ => new VariantColumnKeys(count, data, type),
+    };
+
+    private sealed class RowsComparer(ColumnKeys[] columnKeys) : IComparer<int>
+    {
+        /// <inheritdoc />
+        public int Compare(int x, int y)
+        {
+            foreach (var keys in columnKeys)
+            {
+                var result = keys.Compare(x, y);
+                if (result != 0)
+                {
+                    return result;
+                }
+            }
+            // Keep the original order for equal rows: makes the sort stable and the comparer consistent.
+            return x.CompareTo(y);
+        }
+    }
+
+    #endregion
 
     private sealed class OrderColumnsIterator : ICursorRowsIterator
     {
@@ -209,18 +255,10 @@ internal sealed class OrderColumnsIndex : IOrderIndex
         }
     }
 
-    public OrderColumnsIndex(
-        IExecutionThread thread,
-        ICursorRowsIterator rowsFrameIterator,
-        OrderColumnData[] orderColumnData)
+    public OrderColumnsIndex(ICursorRowsIterator rowsFrameIterator, OrderColumnData[] orderColumnData)
     {
-        _thread = thread;
         RowsFrameIterator = rowsFrameIterator;
-        _directions = orderColumnData.Select(d => d.Direction).ToArray();
-        _nullOrders = orderColumnData.Select(d => d.NullOrder).ToArray();
-        _columnIndexes = orderColumnData.Select(d => d.Index).ToArray();
-        _valueGetters = _columnIndexes.Select(index => new FuncUnitRowsIteratorColumn(rowsFrameIterator, index))
-            .ToArray();
+        _orderColumnData = orderColumnData;
     }
 
     /// <inheritdoc />
@@ -229,14 +267,42 @@ internal sealed class OrderColumnsIndex : IOrderIndex
     /// <inheritdoc />
     public async Task RebuildAsync(CancellationToken cancellationToken = default)
     {
-        _rowsOrder = new int[RowsFrameIterator.TotalRows];
-        for (var i = 0; i < RowsFrameIterator.TotalRows; i++)
+        var totalRows = (int)RowsFrameIterator.TotalRows;
+        var rowsOrder = new int[totalRows];
+        for (var i = 0; i < totalRows; i++)
         {
-            _rowsOrder[i] = i;
+            rowsOrder[i] = i;
         }
 
-        var comparer = new RowsComparer(this);
-        await comparer.LoadAsync(cancellationToken);
-        Array.Sort(_rowsOrder, comparer);
+        if (totalRows > 1 && _orderColumnData.Length > 0)
+        {
+            var columnKeys = await LoadColumnKeysAsync(totalRows, cancellationToken);
+            Array.Sort(rowsOrder, new RowsComparer(columnKeys));
+        }
+        _rowsOrder = rowsOrder;
+    }
+
+    private async ValueTask<ColumnKeys[]> LoadColumnKeysAsync(int totalRows, CancellationToken cancellationToken)
+    {
+        var columns = RowsFrameIterator.Columns;
+        var columnKeys = new ColumnKeys[_orderColumnData.Length];
+        for (var i = 0; i < _orderColumnData.Length; i++)
+        {
+            var data = _orderColumnData[i];
+            columnKeys[i] = CreateColumnKeys(totalRows, data, columns[data.Index].DataType);
+        }
+
+        await RowsFrameIterator.ResetAsync(cancellationToken);
+        var rowIndex = 0;
+        while (rowIndex < totalRows && await RowsFrameIterator.MoveNextAsync(cancellationToken))
+        {
+            var row = RowsFrameIterator.Current;
+            for (var i = 0; i < columnKeys.Length; i++)
+            {
+                columnKeys[i].Set(rowIndex, row[_orderColumnData[i].Index]);
+            }
+            rowIndex++;
+        }
+        return columnKeys;
     }
 }

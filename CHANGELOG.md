@@ -7,8 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## Fixed
+### Added
 
+- Column attributes.
+- Add functions "array_to_string", "_function_args".
+- Add function "repeat".
+- MCP server (`qcat mcp`) with stdio and HTTP transports, supports MCP protocol versions 2026-07-28, 2025-11-25 and 2025-06-18.
+- "date_trunc" and "date_part" support week interval.
+- Initial plugin authentication infrastructure.
+- Configurable OAuth2 redirect loopback host/path and refresh token endpoint/parameter for plugins.
+- `DisablePkce` auth provider option to turn off PKCE in OAuth2 authorization code flow.
+- `TokenValidateUrl` auth provider option to validate the stored token with the remote service before the first use.
+- Configuration options `qcat options get|set|unset` and `qcat plugin options [plugin]` commands.
+- Install scripts: `scripts/install.sh` for Linux/macOS and `scripts/install.ps1` for Windows, see the README installation section.
+- `--web-proxy` option for HTTP, HTTPS and SOCKS proxies, with authentication and plugin proxy support.
+- Install plugin directly from a web URL.
+- AI answer agents management commands `qcat agent list|get|set`.
+
+### Changed
+
+- .NET 11 upgrade.
+- Improve "to_json" function.
+ `_ANSWER_AGENT` variable, the default answer agent is now resolved from the config `__ai_agent` key.
+- ClassRowsFrameBuilder.AddKeyColumn now adds the new column if it was not previously added.
+- Plugin config storage keys are prefixed with the plugin name.
+- Extended column attributes detection: more identifier column names are recognized ("uuid", "guid", "pk", "event_id", etc.) and more timestamp column names ("time", "date", "datetime", "ts", "@timestamp", "event_time", "occurred_at", "logged_at", etc.). Names are matched ignoring case and separators ("createdAt", "created-at", "created_at"). The "@id" attribute is set only if sample values are unique, "@ts" is set on a single, most specific column, and attributes already provided by the input are kept.
+- Plugin rows inputs are read in batches of up to 100 rows (capped by the query limit) instead of one row per request; UPDATE and DELETE targets are still read row by row.
+- New "@trace" column attribute for correlation columns ("trace_id", "span_id", "request_id", "correlation_id", "session_id", etc.).
+
+## [0.19.0] - 2026-10-10
+
+### Fixed
+
+- Inconsistent ordering when an `ORDER BY` column contains several null values.
 - Improve parser handling in ambiguity paths.
 - Fix WebServer bugger leaks, query processing improvements.
 - Reduce memory usage for GreaterOrEquals, LessOrEquals, NotEquals, Subtract operations.

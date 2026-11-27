@@ -57,8 +57,8 @@ public sealed class CollectionInputTests : IDisposable
         var rowsFrameSource = new RowsFrameSource(rowsFrame);
         var thread = new ExecutionThreadBootstrapper().Create();
         thread.TopScope.Variables["employees"] = VariantValue.CreateFromObject(_employeesList);
-        var result = await thread.RunAsync("select * from \"employees\";");
-        await rowsFrameSource.WriteAsync(result.AsRequired<IRowsIterator>());
+        var result = await thread.RunAsync("select * from \"employees\";", cancellationToken: TestContext.Current.CancellationToken);
+        await rowsFrameSource.WriteAsync(result.AsRequired<IRowsIterator>(), cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(DataType.Integer, rowsFrame.Columns[0].DataType);
         Assert.Equal(3, rowsFrame.TotalRows);
     }
@@ -68,7 +68,7 @@ public sealed class CollectionInputTests : IDisposable
     {
         var thread = new ExecutionThreadBootstrapper().Create();
         thread.TopScope.Variables["employees"] = VariantValue.CreateFromObject(_employeesList);
-        await thread.RunAsync("update employees set id = id + 1, score = 10 where id > 1;");
+        await thread.RunAsync("update employees set id = id + 1, score = 10 where id > 1;", cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(1, _employeesList.TargetCollection.ElementAt(0).Id);
         Assert.Equal(3, _employeesList.TargetCollection.ElementAt(1).Id);
         Assert.Equal(10, _employeesList.TargetCollection.ElementAt(2).Score);
@@ -79,7 +79,7 @@ public sealed class CollectionInputTests : IDisposable
     {
         var thread = new ExecutionThreadBootstrapper().Create();
         thread.TopScope.Variables["employees"] = VariantValue.CreateFromObject(_employeesList);
-        await thread.RunAsync("insert into \"employees\" values (4, 'Abbie Cornish', '1982-08-07', 5);");
+        await thread.RunAsync("insert into \"employees\" values (4, 'Abbie Cornish', '1982-08-07', 5);", cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(4, _employeesList.TargetCollection.Count());
         Assert.Equal(5, _employeesList.TargetCollection.ElementAt(3).Score);
     }
@@ -93,7 +93,7 @@ public sealed class CollectionInputTests : IDisposable
             .WithRegistrations(AdditionalRegistration.Register)
             .Create();
         thread.TopScope.Variables["employees"] = VariantValue.CreateFromObject(_employeesList);
-        await thread.RunAsync("insert into self(employees) (id, name) values (4, 'Abbie Cornish');");
+        await thread.RunAsync("insert into self(employees) (id, name) values (4, 'Abbie Cornish');", cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(4, _employeesList.TargetCollection.Count());
         Assert.Equal(5, _employeesList.TargetCollection.ElementAt(3).Score);
     }
@@ -108,7 +108,7 @@ public sealed class CollectionInputTests : IDisposable
         var rowsFrame = _employeesList.ToRowsFrame();
         var rowsInput = new RowsFrameSource(rowsFrame);
         thread.TopScope.Variables["employees"] = VariantValue.CreateFromObject(rowsInput);
-        await thread.RunAsync(@"delete from self(employees) where id >= 2;");
+        await thread.RunAsync(@"delete from self(employees) where id >= 2;", cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(1, rowsFrame.TotalActiveRows);
     }
 

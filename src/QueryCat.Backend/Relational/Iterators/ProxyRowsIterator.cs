@@ -24,7 +24,7 @@ internal sealed class ProxyRowsIterator : IRowsIterator, IRowsIteratorParent
 
     public ProxyRowsIterator(IRowsSchema schema)
     {
-        _currentIterator = new EmptyIterator(schema);
+        _currentIterator = new EmptyRowsIterator(schema);
     }
 
     /// <summary>

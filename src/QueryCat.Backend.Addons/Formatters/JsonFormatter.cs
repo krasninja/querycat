@@ -14,7 +14,7 @@ internal sealed class JsonFormatter : IRowsFormatter
     [SafeFunction]
     [Description("JSON formatter.")]
     [FunctionSignature("json(jsonpath?: string, indent?: int): object<IRowsFormatter>")]
-    [FunctionFormatters(".json", "application/json")]
+    [FunctionFormatters(".json", ".jsonl", "application/json")]
     public static VariantValue Json(IExecutionThread thread)
     {
         var path = thread.Stack.GetAtOrDefault(0).AsString;

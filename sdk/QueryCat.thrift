@@ -100,6 +100,16 @@ enum ErrorType {
   INVALID_AUTH_TOKEN = 11,
 
   INVALID_FUNCTION = 20,
+
+  QUERYCAT_IO_SOURCE = 50, // IOSourceException.
+  QUERYCAT_AUTHORIZATION = 51, // AuthorizationException.
+  QUERYCAT_CANNOT_FIND_ARGUMENT = 52, // CannotFindArgumentException.
+  QUERYCAT_CANNOT_FIND_FUNCTION = 53, // CannotFindFunctionException.
+  QUERYCAT_CANNOT_SET_VALUE = 54, // CannotSetValueException.
+  QUERYCAT_INVALID_FUNCTION_ARGUMENT = 55, // InvalidFunctionArgumentException.
+  QUERYCAT_INVALID_VARIANT_TYPE = 56, // InvalidVariantTypeException.
+  QUERYCAT_MISSED_CONDITION = 57, // QueryMissedConditionException.
+  QUERYCAT_SAFE_MODE = 58 // SafeModeException.
 }
 
 // The error code that is returned by several QueryCat methods.
@@ -143,13 +153,71 @@ exception QueryCatPluginException {
   3: optional i32 object_handle,
   4: optional string exception_type,
   5: optional string exception_stack_trace,
-  6: optional QueryCatPluginException exception_nested
+  6: optional QueryCatPluginException exception_nested,
+  // Exception data, it can be used to construct the original exception.
+  7: optional map<string, VariantValue> error_data
 }
 
 /*
  * Plugins Manager
  * ---------------
  */
+
+enum AuthType {
+  OAUTH2 = 0,
+  API_KEY = 1
+}
+
+// Authentication provider declared by plugin. QueryCat host performs login and token refresh.
+struct AuthProvider {
+  // Provider identifier (f.e. "github"). Must be unique across all plugins.
+  1: required string id,
+  2: required AuthType type,
+  3: optional string display_name,
+  4: optional string authorization_url,
+  5: optional string token_url,
+  6: optional string device_authorization_url,
+  7: optional string client_id,
+  8: optional string client_secret,
+  9: optional list<string> scopes,
+  // Audience, prompt, access_type=offline...
+  10: optional map<string, string> extra_params,
+  // Fixed loopback redirect port. Random port is used if not set.
+  11: optional i32 redirect_port,
+  // Some providers require "localhost" for redirect, "127.0.0.1" is used if not set.
+  12: optional string redirect_loopback,
+  // Redirect path, "/callback" is used if not set.
+  13: optional string redirect_path,
+  // Refresh token URL, if empty the token_url is used.
+  14: optional string refresh_token_url,
+  // Refresh token query parameter name, default is "refresh_token".
+  15: optional string refresh_token_param_name,
+  // Use device authorization flow by default.
+  16: optional bool prefer_device_flow,
+  // Allow user to provide API key/personal token instead of OAuth2 login.
+  17: optional bool allow_api_key,
+  // Disable PKCE validation (code_challenge/code_verifier).
+  18: optional bool disable_pkce,
+  // Validate token before getting it to user first time.
+  19: optional string token_validate_url
+}
+
+// Authentication token. Empty access token means the user is not logged in.
+struct AuthToken {
+  1: required string access_token,
+  2: optional string token_type,
+  3: optional i64 expires_at, // Unix seconds.
+  4: optional list<string> scopes,
+  5: optional AuthType auth_type
+}
+
+// Configuration value.
+struct ConfigOption {
+  1: required string name,
+  2: required DataType type,
+  3: required string description,
+  4: optional VariantValue default_value
+}
 
 struct Function {
   // Function call signature.
@@ -160,7 +228,13 @@ struct Function {
   // The function is safe if it only reads data.
   4: optional bool is_safe,
   // Register formatter for a specific file extensions or MIME types.
-  5: optional list<string> formatter_ids
+  5: optional list<string> formatter_ids,
+  // Map of argument name (as in signature) -> description.
+  6: optional map<string, string> arguments_descriptions,
+  // Examples of function call.
+  7: optional list<string> examples,
+  // Function category.
+  8: optional string category
 }
 
 struct PluginData {
@@ -171,7 +245,11 @@ struct PluginData {
   // Plugin version. Format is MAJOR.MINOR.PATCH.
   3: required string version,
   // Metadata.
-  4: optional map<string, VariantValue> metadata
+  4: optional map<string, VariantValue> metadata,
+  // Authentication providers.
+  5: optional list<AuthProvider> auth_providers,
+  // Configuration options for plugin.
+  6: optional list<ConfigOption> config_options
 }
 
 struct RegistrationResult {
@@ -281,7 +359,8 @@ struct KeyColumn {
 struct ContextQueryInfo {
   1: required list<Column> columns,
   2: required i64 offset,
-  3: optional i64 limit
+  3: optional i64 limit,
+  4: optional map<string, VariantValue> extra_params
 }
 
 // Contains the general information.
@@ -629,6 +708,13 @@ service PluginsManager extends QueryCatIO {
   void RegisterFunctions(
     1: required i64 token, // Authorization token.
     2: required list<Function> functions
+  ) throws (1: QueryCatPluginException e),
+
+  // Get authentication token for the provider declared by the plugin. The host refreshes it if needed.
+  AuthToken GetAuthToken(
+    1: required i64 token, // Authorization token.
+    2: required string provider_id,
+    3: required bool force_refresh
   ) throws (1: QueryCatPluginException e),
 }
 

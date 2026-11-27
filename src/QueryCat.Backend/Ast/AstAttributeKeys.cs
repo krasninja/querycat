@@ -46,4 +46,9 @@ internal static class AstAttributeKeys
     /// Correspond identifier rows input column.
     /// </summary>
     public const string InputColumnKey = "input_column";
+
+    /// <summary>
+    /// The operand of binary operation was swapped. It is needed to take into account for key columns.
+    /// </summary>
+    public const string OperationOperandsSwap = "binop_swap";
 }

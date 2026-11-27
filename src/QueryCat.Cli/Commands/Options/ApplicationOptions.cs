@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend;
 using QueryCat.Backend.Addons.Formatters;
+using QueryCat.Backend.Auth;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Plugins;
 using QueryCat.Backend.Execution;
@@ -16,14 +17,27 @@ namespace QueryCat.Cli.Commands.Options;
 internal sealed class ApplicationOptions
 {
     internal const string ConfigFileName = "config.json";
+    internal const string AuthFileName = "auth.json";
     internal const string ApplicationPluginsDirectory = "plugins";
     internal const string ApplicationPluginsFunctionsCacheDirectory = "func-cache";
 
     public LogLevel LogLevel { get; init; }
 
+    public string? WebProxy { get; init; }
+
+    private static readonly FileAuthTokenStore _authTokenStore = new(
+        Path.Combine(Application.GetApplicationDirectory(), AuthFileName));
+
 #if ENABLE_PLUGINS
     public string[] PluginDirectories { get; init; } = [];
 #endif
+
+    /// <summary>
+    /// Create the application persistent config storage.
+    /// </summary>
+    /// <returns>Instance of <see cref="PersistentConfigStorage" />.</returns>
+    internal static PersistentConfigStorage CreateConfigStorage()
+        => new(Path.Combine(Application.GetConfigDirectory(), ConfigFileName));
 
     /// <summary>
     /// Creation application core object facade.
@@ -99,9 +113,8 @@ internal sealed class ApplicationOptions
 #endif
 
         var bootstrapper = new ExecutionThreadBootstrapper(executionOptions)
-            .WithConfigStorage(new PersistentConfigStorage(
-                Path.Combine(Application.GetApplicationDirectory(), ConfigFileName))
-            )
+            .WithConfigStorage(CreateConfigStorage())
+            .WithAuthTokenManager(new DefaultAuthTokenManager(_authTokenStore))
             .WithStandardFunctions()
             .WithRegistrations(Backend.Addons.Functions.JsonFunctions.RegisterFunctions)
             .WithStandardUriResolvers()
@@ -113,6 +126,7 @@ internal sealed class ApplicationOptions
             endpoint: QueryCat.Plugins.Client.ThriftEndpoint.CreateNamedPipe(
                 QueryCat.Plugins.Client.ThriftEndpoint.GenerateIdentifier("qcath")),
             Application.GetApplicationDirectory(),
+            webProxy: WebProxy,
             functionsCacheDirectory: Path.Combine(Application.GetApplicationDirectory(),
                 ApplicationPluginsFunctionsCacheDirectory),
             minLogLevel: LogLevel,
@@ -137,7 +151,7 @@ internal sealed class ApplicationOptions
         var thread = bootstrapper.Create();
         await thread.PluginsManager.PluginsLoader.LoadAsync(new PluginsLoadingOptions(), cancellationToken);
 
-        return new ApplicationRoot(thread, thread.PluginsManager);
+        return new ApplicationRoot(thread, thread.PluginsManager, _authTokenStore);
     }
 
     /// <summary>
@@ -176,10 +190,12 @@ internal sealed class ApplicationOptions
     /// <summary>
     /// Pre initialization step for logger.
     /// </summary>
-    public void InitializeLogger()
+    /// <param name="useErrorOut">Use error standard stream.
+    /// It can be needed if standard output is consumed by another tool.</param>
+    public void InitializeLogger(bool useErrorOut = false)
     {
         Application.LoggerFactory = new LoggerFactory(
-            providers: [new QueryCatConsoleLoggerProvider()],
+            providers: [new QueryCatConsoleLoggerProvider(useErrorOut)],
             new LoggerFilterOptions
             {
                 MinLevel = LogLevel,

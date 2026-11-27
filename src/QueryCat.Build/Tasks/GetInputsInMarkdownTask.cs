@@ -72,11 +72,11 @@ public sealed class GetInputsInMarkdownTask : AsyncFrostingTask<BuildContext>
             .Where(f =>
                 f.ReturnType == DataType.Object
                 && !f.IsAggregate
-                && f.ReturnObjectName == nameof(IRowsInput)
+                && FunctionFormatter.IsRowsInputFunction(f)
                 && f.Name.Contains("_") // Usually plugin name should have name like "pluginName_method".
                 && !_excludeList.Contains(f.Name)
             )
-            .OrderBy(f => f.Name)
+            .OrderBy(f => f.Name, StringComparer.OrdinalIgnoreCase)
             .ToList();
         var sb = new StringBuilder()
             .AppendLine("# Schema");
