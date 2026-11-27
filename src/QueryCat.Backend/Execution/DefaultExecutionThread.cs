@@ -9,9 +9,6 @@ using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Plugins;
 using QueryCat.Backend.Core.Plugins.Auth;
 using QueryCat.Backend.Core.Types;
-#if NET8_0 || NET9_0
-using QueryCat.Backend.Core.Utils;
-#endif
 using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Execution;

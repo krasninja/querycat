@@ -16,11 +16,7 @@ internal sealed class SimpleLruDictionary<TKey, TValue> : IDictionary<TKey, TVal
 
     // The first item is the least recently used, the last is the most recently used.
     private readonly LinkedList<KeyValuePair<TKey, TValue>> _lruList = [];
-#if NET9_0_OR_GREATER
     private readonly Lock _objLock = new();
-#else
-    private readonly object _objLock = new();
-#endif
 
     /// <inheritdoc />
     public int Count

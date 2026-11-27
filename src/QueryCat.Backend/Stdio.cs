@@ -8,11 +8,8 @@ public static class Stdio
     private static Stream? _errorStream;
     private static Stream? _outputStream;
     private static Stream? _inputStream;
-#if NET9_0_OR_GREATER
+
     private static readonly Lock _objLock = new();
-#else
-    private static readonly object _objLock = new();
-#endif
 
     /// <summary>
     /// Get the cached standard output stream.

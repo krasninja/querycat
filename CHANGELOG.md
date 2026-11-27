@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- Drop .NET 8 support. `QueryCat` NuGet packages now target .NET 10 and .NET 11 only.
+
 ## [0.20.1] - 2026-11-27
 
 ### Added

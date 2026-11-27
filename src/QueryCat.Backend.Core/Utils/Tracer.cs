@@ -13,11 +13,7 @@ internal static class Tracer
 {
     private static readonly ConcurrentDictionary<string, long> _methods = new();
 
-#if NET9_0_OR_GREATER
     private static readonly Lock _objLock = new();
-#else
-    private static readonly object _objLock = new();
-#endif
 
     private static readonly StringBuilder _stringBuilder = new();
 

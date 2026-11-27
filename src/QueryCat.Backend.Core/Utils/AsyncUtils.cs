@@ -222,65 +222,6 @@ public static class AsyncUtils
             .GetAwaiter().GetResult();
     }
 
-#if NET8_0
-    /// <summary>
-    /// Converts async enumerable into list.
-    /// </summary>
-    /// <param name="items">Async enumerable.</param>
-    /// <param name="cancellationToken">Cancellation token to monitor request cancellation.</param>
-    /// <typeparam name="T">Enumerable type.</typeparam>
-    /// <returns>List.</returns>
-    public static async Task<List<T>> ToListAsync<T>(this IAsyncEnumerable<T> items,
-        CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(items);
-        var results = new List<T>();
-        await foreach (var item in items.WithCancellation(cancellationToken).ConfigureAwait(false))
-        {
-            results.Add(item);
-        }
-        return results;
-    }
-
-    /// <summary>
-    /// Returns the first element of a sequence, or a default value if no element is found.
-    /// </summary>
-    /// <param name="items">Async enumerable to return an element.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <typeparam name="T">Enumerable type.</typeparam>
-    /// <returns>The first element or null.</returns>
-    public static async Task<T?> FirstOrDefaultAsync<T>(this IAsyncEnumerable<T> items,
-        CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(items);
-        await foreach (var item in items.WithCancellation(cancellationToken).ConfigureAwait(false))
-        {
-            return item;
-        }
-        return default;
-    }
-
-    /// <summary>
-    /// Returns the first element of a sequence, or a default value if no element is found.
-    /// </summary>
-    /// <param name="items">Async enumerable to return an element.</param>
-    /// <param name="defaultValue">Default value.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <typeparam name="T">Enumerable type.</typeparam>
-    /// <returns>The first element or default.</returns>
-    public static async Task<T> FirstOrDefaultAsync<T>(this IAsyncEnumerable<T> items,
-        T defaultValue,
-        CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(items);
-        await foreach (var item in items.WithCancellation(cancellationToken).ConfigureAwait(false))
-        {
-            return item;
-        }
-        return defaultValue;
-    }
-#endif
-
     /// <summary>
     /// Convert <see cref="IEnumerable{T}" /> to <see cref="IAsyncEnumerable{T}" />.
     /// </summary>

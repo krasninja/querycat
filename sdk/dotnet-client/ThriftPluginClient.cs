@@ -65,11 +65,7 @@ public partial class ThriftPluginClient : IDisposable
 
     // Plugin server.
     private readonly List<ThriftServerConnection> _serverConnections = new();
-#if NET9_0_OR_GREATER
     private readonly Lock _objLock = new();
-#else
-    private readonly object _objLock = new();
-#endif
     private readonly CancellationTokenSource _clientServerCts = new();
 
     /// <summary>

@@ -9,9 +9,6 @@ using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Storage;
-#if NET8_0
-using QueryCat.Backend.Utils;
-#endif
 
 namespace QueryCat.Backend.Commands;
 

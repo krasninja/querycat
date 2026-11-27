@@ -9,11 +9,7 @@ internal sealed class ThriftClientLogger : ILogger
 {
     private readonly string _name;
     private readonly ThriftPluginClient _client;
-#if NET9_0_OR_GREATER
     private readonly Lock _objLock = new();
-#else
-    private readonly object _objLock = new();
-#endif
     private readonly LogLevel _minLogLevel = LogLevel.Trace;
 
     public ThriftClientLogger(string name, ThriftPluginClient client)

@@ -3,9 +3,6 @@ using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
-#if NET8_0
-using QueryCat.Backend.Utils;
-#endif
 
 namespace QueryCat.Backend.Commands.Select.Visitors;
 

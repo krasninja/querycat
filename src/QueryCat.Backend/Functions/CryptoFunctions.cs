@@ -84,11 +84,7 @@ internal static class CryptoFunctions
 
     private static string ToHexLower(ReadOnlySpan<byte> bytes)
     {
-#if NET9_0_OR_GREATER
         return Convert.ToHexStringLower(bytes);
-#else
-        return Convert.ToHexString(bytes).ToLowerInvariant();
-#endif
     }
 
     public static void RegisterFunctions(IFunctionsManager functionsManager)

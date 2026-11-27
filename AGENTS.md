@@ -62,7 +62,7 @@ Tests are xUnit with `Arrange. / Act. / Assert.` comment sections and `Method_Sc
 - Style is enforced by [src/.editorconfig](src/.editorconfig) and StyleCop analyzers; 4 spaces, file-scoped namespaces, braces always, `_camelCase` private fields, usings outside the namespace with System first. Warnings aren't errors, but don't add new ones.
 - Nullable reference types and implicit usings are on everywhere. Keep them satisfied rather than suppressing.
 - Everything must stay **AOT-compatible**: no unbounded reflection, use the project's own `SourceGenerationContext` (Backend, Addons, ThriftPlugins and Cli each have one) for JSON serialization.
-- `QueryCat.Backend.Core` and `QueryCat.Backend` multi-target `net8.0;net10.0;net11.0`, the plugin client `net10.0;net11.0`; the generated `sdk/dotnet-sdk` is `net10.0` only; the CLI, addons and plugin hosts are `net11.0` only. Don't use newer APIs in the multi-targeted projects without a guard.
+- `QueryCat.Backend.Core` and `QueryCat.Backend` multi-target `net10.0;net11.0`, the plugin client `net10.0;net11.0`; the generated `sdk/dotnet-sdk` is `net10.0` only; the CLI, addons and plugin hosts are `net11.0` only. Don't use newer APIs in the multi-targeted projects without a guard.
 - I/O is async-first: pass `CancellationToken` through and suffix async members with `Async`.
 - User-facing strings and exception messages live in the project's own `Resources/Errors.resx` / `Messages.resx` (`throw new QueryCatException(Resources.Errors.NoColumns)`), avoid using inline literals.
 - Public API in `.Core` gets XML doc comments; overrides use `/// <inheritdoc />`.

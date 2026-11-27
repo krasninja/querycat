@@ -12,11 +12,7 @@ namespace QueryCat.Plugins.Client;
 /// </summary>
 public sealed class ObjectsStorage
 {
-#if NET9_0_OR_GREATER
     private readonly Lock _objLock = new();
-#else
-    private readonly object _objLock = new();
-#endif
     private readonly List<object?> _objects = new();
 
     public int Count
