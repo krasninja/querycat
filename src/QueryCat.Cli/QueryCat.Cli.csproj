@@ -28,6 +28,15 @@
     <PackageReference Include="System.CommandLine" Version="3.0.0" />
   </ItemGroup>
 
+  <!-- Workaround for https://github.com/dotnet/runtime/issues/136007: the .NET 11 osx-x64 NativeAOT
+       runtime pack ships an unaligned GSS descriptor in libSystem.Net.Security.Native.a, which the
+       classic Xcode linker (auto-selected by ILCompiler for Xcode 15/16) rejects with
+       "ld: unaligned pointer(s) for architecture x86_64". Disabling chained fixups makes the link
+       succeed. Remove once the runtime pack is fixed. -->
+  <ItemGroup Condition=" '$(RuntimeIdentifier)' == 'osx-x64' ">
+    <LinkerArg Include="-Wl,-no_fixup_chains" />
+  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\QueryCat.Backend\QueryCat.Backend.csproj" />
     <ProjectReference Include="..\QueryCat.Backend.Addons\QueryCat.Backend.Addons.csproj" />
